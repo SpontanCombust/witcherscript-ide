@@ -28,8 +28,8 @@ LiteralFloat: f32 = {
 }
 
 LiteralBool: bool = {
-    "true" => true,
-    "false" => false
+    KeywordTrue => true,
+    KeywordFalse => false
 }
 
 LiteralString: String = {
@@ -45,6 +45,60 @@ match {
     // Ignore C-style comments
     r"//[^\n\r]*[\n\r]*" => {},
     r"/\*[^\*]*[^/]*(\*/)[\n\r]*" => {},
+
+    "abstract" => KeywordAbstract,
+    "array" => KeywordArray,
+    "bool" => KeywordBool,
+    "break" => KeywordBreak,
+    "case" => KeywordCase,
+    "class" => KeywordClass,
+    "const" => KeywordConst,
+    "continue" => KeywordContinue,
+    "default" => KeywordDefault,
+    "delete" => KeywordDelete,
+    "do" => KeywordDo,
+    "editable" => KeywordEditable,
+    "else" => KeywordElse,
+    "entry" => KeywordEntry,
+    "enum" => KeywordEnum,
+    "event" => KeywordEvent,
+    "exec" => KeywordExec,
+    "extends" => KeywordExtends,
+    "false" => KeywordFalse,
+    "final" => KeywordFinal,
+    "float" => KeywordFloat,
+    "for" => KeywordFor,
+    "function" => KeywordFunction,
+    "hint" => KeywordHint,
+    "if" => KeywordIf,
+    "in" => KeywordIn,
+    "int" => KeywordInt,
+    "import" => KeywordImport,
+    "latent" => KeywordLatent,
+    "name" => KeywordName,
+    "new" => KeywordNew,
+    "NULL" => KeywordNull,
+    "optional" => KeywordOptional,
+    "out" => KeywordOut,
+    "parent" => KeywordParent,
+    "private" => KeywordPrivate,
+    "protected" => KeywordProtected, 
+    "public" => KeywordPublic,
+    "return" => KeywordReturn,
+    "saved" => KeywordSaved,
+    "state" => KeywordState,
+    "statemachine" => KeywordStatemachine,
+    "string" => KeywordString,
+    "struct" => KeywordStruct,
+    "super" => KeywordSuper,
+    "switch" => KeywordSwitch,
+    "this" => KeywordThis,
+    "timer" => KeywordTimer,
+    "true" => KeywordTrue,
+    "var" => KeywordVar,
+    "virtual_parent" => KeywordVirtualParent,
+    "void" => KeywordVoid,
+    "while" => KeywordWhile,
 } else {
     _
 }
