@@ -8,6 +8,10 @@ use crate::ast::{
 grammar;
 
 
+Identifier: String = {
+    RegexIdentifier => String::from(<>)
+}
+
 // =========================================== LITERALS ===========================================
 
 pub Literal: Literal = {
@@ -100,5 +104,7 @@ match {
     "void" => KeywordVoid,
     "while" => KeywordWhile,
 } else {
+    r"[_a-zA-Z][_a-zA-Z0-9]*" => RegexIdentifier,
+
     _
 }
