@@ -7,16 +7,21 @@ pub enum Expression {
     Identifier(String),
     UnaryOperation(UnaryOperator, Rc<Expression>),
     BinaryOperation(Rc<Expression>, BinaryOperator, Rc<Expression>),
+    TernaryConditional {
+        condition: Rc<Expression>,
+        expr_if_true: Rc<Expression>,
+        expr_if_false: Rc<Expression>
+    },
     MemberAccess {
-        exp: Rc<Expression>, 
-        member_ident: String
+        expr: Rc<Expression>, 
+        member: String
     },
     Subscript {
-        exp: Rc<Expression>, 
+        expr: Rc<Expression>, 
         index: Rc<Expression>
     },
-    Call {
-        exp: Rc<Expression>, 
+    FunctionCall {
+        expr: Rc<Expression>, 
         args: Vec<Rc<Expression>>
     },
     Instantiation {
@@ -25,7 +30,7 @@ pub enum Expression {
     },
     TypeCast {
         target_type: String,
-        exp: Rc<Expression>
+        expr: Rc<Expression>
     },
     Nested(Rc<Expression>)
 }

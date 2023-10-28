@@ -4,19 +4,22 @@ pub enum UnaryOperator {
     Minus
 }
 
-pub enum ArithmeticOperator {
+pub enum ArithmeticBinaryOperator {
     Multip,
     Div,
     Modulo,
     Add,
     Sub,
-    LogicalAnd,
-    LogicalOr,
     BitwiseAnd,
     BitwiseOr
 }
 
-pub enum RelationalOperator {
+pub enum LogicalBinaryOperator {
+    And,
+    Or
+}
+
+pub enum RelationalBinaryOperator {
     Equal,
     NotEqual,
     Less,
@@ -26,8 +29,9 @@ pub enum RelationalOperator {
 }
 
 pub enum BinaryOperator {
-    Airthmetic(ArithmeticOperator),
-    Relational(RelationalOperator)
+    Airthmetic(ArithmeticBinaryOperator),
+    Logical(LogicalBinaryOperator),
+    Relational(RelationalBinaryOperator)
 }
 
 pub enum AssignmentOperator {
