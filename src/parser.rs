@@ -53,7 +53,7 @@ peg::parser! {
                 Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Less.into(), rh))
             }
             --
-            lh:(@) _ "+" _ rh:@ {
+            lh:(@) _ "-" _ rh:@ {
                 Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Sub.into(), rh))
             }
             lh:(@) _ "+" _ rh:@ {
@@ -80,7 +80,7 @@ peg::parser! {
                 Rc::new(Expression::TypeCast { target_type: id, expr }) 
             }
             --
-            expr:(@) _ "." _ func:identifier() "(" _ args:expr_list() _ ")" {
+            expr:(@) _ "." _ func:identifier() "(" _ args:opt_expr_list() _ ")" {
                 Rc::new(Expression::MethodCall { expr, func, args })
             }
             expr:(@) _ "." _ member:identifier() {
@@ -89,20 +89,22 @@ peg::parser! {
             expr:(@) "[" _ index:expr() _ "]" { 
                 Rc::new(Expression::Subscript { expr, index }) 
             }
-            func:identifier() "(" _ args:expr_list() _ ")" { 
+            func:identifier() "(" _ args:opt_expr_list() _ ")" { 
                 Rc::new(Expression::FunctionCall { func, args }) 
             }
             --
-            "(" e:expr() ")" { 
-                e 
+            lit:literal() { 
+                Rc::new(Expression::Literal(lit)) 
             }
             id:identifier() { 
                 Rc::new(Expression::Identifier(id)) 
             }
-            lit:literal() { 
-                Rc::new(Expression::Literal(lit)) 
+            "(" _ e:expr() _ ")" { 
+                e 
             }
         }
+
+        rule opt_expr_list()-> Vec<Option<Rc<Expression>>> = v:comma(<expr()?>) {v}
 
         rule expr_list()-> Vec<Rc<Expression>> = v:comma(<expr()>) {v}
 

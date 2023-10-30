@@ -24,12 +24,12 @@ pub enum Expression {
     },
     FunctionCall {
         func: String, 
-        args: Vec<Rc<Expression>>
+        args: Vec<Option<Rc<Expression>>> // arguments can be optional and can be skipped in the call (like func(arg0,,,arg3))
     },
     MethodCall {
         expr: Rc<Expression>,
         func: String,
-        args: Vec<Rc<Expression>>
+        args: Vec<Option<Rc<Expression>>>
     },
     Instantiation {
         class: String,
