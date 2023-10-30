@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-use crate::{parser::literal, ast::literal::Literal};
+use crate::{parser::*, ast::literal::Literal};
 
 #[test]
 fn test_invalid() {

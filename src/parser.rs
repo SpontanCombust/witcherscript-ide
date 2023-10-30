@@ -4,6 +4,8 @@ peg::parser! {
     pub grammar parser() for str {
         use crate::ast::literal::*;
 
+        // LITERALS ===============================================================================
+
         pub rule literal() -> Literal
             = s:literal_string() { Literal::String(s) }
             / n:literal_name() { Literal::Name(n) }
@@ -27,8 +29,8 @@ peg::parser! {
             / "false" { false }
         
         rule string_char() -> char 
-            = "\\\"" { '\"' }
-            / "\\\'" { '\'' }
+            = r#"\""# { '\"' }
+            / r#"\'"# { '\'' }
             / !['\"' | '\''] c:[_] { c }
 
         rule literal_string() -> String
@@ -39,6 +41,21 @@ peg::parser! {
 
         rule literal_null() -> ()
             = "NULL"
+
+
+        // WHITESPACE & UTILITIES =================================================================
+
+        rule _() = quiet!{ ([' ' | '\n' | '\t' | '\r'] / multiline_comment() / line_comment())* }
+
+        //TODO testing needed
+        rule line_comment()
+            = "//" [^ '\n'|'\r']* ['\n'|'\r']*
+
+        rule multiline_comment()
+            = "/*" (!"*/" [_])* "*/"
+
+        rule comma<T>(x: rule<T>) -> Vec<T>
+            = v:(x() ** (_ "," _)) {v}
     }
 }
 
