@@ -5,6 +5,7 @@ pub enum UnaryOperator {
     Minus
 }
 
+
 #[derive(Debug)]
 pub enum ArithmeticBinaryOperator {
     Multip,
@@ -39,6 +40,26 @@ pub enum BinaryOperator {
     Relational(RelationalBinaryOperator)
 }
 
+impl Into<BinaryOperator> for ArithmeticBinaryOperator {
+    fn into(self) -> BinaryOperator {
+        BinaryOperator::Airthmetic(self)
+    }
+}
+
+impl Into<BinaryOperator> for LogicalBinaryOperator {
+    fn into(self) -> BinaryOperator {
+        BinaryOperator::Logical(self)
+    }
+}
+
+impl Into<BinaryOperator> for RelationalBinaryOperator {
+    fn into(self) -> BinaryOperator {
+        BinaryOperator::Relational(self)
+    }
+}
+
+
+#[derive(Debug)]
 pub enum AssignmentOperator {
     Direct,
     Multip,

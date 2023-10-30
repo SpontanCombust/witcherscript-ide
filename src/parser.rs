@@ -1,8 +1,129 @@
-
-
 peg::parser! {
     pub grammar parser() for str {
         use crate::ast::literal::*;
+        use crate::ast::operators::*;
+        use crate::ast::expression::*;
+
+        use std::rc::Rc;
+    
+
+        // EXPRESSIONS ===============================================================================
+
+        // precedence based on C++'s operator precedence
+        // https://en.cppreference.com/w/cpp/language/operator_precedence
+        pub rule expr() -> Rc<Expression> = precedence!{
+            lh:@ _ op:assignment_operator() _ rh:(@) {
+                Rc::new(Expression::AssignmentOperation(lh, op, rh))
+            }
+            condition:@ _ "?" _ expr_if_true:expr() _ ":" _ expr_if_false:(@) {
+                Rc::new(Expression::TernaryConditional { condition, expr_if_true, expr_if_false })
+            }
+            --
+            lh:(@) _ "||" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::Or.into(), rh))
+            }
+            lh:(@) _ "&&" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::And.into(), rh))
+            }
+            --
+            lh:(@) _ "|" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseOr.into(), rh))
+            }
+            lh:(@) _ "&" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseAnd.into(), rh))
+            }
+            --
+            lh:(@) _ "!=" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::NotEqual.into(), rh))
+            }
+            lh:(@) _ "==" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Equal.into(), rh))
+            }
+            --
+            lh:(@) _ ">=" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::GreaterOrEqual.into(), rh))
+            }
+            lh:(@) _ ">" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Greater.into(), rh))
+            }
+            lh:(@) _ "<=" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::LessOrEqual.into(), rh))
+            }
+            lh:(@) _ "<" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Less.into(), rh))
+            }
+            --
+            lh:(@) _ "+" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Sub.into(), rh))
+            }
+            lh:(@) _ "+" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Add.into(), rh))
+            }
+            --
+            lh:(@) _ "%" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Modulo.into(), rh))
+            }
+            lh:(@) _ "/" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Div.into(), rh))
+            }
+            lh:(@) _ "*" _ rh:@ {
+                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Multip.into(), rh))
+            }
+            --
+            "new" _ class:identifier() _ "in" _ lifetime_object:expr() {
+                Rc::new(Expression::Instantiation { class, lifetime_object })
+            }
+            op:unary_operator() expr:@ {
+                Rc::new(Expression::UnaryOperation(op, expr))
+            }
+            "(" _ id:identifier() _ ")" _ expr:(@) { 
+                Rc::new(Expression::TypeCast { target_type: id, expr }) 
+            }
+            --
+            expr:(@) _ "." _ func:identifier() "(" _ args:expr_list() _ ")" {
+                Rc::new(Expression::MethodCall { expr, func, args })
+            }
+            expr:(@) _ "." _ member:identifier() {
+                Rc::new(Expression::MemberAccess { expr, member })
+            }
+            expr:(@) "[" _ index:expr() _ "]" { 
+                Rc::new(Expression::Subscript { expr, index }) 
+            }
+            func:identifier() "(" _ args:expr_list() _ ")" { 
+                Rc::new(Expression::FunctionCall { func, args }) 
+            }
+            --
+            "(" e:expr() ")" { 
+                e 
+            }
+            id:identifier() { 
+                Rc::new(Expression::Identifier(id)) 
+            }
+            lit:literal() { 
+                Rc::new(Expression::Literal(lit)) 
+            }
+        }
+
+        rule expr_list()-> Vec<Rc<Expression>> = v:comma(<expr()>) {v}
+
+
+        rule assignment_operator() -> AssignmentOperator
+            = "=" { AssignmentOperator::Direct }
+            / "+=" { AssignmentOperator::Add }
+            / "-=" { AssignmentOperator::Sub }
+            / "*=" { AssignmentOperator::Multip }
+            / "/=" { AssignmentOperator::Div }
+            / "%=" { AssignmentOperator::Modulo } 
+
+        rule unary_operator() -> UnaryOperator
+            = "-" { UnaryOperator::LogicalNot }
+            / "!" { UnaryOperator::LogicalNot }
+            / "~" { UnaryOperator::BitwiseNot }
+
+        rule identifier() -> String
+            = quiet!{ s:$(['_' | 'a'..='z' | 'A'..='Z']['_' | 'a'..='z' | 'A'..='Z' | '0'..='9']*) { String::from(s) } }
+            / expected!("identifier")
+
 
         // LITERALS ===============================================================================
 
@@ -15,14 +136,12 @@ peg::parser! {
             / literal_null() { Literal::Null }
 
         rule literal_int() -> i32
-            = i:$("-"? ['0'..='9']+) {? 
-                i.parse().or(Err("i32")) 
-            }
+            = quiet!{ i:$("-"? ['0'..='9']+) {? i.parse().or(Err("i32")) } }
+            / expected!("int literal")
 
         rule literal_float() -> f32
-            = f:$("-"? ['0'..='9']+ "." ['0'..='9']*) "f"? {?
-                f.parse().or(Err("f32"))
-            }
+            = quiet!{ f:$("-"? ['0'..='9']+ "." ['0'..='9']*) "f"? {? f.parse().or(Err("f32")) } } 
+            / expected!("float literal")
 
         rule literal_bool() -> bool
             = "true" { true }
@@ -32,12 +151,15 @@ peg::parser! {
             = r#"\""# { '\"' }
             / r#"\'"# { '\'' }
             / !['\"' | '\''] c:[_] { c }
+            / expected!("string character")
 
         rule literal_string() -> String
-            = "\"" s:string_char()* "\"" { s.into_iter().collect() }
+            = quiet!{ "\"" s:string_char()* "\"" { s.into_iter().collect() } }
+            / expected!("string literal")
 
         rule literal_name() -> String
-            = "\'" s:string_char()* "\'" { s.into_iter().collect() }
+            = quiet!{ "\'" s:string_char()* "\'" { s.into_iter().collect() } }
+            / expected!("name literal")
 
         rule literal_null() -> ()
             = "NULL"

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use super::{literal::Literal, operators::{UnaryOperator, BinaryOperator}};
+use super::{literal::*, operators::*};
 
 #[derive(Debug)]
 pub enum Expression {
@@ -8,6 +8,7 @@ pub enum Expression {
     Identifier(String),
     UnaryOperation(UnaryOperator, Rc<Expression>),
     BinaryOperation(Rc<Expression>, BinaryOperator, Rc<Expression>),
+    AssignmentOperation(Rc<Expression>, AssignmentOperator, Rc<Expression>),
     TernaryConditional {
         condition: Rc<Expression>,
         expr_if_true: Rc<Expression>,
@@ -25,6 +26,11 @@ pub enum Expression {
         func: String, 
         args: Vec<Rc<Expression>>
     },
+    MethodCall {
+        expr: Rc<Expression>,
+        func: String,
+        args: Vec<Rc<Expression>>
+    },
     Instantiation {
         class: String,
         lifetime_object: Rc<Expression>
@@ -32,6 +38,6 @@ pub enum Expression {
     TypeCast {
         target_type: String,
         expr: Rc<Expression>
-    },
-    Nested(Rc<Expression>)
+    }
+    //TODO this, super etc.
 }
