@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use super::{literal::Literal, operators::{UnaryOperator, BinaryOperator}};
 
+#[derive(Debug)]
 pub enum Expression {
     Literal(Literal),
     Identifier(String),
@@ -21,7 +22,7 @@ pub enum Expression {
         index: Rc<Expression>
     },
     FunctionCall {
-        expr: Rc<Expression>, 
+        func: String, 
         args: Vec<Rc<Expression>>
     },
     Instantiation {
@@ -29,7 +30,7 @@ pub enum Expression {
         lifetime_object: Rc<Expression>
     },
     TypeCast {
-        target_type: String,
+        target_type: Rc<Expression>,
         expr: Rc<Expression>
     },
     Nested(Rc<Expression>)

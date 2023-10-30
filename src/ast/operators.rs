@@ -1,9 +1,11 @@
+#[derive(Debug)]
 pub enum UnaryOperator {
     LogicalNot,
     BitwiseNot,
     Minus
 }
 
+#[derive(Debug)]
 pub enum ArithmeticBinaryOperator {
     Multip,
     Div,
@@ -14,11 +16,13 @@ pub enum ArithmeticBinaryOperator {
     BitwiseOr
 }
 
+#[derive(Debug)]
 pub enum LogicalBinaryOperator {
     And,
     Or
 }
 
+#[derive(Debug)]
 pub enum RelationalBinaryOperator {
     Equal,
     NotEqual,
@@ -28,6 +32,7 @@ pub enum RelationalBinaryOperator {
     GreaterOrEqual
 }
 
+#[derive(Debug)]
 pub enum BinaryOperator {
     Airthmetic(ArithmeticBinaryOperator),
     Logical(LogicalBinaryOperator),

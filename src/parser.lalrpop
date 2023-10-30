@@ -1,16 +1,57 @@
-use std::str::FromStr;
+use std::{
+    rc::Rc,
+    str::FromStr
+};
 
 use crate::ast::{
-    literal::{Literal, parse_string_like}
+    expression::*,
+    literal::*,
+    operators::*
 };
 
 
 grammar;
 
 
-Identifier: String = {
-    RegexIdentifier => String::from(<>)
-}
+// ========================================= EXPRESSIONS ==========================================
+
+// pub Expression: Rc<Expression> = {
+//     "!" <l:Expression> => Rc::new(Expression::UnaryOperation(UnaryOperator::LogicalNot, l)),
+//     Term
+// };
+
+    // Identifier => Rc::new(Expression::Identifier(<>)),
+
+ExprList: Vec<Rc<Expression>> = Comma<Expr>;
+
+pub Expr: Rc<Expression> = {
+    Expr2
+};
+
+Expr2: Rc<Expression> = {
+    // due to LR(1) restriction, left hand can't be an identifier
+    // but as long as we can verify that it yields a type identifier after parsing, we are golden
+    "(" <t:Expr2> ")" <e:Expr1> => Rc::new(Expression::TypeCast { target_type: t, expr: e }),
+    Expr1
+};
+
+Expr1: Rc<Expression> = {
+    Identifier => Rc::new(Expression::Identifier(<>)),
+    <f:Expr1> "(" <args:ExprList> ")" => Rc::new(Expression::FunctionCall { func: f, args: args }),
+    <e:Expr1> "[" <i:Expr> "]" => Rc::new(Expression::Subscript { expr: e, index: i }),
+    Expr0
+};
+
+Expr0: Rc<Expression> = {
+    Literal => Rc::new(Expression::Literal(<>)),
+    "(" <Expr> ")" =>  Rc::new(Expression::Nested(<>)),
+};
+
+
+pub IdentifierList: Vec<String> = Comma<Identifier>;
+
+Identifier: String = RegexIdentifier => String::from(<>);
+
 
 // =========================================== LITERALS ===========================================
 
@@ -44,6 +85,20 @@ LiteralName: String = {
     r#"'([^"'\\]|\\.)*'"# => parse_string_like(<>)
 }
 
+
+// ============================================ MACROS ============================================
+
+Comma<T>: Vec<T> = {
+    <e:T?> <mut ev:("," <T> )*> => {
+        if let Some(e) = e {
+            ev.insert(0, e);
+        }
+        ev
+    }
+};
+
+
+// ============================= KEYWORDS, SPECIAL TERMINALS & PRECEDENSE =========================
 
 match {
     // Ignore C-style comments
@@ -105,6 +160,9 @@ match {
     "while" => KeywordWhile,
 } else {
     r"[_a-zA-Z][_a-zA-Z0-9]*" => RegexIdentifier,
+
+    // ignore whitespace
+    r"\s*" => {},
 
     _
 }
