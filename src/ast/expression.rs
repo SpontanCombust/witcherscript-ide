@@ -30,7 +30,7 @@ pub enum Expression {
         lifetime_object: Rc<Expression>
     },
     TypeCast {
-        target_type: Rc<Expression>,
+        target_type: String,
         expr: Rc<Expression>
     },
     Nested(Rc<Expression>)
