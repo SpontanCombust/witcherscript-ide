@@ -87,12 +87,24 @@ peg::parser! {
                 Rc::new(Expression::MemberAccess { expr, member })
             }
             expr:(@) "[" _ index:expr() _ "]" { 
-                Rc::new(Expression::Subscript { expr, index }) 
+                Rc::new(Expression::ArrayAccess { expr, index }) 
             }
             func:identifier() "(" _ args:opt_expr_list() _ ")" { 
                 Rc::new(Expression::FunctionCall { func, args }) 
             }
             --
+            "this" {
+                Rc::new(Expression::This)
+            }
+            "super" {
+                Rc::new(Expression::Super)
+            }
+            "parent" {
+                Rc::new(Expression::Parent)
+            }
+            "virtual_parent" {
+                Rc::new(Expression::VirtualParent)
+            }
             lit:literal() { 
                 Rc::new(Expression::Literal(lit)) 
             }
