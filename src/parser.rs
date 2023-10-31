@@ -130,7 +130,7 @@ peg::parser! {
             / "%=" { AssignmentOperator::Modulo } 
 
         rule unary_operator() -> UnaryOperator
-            = "-" { UnaryOperator::LogicalNot }
+            = "-" { UnaryOperator::Negation }
             / "!" { UnaryOperator::LogicalNot }
             / "~" { UnaryOperator::BitwiseNot }
 

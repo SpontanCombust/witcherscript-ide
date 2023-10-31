@@ -2,7 +2,7 @@
 pub enum UnaryOperator {
     LogicalNot,
     BitwiseNot,
-    Minus
+    Negation
 }
 
 
