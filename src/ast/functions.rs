@@ -4,7 +4,7 @@ use super::{
     conditionals::*,
     expression::*,
     loops::*,
-    type_annotation::*,
+    vars::*,
 };
 use bitmask_enum::bitmask;
 
