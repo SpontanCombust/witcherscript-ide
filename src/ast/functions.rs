@@ -1,8 +1,9 @@
 use std::rc::Rc;
 use super::{
+    classes::*, 
     expression::*,
+    loops::*,
     type_annotation::*,
-    classes::*
 };
 use bitmask_enum::bitmask;
 
@@ -13,7 +14,7 @@ pub struct FunctionDeclaration {
 
     pub name: String,
     pub return_type: TypeAnnotation,
-    pub body: Option<Vec<FunctionStatement>> // if there is no body it doesn't have a definition
+    pub body: Option<FunctionBody> // if there is no body it doesn't have a definition
 }
 
 #[bitmask(u32)]
@@ -37,6 +38,13 @@ pub struct FunctionParameter {
 }
 
 pub enum FunctionStatement {
-    Expr(Rc<Expression>)
-    //TODO function statements
+    Expr(Rc<Expression>),
+    For(Rc<ForLoop>),
+    While(Rc<WhileLoop>),
+    DoWhile(Rc<DoWhileLoop>),
+    Break,
+    Continue,
+    Return(Option<Rc<Expression>>)
 }
+
+pub type FunctionBody = Vec<FunctionStatement>;

@@ -4,3 +4,4 @@ pub mod expression;
 pub mod type_annotation;
 pub mod functions;
 pub mod classes;
+pub mod loops;
