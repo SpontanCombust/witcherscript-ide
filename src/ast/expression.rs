@@ -2,8 +2,9 @@ use std::rc::Rc;
 
 use super::{literal::*, operators::*};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Expression {
+    Nested(Rc<Expression>),
     Literal(Literal),
     This,
     Super,

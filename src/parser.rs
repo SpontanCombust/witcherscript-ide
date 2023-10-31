@@ -112,7 +112,7 @@ peg::parser! {
                 Rc::new(Expression::Identifier(id)) 
             }
             "(" _ e:expr() _ ")" { 
-                e 
+                Rc::new(Expression::Nested(e)) 
             }
         }
 
