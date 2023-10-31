@@ -1,6 +1,7 @@
 use std::rc::Rc;
 use super::{
     classes::*, 
+    conditionals::*,
     expression::*,
     loops::*,
     type_annotation::*,
@@ -39,9 +40,11 @@ pub struct FunctionParameter {
 
 pub enum FunctionStatement {
     Expr(Rc<Expression>),
-    For(Rc<ForLoop>),
-    While(Rc<WhileLoop>),
-    DoWhile(Rc<DoWhileLoop>),
+    For(ForLoop),
+    While(WhileLoop),
+    DoWhile(DoWhileLoop),
+    If(IfConditional),
+    Switch(SwitchConditional),
     Break,
     Continue,
     Return(Option<Rc<Expression>>)
