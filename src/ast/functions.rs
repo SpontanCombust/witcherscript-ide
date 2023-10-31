@@ -8,12 +8,12 @@ use bitmask_enum::bitmask;
 
 
 pub struct FunctionDeclaration {
-    access_modifier: Option<AccessModifier>,
-    specifiers: FunctionSpecifiers,
+    pub access_modifier: Option<AccessModifier>,
+    pub specifiers: FunctionSpecifiers,
 
-    name: String,
-    return_type: TypeAnnotation,
-    body: Option<Vec<FunctionStatement>> // if there is no body it doesn't have a definition
+    pub name: String,
+    pub return_type: TypeAnnotation,
+    pub body: Option<Vec<FunctionStatement>> // if there is no body it doesn't have a definition
 }
 
 #[bitmask(u32)]
@@ -30,10 +30,10 @@ pub enum FunctionSpecifiers {
 }
 
 pub struct FunctionParameter {
-    name: String,
-    is_optional: bool,
-    is_output: bool,
-    param_type: TypeAnnotation
+    pub name: String,
+    pub is_optional: bool,
+    pub is_output: bool,
+    pub param_type: TypeAnnotation
 }
 
 pub enum FunctionStatement {
