@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 peg = "0.8.*"
+bitmask-enum = "2.2.*"

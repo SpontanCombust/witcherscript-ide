@@ -3,6 +3,16 @@
 version = 3
 
 [[package]]
+name = "bitmask-enum"
+version = "2.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49fb8528abca6895a5ada33d62aedd538a5c33e77068256483b44a3230270163"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "peg"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -48,6 +58,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "syn"
+version = "2.0.38"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e96b79aaa137db8f61e26363a0c9b47d8b4ec75da28b7d1d614c2303e232408b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -57,5 +78,6 @@ checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 name = "witcherscript"
 version = "0.1.0"
 dependencies = [
+ "bitmask-enum",
  "peg",
 ]
