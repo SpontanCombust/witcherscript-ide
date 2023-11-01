@@ -12,20 +12,25 @@ use bitmask_enum::bitmask;
 pub struct FunctionDeclaration {
     pub access_modifier: Option<AccessModifier>,
     pub specifiers: FunctionSpecifiers,
+    pub speciality: Option<FunctionSpeciality>,
 
     pub name: String,
     pub return_type: TypeAnnotation,
     pub body: Option<FunctionBody> // if there is no body it doesn't have a definition
 }
 
+
 #[bitmask(u32)]
 pub enum FunctionSpecifiers {
-    Entry,
-    Event,
-    Exec,
     Final,
     Import,
     Latent,
+}
+
+pub enum FunctionSpeciality {
+    Entry,
+    Event,
+    Exec,
     Quest,
     Timer,
     Storyscene
@@ -37,6 +42,7 @@ pub struct FunctionParameter {
     pub is_output: bool,
     pub param_type: TypeAnnotation
 }
+
 
 pub enum FunctionStatement {
     Expr(Rc<Expression>),
