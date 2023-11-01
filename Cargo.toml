@@ -6,5 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-peg = "0.8.*"
-bitmask-enum = "2.2.*"
+peg = "0.8.2"
+bitmask-enum = "2.2.2"
+lazy_static = "1.4.0"

@@ -6,3 +6,4 @@ pub mod classes;
 pub mod loops;
 pub mod conditionals;
 pub mod vars;
+pub mod native_types;
