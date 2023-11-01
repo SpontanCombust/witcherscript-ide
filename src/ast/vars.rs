@@ -17,7 +17,7 @@ pub struct VarDeclaration {
     pub var_type: TypeAnnotation
 }
 
-#[bitmask]
+#[bitmask(u8)]
 pub enum VarSpecifiers {
     Const,
     Editable,

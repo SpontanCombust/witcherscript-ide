@@ -5,7 +5,7 @@ use super::{
     identifier::Identifier, 
     classes::AccessModifier, 
     vars::TypeAnnotation, 
-    expression::Expression, 
+    expressions::Expression, 
     loops::*,
     conditionals::*,
 };
@@ -23,7 +23,7 @@ pub struct FunctionDeclaration {
 }
 
 
-#[bitmask(u32)]
+#[bitmask(u8)]
 pub enum FunctionSpecifiers {
     Final,
     Latent,

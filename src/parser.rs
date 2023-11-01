@@ -2,7 +2,7 @@ peg::parser! {
     pub grammar parser() for str {
         use crate::ast::literal::*;
         use crate::ast::operators::*;
-        use crate::ast::expression::*;
+        use crate::ast::expressions::*;
         use crate::ast::identifier::*;
 
         use std::rc::Rc;

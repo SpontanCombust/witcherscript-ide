@@ -1,6 +1,6 @@
 pub mod literal;
 pub mod operators;
-pub mod expression;
+pub mod expressions;
 pub mod functions;
 pub mod classes;
 pub mod loops;
@@ -10,4 +10,4 @@ pub mod native_types;
 pub mod structs;
 pub mod enums;
 pub mod identifier;
-pub mod state;
+pub mod states;

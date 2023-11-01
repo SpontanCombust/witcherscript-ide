@@ -1,7 +1,7 @@
 #[allow(unused_imports)]
 use {
     crate::{
-        ast::expression::*,
+        ast::expressions::*,
         parser::*
     },
     std::rc::Rc
