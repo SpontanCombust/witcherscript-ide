@@ -1,4 +1,4 @@
-use super::{vars::VarDeclaration, literal::Literal, identifier::Identifier};
+use super::{vars::VarDeclaration, literal::*, identifier::Identifier};
 
 
 pub struct StructDeclaration {
@@ -11,7 +11,7 @@ pub enum StructStatement {
     MemberDeclaration(VarDeclaration),
     MemberDefaultValue {
         member: Identifier,
-        value: Literal
+        value: LiteralOrIdentifier
     },
 }
 

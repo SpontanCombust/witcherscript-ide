@@ -1,3 +1,5 @@
+use super::identifier::Identifier;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
     Int(i32),
@@ -6,4 +8,10 @@ pub enum Literal {
     String(String),
     Name(String),
     Null
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum LiteralOrIdentifier {
+    Literal(Literal),
+    Identifier(Identifier)
 }
