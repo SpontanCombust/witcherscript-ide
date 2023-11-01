@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use super::{literal::*, operators::*};
+use super::{literal::*, operators::*, identifier::Identifier};
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
@@ -10,9 +10,9 @@ pub enum Expression {
     Super,
     Parent,
     VirtualParent,
-    Identifier(String),
+    Identifier(Identifier),
     FunctionCall {
-        func: String, 
+        func: Identifier, 
         args: Vec<Option<Rc<Expression>>> // arguments can be optional and can be skipped in the call (like func(arg0,,,arg3))
     },
     ArrayAccess {
@@ -21,19 +21,19 @@ pub enum Expression {
     },
     MemberAccess {
         expr: Rc<Expression>, 
-        member: String
+        member: Identifier
     },
     MethodCall {
         expr: Rc<Expression>,
-        func: String,
+        func: Identifier,
         args: Vec<Option<Rc<Expression>>>
     },
     Instantiation {
-        class: String,
+        class: Identifier,
         lifetime_object: Rc<Expression>
     },
     TypeCast {
-        target_type: String,
+        target_type: Identifier,
         expr: Rc<Expression>
     },
     UnaryOperation(UnaryOperator, Rc<Expression>),

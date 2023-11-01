@@ -1,16 +1,16 @@
-use super::{vars::VarDeclaration, literal::Literal};
+use super::{vars::VarDeclaration, literal::Literal, identifier::Identifier};
 
 
 pub struct StructDeclaration {
     pub imported: bool,
-    pub name: String,
+    pub name: Identifier,
     pub body: StructBody
 }
 
 pub enum StructStatement {
     MemberDeclaration(VarDeclaration),
     MemberDefaultValue {
-        member: String,
+        member: Identifier,
         value: Literal
     },
 }

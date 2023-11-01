@@ -1,10 +1,10 @@
-use super::classes::AccessModifier;
+use super::{classes::AccessModifier, identifier::Identifier};
 use bitmask_enum::bitmask;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct TypeAnnotation {
-    pub name: String,
-    pub generic_argument: Option<String> // only used for arrays
+    pub name: Identifier,
+    pub generic_argument: Option<Identifier> // only used for arrays
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -13,7 +13,7 @@ pub struct VarDeclaration {
     pub access_modifier: Option<AccessModifier>,
     pub specifiers: VarSpecifiers,
 
-    pub name: String,
+    pub name: Identifier,
     pub var_type: TypeAnnotation
 }
 

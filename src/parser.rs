@@ -3,6 +3,7 @@ peg::parser! {
         use crate::ast::literal::*;
         use crate::ast::operators::*;
         use crate::ast::expression::*;
+        use crate::ast::identifier::*;
 
         use std::rc::Rc;
     
@@ -134,8 +135,8 @@ peg::parser! {
             / "!" { UnaryOperator::LogicalNot }
             / "~" { UnaryOperator::BitwiseNot }
 
-        rule identifier() -> String
-            = quiet!{ s:$(['_' | 'a'..='z' | 'A'..='Z']['_' | 'a'..='z' | 'A'..='Z' | '0'..='9']*) { String::from(s) } }
+        rule identifier() -> Identifier
+            = quiet!{ s:$(['_' | 'a'..='z' | 'A'..='Z']['_' | 'a'..='z' | 'A'..='Z' | '0'..='9']*) { Identifier::from(s) } }
             / expected!("identifier")
 
 

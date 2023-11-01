@@ -1,12 +1,14 @@
 use std::rc::Rc;
-use super::{
-    classes::*, 
-    conditionals::*,
-    expression::*,
-    loops::*,
-    vars::*,
-};
 use bitmask_enum::bitmask;
+
+use super::{
+    identifier::Identifier, 
+    classes::AccessModifier, 
+    vars::TypeAnnotation, 
+    expression::Expression, 
+    loops::*,
+    conditionals::*,
+};
 
 
 pub struct FunctionDeclaration {
@@ -15,7 +17,7 @@ pub struct FunctionDeclaration {
     pub specifiers: FunctionSpecifiers,
     pub speciality: Option<FunctionSpeciality>,
 
-    pub name: String,
+    pub name: Identifier,
     pub return_type: TypeAnnotation,
     pub body: Option<FunctionBody> // if there is no body it doesn't have a definition
 }
@@ -37,7 +39,7 @@ pub enum FunctionSpeciality {
 }
 
 pub struct FunctionParameter {
-    pub name: String,
+    pub name: Identifier,
     pub is_optional: bool,
     pub is_output: bool,
     pub param_type: TypeAnnotation
