@@ -55,7 +55,8 @@ pub enum FunctionStatement {
     Switch(SwitchConditional),
     Break,
     Continue,
-    Return(Option<Rc<Expression>>)
+    Return(Option<Rc<Expression>>),
+    Delete(Rc<Expression>)
 }
 
 pub type FunctionBody = Vec<FunctionStatement>;
