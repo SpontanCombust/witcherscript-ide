@@ -10,6 +10,7 @@ use bitmask_enum::bitmask;
 
 
 pub struct FunctionDeclaration {
+    pub imported: bool,
     pub access_modifier: Option<AccessModifier>,
     pub specifiers: FunctionSpecifiers,
     pub speciality: Option<FunctionSpeciality>,
@@ -23,7 +24,6 @@ pub struct FunctionDeclaration {
 #[bitmask(u32)]
 pub enum FunctionSpecifiers {
     Final,
-    Import,
     Latent,
 }
 

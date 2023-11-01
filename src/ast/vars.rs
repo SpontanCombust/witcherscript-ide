@@ -9,6 +9,7 @@ pub struct TypeAnnotation {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct VarDeclaration {
+    pub imported: bool,
     pub access_modifier: Option<AccessModifier>,
     pub specifiers: VarSpecifiers,
 
@@ -20,7 +21,6 @@ pub struct VarDeclaration {
 pub enum VarSpecifiers {
     Const,
     Editable,
-    Import,
     Inlined,
     Saved,
 }
