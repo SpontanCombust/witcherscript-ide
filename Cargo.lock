@@ -85,6 +85,13 @@ name = "witcherscript"
 version = "0.1.0"
 dependencies = [
  "bitmask-enum",
- "lazy_static",
  "peg",
+]
+
+[[package]]
+name = "witcherscript-analyzer"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "witcherscript",
 ]

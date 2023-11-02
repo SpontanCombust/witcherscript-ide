@@ -1,0 +1,10 @@
+[package]
+name = "witcherscript-analyzer"
+description = "Utilities for analyzing WitcherScript code and its validity"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+witcherscript = { path = "../core" }
+lazy_static.workspace = true
