@@ -1,20 +1,80 @@
 peg::parser! {
     pub grammar parser() for str {
-        use crate::ast::literal::*;
-        use crate::ast::operators::*;
-        use crate::ast::expressions::*;
-        use crate::ast::identifier::*;
-        use crate::ast::functions::*;
-        use crate::ast::vars::*;
-        use crate::ast::loops::*;
+        use crate::ast::classes::*;
         use crate::ast::conditionals::*;
+        use crate::ast::enums::*;
+        use crate::ast::expressions::*;
+        use crate::ast::functions::*;
+        use crate::ast::identifier::*;
+        use crate::ast::literal::*;
+        use crate::ast::loops::*;
+        use crate::ast::module::*;
         use crate::ast::nop::*;
+        use crate::ast::operators::*;
+        use crate::ast::states::*;
+        use crate::ast::structs::*;
+        use crate::ast::vars::*;
+
+        use peg::ParseLiteral;
 
     
 
-        // STATEMENTS ===============================================================================
+        // STATEMENTS =============================================================================
         
-        // FUNCTION ===========================
+        // MODULE FUNCTION ========================
+
+        pub rule mod_func_decl_stmt() -> FunctionDeclaration
+            = imported:imported() _ specifiers:mod_func_specifiers() _ speciality:mod_func_speciality()? 
+            _ "function" _ name:identifier() _ "(" _ params:func_parameters() _ ")" _ return_type:func_return_type()? _ body:func_definition() {
+                FunctionDeclaration { 
+                    imported, 
+                    access_modifier: None, 
+                    specifiers, 
+                    speciality, 
+                    name, 
+                    params, 
+                    return_type, 
+                    body
+                }
+            }
+        
+        rule func_definition() -> Option<FunctionBody>
+            = "{" _ b:func_body() _ "}" { Some(b) }
+            / ";" { None }
+
+        rule func_return_type() -> TypeAnnotation
+            = ":" _ t:type_annot() {t}
+
+        rule func_parameters() -> Vec<FunctionParameter>
+            = groups:comma(<func_parameter_group()>) {
+                groups.into_iter().flatten().collect()
+            }
+
+        rule func_parameter_group() -> Vec<FunctionParameter>
+            = is_optional:present("optional") _ is_output:present("out") _ idents:ident_list() _ ":" _ param_type:type_annot() {
+                let mut params = vec![];
+                for ident in idents.into_iter() {
+                    params.push(FunctionParameter { 
+                        name: ident, 
+                        is_optional, 
+                        is_output, 
+                        param_type: param_type.clone() 
+                    });
+                }
+                params
+            }
+
+        rule mod_func_speciality() -> FunctionSpeciality
+            = "exec" { FunctionSpeciality::Exec }
+            / "quest" { FunctionSpeciality::Quest }
+            / "storyscene" { FunctionSpeciality::Storyscene }
+
+        rule mod_func_specifiers() -> FunctionSpecifiers
+            = "latent" { FunctionSpecifiers::Latent }
+            / { FunctionSpecifiers::none() }
+
+
+        // FUNCTION BODY ==========================
 
         rule func_body() -> FunctionBody
             = v:func_stmt() ** _ {v}
@@ -35,13 +95,14 @@ peg::parser! {
             / nop()
         
         rule var_decl_stmt() -> FunctionStatement
-            = "var" _ idents:ident_list() _ ":" _ t:type_annot() _ ";" {
+            = "var" _ idents:ident_list() _ ":" _ t:type_annot() _ init_value:("=" _ v:expr() {v})? _ ";" {
                 FunctionStatement::VarDeclaration(VarDeclaration { 
                     imported: false, 
                     access_modifier: None, 
                     specifiers: VarSpecifiers::none(), 
                     names: idents, 
-                    var_type: t
+                    var_type: t,
+                    init_value
                 })
             }
 
@@ -135,12 +196,21 @@ peg::parser! {
             }
 
 
+        // COMMON =================================
+
         rule type_annot() -> TypeAnnotation
             = n:identifier() _ g:("<" _ g:identifier() _ ">" {g})? {
                 TypeAnnotation { name: n, generic_argument: g }
             }
 
-        rule ident_list() -> Vec<Identifier> = v:comma(<identifier()>) {v}
+        rule ident_list() -> Vec<Identifier> 
+            = comma_least_one(<identifier()>)
+
+        rule nop<T: From<Nop>>() -> T
+            = ";" { Nop.into() }
+
+        rule imported() -> bool
+            = present("import")
 
 
         // EXPRESSIONS ===============================================================================
@@ -330,8 +400,12 @@ peg::parser! {
         rule comma<T>(x: rule<T>) -> Vec<T>
             = v:(x() ** (_ "," _)) {v}
 
-        rule nop<T: From<Nop>>() -> T
-            = ";" { Nop.into() }
+        rule comma_least_one<T>(x: rule<T>) -> Vec<T>
+            = v:(x() ++ (_ "," _)) {v}
+
+        rule present(k: &'static str) -> bool
+            = ##parse_string_literal(k) { true }
+            / { false }
     }
 }
 

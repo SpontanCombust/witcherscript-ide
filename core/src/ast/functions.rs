@@ -18,7 +18,7 @@ pub struct FunctionDeclaration {
 
     pub name: Identifier,
     pub params: Vec<FunctionParameter>,
-    pub return_type: TypeAnnotation,
+    pub return_type: Option<TypeAnnotation>,
     pub body: Option<FunctionBody> // if there is no body it doesn't have a definition
 }
 

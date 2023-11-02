@@ -1,4 +1,4 @@
-use super::{classes::AccessModifier, identifier::Identifier};
+use super::{classes::AccessModifier, identifier::Identifier, expressions::Expression};
 use bitmask_enum::bitmask;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -7,14 +7,15 @@ pub struct TypeAnnotation {
     pub generic_argument: Option<Identifier> // only used for arrays
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct VarDeclaration {
     pub imported: bool,
     pub access_modifier: Option<AccessModifier>,
     pub specifiers: VarSpecifiers,
 
     pub names: Vec<Identifier>,
-    pub var_type: TypeAnnotation
+    pub var_type: TypeAnnotation,
+    pub init_value: Option<Box<Expression>>
 }
 
 #[bitmask(u8)]
