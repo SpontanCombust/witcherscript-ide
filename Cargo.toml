@@ -1,11 +1,12 @@
-[package]
-name = "witcherscript"
-version = "0.1.0"
+[workspace]
+members = ["core"]
+resolver = "2"
+
+[workspace.package]
 edition = "2021"
+authors = ["SpontanCombust"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
+[workspace.dependencies]
 peg = "0.8.2"
 bitmask-enum = "2.2.2"
 lazy_static = "1.4.0"
