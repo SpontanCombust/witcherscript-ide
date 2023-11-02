@@ -5,44 +5,147 @@ peg::parser! {
         use crate::ast::expressions::*;
         use crate::ast::identifier::*;
         use crate::ast::functions::*;
+        use crate::ast::vars::*;
+        use crate::ast::loops::*;
+        use crate::ast::conditionals::*;
 
     
 
         // STATEMENTS ===============================================================================
         
-        // rule func_body() -> FunctionBody
-        //     = v:func_stmt() ** _nop() {v}
+        // FUNCTION ===========================
 
-        // pub rule func_stmt() -> FunctionStatement
-        //     = expr_stmt()
-        //     / scope_stmt()
+        rule func_body() -> FunctionBody
+            = v:func_stmt() ** _ {v}
+
+        pub rule func_stmt() -> FunctionStatement
+            = var_decl_stmt()
+            / for_stmt()
+            / while_stmt()
+            / do_while_stmt()
+            / if_stmt()
+            / switch_stmt()
+            / break_stmt()
+            / continue_stmt()
+            / return_stmt()
+            / delete_stmt()
+            / scope_stmt()
+            / expr_stmt()
+            / nop_stmt()
         
-        // rule for_stmt() -> FunctionStatement
-        //     = "for" _ "(" _ init_expr:expr()? _ ";" _ condition:expr()? _ ";" _ iter_expr:expr()? _ ")" {
+        rule var_decl_stmt() -> FunctionStatement
+            = "var" _ idents:ident_list() _ ":" _ t:type_annot() _ ";" {
+                FunctionStatement::VarDeclaration(VarDeclaration { 
+                    imported: false, 
+                    access_modifier: None, 
+                    specifiers: VarSpecifiers::none(), 
+                    names: idents, 
+                    var_type: t
+                })
+            }
 
-        //     }
+        rule for_stmt() -> FunctionStatement
+            = "for" _ "(" _ init_expr:expr()? _ ";" _ condition:expr()? _ ";" _ iter_expr:expr()? _ ")" _ body:func_stmt() {
+                FunctionStatement::For(ForLoop { 
+                    init_expr, 
+                    condition, 
+                    iter_expr, 
+                    body: Box::new(body) 
+                })
+            }
 
-        // rule scope_stmt() -> FunctionStatement
-        //     = s:scope() { 
-        //         FunctionStatement::Scope(s) 
-        //     }
+        rule while_stmt() -> FunctionStatement
+            = "while" _ "(" _ condition:expr() _ ")" _ body:func_stmt() {
+                FunctionStatement::While(WhileLoop { 
+                    condition, 
+                    body: Box::new(body) 
+                })
+            }
 
-        // rule expr_stmt() -> FunctionStatement
-        //     = e:expr() _ ";" { 
-        //         FunctionStatement::Expr(e) 
-        //     }
+        rule do_while_stmt() -> FunctionStatement
+            = "do" _ body:func_stmt() _ "while" _ "(" _ condition:expr() _ ")" _ ";" {
+                FunctionStatement::DoWhile(DoWhileLoop { 
+                    condition, 
+                    body: Box::new(body) 
+                })
+            }
+
+        rule if_stmt() -> FunctionStatement
+            = "if" _ "(" _ condition:expr() _ ")" _ body:func_stmt() _ else_body:else_stmt()? {
+                FunctionStatement::If(IfConditional { 
+                    condition, 
+                    body: Box::new(body), 
+                    else_body
+                })
+            }
+
+        rule else_stmt() -> Box<FunctionStatement>
+            = "else" _ else_body:func_stmt() { 
+                Box::new(else_body)
+            }
+
+        rule switch_stmt() -> FunctionStatement
+            = "switch" _ "(" _ matched_expr:expr() _ ")" _ "{" _ cases:switch_case() ** _ _ default:switch_default()? _ "}" {
+                FunctionStatement::Switch(SwitchConditional { 
+                    matched_expr, 
+                    cases,
+                    default
+                })
+            }
+
+        rule switch_case() -> SwitchConditionalCase
+            = "case" _ value:expr() _ ":" _ body:func_body() {
+                SwitchConditionalCase { value, body }
+            }
+        
+        rule switch_default() -> FunctionBody
+            = "default" _ ":" _ body:func_body() {
+                body
+            }
+
+        rule break_stmt() -> FunctionStatement
+            = "break" _ ";" {
+                FunctionStatement::Break
+            }
+
+        rule continue_stmt() -> FunctionStatement
+            = "continue" _ ";" {
+                FunctionStatement::Continue
+            }
+
+        rule return_stmt() -> FunctionStatement
+            = "return" _ retval:expr()? _ ";" {
+                FunctionStatement::Return(retval)
+            }
+
+        rule delete_stmt() -> FunctionStatement
+            = "delete" _ val:expr() _ ";" {
+                FunctionStatement::Delete(val)
+            }
+
+        rule scope_stmt() -> FunctionStatement
+            = "{" _ b:func_body() _ "}" { 
+                FunctionStatement::Scope(b) 
+            }
+
+        rule expr_stmt() -> FunctionStatement
+            = e:expr() _ ";" { 
+                FunctionStatement::Expr(e) 
+            }
+
+        rule nop_stmt() -> FunctionStatement
+            = ";" {
+                FunctionStatement::Nop
+            }
 
 
-        // rule nop_or_stmt() -> Option<FunctionBody>
-        //     = ";" { None }
-        //     / b:scope() { Some(b) }
-        //     / s:func_stmt() { Some(vec![s]) }
+        rule type_annot() -> TypeAnnotation
+            = n:identifier() _ g:("<" _ g:identifier() _ ">" {g})? {
+                TypeAnnotation { name: n, generic_argument: g }
+            }
 
-        // rule scope() -> FunctionBody
-        //     = "{" _nop() b:func_body() _nop() "}" { b }
-            
-        // rule _nop() = quiet!{ _ / ";"* }
-            
+        rule ident_list() -> Vec<Identifier> = v:comma(<identifier()>) {v}
+
 
         // EXPRESSIONS ===============================================================================
 
@@ -174,6 +277,7 @@ peg::parser! {
         rule identifier() -> Identifier
             = quiet!{ s:$(['_' | 'a'..='z' | 'A'..='Z']['_' | 'a'..='z' | 'A'..='Z' | '0'..='9']*) { Identifier::from(s) } }
             / expected!("identifier")
+
 
 
         // LITERALS ===============================================================================
