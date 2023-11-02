@@ -43,6 +43,7 @@ pub enum ClassStatement {
     },
     Autobind(ClassAutobind),
     MethodDeclaration(FunctionDeclaration),
+    Nop
 }
 
 pub type ClassBody = Vec<ClassStatement>;

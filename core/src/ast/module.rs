@@ -19,7 +19,8 @@ pub enum ModuleStatement {
     ClassDeclaration(ClassDeclaration),
     StateDeclaration(StateDeclaration),
     StructDeclaration(StructDeclaration),
-    EnumDeclaration(EnumDeclaration)
+    EnumDeclaration(EnumDeclaration),
+    Nop
 }
 
 pub type ModuleBody = Vec<ModuleStatement>;

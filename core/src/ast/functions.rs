@@ -56,7 +56,8 @@ pub enum FunctionStatement {
     Continue,
     Return(Option<Box<Expression>>),
     Delete(Box<Expression>),
-    Scope(FunctionBody)
+    Scope(FunctionBody),
+    Nop
 }
 
 pub type FunctionBody = Vec<FunctionStatement>;
