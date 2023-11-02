@@ -4,122 +4,158 @@ peg::parser! {
         use crate::ast::operators::*;
         use crate::ast::expressions::*;
         use crate::ast::identifier::*;
+        use crate::ast::functions::*;
 
-        use std::rc::Rc;
     
+
+        // STATEMENTS ===============================================================================
+        
+        // rule func_body() -> FunctionBody
+        //     = v:func_stmt() ** _nop() {v}
+
+        // pub rule func_stmt() -> FunctionStatement
+        //     = expr_stmt()
+        //     / scope_stmt()
+        
+        // rule for_stmt() -> FunctionStatement
+        //     = "for" _ "(" _ init_expr:expr()? _ ";" _ condition:expr()? _ ";" _ iter_expr:expr()? _ ")" {
+
+        //     }
+
+        // rule scope_stmt() -> FunctionStatement
+        //     = s:scope() { 
+        //         FunctionStatement::Scope(s) 
+        //     }
+
+        // rule expr_stmt() -> FunctionStatement
+        //     = e:expr() _ ";" { 
+        //         FunctionStatement::Expr(e) 
+        //     }
+
+
+        // rule nop_or_stmt() -> Option<FunctionBody>
+        //     = ";" { None }
+        //     / b:scope() { Some(b) }
+        //     / s:func_stmt() { Some(vec![s]) }
+
+        // rule scope() -> FunctionBody
+        //     = "{" _nop() b:func_body() _nop() "}" { b }
+            
+        // rule _nop() = quiet!{ _ / ";"* }
+            
 
         // EXPRESSIONS ===============================================================================
 
         // precedence based on C++'s operator precedence
         // https://en.cppreference.com/w/cpp/language/operator_precedence
-        pub rule expr() -> Rc<Expression> = precedence!{
+        pub rule expr() -> Box<Expression> = precedence!{
             lh:@ _ op:assignment_operator() _ rh:(@) {
-                Rc::new(Expression::AssignmentOperation(lh, op, rh))
+                Box::new(Expression::AssignmentOperation(lh, op, rh))
             }
             condition:@ _ "?" _ expr_if_true:expr() _ ":" _ expr_if_false:(@) {
-                Rc::new(Expression::TernaryConditional { condition, expr_if_true, expr_if_false })
+                Box::new(Expression::TernaryConditional { condition, expr_if_true, expr_if_false })
             }
             --
             lh:(@) _ "||" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::Or.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::Or.into(), rh))
             }
             lh:(@) _ "&&" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::And.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::And.into(), rh))
             }
             --
             lh:(@) _ "|" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseOr.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseOr.into(), rh))
             }
             lh:(@) _ "&" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseAnd.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseAnd.into(), rh))
             }
             --
             lh:(@) _ "!=" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::NotEqual.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::NotEqual.into(), rh))
             }
             lh:(@) _ "==" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Equal.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Equal.into(), rh))
             }
             --
             lh:(@) _ ">=" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::GreaterOrEqual.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::GreaterOrEqual.into(), rh))
             }
             lh:(@) _ ">" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Greater.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Greater.into(), rh))
             }
             lh:(@) _ "<=" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::LessOrEqual.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::LessOrEqual.into(), rh))
             }
             lh:(@) _ "<" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Less.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Less.into(), rh))
             }
             --
             lh:(@) _ "-" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Sub.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Sub.into(), rh))
             }
             lh:(@) _ "+" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Add.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Add.into(), rh))
             }
             --
             lh:(@) _ "%" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Modulo.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Modulo.into(), rh))
             }
             lh:(@) _ "/" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Div.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Div.into(), rh))
             }
             lh:(@) _ "*" _ rh:@ {
-                Rc::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Multip.into(), rh))
+                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Multip.into(), rh))
             }
             --
             "new" _ class:identifier() _ "in" _ lifetime_object:expr() {
-                Rc::new(Expression::Instantiation { class, lifetime_object })
+                Box::new(Expression::Instantiation { class, lifetime_object })
             }
             op:unary_operator() expr:@ {
-                Rc::new(Expression::UnaryOperation(op, expr))
+                Box::new(Expression::UnaryOperation(op, expr))
             }
             "(" _ id:identifier() _ ")" _ expr:(@) { 
-                Rc::new(Expression::TypeCast { target_type: id, expr }) 
+                Box::new(Expression::TypeCast { target_type: id, expr }) 
             }
             --
             expr:(@) _ "." _ func:identifier() "(" _ args:opt_expr_list() _ ")" {
-                Rc::new(Expression::MethodCall { expr, func, args })
+                Box::new(Expression::MethodCall { expr, func, args })
             }
             expr:(@) _ "." _ member:identifier() {
-                Rc::new(Expression::MemberAccess { expr, member })
+                Box::new(Expression::MemberAccess { expr, member })
             }
             expr:(@) "[" _ index:expr() _ "]" { 
-                Rc::new(Expression::ArrayAccess { expr, index }) 
+                Box::new(Expression::ArrayAccess { expr, index }) 
             }
             func:identifier() "(" _ args:opt_expr_list() _ ")" { 
-                Rc::new(Expression::FunctionCall { func, args }) 
+                Box::new(Expression::FunctionCall { func, args }) 
             }
             --
             "this" {
-                Rc::new(Expression::This)
+                Box::new(Expression::This)
             }
             "super" {
-                Rc::new(Expression::Super)
+                Box::new(Expression::Super)
             }
             "parent" {
-                Rc::new(Expression::Parent)
+                Box::new(Expression::Parent)
             }
             "virtual_parent" {
-                Rc::new(Expression::VirtualParent)
+                Box::new(Expression::VirtualParent)
             }
             lit:literal() { 
-                Rc::new(Expression::Literal(lit)) 
+                Box::new(Expression::Literal(lit)) 
             }
             id:identifier() { 
-                Rc::new(Expression::Identifier(id)) 
+                Box::new(Expression::Identifier(id)) 
             }
             "(" _ e:expr() _ ")" { 
-                Rc::new(Expression::Nested(e)) 
+                Box::new(Expression::Nested(e)) 
             }
         }
 
-        rule opt_expr_list()-> Vec<Option<Rc<Expression>>> = v:comma(<expr()?>) {v}
+        rule opt_expr_list()-> Vec<Option<Box<Expression>>> = v:comma(<expr()?>) {v}
 
-        rule expr_list()-> Vec<Rc<Expression>> = v:comma(<expr()>) {v}
+        rule expr_list()-> Vec<Box<Expression>> = v:comma(<expr()>) {v}
 
 
         rule assignment_operator() -> AssignmentOperator

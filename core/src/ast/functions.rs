@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use bitmask_enum::bitmask;
 
 use super::{
@@ -47,7 +46,7 @@ pub struct FunctionParameter {
 
 
 pub enum FunctionStatement {
-    Expr(Rc<Expression>),
+    Expr(Box<Expression>),
     For(ForLoop),
     While(WhileLoop),
     DoWhile(DoWhileLoop),
@@ -55,8 +54,8 @@ pub enum FunctionStatement {
     Switch(SwitchConditional),
     Break,
     Continue,
-    Return(Option<Rc<Expression>>),
-    Delete(Rc<Expression>),
+    Return(Option<Box<Expression>>),
+    Delete(Box<Expression>),
     Scope(FunctionBody)
 }
 
