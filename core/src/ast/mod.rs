@@ -11,3 +11,4 @@ pub mod enums;
 pub mod identifier;
 pub mod states;
 pub mod module;
+pub mod nop;

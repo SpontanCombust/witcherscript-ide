@@ -8,6 +8,7 @@ peg::parser! {
         use crate::ast::vars::*;
         use crate::ast::loops::*;
         use crate::ast::conditionals::*;
+        use crate::ast::nop::*;
 
     
 
@@ -31,7 +32,7 @@ peg::parser! {
             / delete_stmt()
             / scope_stmt()
             / expr_stmt()
-            / nop_stmt()
+            / nop()
         
         rule var_decl_stmt() -> FunctionStatement
             = "var" _ idents:ident_list() _ ":" _ t:type_annot() _ ";" {
@@ -131,11 +132,6 @@ peg::parser! {
         rule expr_stmt() -> FunctionStatement
             = e:expr() _ ";" { 
                 FunctionStatement::Expr(e) 
-            }
-
-        rule nop_stmt() -> FunctionStatement
-            = ";" {
-                FunctionStatement::Nop
             }
 
 
@@ -333,6 +329,9 @@ peg::parser! {
 
         rule comma<T>(x: rule<T>) -> Vec<T>
             = v:(x() ** (_ "," _)) {v}
+
+        rule nop<T: From<Nop>>() -> T
+            = ";" { Nop.into() }
     }
 }
 
