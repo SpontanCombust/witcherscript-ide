@@ -2,10 +2,9 @@ use super::{functions::*, expressions::*};
 
 pub struct IfConditional {
     pub condition: Box<Expression>,
-    pub body: FunctionBody,
-    // "else if" statements can be treated as regular if statements 
-    // that go directly under previous if's "else" directive without the brackets {}
-    pub else_body: Option<FunctionBody>
+    pub body: Box<FunctionStatement>, // can be a scope or a NOP
+    // "else if" statement can be treated as regular if statement nested in the "else" statement
+    pub else_body: Option<Box<FunctionStatement>>
 }
 
 pub struct SwitchConditional {
@@ -16,5 +15,5 @@ pub struct SwitchConditional {
 
 pub struct SwitchConditionalCase {
     pub value: Box<Expression>,
-    pub body: Option<FunctionBody>,
+    pub body: FunctionBody,
 }

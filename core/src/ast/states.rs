@@ -1,3 +1,5 @@
+use bitmask_enum::bitmask;
+
 use super::{identifier::Identifier, vars::TypeAnnotation, classes::ClassBody};
 
 pub struct StateDeclaration {
@@ -9,6 +11,7 @@ pub struct StateDeclaration {
     pub body: ClassBody,
 }
 
+#[bitmask]
 pub enum StateSpecifiers {
     Abstract
 }
