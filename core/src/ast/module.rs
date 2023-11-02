@@ -9,11 +9,13 @@ use super::{
 };
 
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Module {
     pub path: PathBuf,
     pub body: ModuleBody
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum ModuleStatement {
     FunctionDeclaration(FunctionDeclaration),
     ClassDeclaration(ClassDeclaration),

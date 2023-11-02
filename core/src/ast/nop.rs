@@ -1,6 +1,7 @@
 use super::{functions::FunctionStatement, classes::ClassStatement, module::ModuleStatement};
 
 // Empty type essentially representing an orphaned/trailing semicolon
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Nop;
 
 impl From<Nop> for FunctionStatement {

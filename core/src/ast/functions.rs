@@ -9,7 +9,7 @@ use super::{
     conditionals::*,
 };
 
-
+#[derive(Debug, Clone, PartialEq)]
 pub struct FunctionDeclaration {
     pub imported: bool,
     pub access_modifier: Option<AccessModifier>,
@@ -29,6 +29,7 @@ pub enum FunctionSpecifiers {
     Latent,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FunctionSpeciality {
     Entry,
     Event,
@@ -38,6 +39,7 @@ pub enum FunctionSpeciality {
     Storyscene
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionParameter {
     pub name: Identifier,
     pub is_optional: bool,
@@ -46,6 +48,7 @@ pub struct FunctionParameter {
 }
 
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum FunctionStatement {
     VarDeclaration(VarDeclaration),
     Expr(Box<Expression>),

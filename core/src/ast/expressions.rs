@@ -1,6 +1,6 @@
 use super::{literal::*, operators::*, identifier::Identifier};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
     Nested(Box<Expression>),
     Literal(Literal),

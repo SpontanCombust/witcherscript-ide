@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UnaryOperator {
     LogicalNot,
     BitwiseNot,
@@ -6,7 +6,7 @@ pub enum UnaryOperator {
 }
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArithmeticBinaryOperator {
     Multip,
     Div,
@@ -17,13 +17,13 @@ pub enum ArithmeticBinaryOperator {
     BitwiseOr
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogicalBinaryOperator {
     And,
     Or
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RelationalBinaryOperator {
     Equal,
     NotEqual,
@@ -33,7 +33,7 @@ pub enum RelationalBinaryOperator {
     GreaterOrEqual
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinaryOperator {
     Airthmetic(ArithmeticBinaryOperator),
     Logical(LogicalBinaryOperator),
@@ -59,7 +59,7 @@ impl Into<BinaryOperator> for RelationalBinaryOperator {
 }
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AssignmentOperator {
     Direct,
     Multip,

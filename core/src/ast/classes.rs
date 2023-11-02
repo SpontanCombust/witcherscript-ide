@@ -9,6 +9,7 @@ pub enum AccessModifier {
     Public
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct ClassDeclaration {
     pub imported: bool,
     pub specifiers: ClassSpecifiers,
@@ -17,12 +18,13 @@ pub struct ClassDeclaration {
     pub body: ClassBody,
 }
 
-#[bitmask]
+#[bitmask(u8)]
 pub enum ClassSpecifiers {
     Abstract,
     Statemachine
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct ClassAutobind {
     pub access_modifier: Option<AccessModifier>,
     pub optional: bool,
@@ -31,6 +33,7 @@ pub struct ClassAutobind {
     pub value: Option<LiteralOrIdentifier>, // if None it's a "single"
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum ClassStatement {
     MemberDeclaration(VarDeclaration),
     MemberDefaultValue {

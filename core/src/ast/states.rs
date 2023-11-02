@@ -2,6 +2,8 @@ use bitmask_enum::bitmask;
 
 use super::{identifier::Identifier, vars::TypeAnnotation, classes::ClassBody};
 
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct StateDeclaration {
     pub imported: bool,
     pub specifiers: StateSpecifiers,
@@ -11,7 +13,7 @@ pub struct StateDeclaration {
     pub body: ClassBody,
 }
 
-#[bitmask]
+#[bitmask(u8)]
 pub enum StateSpecifiers {
     Abstract
 }
