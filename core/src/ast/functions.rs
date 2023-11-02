@@ -3,7 +3,7 @@ use bitmask_enum::bitmask;
 use super::{
     identifier::Identifier, 
     classes::AccessModifier, 
-    vars::TypeAnnotation, 
+    vars::*, 
     expressions::Expression, 
     loops::*,
     conditionals::*,
@@ -17,6 +17,7 @@ pub struct FunctionDeclaration {
     pub speciality: Option<FunctionSpeciality>,
 
     pub name: Identifier,
+    pub params: Vec<FunctionParameter>,
     pub return_type: TypeAnnotation,
     pub body: Option<FunctionBody> // if there is no body it doesn't have a definition
 }
@@ -46,6 +47,7 @@ pub struct FunctionParameter {
 
 
 pub enum FunctionStatement {
+    VarDeclaration(VarDeclaration),
     Expr(Box<Expression>),
     For(ForLoop),
     While(WhileLoop),

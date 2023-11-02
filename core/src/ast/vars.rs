@@ -13,7 +13,7 @@ pub struct VarDeclaration {
     pub access_modifier: Option<AccessModifier>,
     pub specifiers: VarSpecifiers,
 
-    pub name: Identifier,
+    pub names: Vec<Identifier>,
     pub var_type: TypeAnnotation
 }
 
