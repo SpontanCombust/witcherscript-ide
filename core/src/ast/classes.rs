@@ -14,7 +14,7 @@ pub struct ClassDeclaration {
     pub imported: bool,
     pub specifiers: ClassSpecifiers,
     pub name: Identifier,
-    pub extended_class: Option<TypeAnnotation>,
+    pub base_class: Option<Identifier>,
     pub body: ClassBody,
 }
 

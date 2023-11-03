@@ -21,6 +21,32 @@ peg::parser! {
 
         // STATEMENTS =============================================================================
         
+        // CLASS DECLARATION ======================
+
+        pub rule class_decl() -> ClassDeclaration
+            = imported:imported() _ specifiers:class_specifiers_bitmask() _ "class" _ name:identifier() _ base_class:class_base()? 
+            _ "{" _ body:class_body() _ "}" {
+                ClassDeclaration { 
+                    imported, 
+                    specifiers, 
+                    name, 
+                    base_class, 
+                    body
+                }
+            }
+
+        rule class_base() -> Identifier
+            = "extends" _ b:identifier() { b }
+
+        rule class_specifiers_bitmask() -> ClassSpecifiers
+            = bitmask(<class_specifiers()>)
+
+        rule class_specifiers() -> ClassSpecifiers
+            = "abstract" { ClassSpecifiers::Abstract }
+            / "statemachine" { ClassSpecifiers::Statemachine }
+
+
+
         // CLASS BODY =============================
 
         rule class_body() -> ClassBody
@@ -80,6 +106,7 @@ peg::parser! {
             = "hint" _ ident:identifier() _ "=" _ val:literal_string() _ ";" {
                 (ident, val)
             }
+
 
 
         // FUNCTION DECLARATION ===================
@@ -286,7 +313,7 @@ peg::parser! {
 
 
         // COMMON =================================
-
+        //TODO add leading ':'
         rule type_annot() -> TypeAnnotation
             = n:identifier() _ g:("<" _ g:identifier() _ ">" {g})? {
                 TypeAnnotation { name: n, generic_argument: g }
