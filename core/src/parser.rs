@@ -21,7 +21,30 @@ peg::parser! {
 
         // STATEMENTS =============================================================================
         
-        // STRUCT DECLARATION ======================
+        // ENUM DECLARATION =======================
+
+        pub rule enum_decl() -> EnumDeclaration
+            = "enum" _ name:identifier() _ "{" _ body:enum_body() _ "}" {
+                EnumDeclaration {
+                    name,
+                    body
+                }
+            }
+
+        rule enum_body() -> EnumBody
+            = comma_trailing(<enum_decl_value()>)
+
+        rule enum_decl_value() -> EnumDeclarationValue
+            = name:identifier() _ int_value:("=" _ i:literal_int() {i})? {
+                EnumDeclarationValue { 
+                    name, 
+                    int_value 
+                }
+            }
+
+
+
+        // STRUCT DECLARATION =====================
 
         pub rule struct_decl() -> StructDeclaration
             = imported:imported() _ "struct" _ name:identifier() 
@@ -580,6 +603,9 @@ peg::parser! {
 
         rule comma<T>(x: rule<T>) -> Vec<T>
             = v:(x() ** (_ "," _)) {v}
+
+        rule comma_trailing<T>(x: rule<T>) -> Vec<T>
+            = v:(x() ** (_ "," _)) _ ","? {v}
 
         rule comma_least_one<T>(x: rule<T>) -> Vec<T>
             = v:(x() ++ (_ "," _)) {v}
