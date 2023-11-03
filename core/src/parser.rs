@@ -98,7 +98,7 @@ peg::parser! {
 
         rule class_autobind_stmt() -> ClassStatement
             = access_modifier:access_modifier()? _ optional:present("optional")  _ "autobind" 
-            _ name:identifier() _ ":" _ autobind_type:type_annot() _ "=" _ value:class_autobind_value() _ ";" { 
+            _ name:identifier() _ autobind_type:type_annot() _ "=" _ value:class_autobind_value() _ ";" { 
                 ClassStatement::Autobind(ClassAutobind { 
                     access_modifier, 
                     optional, 
@@ -134,7 +134,7 @@ peg::parser! {
 
         pub rule func_decl() -> FunctionDeclaration
             = imported:imported() _ access_modifier:access_modifier()? _ specifiers:func_specifiers() _ speciality:func_speciality()
-            _ name:identifier() _ "(" _ params:func_parameters() _ ")" _ return_type:func_return_type()? _ body:func_definition() {
+            _ name:identifier() _ "(" _ params:func_parameters() _ ")" _ return_type:type_annot()? _ body:func_definition() {
                 FunctionDeclaration { 
                     imported, 
                     access_modifier, 
@@ -151,16 +151,13 @@ peg::parser! {
             = "{" _ b:func_body() _ "}" { Some(b) }
             / ";" { None }
 
-        rule func_return_type() -> TypeAnnotation
-            = ":" _ t:type_annot() {t}
-
         rule func_parameters() -> Vec<FunctionParameter>
             = groups:comma(<func_parameter_group()>) {
                 groups.into_iter().flatten().collect()
             }
 
         rule func_parameter_group() -> Vec<FunctionParameter>
-            = is_optional:present("optional") _ is_output:present("out") _ idents:ident_list() _ ":" _ param_type:type_annot() {
+            = is_optional:present("optional") _ is_output:present("out") _ idents:ident_list() _ param_type:type_annot() {
                 let mut params = vec![];
                 for ident in idents.into_iter() {
                     params.push(FunctionParameter { 
@@ -311,7 +308,7 @@ peg::parser! {
 
         rule var_decl() -> VarDeclaration
             = imported:imported() _ access_modifier:access_modifier()? _ specifiers:var_specifier_bitmask()
-            _ "var" _ idents:ident_list() _ ":" _ var_type:type_annot() _ init_value:("=" _ v:expr() {v})? _ ";" {
+            _ "var" _ idents:ident_list() _ var_type:type_annot() _ init_value:("=" _ v:expr() {v})? _ ";" {
                 VarDeclaration { 
                     imported: imported, 
                     access_modifier, 
@@ -334,9 +331,9 @@ peg::parser! {
 
 
         // COMMON =================================
-        //TODO add leading ':'
+
         rule type_annot() -> TypeAnnotation
-            = n:identifier() _ g:("<" _ g:identifier() _ ">" {g})? {
+            = ":" _ n:identifier() _ g:("<" _ g:identifier() _ ">" {g})? {
                 TypeAnnotation { name: n, generic_argument: g }
             }
 
