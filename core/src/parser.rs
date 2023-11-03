@@ -21,6 +21,21 @@ peg::parser! {
 
         // STATEMENTS =============================================================================
         
+        // MODULE =================================
+
+        pub rule module() -> ModuleBody
+            = v:module_stmt() ** _ {v}
+
+        rule module_stmt() -> ModuleStatement
+            = f:func_decl() { ModuleStatement::FunctionDeclaration(f) }
+            / c:class_decl() { ModuleStatement::ClassDeclaration(c) }
+            / s:state_decl() { ModuleStatement::StateDeclaration(s) }
+            / s:struct_decl() { ModuleStatement::StructDeclaration(s) }
+            / e:enum_decl() { ModuleStatement::EnumDeclaration(e) }
+            / nop()
+
+
+
         // ENUM DECLARATION =======================
 
         pub rule enum_decl() -> EnumDeclaration
