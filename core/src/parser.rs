@@ -21,6 +21,67 @@ peg::parser! {
 
         // STATEMENTS =============================================================================
         
+        // CLASS BODY =============================
+
+        rule class_body() -> ClassBody
+            = v:class_stmt() ** _ {v}
+
+        pub rule class_stmt() -> ClassStatement
+            = class_member_var_decl_stmt()
+            / class_member_default_val_stmt()
+            / class_member_hint_stmt()
+            / class_autobind_stmt()
+            / class_method_decl_stmt()
+            / nop()
+
+        rule class_member_var_decl_stmt() -> ClassStatement
+            = v:var_decl() { 
+                ClassStatement::MemberDeclaration(v)
+            }
+
+        rule class_member_default_val_stmt() -> ClassStatement
+            = t:member_default_val() { 
+                ClassStatement::MemberDefaultValue { member: t.0, value: t.1 }
+            }
+
+        rule class_member_hint_stmt() -> ClassStatement
+            = t:member_hint() { 
+                ClassStatement::MemberHint { member: t.0, value: t.1 }
+            }
+
+        rule class_autobind_stmt() -> ClassStatement
+            = access_modifier:access_modifier()? _ optional:present("optional")  _ "autobind" 
+            _ name:identifier() _ ":" _ autobind_type:type_annot() _ "=" _ value:class_autobind_value() _ ";" { 
+                ClassStatement::Autobind(ClassAutobind { 
+                    access_modifier, 
+                    optional, 
+                    name, 
+                    autobind_type, 
+                    value 
+                })
+            }
+
+        rule class_autobind_value() -> Option<String>
+            = "single" { None }
+            / s:literal_string() { Some(s) }
+
+        rule class_method_decl_stmt() -> ClassStatement
+            = f:func_decl() {
+                ClassStatement::MethodDeclaration(f)
+            }
+            
+
+        rule member_default_val() -> (Identifier, LiteralOrIdentifier)
+            = "default" _ ident:identifier() _ "=" _ val:literal_or_identifier() _ ";" {
+                (ident, val)
+            }
+
+        rule member_hint() -> (Identifier, String)
+            = "hint" _ ident:identifier() _ "=" _ val:literal_string() _ ";" {
+                (ident, val)
+            }
+
+
         // FUNCTION DECLARATION ===================
 
         pub rule func_decl() -> FunctionDeclaration
@@ -244,6 +305,10 @@ peg::parser! {
             = "private" { AccessModifier::Private }
             / "protected" { AccessModifier::Protected }
             / "public" { AccessModifier::Public }
+
+        rule literal_or_identifier() -> LiteralOrIdentifier
+            = lit:literal() { LiteralOrIdentifier::Literal(lit) }
+            / id:identifier() { LiteralOrIdentifier::Identifier(id) }
 
 
 

@@ -30,7 +30,7 @@ pub struct ClassAutobind {
     pub optional: bool,
     pub name: Identifier,
     pub autobind_type: TypeAnnotation,
-    pub value: Option<LiteralOrIdentifier>, // if None it's a "single"
+    pub value: Option<String>, // if None it's a "single"
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -42,7 +42,7 @@ pub enum ClassStatement {
     },
     MemberHint {
         member: Identifier,
-        value: LiteralOrIdentifier
+        value: String
     },
     Autobind(ClassAutobind),
     MethodDeclaration(FunctionDeclaration),
