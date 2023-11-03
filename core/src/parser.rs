@@ -21,11 +21,32 @@ peg::parser! {
 
         // STATEMENTS =============================================================================
         
+        // STATE DECLARATION ======================
+
+        pub rule state_decl() -> StateDeclaration
+            = imported:imported() _ specifiers:state_specifiers_bitmask() _ "state" _ name:identifier() 
+            _ "in" _ parent_class:identifier() _ base_state:class_base()? _ "{" _ body:class_body() _ "}" {
+                StateDeclaration { 
+                    imported, 
+                    specifiers, 
+                    name,
+                    parent_class,
+                    base_state, 
+                    body
+                }
+            }
+
+        rule state_specifiers_bitmask() -> StateSpecifiers
+            = "abstract" { StateSpecifiers::Abstract }
+            / { StateSpecifiers::none() }
+
+
+
         // CLASS DECLARATION ======================
 
         pub rule class_decl() -> ClassDeclaration
-            = imported:imported() _ specifiers:class_specifiers_bitmask() _ "class" _ name:identifier() _ base_class:class_base()? 
-            _ "{" _ body:class_body() _ "}" {
+            = imported:imported() _ specifiers:class_specifiers_bitmask() _ "class" _ name:identifier() 
+            _ base_class:class_base()? _ "{" _ body:class_body() _ "}" {
                 ClassDeclaration { 
                     imported, 
                     specifiers, 
