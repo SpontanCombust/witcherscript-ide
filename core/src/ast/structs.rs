@@ -15,6 +15,10 @@ pub enum StructStatement {
         member: Identifier,
         value: LiteralOrIdentifier
     },
+    MemberHint {
+        member: Identifier,
+        value: String
+    },
 }
 
 pub type StructBody = Vec<StructStatement>;

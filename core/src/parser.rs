@@ -21,6 +21,43 @@ peg::parser! {
 
         // STATEMENTS =============================================================================
         
+        // STRUCT DECLARATION ======================
+
+        pub rule struct_decl() -> StructDeclaration
+            = imported:imported() _ "struct" _ name:identifier() 
+            _ "{" _ body:struct_body() _ "}" {
+                StructDeclaration { 
+                    imported, 
+                    name, 
+                    body
+                }
+            }
+
+        rule struct_body() -> StructBody
+            = v:struct_stmt() ** _ {v}
+
+        rule struct_stmt() -> StructStatement
+            = struct_member_var_decl_stmt()
+            / struct_member_default_val_stmt()
+            / struct_member_hint_stmt()
+
+        rule struct_member_var_decl_stmt() -> StructStatement
+            = v:var_decl() {
+                StructStatement::MemberDeclaration(v)
+            }
+
+        rule struct_member_default_val_stmt() -> StructStatement
+            = t:member_default_val() { 
+                StructStatement::MemberDefaultValue { member: t.0, value: t.1 }
+            }
+
+        rule struct_member_hint_stmt() -> StructStatement
+            = t:member_hint() { 
+                StructStatement::MemberHint { member: t.0, value: t.1 }
+            }
+
+
+
         // STATE DECLARATION ======================
 
         pub rule state_decl() -> StateDeclaration
