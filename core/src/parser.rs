@@ -21,14 +21,14 @@ peg::parser! {
 
         // STATEMENTS =============================================================================
         
-        // MODULE FUNCTION ========================
+        // FUNCTION DECLARATION ===================
 
-        pub rule mod_func_decl_stmt() -> FunctionDeclaration
-            = imported:imported() _ specifiers:mod_func_specifiers() _ speciality:mod_func_speciality()? 
-            _ "function" _ name:identifier() _ "(" _ params:func_parameters() _ ")" _ return_type:func_return_type()? _ body:func_definition() {
+        pub rule func_decl() -> FunctionDeclaration
+            = imported:imported() _ access_modifier:access_modifier()? _ specifiers:func_specifiers() _ speciality:func_speciality()
+            _ name:identifier() _ "(" _ params:func_parameters() _ ")" _ return_type:func_return_type()? _ body:func_definition() {
                 FunctionDeclaration { 
                     imported, 
-                    access_modifier: None, 
+                    access_modifier, 
                     specifiers, 
                     speciality, 
                     name, 
@@ -64,14 +64,22 @@ peg::parser! {
                 params
             }
 
-        rule mod_func_speciality() -> FunctionSpeciality
-            = "exec" { FunctionSpeciality::Exec }
-            / "quest" { FunctionSpeciality::Quest }
-            / "storyscene" { FunctionSpeciality::Storyscene }
+        rule func_speciality() -> Option<FunctionSpeciality>
+            = "entry" _ "function" { Some(FunctionSpeciality::Entry) }
+            / "event" { Some(FunctionSpeciality::Event) }
+            / "exec" _ "function" { Some(FunctionSpeciality::Exec) }
+            / "quest" _ "function" { Some(FunctionSpeciality::Quest) }
+            / "timer" _ "function" { Some(FunctionSpeciality::Timer) }
+            / "storyscene" _ "function" { Some(FunctionSpeciality::Storyscene) }
+            / "function" { None }
 
-        rule mod_func_specifiers() -> FunctionSpecifiers
+        rule func_specifiers_bitmask() -> FunctionSpecifiers
+            = bitmask(<func_specifiers()>)
+
+        rule func_specifiers() -> FunctionSpecifiers
             = "latent" { FunctionSpecifiers::Latent }
-            / { FunctionSpecifiers::none() }
+            / "final" { FunctionSpecifiers::Final }
+
 
 
         // FUNCTION BODY ==========================
@@ -80,7 +88,7 @@ peg::parser! {
             = v:func_stmt() ** _ {v}
 
         pub rule func_stmt() -> FunctionStatement
-            = var_decl_stmt()
+            = func_var_decl_stmt()
             / for_stmt()
             / while_stmt()
             / do_while_stmt()
@@ -93,17 +101,10 @@ peg::parser! {
             / scope_stmt()
             / expr_stmt()
             / nop()
-        
-        rule var_decl_stmt() -> FunctionStatement
-            = "var" _ idents:ident_list() _ ":" _ t:type_annot() _ init_value:("=" _ v:expr() {v})? _ ";" {
-                FunctionStatement::VarDeclaration(VarDeclaration { 
-                    imported: false, 
-                    access_modifier: None, 
-                    specifiers: VarSpecifiers::none(), 
-                    names: idents, 
-                    var_type: t,
-                    init_value
-                })
+
+        rule func_var_decl_stmt() -> FunctionStatement
+            = v:var_decl() { 
+                FunctionStatement::VarDeclaration(v)
             }
 
         rule for_stmt() -> FunctionStatement
@@ -194,6 +195,33 @@ peg::parser! {
             = e:expr() _ ";" { 
                 FunctionStatement::Expr(e) 
             }
+        
+
+
+        // VAR DECLARATION ========================
+
+        rule var_decl() -> VarDeclaration
+            = imported:imported() _ access_modifier:access_modifier()? _ specifiers:var_specifier_bitmask()
+            _ "var" _ idents:ident_list() _ ":" _ var_type:type_annot() _ init_value:("=" _ v:expr() {v})? _ ";" {
+                VarDeclaration { 
+                    imported: imported, 
+                    access_modifier, 
+                    specifiers, 
+                    names: idents, 
+                    var_type,
+                    init_value
+                }
+            }
+        
+        rule var_specifier_bitmask() -> VarSpecifiers
+            = bitmask(<var_specifier()>)
+
+        rule var_specifier() -> VarSpecifiers
+            = "const" { VarSpecifiers::Const }
+            / "editable" { VarSpecifiers::Editable }
+            / "inlined" { VarSpecifiers::Inlined }
+            / "saved" { VarSpecifiers::Saved }
+
 
 
         // COMMON =================================
@@ -211,6 +239,12 @@ peg::parser! {
 
         rule imported() -> bool
             = present("import")
+
+        rule access_modifier() -> AccessModifier
+            = "private" { AccessModifier::Private }
+            / "protected" { AccessModifier::Protected }
+            / "public" { AccessModifier::Public }
+
 
 
         // EXPRESSIONS ===============================================================================
@@ -406,6 +440,15 @@ peg::parser! {
         rule present(k: &'static str) -> bool
             = ##parse_string_literal(k) { true }
             / { false }
+
+        rule bitmask<T: Into<u8>, B: From<u8>>(b: rule<T>) -> B
+            = v:b() ** _ {
+                let mut b = 0u8;
+                for val in v {
+                    b |= val.into();
+                }
+                b.into()
+            }
     }
 }
 
