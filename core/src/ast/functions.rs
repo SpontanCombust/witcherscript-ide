@@ -50,7 +50,7 @@ pub struct FunctionParameter {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum FunctionStatement {
-    VarDeclaration(VarDeclaration),
+    Var(VarDeclaration),
     Expr(Box<Expression>),
     For(ForLoop),
     While(WhileLoop),

@@ -17,11 +17,11 @@ pub struct Module {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ModuleStatement {
-    FunctionDeclaration(FunctionDeclaration),
-    ClassDeclaration(ClassDeclaration),
-    StateDeclaration(StateDeclaration),
-    StructDeclaration(StructDeclaration),
-    EnumDeclaration(EnumDeclaration),
+    Function(FunctionDeclaration),
+    Class(ClassDeclaration),
+    State(StateDeclaration),
+    Struct(StructDeclaration),
+    Enum(EnumDeclaration),
     Nop
 }
 

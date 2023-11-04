@@ -1,4 +1,4 @@
-use super::{vars::VarDeclaration, literal::*, identifier::Identifier};
+use super::{vars::*, literal::*, identifier::Identifier};
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -10,15 +10,21 @@ pub struct StructDeclaration {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum StructStatement {
-    MemberDeclaration(VarDeclaration),
-    MemberDefaultValue {
-        member: Identifier,
-        value: LiteralOrIdentifier
-    },
-    MemberHint {
-        member: Identifier,
-        value: String
-    },
+    Var(MemberVarDeclaration),
+    Default(MemberDefaultValue),
+    Hint(MemberHint),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MemberDefaultValue {
+    pub member: Identifier,
+    pub value: LiteralOrIdentifier
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MemberHint {
+    pub member: Identifier,
+    pub value: String
 }
 
 pub type StructBody = Vec<StructStatement>;

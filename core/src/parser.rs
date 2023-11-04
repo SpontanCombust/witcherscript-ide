@@ -27,11 +27,11 @@ peg::parser! {
             = v:module_stmt() ** _ {v}
 
         rule module_stmt() -> ModuleStatement
-            = f:func_decl() { ModuleStatement::FunctionDeclaration(f) }
-            / c:class_decl() { ModuleStatement::ClassDeclaration(c) }
-            / s:state_decl() { ModuleStatement::StateDeclaration(s) }
-            / s:struct_decl() { ModuleStatement::StructDeclaration(s) }
-            / e:enum_decl() { ModuleStatement::EnumDeclaration(e) }
+            = f:func_decl() { ModuleStatement::Function(f) }
+            / c:class_decl() { ModuleStatement::Class(c) }
+            / s:state_decl() { ModuleStatement::State(s) }
+            / s:struct_decl() { ModuleStatement::Struct(s) }
+            / e:enum_decl() { ModuleStatement::Enum(e) }
             / nop()
 
 
@@ -80,18 +80,18 @@ peg::parser! {
             / struct_member_hint_stmt()
 
         rule struct_member_var_decl_stmt() -> StructStatement
-            = v:var_decl() {
-                StructStatement::MemberDeclaration(v)
+            = v:member_var_decl() {
+                StructStatement::Var(v)
             }
 
         rule struct_member_default_val_stmt() -> StructStatement
-            = t:member_default_val() { 
-                StructStatement::MemberDefaultValue { member: t.0, value: t.1 }
+            = dv:member_default_val() { 
+                StructStatement::Default(dv)
             }
 
         rule struct_member_hint_stmt() -> StructStatement
-            = t:member_hint() { 
-                StructStatement::MemberHint { member: t.0, value: t.1 }
+            = h:member_hint() { 
+                StructStatement::Hint(h)
             }
 
 
@@ -157,18 +157,18 @@ peg::parser! {
             / nop()
 
         rule class_member_var_decl_stmt() -> ClassStatement
-            = v:var_decl() { 
-                ClassStatement::MemberDeclaration(v)
+            = v:member_var_decl() { 
+                ClassStatement::Var(v)
             }
 
         rule class_member_default_val_stmt() -> ClassStatement
-            = t:member_default_val() { 
-                ClassStatement::MemberDefaultValue { member: t.0, value: t.1 }
+            = dv:member_default_val() { 
+                ClassStatement::Default(dv)
             }
 
         rule class_member_hint_stmt() -> ClassStatement
-            = t:member_hint() { 
-                ClassStatement::MemberHint { member: t.0, value: t.1 }
+            = h:member_hint() { 
+                ClassStatement::Hint(h)
             }
 
         rule class_autobind_stmt() -> ClassStatement
@@ -189,18 +189,24 @@ peg::parser! {
 
         rule class_method_decl_stmt() -> ClassStatement
             = f:func_decl() {
-                ClassStatement::MethodDeclaration(f)
+                ClassStatement::Method(f)
             }
             
 
-        rule member_default_val() -> (Identifier, LiteralOrIdentifier)
-            = "default" _ ident:identifier() _ "=" _ val:literal_or_identifier() _ ";" {
-                (ident, val)
+        rule member_default_val() -> MemberDefaultValue
+            = "default" _ member:identifier() _ "=" _ value:literal_or_identifier() _ ";" {
+                MemberDefaultValue { 
+                    member, 
+                    value 
+                }
             }
 
-        rule member_hint() -> (Identifier, String)
-            = "hint" _ ident:identifier() _ "=" _ val:literal_string() _ ";" {
-                (ident, val)
+        rule member_hint() -> MemberHint
+            = "hint" _ member:identifier() _ "=" _ value:literal_string() _ ";" {
+                MemberHint { 
+                    member, 
+                    value 
+                }
             }
 
 
@@ -285,7 +291,7 @@ peg::parser! {
 
         rule func_var_decl_stmt() -> FunctionStatement
             = v:var_decl() { 
-                FunctionStatement::VarDeclaration(v)
+                FunctionStatement::Var(v)
             }
 
         rule for_stmt() -> FunctionStatement
@@ -381,13 +387,21 @@ peg::parser! {
 
         // VAR DECLARATION ========================
 
-        rule var_decl() -> VarDeclaration
+        rule member_var_decl() -> MemberVarDeclaration
             = imported:imported() _ access_modifier:access_modifier()? _ specifiers:var_specifier_bitmask()
-            _ "var" _ idents:ident_list() _ var_type:type_annot() _ init_value:("=" _ v:expr() {v})? _ ";" {
-                VarDeclaration { 
+            _ "var" _ idents:ident_list() _ var_type:type_annot() _ ";" {
+                MemberVarDeclaration { 
                     imported: imported, 
                     access_modifier, 
                     specifiers, 
+                    names: idents, 
+                    var_type,
+                }
+            }
+
+        rule var_decl() -> VarDeclaration
+            = "var" _ idents:ident_list() _ var_type:type_annot() _ init_value:("=" _ v:expr() {v})? _ ";" {
+                VarDeclaration {
                     names: idents, 
                     var_type,
                     init_value

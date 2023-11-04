@@ -9,13 +9,18 @@ pub struct TypeAnnotation {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct VarDeclaration {
-    pub imported: bool,
-    pub access_modifier: Option<AccessModifier>,
-    pub specifiers: VarSpecifiers,
-
     pub names: Vec<Identifier>,
     pub var_type: TypeAnnotation,
     pub init_value: Option<Box<Expression>>
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MemberVarDeclaration {
+    pub imported: bool,
+    pub access_modifier: Option<AccessModifier>,
+    pub specifiers: VarSpecifiers,
+    pub names: Vec<Identifier>,
+    pub var_type: TypeAnnotation,
 }
 
 #[bitmask(u8)]

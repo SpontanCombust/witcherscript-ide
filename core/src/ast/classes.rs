@@ -1,6 +1,6 @@
 use bitmask_enum::bitmask;
 
-use super::{literal::*, vars::*, functions::FunctionDeclaration, identifier::Identifier};
+use super::{vars::*, functions::FunctionDeclaration, identifier::Identifier, structs::*};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum AccessModifier {
@@ -35,17 +35,11 @@ pub struct ClassAutobind {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ClassStatement {
-    MemberDeclaration(VarDeclaration),
-    MemberDefaultValue {
-        member: Identifier,
-        value: LiteralOrIdentifier
-    },
-    MemberHint {
-        member: Identifier,
-        value: String
-    },
+    Var(MemberVarDeclaration),
+    Default(MemberDefaultValue),
+    Hint(MemberHint),
     Autobind(ClassAutobind),
-    MethodDeclaration(FunctionDeclaration),
+    Method(FunctionDeclaration),
     Nop
 }
 
