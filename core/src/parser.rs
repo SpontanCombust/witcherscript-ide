@@ -24,7 +24,7 @@ peg::parser! {
         // MODULE =================================
 
         pub rule module() -> ModuleBody
-            = v:module_stmt() ** _ {v}
+            = _ v:module_stmt() ** _ _ {v}
 
         rule module_stmt() -> ModuleStatement
             = f:func_decl() { ModuleStatement::Function(f) }
@@ -39,7 +39,7 @@ peg::parser! {
         // ENUM DECLARATION =======================
 
         pub rule enum_decl() -> EnumDeclaration
-            = "enum" _ name:identifier() _ "{" _ body:enum_body() _ "}" {
+            = _ "enum" _ name:identifier() _ "{" _ body:enum_body() _ "}" _ {
                 EnumDeclaration {
                     name,
                     body
@@ -62,8 +62,7 @@ peg::parser! {
         // STRUCT DECLARATION =====================
 
         pub rule struct_decl() -> StructDeclaration
-            = imported:imported() _ "struct" _ name:identifier() 
-            _ "{" _ body:struct_body() _ "}" {
+            = _ imported:imported() _ "struct" _ name:identifier() _ "{" _ body:struct_body() _ "}" _ {
                 StructDeclaration { 
                     imported, 
                     name, 
@@ -99,8 +98,8 @@ peg::parser! {
         // STATE DECLARATION ======================
 
         pub rule state_decl() -> StateDeclaration
-            = imported:imported() _ specifiers:state_specifiers_bitmask() _ "state" _ name:identifier() 
-            _ "in" _ parent_class:identifier() _ base_state:class_base()? _ "{" _ body:class_body() _ "}" {
+            =  _ imported:imported() _ specifiers:state_specifiers_bitmask() _ "state" _ name:identifier() 
+            _ "in" _ parent_class:identifier() _ base_state:class_base()? _ "{" _ body:class_body() _ "}" _ {
                 StateDeclaration { 
                     imported, 
                     specifiers, 
@@ -120,8 +119,8 @@ peg::parser! {
         // CLASS DECLARATION ======================
 
         pub rule class_decl() -> ClassDeclaration
-            = imported:imported() _ specifiers:class_specifiers_bitmask() _ "class" _ name:identifier() 
-            _ base_class:class_base()? _ "{" _ body:class_body() _ "}" {
+            = _ imported:imported() _ specifiers:class_specifiers_bitmask() _ "class" _ name:identifier() 
+            _ base_class:class_base()? _ "{" _ body:class_body() _ "}" _ {
                 ClassDeclaration { 
                     imported, 
                     specifiers, 
@@ -214,8 +213,8 @@ peg::parser! {
         // FUNCTION DECLARATION ===================
 
         pub rule func_decl() -> FunctionDeclaration
-            = imported:imported() _ access_modifier:access_modifier()? _ specifiers:func_specifiers() _ speciality:func_speciality()
-            _ name:identifier() _ "(" _ params:func_parameters() _ ")" _ return_type:type_annot()? _ body:func_definition() {
+            = _ imported:imported() _ access_modifier:access_modifier()? _ specifiers:func_specifiers() _ speciality:func_speciality()
+            _ name:identifier() _ "(" _ params:func_parameters() _ ")" _ return_type:type_annot()? _ body:func_definition() _ {
                 FunctionDeclaration { 
                     imported, 
                     access_modifier, 
