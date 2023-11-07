@@ -1,29 +1,29 @@
-use super::{classes::AccessModifier, identifier::Identifier, expressions::Expression};
+use super::{classes::AccessModifier, identifier::Identifier, expressions::Expression, span::Spanned};
 use bitmask_enum::bitmask;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TypeAnnotation {
-    pub name: Identifier,
-    pub generic_argument: Option<Identifier> // only used for arrays
+    pub name: Spanned<Identifier>,
+    pub generic_argument: Option<Spanned<Identifier>> // only used for arrays
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct VarDeclaration {
-    pub names: Vec<Identifier>,
-    pub var_type: TypeAnnotation,
-    pub init_value: Option<Box<Expression>>
+    pub names: Vec<Spanned<Identifier>>,
+    pub var_type: Spanned<TypeAnnotation>,
+    pub init_value: Option<Box<Spanned<Expression>>>
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MemberVarDeclaration {
     pub imported: bool,
-    pub access_modifier: Option<AccessModifier>,
+    pub access_modifier: Option<Spanned<AccessModifier>>,
     pub specifiers: VarSpecifiers,
-    pub names: Vec<Identifier>,
-    pub var_type: TypeAnnotation,
+    pub names: Vec<Spanned<Identifier>>,
+    pub var_type: Spanned<TypeAnnotation>,
 }
 
-#[bitmask(u8)]
+#[bitmask(u8)] //TODO maybe just use a Vec...
 pub enum VarSpecifiers {
     Const,
     Editable,

@@ -1,15 +1,15 @@
-use super::identifier::Identifier;
+use super::{identifier::Identifier, span::Spanned};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EnumDeclaration {
-    pub name: Identifier,
-    pub body: EnumBody
+    pub name: Spanned<Identifier>,
+    pub body: Spanned<EnumBody>
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EnumDeclarationValue {
-    pub name: Identifier,
-    pub int_value: Option<i32>
+    pub name: Spanned<Identifier>,
+    pub int_value: Option<Spanned<i32>>
 }
 
-pub type EnumBody = Vec<EnumDeclarationValue>;
+pub type EnumBody = Vec<Spanned<EnumDeclarationValue>>;

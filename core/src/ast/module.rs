@@ -5,14 +5,15 @@ use super::{
     enums::EnumDeclaration,
     classes::ClassDeclaration,
     states::StateDeclaration,
-    structs::StructDeclaration
+    structs::StructDeclaration, 
+    span::Spanned
 };
 
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Module {
     pub path: PathBuf,
-    pub body: ModuleBody
+    pub body: Spanned<ModuleBody>
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -25,4 +26,4 @@ pub enum ModuleStatement {
     Nop
 }
 
-pub type ModuleBody = Vec<ModuleStatement>;
+pub type ModuleBody = Vec<Spanned<ModuleStatement>>;

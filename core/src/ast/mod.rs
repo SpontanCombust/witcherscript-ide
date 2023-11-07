@@ -12,3 +12,4 @@ pub mod identifier;
 pub mod states;
 pub mod module;
 pub mod nop;
+pub mod span;

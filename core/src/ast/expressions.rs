@@ -1,8 +1,8 @@
-use super::{literal::*, operators::*, identifier::Identifier};
+use super::{literal::*, operators::*, identifier::Identifier, span::Spanned};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
-    Nested(Box<Expression>),
+    Nested(Box<Spanned<Expression>>),
     Literal(Literal),
     This,
     Super,
@@ -10,36 +10,36 @@ pub enum Expression {
     VirtualParent,
     Identifier(Identifier),
     FunctionCall {
-        func: Identifier, 
-        args: Vec<Option<Box<Expression>>> // arguments can be optional and can be skipped in the call (like func(arg0,,,arg3))
+        func: Spanned<Identifier>,
+        args: Vec<Option<Box<Spanned<Expression>>>> // arguments can be optional and can be skipped in the call (like func(arg0,,,arg3))
     },
     ArrayAccess {
-        expr: Box<Expression>, 
-        index: Box<Expression>
+        expr: Box<Spanned<Expression>>, 
+        index: Box<Spanned<Expression>>
     },
     MemberAccess {
-        expr: Box<Expression>, 
-        member: Identifier
+        expr: Box<Spanned<Expression>>, 
+        member: Spanned<Identifier>
     },
     MethodCall {
-        expr: Box<Expression>,
-        func: Identifier,
-        args: Vec<Option<Box<Expression>>>
+        expr: Box<Spanned<Expression>>,
+        func: Spanned<Identifier>,
+        args: Vec<Option<Box<Spanned<Expression>>>>
     },
     Instantiation {
-        class: Identifier,
-        lifetime_object: Box<Expression>
+        class: Spanned<Identifier>,
+        lifetime_object: Box<Spanned<Expression>>
     },
     TypeCast {
-        target_type: Identifier,
-        expr: Box<Expression>
+        target_type: Spanned<Identifier>,
+        expr: Box<Spanned<Expression>>
     },
-    UnaryOperation(UnaryOperator, Box<Expression>),
-    BinaryOperation(Box<Expression>, BinaryOperator, Box<Expression>),
-    AssignmentOperation(Box<Expression>, AssignmentOperator, Box<Expression>),
+    UnaryOperation(UnaryOperator, Box<Spanned<Expression>>),
+    BinaryOperation(Box<Spanned<Expression>>, BinaryOperator, Box<Spanned<Expression>>),
+    AssignmentOperation(Box<Spanned<Expression>>, AssignmentOperator, Box<Spanned<Expression>>),
     TernaryConditional {
-        condition: Box<Expression>,
-        expr_if_true: Box<Expression>,
-        expr_if_false: Box<Expression>
+        condition: Box<Spanned<Expression>>,
+        expr_if_true: Box<Spanned<Expression>>,
+        expr_if_false: Box<Spanned<Expression>>
     },
 }

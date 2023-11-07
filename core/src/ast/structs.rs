@@ -1,11 +1,11 @@
-use super::{vars::*, literal::*, identifier::Identifier};
+use super::{vars::*, literal::*, identifier::Identifier, span::Spanned};
 
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructDeclaration {
     pub imported: bool,
-    pub name: Identifier,
-    pub body: StructBody
+    pub name: Spanned<Identifier>,
+    pub body: Spanned<StructBody>
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -17,14 +17,14 @@ pub enum StructStatement {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MemberDefaultValue {
-    pub member: Identifier,
-    pub value: LiteralOrIdentifier
+    pub member: Spanned<Identifier>,
+    pub value: Spanned<LiteralOrIdentifier>
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MemberHint {
-    pub member: Identifier,
-    pub value: String
+    pub member: Spanned<Identifier>,
+    pub value: Spanned<String>
 }
 
-pub type StructBody = Vec<StructStatement>;
+pub type StructBody = Vec<Spanned<StructStatement>>;

@@ -1,21 +1,21 @@
-use super::{expressions::*, functions::*};
+use super::{expressions::Expression, functions::FunctionStatement, span::Spanned};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ForLoop {
-    pub init_expr: Option<Box<Expression>>,
-    pub condition: Option<Box<Expression>>,
-    pub iter_expr: Option<Box<Expression>>,
-    pub body: Box<FunctionStatement> // can be NOP
+    pub init_expr: Option<Box<Spanned<Expression>>>,
+    pub condition: Option<Box<Spanned<Expression>>>,
+    pub iter_expr: Option<Box<Spanned<Expression>>>,
+    pub body: Box<Spanned<FunctionStatement>> // can be NOP
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct WhileLoop {
-    pub condition: Box<Expression>,
-    pub body: Box<FunctionStatement>
+    pub condition: Box<Spanned<Expression>>,
+    pub body: Box<Spanned<FunctionStatement>>
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DoWhileLoop {
-    pub condition: Box<Expression>,
-    pub body: Box<FunctionStatement>
+    pub condition: Box<Spanned<Expression>>,
+    pub body: Box<Spanned<FunctionStatement>>
 }

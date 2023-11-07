@@ -11,6 +11,7 @@ peg::parser! {
         use crate::ast::module::*;
         use crate::ast::nop::*;
         use crate::ast::operators::*;
+        use crate::ast::span::*;
         use crate::ast::states::*;
         use crate::ast::structs::*;
         use crate::ast::vars::*;
@@ -24,7 +25,7 @@ peg::parser! {
         // MODULE =================================
 
         pub rule module() -> ModuleBody
-            = _ v:module_stmt() ** _ _ {v}
+            = _ v:spanned(<module_stmt()>) ** _ _ {v}
 
         rule module_stmt() -> ModuleStatement
             = f:func_decl() { ModuleStatement::Function(f) }
@@ -39,7 +40,8 @@ peg::parser! {
         // ENUM DECLARATION =======================
 
         pub rule enum_decl() -> EnumDeclaration
-            = _ "enum" _ name:identifier() _ "{" _ body:enum_body() _ "}" _ {
+            = _ "enum" _ name:spanned(<identifier()>) 
+            _ "{" _ body:spanned(<enum_body()>) _ "}" _ {
                 EnumDeclaration {
                     name,
                     body
@@ -47,10 +49,10 @@ peg::parser! {
             }
 
         rule enum_body() -> EnumBody
-            = comma_trailing(<enum_decl_value()>)
+            = comma_trailing(<spanned(<enum_decl_value()>)>)
 
         rule enum_decl_value() -> EnumDeclarationValue
-            = name:identifier() _ int_value:("=" _ i:literal_int() {i})? {
+            = name:spanned(<identifier()>) _ int_value:("=" _ i:spanned(<literal_int()>) {i})? {
                 EnumDeclarationValue { 
                     name, 
                     int_value 
@@ -62,7 +64,8 @@ peg::parser! {
         // STRUCT DECLARATION =====================
 
         pub rule struct_decl() -> StructDeclaration
-            = _ imported:imported() _ "struct" _ name:identifier() _ "{" _ body:struct_body() _ "}" _ {
+            = _ imported:imported() _ "struct" _ name:spanned(<identifier()>)
+            _ "{" _ body:spanned(<struct_body()>) _ "}" _ {
                 StructDeclaration { 
                     imported, 
                     name, 
@@ -71,7 +74,7 @@ peg::parser! {
             }
 
         rule struct_body() -> StructBody
-            = v:struct_stmt() ** _ {v}
+            = v:spanned(<struct_stmt()>) ** _ {v}
 
         rule struct_stmt() -> StructStatement
             = struct_member_var_decl_stmt()
@@ -98,8 +101,11 @@ peg::parser! {
         // STATE DECLARATION ======================
 
         pub rule state_decl() -> StateDeclaration
-            =  _ imported:imported() _ specifiers:state_specifiers_bitmask() _ "state" _ name:identifier() 
-            _ "in" _ parent_class:identifier() _ base_state:class_base()? _ "{" _ body:class_body() _ "}" _ {
+            =  _ imported:imported() _ specifiers:state_specifiers_bitmask() 
+            _ "state" _ name:spanned(<identifier()>) 
+            _ "in" _ parent_class:spanned(<identifier()>) 
+            _ base_state:class_base()? 
+            _ "{" _ body:spanned(<class_body()>) _ "}" _ {
                 StateDeclaration { 
                     imported, 
                     specifiers, 
@@ -119,8 +125,9 @@ peg::parser! {
         // CLASS DECLARATION ======================
 
         pub rule class_decl() -> ClassDeclaration
-            = _ imported:imported() _ specifiers:class_specifiers_bitmask() _ "class" _ name:identifier() 
-            _ base_class:class_base()? _ "{" _ body:class_body() _ "}" _ {
+            = _ imported:imported() _ specifiers:class_specifiers_bitmask() 
+            _ "class" _ name:spanned(<identifier()>) _ base_class:class_base()? 
+            _ "{" _ body:spanned(<class_body()>) _ "}" _ {
                 ClassDeclaration { 
                     imported, 
                     specifiers, 
@@ -130,8 +137,8 @@ peg::parser! {
                 }
             }
 
-        rule class_base() -> Identifier
-            = "extends" _ b:identifier() { b }
+        rule class_base() -> Spanned<Identifier>
+            = "extends" _ b:spanned(<identifier()>) { b }
 
         rule class_specifiers_bitmask() -> ClassSpecifiers
             = bitmask(<class_specifiers()>)
@@ -145,7 +152,7 @@ peg::parser! {
         // CLASS BODY =============================
 
         rule class_body() -> ClassBody
-            = v:class_stmt() ** _ {v}
+        = v:spanned(<class_stmt()>) ** _ {v}
 
         pub rule class_stmt() -> ClassStatement
             = class_member_var_decl_stmt()
@@ -171,8 +178,9 @@ peg::parser! {
             }
 
         rule class_autobind_stmt() -> ClassStatement
-            = access_modifier:access_modifier()? _ optional:present("optional")  _ "autobind" 
-            _ name:identifier() _ autobind_type:type_annot() _ "=" _ value:class_autobind_value() _ ";" { 
+            = access_modifier:spanned(<access_modifier()>)? _ optional:present("optional")  
+            _ "autobind" _ name:spanned(<identifier()>) _ autobind_type:spanned(<type_annot()>) 
+            _ "=" _ value:spanned(<class_autobind_value()>) _ ";" { 
                 ClassStatement::Autobind(ClassAutobind { 
                     access_modifier, 
                     optional, 
@@ -182,9 +190,9 @@ peg::parser! {
                 })
             }
 
-        rule class_autobind_value() -> Option<String>
-            = "single" { None }
-            / s:literal_string() { Some(s) }
+        rule class_autobind_value() -> ClassAutobindValue
+            = "single" { ClassAutobindValue::Single }
+            / s:literal_string() { ClassAutobindValue::Concrete(s) }
 
         rule class_method_decl_stmt() -> ClassStatement
             = f:func_decl() {
@@ -193,7 +201,7 @@ peg::parser! {
             
 
         rule member_default_val() -> MemberDefaultValue
-            = "default" _ member:identifier() _ "=" _ value:literal_or_identifier() _ ";" {
+            = "default" _ member:spanned(<identifier()>) _ "=" _ value:spanned(<literal_or_identifier()>) _ ";" {
                 MemberDefaultValue { 
                     member, 
                     value 
@@ -201,7 +209,7 @@ peg::parser! {
             }
 
         rule member_hint() -> MemberHint
-            = "hint" _ member:identifier() _ "=" _ value:literal_string() _ ";" {
+            = "hint" _ member:spanned(<identifier()>) _ "=" _ value:spanned(<literal_string()>) _ ";" {
                 MemberHint { 
                     member, 
                     value 
@@ -213,8 +221,10 @@ peg::parser! {
         // FUNCTION DECLARATION ===================
 
         pub rule func_decl() -> FunctionDeclaration
-            = _ imported:imported() _ access_modifier:access_modifier()? _ specifiers:func_specifiers() _ speciality:func_speciality()
-            _ name:identifier() _ "(" _ params:func_parameters() _ ")" _ return_type:type_annot()? _ body:func_definition() _ {
+            = _ imported:imported() _ access_modifier:spanned(<access_modifier()>)? 
+            _ specifiers:func_specifiers() _ speciality:func_speciality()
+            _ name:spanned(<identifier()>) _ "(" _ params:func_parameters() _ ")" 
+            _ return_type:spanned(<type_annot()>)? _ body:func_definition() _ {
                 FunctionDeclaration { 
                     imported, 
                     access_modifier, 
@@ -227,8 +237,8 @@ peg::parser! {
                 }
             }
         
-        rule func_definition() -> Option<FunctionBody>
-            = "{" _ b:func_body() _ "}" { Some(b) }
+        rule func_definition() -> Option<Spanned<FunctionBody>>
+            = "{" _ b:spanned(<func_body()>) _ "}" { Some(b) }
             / ";" { None }
 
         rule func_parameters() -> Vec<FunctionParameter>
@@ -237,7 +247,7 @@ peg::parser! {
             }
 
         rule func_parameter_group() -> Vec<FunctionParameter>
-            = is_optional:present("optional") _ is_output:present("out") _ idents:ident_list() _ param_type:type_annot() {
+            = is_optional:present("optional") _ is_output:present("out") _ idents:ident_list() _ param_type:spanned(<type_annot()>) {
                 let mut params = vec![];
                 for ident in idents.into_iter() {
                     params.push(FunctionParameter { 
@@ -250,7 +260,10 @@ peg::parser! {
                 params
             }
 
-        rule func_speciality() -> Option<FunctionSpeciality>
+        rule func_speciality() -> Option<Spanned<FunctionSpeciality>>
+            = L:p() fs:_func_speciality() R:p() { fs.map(|v| Spanned::new(v, Span::new(L, R))) }
+
+        rule _func_speciality() -> Option<FunctionSpeciality>
             = "entry" _ "function" { Some(FunctionSpeciality::Entry) }
             / "event" { Some(FunctionSpeciality::Event) }
             / "exec" _ "function" { Some(FunctionSpeciality::Exec) }
@@ -271,7 +284,7 @@ peg::parser! {
         // FUNCTION BODY ==========================
 
         rule func_body() -> FunctionBody
-            = v:func_stmt() ** _ {v}
+            = v:spanned(<func_stmt()>) ** _ {v}
 
         pub rule func_stmt() -> FunctionStatement
             = func_var_decl_stmt()
@@ -294,7 +307,7 @@ peg::parser! {
             }
 
         rule for_stmt() -> FunctionStatement
-            = "for" _ "(" _ init_expr:expr()? _ ";" _ condition:expr()? _ ";" _ iter_expr:expr()? _ ")" _ body:func_stmt() {
+            = "for" _ "(" _ init_expr:expr()? _ ";" _ condition:expr()? _ ";" _ iter_expr:expr()? _ ")" _ body:spanned(<func_stmt()>) {
                 FunctionStatement::For(ForLoop { 
                     init_expr, 
                     condition, 
@@ -304,7 +317,7 @@ peg::parser! {
             }
 
         rule while_stmt() -> FunctionStatement
-            = "while" _ "(" _ condition:expr() _ ")" _ body:func_stmt() {
+            = "while" _ "(" _ condition:expr() _ ")" _ body:spanned(<func_stmt()>) {
                 FunctionStatement::While(WhileLoop { 
                     condition, 
                     body: Box::new(body) 
@@ -312,7 +325,7 @@ peg::parser! {
             }
 
         rule do_while_stmt() -> FunctionStatement
-            = "do" _ body:func_stmt() _ "while" _ "(" _ condition:expr() _ ")" _ ";" {
+            = "do" _ body:spanned(<func_stmt()>) _ "while" _ "(" _ condition:expr() _ ")" _ ";" {
                 FunctionStatement::DoWhile(DoWhileLoop { 
                     condition, 
                     body: Box::new(body) 
@@ -320,7 +333,7 @@ peg::parser! {
             }
 
         rule if_stmt() -> FunctionStatement
-            = "if" _ "(" _ condition:expr() _ ")" _ body:func_stmt() _ else_body:else_stmt()? {
+            = "if" _ "(" _ condition:expr() _ ")" _ body:spanned(<func_stmt()>) _ else_body:else_stmt()? {
                 FunctionStatement::If(IfConditional { 
                     condition, 
                     body: Box::new(body), 
@@ -328,13 +341,13 @@ peg::parser! {
                 })
             }
 
-        rule else_stmt() -> Box<FunctionStatement>
-            = "else" _ else_body:func_stmt() { 
+        rule else_stmt() -> Box<Spanned<FunctionStatement>>
+            = "else" _ else_body:spanned(<func_stmt()>) { 
                 Box::new(else_body)
             }
 
         rule switch_stmt() -> FunctionStatement
-            = "switch" _ "(" _ matched_expr:expr() _ ")" _ "{" _ cases:switch_case() ** _ _ default:switch_default()? _ "}" {
+            = "switch" _ "(" _ matched_expr:expr() _ ")" _ "{" _ cases:spanned(<switch_case_list()>) _ default:switch_default()? _ "}" {
                 FunctionStatement::Switch(SwitchConditional { 
                     matched_expr, 
                     cases,
@@ -342,13 +355,16 @@ peg::parser! {
                 })
             }
 
+        rule switch_case_list() -> Vec<Spanned<SwitchConditionalCase>>
+            = spanned(<switch_case()>) ** _
+
         rule switch_case() -> SwitchConditionalCase
-            = "case" _ value:expr() _ ":" _ body:func_body() {
+            = "case" _ value:expr() _ ":" _ body:spanned(<func_body()>) {
                 SwitchConditionalCase { value, body }
             }
         
-        rule switch_default() -> FunctionBody
-            = "default" _ ":" _ body:func_body() {
+        rule switch_default() -> Spanned<FunctionBody>
+            = "default" _ ":" _ body:spanned(<func_body()>) {
                 body
             }
 
@@ -373,7 +389,7 @@ peg::parser! {
             }
 
         rule scope_stmt() -> FunctionStatement
-            = "{" _ b:func_body() _ "}" { 
+            = "{" _ b:spanned(<func_body()>) _ "}" { 
                 FunctionStatement::Scope(b) 
             }
 
@@ -387,8 +403,8 @@ peg::parser! {
         // VAR DECLARATION ========================
 
         rule member_var_decl() -> MemberVarDeclaration
-            = imported:imported() _ access_modifier:access_modifier()? _ specifiers:var_specifier_bitmask()
-            _ "var" _ idents:ident_list() _ var_type:type_annot() _ ";" {
+            = imported:imported() _ access_modifier:spanned(<access_modifier()>)? _ specifiers:var_specifier_bitmask()
+            _ "var" _ idents:ident_list() _ var_type:spanned(<type_annot()>) _ ";" {
                 MemberVarDeclaration { 
                     imported: imported, 
                     access_modifier, 
@@ -399,7 +415,7 @@ peg::parser! {
             }
 
         rule var_decl() -> VarDeclaration
-            = "var" _ idents:ident_list() _ var_type:type_annot() _ init_value:("=" _ v:expr() {v})? _ ";" {
+            = "var" _ idents:ident_list() _ var_type:spanned(<type_annot()>) _ init_value:("=" _ v:expr() {v})? _ ";" {
                 VarDeclaration {
                     names: idents, 
                     var_type,
@@ -421,12 +437,12 @@ peg::parser! {
         // COMMON =================================
 
         rule type_annot() -> TypeAnnotation
-            = ":" _ n:identifier() _ g:("<" _ g:identifier() _ ">" {g})? {
+            = ":" _ n:spanned(<identifier()>) _ g:("<" _ g:spanned(<identifier()>) _ ">" {g})? {
                 TypeAnnotation { name: n, generic_argument: g }
             }
 
-        rule ident_list() -> Vec<Identifier> 
-            = comma_least_one(<identifier()>)
+        rule ident_list() -> Vec<Spanned<Identifier>> 
+            = comma_least_one(<spanned(<identifier()>)>)
 
         rule nop<T: From<Nop>>() -> T
             = ";" { Nop.into() }
@@ -449,114 +465,145 @@ peg::parser! {
 
         // precedence based on C++'s operator precedence
         // https://en.cppreference.com/w/cpp/language/operator_precedence
-        pub rule expr() -> Box<Expression> = precedence!{
+        pub rule expr() -> Box<Spanned<Expression>> = precedence!{
             lh:@ _ op:assignment_operator() _ rh:(@) {
-                Box::new(Expression::AssignmentOperation(lh, op, rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::AssignmentOperation(lh, op, rh), span)) 
             }
             condition:@ _ "?" _ expr_if_true:expr() _ ":" _ expr_if_false:(@) {
-                Box::new(Expression::TernaryConditional { condition, expr_if_true, expr_if_false })
+                let span = Span::new(condition.span.begin, expr_if_false.span.end);
+                Box::new(Spanned::new(Expression::TernaryConditional { condition, expr_if_true, expr_if_false }, span))
             }
             --
             lh:(@) _ "||" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::Or.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::Or.into(), rh), span))
             }
             lh:(@) _ "&&" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::And.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::And.into(), rh), span))
             }
             --
             lh:(@) _ "|" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseOr.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseOr.into(), rh), span))
             }
             lh:(@) _ "&" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseAnd.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseAnd.into(), rh), span))
             }
             --
             lh:(@) _ "!=" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::NotEqual.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::NotEqual.into(), rh), span))
             }
             lh:(@) _ "==" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Equal.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Equal.into(), rh), span))
             }
             --
             lh:(@) _ ">=" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::GreaterOrEqual.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::GreaterOrEqual.into(), rh), span))
             }
             lh:(@) _ ">" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Greater.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Greater.into(), rh), span))
             }
             lh:(@) _ "<=" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::LessOrEqual.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::LessOrEqual.into(), rh), span))
             }
             lh:(@) _ "<" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Less.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Less.into(), rh), span))
             }
             --
             lh:(@) _ "-" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Sub.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Sub.into(), rh), span))
             }
             lh:(@) _ "+" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Add.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Add.into(), rh), span))
             }
             --
             lh:(@) _ "%" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Modulo.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Modulo.into(), rh), span))
             }
             lh:(@) _ "/" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Div.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Div.into(), rh), span))
             }
             lh:(@) _ "*" _ rh:@ {
-                Box::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Multip.into(), rh))
+                let span = Span::new(lh.span.begin, rh.span.end);
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Multip.into(), rh), span))
             }
             --
-            "new" _ class:identifier() _ "in" _ lifetime_object:expr() {
-                Box::new(Expression::Instantiation { class, lifetime_object })
+            L:p() "new" _ class:spanned(<identifier()>) _ "in" _ lifetime_object:(@) {
+                let span = Span::new(L, lifetime_object.span.end);
+                Box::new(Spanned::new(Expression::Instantiation { class, lifetime_object }, span))
             }
-            op:unary_operator() expr:@ {
-                Box::new(Expression::UnaryOperation(op, expr))
+            L:p() op:unary_operator() expr:(@) {
+                let span = Span::new(L, expr.span.end);
+                Box::new(Spanned::new(Expression::UnaryOperation(op, expr), span))
             }
-            "(" _ id:identifier() _ ")" _ expr:(@) { 
-                Box::new(Expression::TypeCast { target_type: id, expr }) 
-            }
-            --
-            expr:(@) _ "." _ func:identifier() "(" _ args:opt_expr_list() _ ")" {
-                Box::new(Expression::MethodCall { expr, func, args })
-            }
-            expr:(@) _ "." _ member:identifier() {
-                Box::new(Expression::MemberAccess { expr, member })
-            }
-            expr:(@) "[" _ index:expr() _ "]" { 
-                Box::new(Expression::ArrayAccess { expr, index }) 
-            }
-            func:identifier() "(" _ args:opt_expr_list() _ ")" { 
-                Box::new(Expression::FunctionCall { func, args }) 
+            L:p() "(" _ id:spanned(<identifier()>) _ ")" _ expr:(@) {
+                let span = Span::new(L, expr.span.end);
+                Box::new(Spanned::new(Expression::TypeCast { target_type: id, expr }, span))
             }
             --
-            "this" {
-                Box::new(Expression::This)
+            expr:(@) _ "." _ func:spanned(<identifier()>) "(" _ args:opt_expr_list() _ ")" R:p() {
+                let span = Span::new(expr.span.begin, R);
+                Box::new(Spanned::new(Expression::MethodCall { expr, func, args }, span))
             }
-            "super" {
-                Box::new(Expression::Super)
+            expr:(@) _ "." _ member:spanned(<identifier()>) R:p() {
+                let span = Span::new(expr.span.begin, R);
+                Box::new(Spanned::new(Expression::MemberAccess { expr, member }, span))
             }
-            "parent" {
-                Box::new(Expression::Parent)
+            expr:(@) "[" _ index:expr() _ "]" R:p() {
+                let span = Span::new(expr.span.begin, R);
+                Box::new(Spanned::new(Expression::ArrayAccess { expr, index }, span))
             }
-            "virtual_parent" {
-                Box::new(Expression::VirtualParent)
+            L:p() func:spanned(<identifier()>) "(" _ args:opt_expr_list() _ ")" R:p() { 
+                let span = Span::new(L, R);
+                Box::new(Spanned::new(Expression::FunctionCall { func, args }, span))
             }
-            lit:literal() { 
-                Box::new(Expression::Literal(lit)) 
+            --
+            L:p() "this" R:p() {
+                let span = Span::new(L, R);
+                Box::new(Spanned::new(Expression::This, span))
             }
-            id:identifier() { 
-                Box::new(Expression::Identifier(id)) 
+            L:p() "super" R:p() {
+                let span = Span::new(L, R);
+                Box::new(Spanned::new(Expression::Super, span))
             }
-            "(" _ e:expr() _ ")" { 
-                Box::new(Expression::Nested(e)) 
+            L:p() "parent" R:p() {
+                let span = Span::new(L, R);
+                Box::new(Spanned::new(Expression::Parent, span))
+            }
+            L:p() "virtual_parent" R:p() {
+                let span = Span::new(L, R);
+                Box::new(Spanned::new(Expression::VirtualParent, span))
+            }
+            L:p() lit:literal() R:p() {
+                let span = Span::new(L, R);
+                Box::new(Spanned::new(Expression::Literal(lit), span))
+            }
+            L:p() id:identifier() R:p() {
+                let span = Span::new(L, R);
+                Box::new(Spanned::new(Expression::Identifier(id), span)) 
+            }
+            L:p() "(" _ e:expr() _ ")" R:p() {
+                let span = Span::new(L, R);
+                Box::new(Spanned::new(Expression::Nested(e), span))
             }
         }
 
-        rule opt_expr_list()-> Vec<Option<Box<Expression>>> = v:comma(<expr()?>) {v}
+        rule opt_expr_list()-> Vec<Option<Box<Spanned<Expression>>>> = v:comma(<expr()?>) {v}
 
-        rule expr_list()-> Vec<Box<Expression>> = v:comma(<expr()>) {v}
+        rule expr_list()-> Vec<Box<Spanned<Expression>>> = v:comma(<expr()>) {v}
 
 
         rule assignment_operator() -> AssignmentOperator
@@ -650,6 +697,15 @@ peg::parser! {
                 }
                 b.into()
             }
+
+        rule p() -> usize = position!()
+
+        // When possible, any rule should only return a data representation of an expression not wrapped in Spanned<T>
+        // Then higher order rules can wrap these in spanned(<>) if they want to
+        // Exceptions can occur such as the expr() rule that always needs to be wrapped as it is an inherently recursive structure
+        // If a rule is highly specific and used only once it may also return Spanned<T> outright
+        rule spanned<T>(r: rule<T>) -> Spanned<T>
+            = L:p() v:r() R:p() { Spanned::new(v, Span::new(L, R)) }
     }
 }
 
