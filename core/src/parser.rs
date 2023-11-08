@@ -477,68 +477,68 @@ peg::parser! {
             --
             lh:(@) _ "||" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::Or.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::Or, rh), span))
             }
             lh:(@) _ "&&" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, LogicalBinaryOperator::And.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::And, rh), span))
             }
             --
             lh:(@) _ "|" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseOr.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::BitOr, rh), span))
             }
             lh:(@) _ "&" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::BitwiseAnd.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::BitAnd, rh), span))
             }
             --
             lh:(@) _ "!=" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::NotEqual.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::NotEqual, rh), span))
             }
             lh:(@) _ "==" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Equal.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::Equal, rh), span))
             }
             --
             lh:(@) _ ">=" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::GreaterOrEqual.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::GreaterOrEqual, rh), span))
             }
             lh:(@) _ ">" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Greater.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::Greater, rh), span))
             }
             lh:(@) _ "<=" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::LessOrEqual.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::LessOrEqual, rh), span))
             }
             lh:(@) _ "<" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, RelationalBinaryOperator::Less.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::Less, rh), span))
             }
             --
             lh:(@) _ "-" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Sub.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::Sub, rh), span))
             }
             lh:(@) _ "+" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Add.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::Add, rh), span))
             }
             --
             lh:(@) _ "%" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Modulo.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::Modulo, rh), span))
             }
             lh:(@) _ "/" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Div.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::Div, rh), span))
             }
             lh:(@) _ "*" _ rh:@ {
                 let span = Span::new(lh.span.begin, rh.span.end);
-                Box::new(Spanned::new(Expression::BinaryOperation(lh, ArithmeticBinaryOperator::Multip.into(), rh), span))
+                Box::new(Spanned::new(Expression::BinaryOperation(lh, BinaryOperator::Multip, rh), span))
             }
             --
             L:p() "new" _ class:spanned(<identifier()>) _ "in" _ lifetime_object:(@) {
@@ -616,8 +616,8 @@ peg::parser! {
 
         rule unary_operator() -> UnaryOperator
             = "-" { UnaryOperator::Negation }
-            / "!" { UnaryOperator::LogicalNot }
-            / "~" { UnaryOperator::BitwiseNot }
+            / "!" { UnaryOperator::Not }
+            / "~" { UnaryOperator::BitNot }
 
         rule identifier() -> Identifier
             = quiet!{ s:$(['_' | 'a'..='z' | 'A'..='Z']['_' | 'a'..='z' | 'A'..='Z' | '0'..='9']*) { Identifier::from(s) } }

@@ -1,30 +1,21 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UnaryOperator {
-    LogicalNot,
-    BitwiseNot,
+    Not,
+    BitNot,
     Negation
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ArithmeticBinaryOperator {
+pub enum BinaryOperator {
     Multip,
     Div,
     Modulo,
     Add,
     Sub,
-    BitwiseAnd,
-    BitwiseOr
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum LogicalBinaryOperator {
+    BitAnd,
+    BitOr,
     And,
-    Or
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RelationalBinaryOperator {
+    Or,
     Equal,
     NotEqual,
     Less,
@@ -34,32 +25,6 @@ pub enum RelationalBinaryOperator {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BinaryOperator {
-    Airthmetic(ArithmeticBinaryOperator),
-    Logical(LogicalBinaryOperator),
-    Relational(RelationalBinaryOperator)
-}
-
-impl Into<BinaryOperator> for ArithmeticBinaryOperator {
-    fn into(self) -> BinaryOperator {
-        BinaryOperator::Airthmetic(self)
-    }
-}
-
-impl Into<BinaryOperator> for LogicalBinaryOperator {
-    fn into(self) -> BinaryOperator {
-        BinaryOperator::Logical(self)
-    }
-}
-
-impl Into<BinaryOperator> for RelationalBinaryOperator {
-    fn into(self) -> BinaryOperator {
-        BinaryOperator::Relational(self)
-    }
-}
-
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AssignmentOperator {
     Direct,
     Multip,
@@ -67,4 +32,90 @@ pub enum AssignmentOperator {
     Modulo,
     Add,
     Sub
+}
+
+
+
+pub trait OperatorTraits {
+    fn is_arithmetic(&self) -> bool;
+    fn is_logical(&self) -> bool;   
+    fn is_bitwise(&self) -> bool;
+    fn is_relational(&self) -> bool;
+}
+
+impl OperatorTraits for UnaryOperator {
+    fn is_arithmetic(&self) -> bool {
+        match self {
+            UnaryOperator::Negation => true,
+            _ => false
+        }
+    }
+
+    fn is_logical(&self) -> bool {
+        match self {
+            UnaryOperator::Not => true,
+            _ => false
+        }
+    }
+
+    fn is_bitwise(&self) -> bool {
+        match self {
+            UnaryOperator::BitNot => true,
+            _ => false
+        }
+    }
+
+    fn is_relational(&self) -> bool {
+        false  
+    }
+}
+
+impl OperatorTraits for BinaryOperator {
+    fn is_arithmetic(&self) -> bool {
+        match self {
+            BinaryOperator::Multip  |
+            BinaryOperator::Div     |
+            BinaryOperator::Modulo  |
+            BinaryOperator::Add     |
+            BinaryOperator::Sub     => true,
+            _ => false
+        }
+    }
+
+    fn is_logical(&self) -> bool {
+        match self {
+            BinaryOperator::And |
+            BinaryOperator::Or  => true,
+            _ => false
+        }
+    }
+
+    fn is_bitwise(&self) -> bool {
+        match self {
+            BinaryOperator::BitAnd  |
+            BinaryOperator::BitOr   => true,
+            _ => false
+        }
+    }
+
+    fn is_relational(&self) -> bool {
+        match self {
+            BinaryOperator::Equal           |
+            BinaryOperator::NotEqual        |
+            BinaryOperator::Less            |
+            BinaryOperator::LessOrEqual     |
+            BinaryOperator::Greater         |
+            BinaryOperator::GreaterOrEqual  => true,
+            _ => false
+        }
+    }
+}
+
+
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Operator {
+    Unary(UnaryOperator),
+    Binary(BinaryOperator),
+    Assignment(AssignmentOperator)
 }
