@@ -111,6 +111,31 @@ impl OperatorTraits for BinaryOperator {
     }
 }
 
+impl OperatorTraits for AssignmentOperator {
+    fn is_arithmetic(&self) -> bool {
+        match self {
+            AssignmentOperator::Multip  |
+            AssignmentOperator::Div     |
+            AssignmentOperator::Modulo  |
+            AssignmentOperator::Add     |
+            AssignmentOperator::Sub     => true,
+            _ => false
+        }
+    }
+
+    fn is_logical(&self) -> bool {
+        false
+    }
+
+    fn is_bitwise(&self) -> bool {
+        false
+    }
+
+    fn is_relational(&self) -> bool {
+        false
+    }
+}
+
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
