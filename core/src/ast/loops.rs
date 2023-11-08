@@ -1,4 +1,5 @@
-use super::{expressions::Expression, functions::FunctionStatement, span::Spanned};
+use crate::lexing::Spanned;
+use super::{expressions::Expression, functions::FunctionStatement};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ForLoop {

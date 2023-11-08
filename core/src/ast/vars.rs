@@ -1,5 +1,8 @@
-use super::{classes::AccessModifier, identifier::Identifier, expressions::Expression, span::Spanned};
+use crate::lexing::{Identifier, Spanned};
+use super::{classes::AccessModifier, expressions::Expression};
+
 use bitmask_enum::bitmask;
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypeAnnotation {

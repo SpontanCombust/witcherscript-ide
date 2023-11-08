@@ -1,13 +1,12 @@
 use bitmask_enum::bitmask;
 
+use crate::lexing::{Identifier, Spanned};
 use super::{
-    identifier::Identifier, 
     classes::AccessModifier, 
     vars::*, 
     expressions::Expression, 
     loops::*,
     conditionals::*, 
-    span::Spanned,
 };
 
 #[derive(Debug, Clone, PartialEq)]

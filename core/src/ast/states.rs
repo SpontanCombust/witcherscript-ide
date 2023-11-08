@@ -1,6 +1,7 @@
 use bitmask_enum::bitmask;
 
-use super::{identifier::Identifier, classes::ClassBody, span::Spanned};
+use crate::lexing::{Identifier, Spanned};
+use super::classes::ClassBody;
 
 
 #[derive(Debug, Clone, PartialEq)]

@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
+use crate::lexing::Spanned;
 use super::{
     functions::FunctionDeclaration,
     enums::EnumDeclaration,
     classes::ClassDeclaration,
     states::StateDeclaration,
-    structs::StructDeclaration, 
-    span::Spanned
+    structs::StructDeclaration
 };
 
 

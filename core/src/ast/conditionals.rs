@@ -1,4 +1,5 @@
-use super::{functions::*, expressions::Expression, span::Spanned};
+use crate::lexing::Spanned;
+use super::{functions::*, expressions::Expression};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct IfConditional {

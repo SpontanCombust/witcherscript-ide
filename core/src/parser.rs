@@ -1,17 +1,14 @@
 peg::parser! {
     pub grammar parser() for str {
+        use crate::lexing::*;
         use crate::ast::classes::*;
         use crate::ast::conditionals::*;
         use crate::ast::enums::*;
         use crate::ast::expressions::*;
         use crate::ast::functions::*;
-        use crate::ast::identifier::*;
-        use crate::ast::literal::*;
         use crate::ast::loops::*;
         use crate::ast::module::*;
         use crate::ast::nop::*;
-        use crate::ast::operators::*;
-        use crate::ast::span::*;
         use crate::ast::states::*;
         use crate::ast::structs::*;
         use crate::ast::vars::*;

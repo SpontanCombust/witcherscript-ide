@@ -1,6 +1,7 @@
 use bitmask_enum::bitmask;
 
-use super::{vars::*, functions::FunctionDeclaration, identifier::Identifier, structs::*, span::Spanned};
+use crate::lexing::{Identifier, Spanned};
+use super::{vars::*, functions::FunctionDeclaration, structs::*};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum AccessModifier {

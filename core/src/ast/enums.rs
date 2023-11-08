@@ -1,4 +1,4 @@
-use super::{identifier::Identifier, span::Spanned};
+use crate::lexing::{Identifier, Spanned};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumDeclaration {
