@@ -1,5 +1,5 @@
 use crate::lexing::*;
-use super::vars::*;
+use super::{vars::*, expressions::Expression};
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -19,7 +19,7 @@ pub enum StructStatement {
 #[derive(Debug, Clone, PartialEq)]
 pub struct MemberDefaultValue {
     pub member: Spanned<Identifier>,
-    pub value: Spanned<LiteralOrIdentifier>
+    pub value: Box<Spanned<Expression>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -6,6 +6,7 @@ peg::parser! {
         use crate::ast::enums::*;
         use crate::ast::expressions::*;
         use crate::ast::functions::*;
+        use crate::ast::literals::*;
         use crate::ast::loops::*;
         use crate::ast::module::*;
         use crate::ast::nop::*;
@@ -198,7 +199,7 @@ peg::parser! {
             
 
         rule member_default_val() -> MemberDefaultValue
-            = "default" _ member:spanned(<identifier()>) _ "=" _ value:spanned(<literal_or_identifier()>) _ ";" {
+            = "default" _ member:spanned(<identifier()>) _ "=" _ value:expr() _ ";" {
                 MemberDefaultValue { 
                     member, 
                     value 
@@ -451,10 +452,6 @@ peg::parser! {
             = "private" { AccessModifier::Private }
             / "protected" { AccessModifier::Protected }
             / "public" { AccessModifier::Public }
-
-        rule literal_or_identifier() -> LiteralOrIdentifier
-            = lit:literal() { LiteralOrIdentifier::Literal(lit) }
-            / id:identifier() { LiteralOrIdentifier::Identifier(id) }
 
 
 
