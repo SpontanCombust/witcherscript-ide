@@ -617,8 +617,14 @@ peg::parser! {
             / "~" { UnaryOperator::BitNot }
 
         rule identifier() -> Identifier
-            = quiet!{ s:$(['_' | 'a'..='z' | 'A'..='Z']['_' | 'a'..='z' | 'A'..='Z' | '0'..='9']*) { Identifier::from(s) } }
-            / expected!("identifier")
+            = quiet!{ s:$(['_' | 'a'..='z' | 'A'..='Z']['_' | 'a'..='z' | 'A'..='Z' | '0'..='9']*) {? 
+                if let Ok(_) = Keyword::try_from(s) {
+                    Err("keyword")
+                } else {
+                    Ok(Identifier::from(s))
+                }
+            }}
+            / expected!("identifier") //TODO no expected! at this stage; make specific type_identifier(), var_identifier() etc.
 
 
 

@@ -8,3 +8,5 @@ authors.workspace = true
 [dependencies]
 peg.workspace = true
 bitmask-enum.workspace = true
+strum.workspace = true
+strum_macros.workspace = true
