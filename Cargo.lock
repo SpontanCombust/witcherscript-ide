@@ -3,16 +3,6 @@
 version = 3
 
 [[package]]
-name = "bitmask-enum"
-version = "2.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49fb8528abca6895a5ada33d62aedd538a5c33e77068256483b44a3230270163"
-dependencies = [
- "quote",
- "syn",
-]
-
-[[package]]
 name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -115,7 +105,6 @@ checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 name = "witcherscript"
 version = "0.1.0"
 dependencies = [
- "bitmask-enum",
  "peg",
  "strum",
  "strum_macros",

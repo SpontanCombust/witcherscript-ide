@@ -1,5 +1,3 @@
-use bitmask_enum::bitmask;
-
 use crate::lexing::{Identifier, Spanned};
 use super::{
     classes::AccessModifier, 
@@ -13,18 +11,17 @@ use super::{
 pub struct FunctionDeclaration {
     pub imported: bool,
     pub access_modifier: Option<Spanned<AccessModifier>>,
-    pub specifiers: FunctionSpecifiers,
-    pub speciality: Option<Spanned<FunctionSpeciality>>,
+    pub specifiers: Spanned<Vec<Spanned<FunctionSpecifier>>>,
+    pub speciality: Spanned<FunctionSpeciality>,
 
     pub name: Spanned<Identifier>,
-    pub params: Vec<FunctionParameter>,
+    pub params: Spanned<Vec<FunctionParameter>>,
     pub return_type: Option<Spanned<TypeAnnotation>>,
     pub body: Option<Spanned<FunctionBody>> // if there is no body it doesn't have a definition
 }
 
-
-#[bitmask(u8)]
-pub enum FunctionSpecifiers {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FunctionSpecifier {
     Final,
     Latent,
 }
@@ -36,7 +33,8 @@ pub enum FunctionSpeciality {
     Exec,
     Quest,
     Timer,
-    Storyscene
+    Storyscene,
+    None,
 }
 
 #[derive(Debug, Clone, PartialEq)]

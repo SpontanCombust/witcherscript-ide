@@ -12,7 +12,7 @@ pub enum Expression {
     Identifier(Identifier),
     FunctionCall {
         func: Spanned<Identifier>,
-        args: Vec<Option<Box<Spanned<Expression>>>> // arguments can be optional and can be skipped in the call (like func(arg0,,,arg3))
+        args: Spanned<Vec<FunctionCallArg>> 
     },
     ArrayAccess {
         expr: Box<Spanned<Expression>>, 
@@ -25,7 +25,7 @@ pub enum Expression {
     MethodCall {
         expr: Box<Spanned<Expression>>,
         func: Spanned<Identifier>,
-        args: Vec<Option<Box<Spanned<Expression>>>>
+        args: Spanned<Vec<FunctionCallArg>>
     },
     Instantiation {
         class: Spanned<Identifier>,
@@ -44,3 +44,5 @@ pub enum Expression {
         expr_if_false: Box<Spanned<Expression>>
     },
 }
+
+pub type FunctionCallArg = Option<Box<Spanned<Expression>>>; // arguments can be optional and can be skipped in the call (like func(arg0,,,arg3))

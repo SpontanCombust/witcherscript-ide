@@ -10,7 +10,6 @@ authors = ["SpontanCombust"]
 
 [workspace.dependencies]
 peg = "0.8.2"
-bitmask-enum = "2.2.2"
 lazy_static = "1.4.0"
 strum = "0.25"
 strum_macros = "0.25"

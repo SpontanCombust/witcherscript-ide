@@ -99,7 +99,7 @@ peg::parser! {
         // STATE DECLARATION ======================
 
         pub rule state_decl() -> StateDeclaration
-            =  _ imported:imported() _ specifiers:state_specifiers_bitmask() 
+            =  _ imported:imported() _ specifiers:spanned(<state_specifier_list()>)
             _ "state" _ name:spanned(<identifier()>) 
             _ "in" _ parent_class:spanned(<identifier()>) 
             _ base_state:class_base()? 
@@ -114,16 +114,18 @@ peg::parser! {
                 }
             }
 
-        rule state_specifiers_bitmask() -> StateSpecifiers
-            = "abstract" { StateSpecifiers::Abstract }
-            / { StateSpecifiers::none() }
+        rule state_specifier_list() -> Vec<Spanned<StateSpecifier>>
+            = spanned(<state_specifier()>) ** _
+
+        rule state_specifier() -> StateSpecifier
+            = "abstract" { StateSpecifier::Abstract }
 
 
 
         // CLASS DECLARATION ======================
 
         pub rule class_decl() -> ClassDeclaration
-            = _ imported:imported() _ specifiers:class_specifiers_bitmask() 
+            = _ imported:imported() _ specifiers:spanned(<class_specifier_list()>)
             _ "class" _ name:spanned(<identifier()>) _ base_class:class_base()? 
             _ "{" _ body:spanned(<class_body()>) _ "}" _ {
                 ClassDeclaration { 
@@ -138,12 +140,12 @@ peg::parser! {
         rule class_base() -> Spanned<Identifier>
             = "extends" _ b:spanned(<identifier()>) { b }
 
-        rule class_specifiers_bitmask() -> ClassSpecifiers
-            = bitmask(<class_specifiers()>)
+        rule class_specifier_list() -> Vec<Spanned<ClassSpecifier>>
+            = spanned(<class_specifier()>) ** _
 
-        rule class_specifiers() -> ClassSpecifiers
-            = "abstract" { ClassSpecifiers::Abstract }
-            / "statemachine" { ClassSpecifiers::Statemachine }
+        rule class_specifier() -> ClassSpecifier
+            = "abstract" { ClassSpecifier::Abstract }
+            / "statemachine" { ClassSpecifier::Statemachine }
 
 
 
@@ -220,11 +222,11 @@ peg::parser! {
 
         pub rule func_decl() -> FunctionDeclaration
             = _ imported:imported() _ access_modifier:spanned(<access_modifier()>)? 
-            _ specifiers:func_specifiers() _ speciality:func_speciality()
-            _ name:spanned(<identifier()>) _ "(" _ params:func_parameters() _ ")" 
+            _ specifiers:spanned(<func_specifier_list()>) _ speciality:spanned(<func_speciality()>)
+            _ name:spanned(<identifier()>) _ "(" _ params:spanned(<func_parameters()>) _ ")" 
             _ return_type:spanned(<type_annot()>)? _ body:func_definition() _ {
                 FunctionDeclaration { 
-                    imported, 
+                    imported,
                     access_modifier, 
                     specifiers, 
                     speciality, 
@@ -258,24 +260,21 @@ peg::parser! {
                 params
             }
 
-        rule func_speciality() -> Option<Spanned<FunctionSpeciality>>
-            = L:p() fs:_func_speciality() R:p() { fs.map(|v| Spanned::new(v, Span::new(L, R))) }
+        rule func_speciality() -> FunctionSpeciality
+            = "function" { FunctionSpeciality::None }
+            / "event" { FunctionSpeciality::Event }
+            / "entry" _ "function" { FunctionSpeciality::Entry }
+            / "exec" _ "function" { FunctionSpeciality::Exec }
+            / "quest" _ "function" { FunctionSpeciality::Quest }
+            / "timer" _ "function" { FunctionSpeciality::Timer }
+            / "storyscene" _ "function" { FunctionSpeciality::Storyscene }
 
-        rule _func_speciality() -> Option<FunctionSpeciality>
-            = "entry" _ "function" { Some(FunctionSpeciality::Entry) }
-            / "event" { Some(FunctionSpeciality::Event) }
-            / "exec" _ "function" { Some(FunctionSpeciality::Exec) }
-            / "quest" _ "function" { Some(FunctionSpeciality::Quest) }
-            / "timer" _ "function" { Some(FunctionSpeciality::Timer) }
-            / "storyscene" _ "function" { Some(FunctionSpeciality::Storyscene) }
-            / "function" { None }
+        rule func_specifier_list() -> Vec<Spanned<FunctionSpecifier>>
+            = spanned(<func_specifier()>) ** _
 
-        rule func_specifiers_bitmask() -> FunctionSpecifiers
-            = bitmask(<func_specifiers()>)
-
-        rule func_specifiers() -> FunctionSpecifiers
-            = "latent" { FunctionSpecifiers::Latent }
-            / "final" { FunctionSpecifiers::Final }
+        rule func_specifier() -> FunctionSpecifier
+            = "latent" { FunctionSpecifier::Latent }
+            / "final" { FunctionSpecifier::Final }
 
 
 
@@ -401,7 +400,7 @@ peg::parser! {
         // VAR DECLARATION ========================
 
         rule member_var_decl() -> MemberVarDeclaration
-            = imported:imported() _ access_modifier:spanned(<access_modifier()>)? _ specifiers:var_specifier_bitmask()
+            = imported:imported() _ access_modifier:spanned(<access_modifier()>)? _ specifiers:spanned(<var_specifier_list()>)
             _ "var" _ idents:ident_list() _ var_type:spanned(<type_annot()>) _ ";" {
                 MemberVarDeclaration { 
                     imported: imported, 
@@ -420,15 +419,15 @@ peg::parser! {
                     init_value
                 }
             }
-        
-        rule var_specifier_bitmask() -> VarSpecifiers
-            = bitmask(<var_specifier()>)
 
-        rule var_specifier() -> VarSpecifiers
-            = "const" { VarSpecifiers::Const }
-            / "editable" { VarSpecifiers::Editable }
-            / "inlined" { VarSpecifiers::Inlined }
-            / "saved" { VarSpecifiers::Saved }
+        rule var_specifier_list() -> Vec<Spanned<VarSpecifier>>
+            = spanned(<var_specifier()>) ** _
+
+        rule var_specifier() -> VarSpecifier
+            = "const" { VarSpecifier::Const }
+            / "editable" { VarSpecifier::Editable }
+            / "inlined" { VarSpecifier::Inlined }
+            / "saved" { VarSpecifier::Saved }
 
 
 
@@ -548,7 +547,7 @@ peg::parser! {
                 Box::new(Spanned::new(Expression::TypeCast { target_type: id, expr }, span))
             }
             --
-            expr:(@) _ "." _ func:spanned(<identifier()>) "(" _ args:opt_expr_list() _ ")" R:p() {
+            expr:(@) _ "." _ func:spanned(<identifier()>) "(" _ args:spanned(<opt_expr_list()>) _ ")" R:p() {
                 let span = Span::new(expr.span.begin, R);
                 Box::new(Spanned::new(Expression::MethodCall { expr, func, args }, span))
             }
@@ -560,7 +559,7 @@ peg::parser! {
                 let span = Span::new(expr.span.begin, R);
                 Box::new(Spanned::new(Expression::ArrayAccess { expr, index }, span))
             }
-            L:p() func:spanned(<identifier()>) "(" _ args:opt_expr_list() _ ")" R:p() { 
+            L:p() func:spanned(<identifier()>) "(" _ args:spanned(<opt_expr_list()>) _ ")" R:p() { 
                 let span = Span::new(L, R);
                 Box::new(Spanned::new(Expression::FunctionCall { func, args }, span))
             }
@@ -616,12 +615,12 @@ peg::parser! {
         rule identifier() -> Identifier
             = quiet!{ s:$(['_' | 'a'..='z' | 'A'..='Z']['_' | 'a'..='z' | 'A'..='Z' | '0'..='9']*) {? 
                 if let Ok(_) = Keyword::try_from(s) {
-                    Err("keyword")
+                    Err("IDENTIFIER_NOT_KEYWORD")
                 } else {
                     Ok(Identifier::from(s))
                 }
             }}
-            / expected!("identifier") //TODO no expected! at this stage; make specific type_identifier(), var_identifier() etc.
+            / expected!("IDENTIFIER")
 
 
 
@@ -636,12 +635,12 @@ peg::parser! {
             / literal_null() { Literal::Null }
 
         rule literal_int() -> i32
-            = quiet!{ i:$("-"? ['0'..='9']+) {? i.parse().or(Err("i32")) } }
-            / expected!("int literal")
+            = quiet!{ i:$("-"? ['0'..='9']+) {? i.parse().or(Err("INT_LITERAL_IN_RANGE")) } }
+            / expected!("INT_LITERAL")
 
         rule literal_float() -> f32
-            = quiet!{ f:$("-"? ['0'..='9']+ "." ['0'..='9']*) "f"? {? f.parse().or(Err("f32")) } } 
-            / expected!("float literal")
+            = quiet!{ f:$("-"? ['0'..='9']+ "." ['0'..='9']*) "f"? {? f.parse().or(Err("FLOAT_LITERAL_IN_RANGE")) } } 
+            / expected!("FLOAT_LITERAL")
 
         rule literal_bool() -> bool
             = "true" { true }
@@ -651,15 +650,15 @@ peg::parser! {
             = r#"\""# { '\"' }
             / r#"\'"# { '\'' }
             / !['\"' | '\''] c:[_] { c }
-            / expected!("string character")
+            / expected!("STRING_CHARACTER")
 
         rule literal_string() -> String
             = quiet!{ "\"" s:string_char()* "\"" { s.into_iter().collect() } }
-            / expected!("string literal")
+            / expected!("STRING_LITERAL")
 
         rule literal_name() -> String
             = quiet!{ "\'" s:string_char()* "\'" { s.into_iter().collect() } }
-            / expected!("name literal")
+            / expected!("NAME_LITERAL")
 
         rule literal_null() -> ()
             = "NULL"
@@ -688,15 +687,6 @@ peg::parser! {
         rule present(k: &'static str) -> bool
             = ##parse_string_literal(k) { true }
             / { false }
-
-        rule bitmask<T: Into<u8>, B: From<u8>>(b: rule<T>) -> B
-            = v:b() ** _ {
-                let mut b = 0u8;
-                for val in v {
-                    b |= val.into();
-                }
-                b.into()
-            }
 
         rule p() -> usize = position!()
 

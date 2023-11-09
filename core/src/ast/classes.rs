@@ -1,5 +1,3 @@
-use bitmask_enum::bitmask;
-
 use crate::lexing::{Identifier, Spanned};
 use super::{vars::*, functions::FunctionDeclaration, structs::*};
 
@@ -13,14 +11,14 @@ pub enum AccessModifier {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ClassDeclaration {
     pub imported: bool,
-    pub specifiers: ClassSpecifiers,
+    pub specifiers: Spanned<Vec<Spanned<ClassSpecifier>>>,
     pub name: Spanned<Identifier>,
     pub base_class: Option<Spanned<Identifier>>,
     pub body: Spanned<ClassBody>,
 }
 
-#[bitmask(u8)]
-pub enum ClassSpecifiers {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ClassSpecifier {
     Abstract,
     Statemachine
 }
