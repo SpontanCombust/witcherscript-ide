@@ -241,23 +241,17 @@ peg::parser! {
             = "{" _ b:spanned(<func_body()>) _ "}" { Some(b) }
             / ";" { None }
 
-        rule func_parameters() -> Vec<FunctionParameter>
-            = groups:comma(<func_parameter_group()>) {
-                groups.into_iter().flatten().collect()
-            }
+        rule func_parameters() -> Vec<Spanned<FunctionParameterGroup>>
+            = groups:comma(<spanned(<func_parameter_group()>)>)
 
-        rule func_parameter_group() -> Vec<FunctionParameter>
-            = is_optional:present("optional") _ is_output:present("out") _ idents:ident_list() _ param_type:spanned(<type_annot()>) {
-                let mut params = vec![];
-                for ident in idents.into_iter() {
-                    params.push(FunctionParameter { 
-                        name: ident, 
-                        is_optional, 
-                        is_output, 
-                        param_type: param_type.clone() 
-                    });
+        rule func_parameter_group() -> FunctionParameterGroup
+            = optional:present("optional") _ output:present("out") _ names:ident_list() _ param_type:spanned(<type_annot()>) {
+                FunctionParameterGroup { 
+                    names, 
+                    optional, 
+                    output, 
+                    param_type
                 }
-                params
             }
 
         rule func_speciality() -> FunctionSpeciality
