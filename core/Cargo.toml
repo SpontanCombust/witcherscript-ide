@@ -6,7 +6,6 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
-peg.workspace = true
 strum.workspace = true
 strum_macros.workspace = true
 tree-sitter-witcherscript.workspace = true
