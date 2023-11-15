@@ -1,4 +1,4 @@
-use crate::lexing::Spanned;
+use crate::tokens::Spanned;
 use super::{expressions::Expression, functions::FunctionStatement};
 
 #[derive(Debug, Clone, PartialEq)]

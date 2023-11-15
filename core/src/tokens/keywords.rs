@@ -53,6 +53,6 @@ pub enum Keyword {
     Timer,
     True,
     Var,
+	VirtualParent,
     While,
-    VirtualParent,
 }

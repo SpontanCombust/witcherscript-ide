@@ -1,4 +1,4 @@
-pub mod lexing;
+pub mod tokens;
 pub mod ast;
 pub mod parser;
 

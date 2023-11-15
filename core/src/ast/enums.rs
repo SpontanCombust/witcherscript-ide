@@ -1,4 +1,4 @@
-use crate::lexing::{Identifier, Spanned};
+use crate::tokens::{Identifier, Spanned};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumDeclaration {

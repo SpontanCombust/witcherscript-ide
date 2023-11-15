@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::lexing::Spanned;
+use crate::tokens::Spanned;
 use super::{
     functions::FunctionDeclaration,
     enums::EnumDeclaration,

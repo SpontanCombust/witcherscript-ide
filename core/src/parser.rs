@@ -1,6 +1,6 @@
 peg::parser! {
     pub grammar parser() for str {
-        use crate::lexing::*;
+        use crate::tokens::*;
         use crate::ast::classes::*;
         use crate::ast::conditionals::*;
         use crate::ast::enums::*;

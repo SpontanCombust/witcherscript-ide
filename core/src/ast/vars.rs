@@ -1,4 +1,4 @@
-use crate::lexing::{Identifier, Spanned};
+use crate::tokens::{Identifier, Spanned};
 use super::{classes::AccessModifier, expressions::Expression};
 
 #[derive(Debug, Clone, PartialEq)]
