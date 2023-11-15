@@ -9,4 +9,3 @@ pub mod enums;
 pub mod states;
 pub mod module;
 pub mod nop;
-pub mod literals;

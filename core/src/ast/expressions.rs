@@ -1,5 +1,4 @@
 use crate::tokens::*;
-use super::literals::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {

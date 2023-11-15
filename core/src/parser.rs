@@ -6,7 +6,6 @@ peg::parser! {
         use crate::ast::enums::*;
         use crate::ast::expressions::*;
         use crate::ast::functions::*;
-        use crate::ast::literals::*;
         use crate::ast::loops::*;
         use crate::ast::module::*;
         use crate::ast::nop::*;
