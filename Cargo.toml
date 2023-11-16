@@ -8,8 +8,9 @@ version = "0.1.0"
 edition = "2021"
 authors = ["SpontanCombust"]
 
+# any dependencies that are used by more than one crate should be listed here
 [workspace.dependencies]
 lazy_static = "1.4.0"
 strum = "0.25"
 strum_macros = "0.25"
-tree-sitter-witcherscript = { git = "https://github.com/SpontanCombust/tree-sitter-witcherscript.git" }
+thiserror = "1.0"

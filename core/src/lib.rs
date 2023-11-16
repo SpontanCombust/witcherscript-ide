@@ -1,4 +1,5 @@
+mod tests;
+
 pub mod tokens;
 pub mod ast;
-
-mod tests;
+pub mod script;
