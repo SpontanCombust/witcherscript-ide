@@ -9,6 +9,7 @@ use thiserror::Error;
 use tree_sitter::{Parser, Tree, LanguageError};
 use encoding_rs_io::DecodeReaderBytes;
 
+#[derive(Debug)]
 pub struct Script {
     path: PathBuf,
     rope: Rope,
