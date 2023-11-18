@@ -126,15 +126,6 @@ impl NamedSyntaxNode for VirtualParentExpression {
 impl SyntaxNode<'_, VirtualParentExpression> {}
 
 
-impl NamedSyntaxNode for Identifier {
-    const NODE_NAME: &'static str = "identifier";
-}
-
-impl SyntaxNode<'_, Identifier> {
-    // use text() to get identifier name
-}
-
-
 #[derive(Debug, Clone)]
 pub struct FunctionCallExpression;
 
