@@ -2,24 +2,25 @@
 pub enum UnaryOperator {
     Not,
     BitNot,
-    Negation
+    Negation,
+    Plus
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinaryOperator {
-    Multip,
+    Mult,
     Div,
-    Modulo,
-    Add,
-    Sub,
+    Mod,
+    Sum,
+    Diff,
     BitAnd,
     BitOr,
     And,
     Or,
     Equal,
     NotEqual,
-    Less,
-    LessOrEqual,
+    Lesser,
+    LesserOrEqual,
     Greater,
     GreaterOrEqual
 }
@@ -27,11 +28,11 @@ pub enum BinaryOperator {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AssignmentOperator {
     Direct,
-    Multip,
+    Mult,
     Div,
-    Modulo,
-    Add,
-    Sub
+    Mod,
+    Sum,
+    Diff
 }
 
 
@@ -73,11 +74,11 @@ impl OperatorTraits for UnaryOperator {
 impl OperatorTraits for BinaryOperator {
     fn is_arithmetic(&self) -> bool {
         match self {
-            BinaryOperator::Multip  |
+            BinaryOperator::Mult  |
             BinaryOperator::Div     |
-            BinaryOperator::Modulo  |
-            BinaryOperator::Add     |
-            BinaryOperator::Sub     => true,
+            BinaryOperator::Mod  |
+            BinaryOperator::Sum     |
+            BinaryOperator::Diff     => true,
             _ => false
         }
     }
@@ -102,8 +103,8 @@ impl OperatorTraits for BinaryOperator {
         match self {
             BinaryOperator::Equal           |
             BinaryOperator::NotEqual        |
-            BinaryOperator::Less            |
-            BinaryOperator::LessOrEqual     |
+            BinaryOperator::Lesser            |
+            BinaryOperator::LesserOrEqual     |
             BinaryOperator::Greater         |
             BinaryOperator::GreaterOrEqual  => true,
             _ => false
@@ -114,11 +115,11 @@ impl OperatorTraits for BinaryOperator {
 impl OperatorTraits for AssignmentOperator {
     fn is_arithmetic(&self) -> bool {
         match self {
-            AssignmentOperator::Multip  |
+            AssignmentOperator::Mult  |
             AssignmentOperator::Div     |
-            AssignmentOperator::Modulo  |
-            AssignmentOperator::Add     |
-            AssignmentOperator::Sub     => true,
+            AssignmentOperator::Mod  |
+            AssignmentOperator::Sum     |
+            AssignmentOperator::Diff     => true,
             _ => false
         }
     }
