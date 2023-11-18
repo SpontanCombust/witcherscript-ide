@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{self, Write, BufReader, Read, BufRead},
+    io::{self, BufReader, BufRead},
     path::{PathBuf, Path}
 };
 
@@ -8,6 +8,8 @@ use ropey::{Rope, RopeBuilder};
 use thiserror::Error;
 use tree_sitter::{Parser, Tree, LanguageError};
 use encoding_rs_io::DecodeReaderBytes;
+
+use crate::SyntaxNode;
 
 #[derive(Debug)]
 pub struct Script {
@@ -64,66 +66,12 @@ impl Script {
             parse_tree
         })
     }
-}
 
-// Acquired from tree-sitter-cli
-// Will delete later
-#[test]
-fn test() {
-    let s1 = Script::from_file("D:\\Git-repo\\tw3-scripts\\core\\math.ws").unwrap();
-    
-    let stdout = io::stdout();
-    let mut stdout = stdout.lock();
-    let mut cursor = s1.parse_tree.walk();
-    let mut needs_newline = false;
-    let mut indent_level = 0;
-    let mut did_visit_children = false;
-    loop {
-        let node = cursor.node();
-        let is_named = node.is_named();
-        if did_visit_children {
-            if is_named {
-                stdout.write(b")").unwrap();
-                needs_newline = true;
-            }
-            if cursor.goto_next_sibling() {
-                did_visit_children = false;
-            } else if cursor.goto_parent() {
-                did_visit_children = true;
-                indent_level -= 1;
-            } else {
-                break;
-            }
-        } else {
-            if is_named {
-                if needs_newline {
-                    stdout.write(b"\n").unwrap();
-                }
-                for _ in 0..indent_level {
-                    stdout.write(b"  ").unwrap();
-                }
-                let start = node.start_position();
-                let end = node.end_position();
-                if let Some(field_name) = cursor.field_name() {
-                    write!(&mut stdout, "{}: ", field_name).unwrap();
-                }
-                write!(
-                    &mut stdout,
-                    "({} [{}, {}] - [{}, {}]",
-                    node.kind(),
-                    start.row + 1,
-                    start.column + 1,
-                    end.row + 1,
-                    end.column + 1
-                ).unwrap();
-                needs_newline = true;
-            }
-            if cursor.goto_first_child() {
-                did_visit_children = false;
-                indent_level += 1;
-            } else {
-                did_visit_children = true;
-            }
-        }
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    pub fn root_node(&self) -> SyntaxNode {
+        SyntaxNode::new(self.parse_tree.root_node(), self.rope.clone())
     }
 }
