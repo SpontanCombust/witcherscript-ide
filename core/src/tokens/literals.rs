@@ -120,7 +120,7 @@ impl NamedSyntaxNode for Literal<'_> {
 
 impl SyntaxNode<'_, Literal<'_>> {
     pub fn value(&self) -> Literal<'_> {
-        let child = self.first_child::<()>();
+        let child = self.first_child();
         match child.tree_node.kind() {
             LiteralInt::NODE_NAME => Literal::Int(child.into()),
             LiteralFloat::NODE_NAME => Literal::Float(child.into()),

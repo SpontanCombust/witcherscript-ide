@@ -21,7 +21,8 @@ pub struct SyntaxNode<'script, T = ()> {
     pub(crate) phantom : PhantomData<T>
 }
 
-impl<'script, T> SyntaxNode<'script, T> {
+impl<'script, T> SyntaxNode<'script, T> where T: Clone {
+    /// Constructs a completely new node from a tree-sitter node and a rope 
     pub(crate) fn new(tree_node: Node<'script>, rope: Rope) -> Self {
         Self {
             tree_node,
@@ -30,6 +31,8 @@ impl<'script, T> SyntaxNode<'script, T> {
         }
     }
 
+    /// Transforms this node into a node with a different underlying type
+    /// Gives no guarantees as to whether that target type is actually valid
     pub(crate) fn into<U>(self) -> SyntaxNode<'script, U> {
         SyntaxNode::<'_, U> {
             tree_node: self.tree_node,
@@ -38,35 +41,33 @@ impl<'script, T> SyntaxNode<'script, T> {
         }
     }
 
-    pub(crate) fn clone_as<U>(&self) -> SyntaxNode<'_, U> {
-        SyntaxNode::<'_, U> {
-            tree_node: self.tree_node.clone(),
-            rope: self.rope.clone(),
-            phantom: PhantomData
-        }
-    }
-
-    pub(crate) fn clone_as_with<U>(&self, node: Node<'script>) -> SyntaxNode<'_, U> {
-        SyntaxNode::<'_, U> {
+    /// Replaces tree-sitter node in self
+    pub(crate) fn replace_node(self, node: Node<'script>) -> Self {
+        Self {
             tree_node: node,
-            rope: self.rope.clone(),
-            phantom: PhantomData
+            ..self
         }
-    } 
-
-    pub(crate) fn first_child<U>(&self) -> SyntaxNode<'_, U> {
-        self.clone_as_with(self.tree_node.named_child(0).unwrap())
     }
 
-    pub(crate) fn field_child<U>(&self, field: &'static str) -> SyntaxNode<'_, U> {
-        self.clone_as_with(self.tree_node.child_by_field_name(field).unwrap())
+    /// Returns the first child of this node as an 'any' node
+    /// Panics if there was no child node
+    pub(crate) fn first_child(&self) -> SyntaxNode<'_, ()> {
+        self.clone().replace_node(self.tree_node.named_child(0).unwrap()).into()
+    }
+
+    /// Returns the first child of this node with a given field name as an 'any' node
+    /// Panics if there was no child node with this field name
+    pub(crate) fn field_child(&self, field: &'static str) -> SyntaxNode<'_, ()> {
+        self.clone().replace_node(self.tree_node.child_by_field_name(field).unwrap()).into()
     }
 
 
+    /// Returns the span at which this node is located in the text document
     pub fn span(&self) -> Range {
         self.tree_node.range()
     }
 
+    /// Returns text that this node spans in the text document
     pub fn text(&self) -> String {
         let pos_span = self.tree_node.start_position() .. self.tree_node.end_position();
         let byte_span = self.rope.line_to_char(pos_span.start.row) + pos_span.start.column .. self.rope.line_to_char(pos_span.end.row) + pos_span.end.column;
