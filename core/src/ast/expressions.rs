@@ -1,21 +1,29 @@
 use std::error::Error;
 
 use crate::tokens::*;
-use crate::SyntaxNode;
+use crate::{SyntaxNode, NamedSyntaxNode};
 
 
 #[derive(Debug, Clone)]
 pub struct NestedExpression;
 
+impl NamedSyntaxNode for NestedExpression {
+    const NODE_NAME: &'static str = "nested_expr";
+}
+
 impl SyntaxNode<'_, NestedExpression> {
-    pub fn inner(&self) -> SyntaxNode<'_, Expression> {
+    pub fn value(&self) -> SyntaxNode<'_, Expression> {
         self.first_child()
     }
 }
 
 
+impl NamedSyntaxNode for Literal {
+    const NODE_NAME: &'static str = "literal";
+}
+
 impl SyntaxNode<'_, Literal> {
-    pub fn literal(&self) -> Result<Literal, Box<dyn Error>> {
+    pub fn value(&self) -> Result<Literal, Box<dyn Error>> {
         let child = self.first_child::<()>();
         let text = child.text();
         match child.tree_node.kind() {
@@ -81,11 +89,19 @@ impl SyntaxNode<'_, Literal> {
 #[derive(Debug, Clone)]
 pub struct ThisExpression;
 
+impl NamedSyntaxNode for ThisExpression {
+    const NODE_NAME: &'static str = "this_expr";
+}
+
 impl SyntaxNode<'_, ThisExpression> {}
 
 
 #[derive(Debug, Clone)]
 pub struct SuperExpression;
+
+impl NamedSyntaxNode for SuperExpression {
+    const NODE_NAME: &'static str = "super_expr";
+}
 
 impl SyntaxNode<'_, SuperExpression> {}
 
@@ -93,14 +109,26 @@ impl SyntaxNode<'_, SuperExpression> {}
 #[derive(Debug, Clone)]
 pub struct ParentExpression;
 
+impl NamedSyntaxNode for ParentExpression {
+    const NODE_NAME: &'static str = "parent_expr";
+}
+
 impl SyntaxNode<'_, ParentExpression> {}
 
 
 #[derive(Debug, Clone)]
 pub struct VirtualParentExpression;
 
+impl NamedSyntaxNode for VirtualParentExpression {
+    const NODE_NAME: &'static str = "virtual_parent_expr";
+}
+
 impl SyntaxNode<'_, VirtualParentExpression> {}
 
+
+impl NamedSyntaxNode for Identifier {
+    const NODE_NAME: &'static str = "identifier";
+}
 
 impl SyntaxNode<'_, Identifier> {
     // use text() to get identifier name
@@ -109,6 +137,10 @@ impl SyntaxNode<'_, Identifier> {
 
 #[derive(Debug, Clone)]
 pub struct FunctionCallExpression;
+
+impl NamedSyntaxNode for FunctionCallExpression {
+    const NODE_NAME: &'static str = "func_call_expr";
+}
 
 impl SyntaxNode<'_, FunctionCallExpression> {
     pub fn func(&self) -> SyntaxNode<'_, Identifier> {
@@ -167,6 +199,10 @@ fn func_args<'script, T>(func_node: &'script SyntaxNode<'_, T>) -> impl Iterator
 #[derive(Debug, Clone)]
 pub struct ArrayExpression;
 
+impl NamedSyntaxNode for ArrayExpression {
+    const NODE_NAME: &'static str = "array_expr";
+}
+
 impl SyntaxNode<'_, ArrayExpression> {
     pub fn accessor(&self) -> SyntaxNode<'_, Expression> {
         self.field_child("accessor")
@@ -181,6 +217,10 @@ impl SyntaxNode<'_, ArrayExpression> {
 #[derive(Debug, Clone)]
 pub struct MemberFieldExpression;
 
+impl NamedSyntaxNode for MemberFieldExpression {
+    const NODE_NAME: &'static str = "member_field_expr";
+}
+
 impl SyntaxNode<'_, MemberFieldExpression> {
     pub fn accessor(&self) -> SyntaxNode<'_, Expression> {
         self.field_child("accessor")
@@ -194,6 +234,10 @@ impl SyntaxNode<'_, MemberFieldExpression> {
 
 #[derive(Debug, Clone)]
 pub struct MethodCallExpression;
+
+impl NamedSyntaxNode for MethodCallExpression {
+    const NODE_NAME: &'static str = "member_func_call_expr";
+}
 
 impl SyntaxNode<'_, MethodCallExpression> {
     pub fn accessor(&self) -> SyntaxNode<'_, Expression> {
@@ -213,6 +257,10 @@ impl SyntaxNode<'_, MethodCallExpression> {
 #[derive(Debug, Clone)]
 pub struct InstantiationExpression;
 
+impl NamedSyntaxNode for InstantiationExpression {
+    const NODE_NAME: &'static str = "new_expr";
+}
+
 impl SyntaxNode<'_, InstantiationExpression> {
     pub fn class(&self) -> SyntaxNode<'_, Identifier> {
         self.field_child("class")
@@ -227,6 +275,10 @@ impl SyntaxNode<'_, InstantiationExpression> {
 #[derive(Debug, Clone)]
 pub struct TypeCastExpression;
 
+impl NamedSyntaxNode for TypeCastExpression {
+    const NODE_NAME: &'static str = "cast_expr";
+}
+
 impl SyntaxNode<'_, TypeCastExpression> {
     pub fn target_type(&self) -> SyntaxNode<'_, Identifier> {
         self.field_child("type")
@@ -240,6 +292,10 @@ impl SyntaxNode<'_, TypeCastExpression> {
 
 #[derive(Debug, Clone)]
 pub struct UnaryOperationExpression;
+
+impl NamedSyntaxNode for UnaryOperationExpression {
+    const NODE_NAME: &'static str = "unary_op_expr";
+}
 
 impl SyntaxNode<'_, UnaryOperationExpression> {
     pub fn op(&self) -> UnaryOperator {
@@ -261,6 +317,10 @@ impl SyntaxNode<'_, UnaryOperationExpression> {
 
 #[derive(Debug, Clone)]
 pub struct BinaryOperationExpression;
+
+impl NamedSyntaxNode for BinaryOperationExpression {
+    const NODE_NAME: &'static str = "binary_op_expr";
+}
 
 impl SyntaxNode<'_, BinaryOperationExpression> {
     pub fn op(&self) -> BinaryOperator {
@@ -298,6 +358,10 @@ impl SyntaxNode<'_, BinaryOperationExpression> {
 #[derive(Debug, Clone)]
 pub struct AssignmentOperationExpression;
 
+impl NamedSyntaxNode for AssignmentOperationExpression {
+    const NODE_NAME: &'static str = "assign_op_expr";
+}
+
 impl SyntaxNode<'_, AssignmentOperationExpression> {
     pub fn op(&self) -> AssignmentOperator {
         let child = self.field_child::<()>("op");
@@ -324,6 +388,10 @@ impl SyntaxNode<'_, AssignmentOperationExpression> {
 
 #[derive(Debug, Clone)]
 pub struct TernaryConditionalExpression;
+
+impl NamedSyntaxNode for TernaryConditionalExpression {
+    const NODE_NAME: &'static str = "ternary_cond_expr";
+}
 
 impl SyntaxNode<'_, TernaryConditionalExpression> {
     pub fn cond(&self) -> SyntaxNode<'_, Expression> {
@@ -363,25 +431,25 @@ pub enum Expression<'script> {
 }
 
 impl SyntaxNode<'_, Expression<'_>> {
-    pub fn inner(&self) -> Expression {
+    pub fn value(&self) -> Expression {
         match self.tree_node.kind() {
-            "assign_op_expr" => Expression::AssignmentOperation(self.clone_as()),
-            "ternary_cond_expr" => Expression::TernaryConditional(self.clone_as()),
-            "binary_op_expr" => Expression::BinaryOperation(self.clone_as()),
-            "new_expr" => Expression::Instantiation(self.clone_as()),
-            "unary_op_expr" => Expression::UnaryOperation(self.clone_as()),
-            "cast_expr" => Expression::TypeCast(self.clone_as()),
-            "member_func_call_expr" => Expression::MethodCall(self.clone_as()),
-            "member_field_expr" => Expression::MemberField(self.clone_as()),
-            "func_call_expr" => Expression::FunctionCall(self.clone_as()),
-            "array_expr" => Expression::Array(self.clone_as()),
-            "nested_expr" => Expression::Nested(self.clone_as()),
-            "this_expr" => Expression::This(self.clone_as()),
-            "super_expr" => Expression::Super(self.clone_as()),
-            "parent_expr" => Expression::Parent(self.clone_as()),
-            "virtual_parent_expr" => Expression::VirtualParent(self.clone_as()),
-            "ident" => Expression::Identifier(self.clone_as()),
-            "literal" => Expression::Literal(self.clone_as()),
+            AssignmentOperationExpression::NODE_NAME => Expression::AssignmentOperation(self.clone_as()),
+            TernaryConditionalExpression::NODE_NAME => Expression::TernaryConditional(self.clone_as()),
+            BinaryOperationExpression::NODE_NAME => Expression::BinaryOperation(self.clone_as()),
+            InstantiationExpression::NODE_NAME => Expression::Instantiation(self.clone_as()),
+            UnaryOperationExpression::NODE_NAME => Expression::UnaryOperation(self.clone_as()),
+            TypeCastExpression::NODE_NAME => Expression::TypeCast(self.clone_as()),
+            MethodCallExpression::NODE_NAME => Expression::MethodCall(self.clone_as()),
+            MemberFieldExpression::NODE_NAME => Expression::MemberField(self.clone_as()),
+            FunctionCallExpression::NODE_NAME => Expression::FunctionCall(self.clone_as()),
+            ArrayExpression::NODE_NAME => Expression::Array(self.clone_as()),
+            NestedExpression::NODE_NAME => Expression::Nested(self.clone_as()),
+            ThisExpression::NODE_NAME => Expression::This(self.clone_as()),
+            SuperExpression::NODE_NAME => Expression::Super(self.clone_as()),
+            ParentExpression::NODE_NAME => Expression::Parent(self.clone_as()),
+            VirtualParentExpression::NODE_NAME => Expression::VirtualParent(self.clone_as()),
+            Identifier::NODE_NAME => Expression::Identifier(self.clone_as()),
+            Literal::NODE_NAME => Expression::Literal(self.clone_as()),
             _ => panic!("Unknown expression type")
         }
     }

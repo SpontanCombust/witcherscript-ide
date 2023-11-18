@@ -5,8 +5,12 @@ use std::marker::PhantomData;
 /// Represents a WitcherScript syntax tree node
 /// 
 /// It is a backbone of the convenience layer for AST that instead of being represented by structs with data is represented by 
-/// functions through which you can traverse said tree. It works as an adapter for tree-sitter's nodes.
+/// functions through which you can traverse said tree.
 /// This way parsed data is retrieved only on demand and not stored anywhere else than in tree-sitter. 
+/// 
+/// It works as an adapter for tree-sitter's nodes. Generic parameter T denotes the type of node, e.g. `Identifier`. 
+/// It can also be just a marker type. What is important is to have a distinct type for a given node type in the parsed tree.
+/// Traits can be blanket-implemented for SyntaxNode by accessing the marker type.
 /// 
 /// ## Arguments
 /// * T - marker for the concrete type of the node; () means it can be any node type
@@ -61,4 +65,13 @@ impl<'script, T> SyntaxNode<'script, T> {
         let slice = self.rope.slice(byte_span);
         slice.to_string()
     }
+}
+
+
+pub trait NamedSyntaxNode {
+    const NODE_NAME: &'static str;
+}
+
+impl<T> NamedSyntaxNode for SyntaxNode<'_, T> where T: NamedSyntaxNode {
+    const NODE_NAME: &'static str = T::NODE_NAME;
 }
