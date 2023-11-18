@@ -11,5 +11,7 @@ impl NamedSyntaxNode for Identifier {
 }
 
 impl SyntaxNode<'_, Identifier> {
-    // use text() to get identifier name
+    pub fn value(&self) -> Identifier {
+        Identifier(self.text())
+    }
 }

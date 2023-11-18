@@ -30,6 +30,14 @@ impl<'script, T> SyntaxNode<'script, T> {
         }
     }
 
+    pub(crate) fn into<U>(self) -> SyntaxNode<'script, U> {
+        SyntaxNode::<'_, U> {
+            tree_node: self.tree_node,
+            rope: self.rope,
+            phantom: PhantomData
+        }
+    }
+
     pub(crate) fn clone_as<U>(&self) -> SyntaxNode<'_, U> {
         SyntaxNode::<'_, U> {
             tree_node: self.tree_node.clone(),

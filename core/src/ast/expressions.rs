@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use crate::tokens::*;
 use crate::{SyntaxNode, NamedSyntaxNode};
 
@@ -14,74 +12,6 @@ impl NamedSyntaxNode for NestedExpression {
 impl SyntaxNode<'_, NestedExpression> {
     pub fn value(&self) -> SyntaxNode<'_, Expression> {
         self.first_child()
-    }
-}
-
-
-impl NamedSyntaxNode for Literal {
-    const NODE_NAME: &'static str = "literal";
-}
-
-impl SyntaxNode<'_, Literal> {
-    pub fn value(&self) -> Result<Literal, Box<dyn Error>> {
-        let child = self.first_child::<()>();
-        let text = child.text();
-        match child.tree_node.kind() {
-            "literal_null" => Ok(Literal::Null),
-            "literal_int" => {
-                let i = Self::parse_int(&text)?;
-                Ok(Literal::Int(i))
-            },
-            "literal_float" => {
-                let f = Self::parse_float(&text)?;
-                Ok(Literal::Float(f))
-            },
-            "literal_string" => {
-                let s = Self::parse_string(text);
-                Ok(Literal::String(s))
-            },
-            "literal_name" => {
-                let n = Self::parse_name(text);
-                Ok(Literal::Name(n))
-            },
-            "literal_bool" => {
-                let b = Self::parse_bool(text);
-                Ok(Literal::Bool(b))
-            }
-            _ => panic!("Unknown literal kind")
-        }
-    }
-
-    fn parse_int(s: &str) -> Result<i32, impl Error> {
-        s.parse::<i32>()
-    }
-
-    fn parse_float(s: &str) -> Result<f32, impl Error> {
-        // trim the optional trailing 'f'
-        let s = if s.chars().last().unwrap() == 'f' { 
-            &s[..s.len() - 1] 
-        } else { 
-            s 
-        };
-
-        s.parse::<f32>()
-    }
-
-    fn parse_string(s: String) -> String {
-        s[1..s.len()-1] // eliminate surrounding quotes
-        .replace(r#"\""#, r#"""#) // eliminate escaped quotes
-    }
-
-    fn parse_name(s: String) -> String {
-        s[1..s.len()-1].to_string() // eliminate surrounding quotes   
-    }
-
-    fn parse_bool(s: String) -> bool {
-        match s.as_str() {
-            "true" => true,
-            "false" => false,
-            _ => panic!("Unknown bool value")
-        }
     }
 }
 
@@ -403,7 +333,7 @@ impl SyntaxNode<'_, TernaryConditionalExpression> {
 #[derive(Debug, Clone)]
 pub enum Expression<'script> {
     Nested(SyntaxNode<'script, NestedExpression>),
-    Literal(SyntaxNode<'script, Literal>),
+    Literal(SyntaxNode<'script, Literal<'script>>),
     This(SyntaxNode<'script, ThisExpression>),
     Super(SyntaxNode<'script, SuperExpression>),
     Parent(SyntaxNode<'script, ParentExpression>),
