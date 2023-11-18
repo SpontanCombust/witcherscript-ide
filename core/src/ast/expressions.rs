@@ -14,10 +14,7 @@ impl SyntaxNode<'_, NestedExpression> {
 }
 
 
-#[derive(Debug, Clone)]
-pub struct LiteralExpression;
-
-impl SyntaxNode<'_, LiteralExpression> {
+impl SyntaxNode<'_, Literal> {
     pub fn literal(&self) -> Result<Literal, Box<dyn Error>> {
         let child = self.first_child::<()>();
         let text = child.text();
@@ -105,10 +102,7 @@ pub struct VirtualParentExpression;
 impl SyntaxNode<'_, VirtualParentExpression> {}
 
 
-#[derive(Debug, Clone)]
-pub struct IdentifierExpression;
-
-impl SyntaxNode<'_, IdentifierExpression> {
+impl SyntaxNode<'_, Identifier> {
     // use text() to get identifier name
 }
 
@@ -117,7 +111,7 @@ impl SyntaxNode<'_, IdentifierExpression> {
 pub struct FunctionCallExpression;
 
 impl SyntaxNode<'_, FunctionCallExpression> {
-    pub fn func(&self) -> SyntaxNode<'_, IdentifierExpression> {
+    pub fn func(&self) -> SyntaxNode<'_, Identifier> {
         self.field_child("func")
     }
 
@@ -220,7 +214,7 @@ impl SyntaxNode<'_, MethodCallExpression> {
 pub struct InstantiationExpression;
 
 impl SyntaxNode<'_, InstantiationExpression> {
-    pub fn class(&self) -> SyntaxNode<'_, IdentifierExpression> {
+    pub fn class(&self) -> SyntaxNode<'_, Identifier> {
         self.field_child("class")
     }
 
@@ -234,7 +228,7 @@ impl SyntaxNode<'_, InstantiationExpression> {
 pub struct TypeCastExpression;
 
 impl SyntaxNode<'_, TypeCastExpression> {
-    pub fn target_type(&self) -> SyntaxNode<'_, IdentifierExpression> {
+    pub fn target_type(&self) -> SyntaxNode<'_, Identifier> {
         self.field_child("type")
     }
 
@@ -350,12 +344,12 @@ impl SyntaxNode<'_, TernaryConditionalExpression> {
 #[derive(Debug, Clone)]
 pub enum Expression<'script> {
     Nested(SyntaxNode<'script, NestedExpression>),
-    Literal(SyntaxNode<'script, LiteralExpression>),
+    Literal(SyntaxNode<'script, Literal>),
     This(SyntaxNode<'script, ThisExpression>),
     Super(SyntaxNode<'script, SuperExpression>),
     Parent(SyntaxNode<'script, ParentExpression>),
     VirtualParent(SyntaxNode<'script, VirtualParentExpression>),
-    Identifier(SyntaxNode<'script, IdentifierExpression>),
+    Identifier(SyntaxNode<'script, Identifier>),
     FunctionCall(SyntaxNode<'script, FunctionCallExpression>),
     Array(SyntaxNode<'script, ArrayExpression>),
     MemberField(SyntaxNode<'script, MemberFieldExpression>),
