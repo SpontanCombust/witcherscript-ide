@@ -31,7 +31,7 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
         }
     }
 
-    /// Transforms this node into a node with a different underlying type
+    /// Interpret this node into a node with a different underlying type
     /// Gives no guarantees as to whether that target type is actually valid
     pub(crate) fn into<U>(self) -> SyntaxNode<'script, U> {
         SyntaxNode::<'_, U> {

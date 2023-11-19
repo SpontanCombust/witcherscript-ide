@@ -74,7 +74,7 @@ impl SyntaxNode<'_, MemberDefaultValue> {
         self.field_child("member").unwrap().into()
     }
 
-    pub fn value(&self) -> SyntaxNode<'_, Expression<'_>> {
+    pub fn value(&self) -> SyntaxNode<'_, Expression> {
         self.field_child("value").unwrap().into()
     }
 }
