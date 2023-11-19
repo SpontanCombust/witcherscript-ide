@@ -51,12 +51,13 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
     }
 
 
-    /// Returns an iterator over non-error named children of this node as 'any' nodes
-    pub(crate) fn children(&self) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
+    /// Returns an iterator over non-error children of this node as 'any' nodes
+    pub(crate) fn children(&self, named: Option<bool>) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
         let mut cursor = self.tree_node.walk();
         let name_nodes = self.tree_node
             .children(&mut cursor)
             .filter(|n| !n.is_error())
+            .filter(|n| if let Some(named) = named { n.is_named() == named } else { true })
             .collect::<Vec<_>>();
 
         name_nodes.into_iter()
@@ -64,8 +65,8 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
     }
 
     /// Returns the first non-error child of this node as an 'any' node
-    pub(crate) fn first_child(&self) -> Option<SyntaxNode<'_, ()>> {
-        self.children().next()
+    pub(crate) fn first_child(&self, named: Option<bool>) -> Option<SyntaxNode<'_, ()>> {
+        self.children(named).next()
     }
 
     /// Returns the first non-error child of this node with a given field name as an 'any' node

@@ -36,7 +36,7 @@ impl NamedSyntaxNode for StructBlock {
 
 impl SyntaxNode<'_, StructBlock> {
     pub fn statements(&self) -> impl Iterator<Item = SyntaxNode<'_, StructStatement>> {
-        self.children().map(|n| n.into())
+        self.children(Some(true)).map(|n| n.into())
     }
 }
 
@@ -111,8 +111,8 @@ impl NamedSyntaxNode for StructSpecifier {
 
 impl SyntaxNode<'_, StructSpecifier> {
     pub fn value(&self) -> StructSpecifier {
-        let s = self.text();
-        if let Ok(k) = Keyword::from_str(s.as_str()) {
+        let s = self.first_child(None).unwrap().tree_node.kind();
+        if let Ok(k) = Keyword::from_str(s) {
             match k {
                 Keyword::Import => return StructSpecifier::Import,
                 _ => {}
