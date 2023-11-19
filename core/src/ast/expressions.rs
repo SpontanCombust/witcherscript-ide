@@ -221,15 +221,8 @@ impl NamedSyntaxNode for UnaryOperationExpression {
 }
 
 impl SyntaxNode<'_, UnaryOperationExpression> {
-    pub fn op(&self) -> UnaryOperator {
-        let child = self.field_child("op").unwrap();
-        match child.tree_node.kind() {
-            "unary_op_neg" => UnaryOperator::Negation,
-            "unary_op_not" => UnaryOperator::Not,
-            "unary_op_bitnot" => UnaryOperator::BitNot,
-            "unary_op_plus" => UnaryOperator::Plus,
-            _ => panic!("Unknown unary operator: {}", child.tree_node.kind())
-        }
+    pub fn op(&self) -> SyntaxNode<'_, UnaryOperator> {
+        self.field_child("op").unwrap().into()
     }
 
     pub fn right(&self) -> SyntaxNode<'_, Expression> {
@@ -246,26 +239,8 @@ impl NamedSyntaxNode for BinaryOperationExpression {
 }
 
 impl SyntaxNode<'_, BinaryOperationExpression> {
-    pub fn op(&self) -> BinaryOperator {
-        let child = self.field_child("op").unwrap();
-        match child.tree_node.kind() {
-            "binary_op_or" => BinaryOperator::Or,
-            "binary_op_and" => BinaryOperator::And,
-            "binary_op_bitor" => BinaryOperator::BitOr,
-            "binary_op_bitand" => BinaryOperator::BitAnd,
-            "binary_op_eq" => BinaryOperator::Equal,
-            "binary_op_neq" => BinaryOperator::NotEqual,
-            "binary_op_gt" => BinaryOperator::Greater,
-            "binary_op_ge" => BinaryOperator::GreaterOrEqual,
-            "binary_op_lt" => BinaryOperator::Lesser,
-            "binary_op_le" => BinaryOperator::LesserOrEqual,
-            "binary_op_diff" => BinaryOperator::Diff,
-            "binary_op_sum" => BinaryOperator::Sum,
-            "binary_op_mod" => BinaryOperator::Mod,
-            "binary_op_div" => BinaryOperator::Div,
-            "binary_op_mult" => BinaryOperator::Mult,
-            _ => panic!("Unknown binary operator: {}", child.tree_node.kind())
-        }
+    pub fn op(&self) -> SyntaxNode<'_, BinaryOperator> {
+        self.field_child("op").unwrap().into()
     }
 
     pub fn left(&self) -> SyntaxNode<'_, Expression> {
@@ -286,17 +261,8 @@ impl NamedSyntaxNode for AssignmentOperationExpression {
 }
 
 impl SyntaxNode<'_, AssignmentOperationExpression> {
-    pub fn op(&self) -> AssignmentOperator {
-        let child = self.field_child("op").unwrap();
-        match child.tree_node.kind() {
-            "assign_op_direct" => AssignmentOperator::Direct,
-            "assign_op_sum" => AssignmentOperator::Sum,
-            "assign_op_diff" => AssignmentOperator::Diff,
-            "assign_op_mult" => AssignmentOperator::Mult,
-            "assign_op_div" => AssignmentOperator::Div,
-            "assign_op_mod" => AssignmentOperator::Mod,
-            _ => panic!("Unknown assignment operator: {}", child.tree_node.kind())
-        }
+    pub fn op(&self) -> SyntaxNode<'_, AssignmentOperator> {
+        self.field_child("op").unwrap().into()
     }
 
     pub fn left(&self) -> SyntaxNode<'_, Expression> {
