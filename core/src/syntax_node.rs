@@ -50,25 +50,39 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
         }
     }
 
-    /// Returns the first child of this node as an 'any' node
+
+    /// Returns an iterator over non-error named children of this node as 'any' nodes
+    pub(crate) fn children(&self) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
+        let mut cursor = self.tree_node.walk();
+        let name_nodes = self.tree_node
+            .children(&mut cursor)
+            .filter(|n| !n.is_error())
+            .collect::<Vec<_>>();
+
+        name_nodes.into_iter()
+            .map(|n| self.clone().replace_node(n))
+    }
+
+    /// Returns the first non-error child of this node as an 'any' node
     pub(crate) fn first_child(&self) -> Option<SyntaxNode<'_, ()>> {
-        self.tree_node.named_child(0).map(|n| self.clone().replace_node(n).into())
+        self.children().next()
     }
 
-    /// Returns the first child of this node with a given field name as an 'any' node
+    /// Returns the first non-error child of this node with a given field name as an 'any' node
     pub(crate) fn field_child(&self, field: &'static str) -> Option<SyntaxNode<'_, ()>> {
-        self.tree_node.child_by_field_name(field).map(|n| self.clone().replace_node(n).into()) 
+        self.field_children(field).next()
     }
 
-    /// Returns an iterator over children of this node with a fiven field name
+    /// Returns an iterator over non-error children of this node with a fiven field name
     pub(crate) fn field_children(&self, field: &'static str) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
         let mut cursor = self.tree_node.walk();
         let name_nodes = self.tree_node
             .children_by_field_name(field, &mut cursor)
+            .filter(|n| !n.is_error())
             .collect::<Vec<_>>();
 
         name_nodes.into_iter()
-        .map(|n| self.clone().replace_node(n))
+            .map(|n| self.clone().replace_node(n))
     }
 
 

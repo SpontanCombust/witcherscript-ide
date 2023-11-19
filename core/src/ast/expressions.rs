@@ -90,14 +90,16 @@ fn func_args<'script, T: Clone>(func_node: &'script SyntaxNode<'_, T>) -> impl I
             // spacial care into handling commas.
             // If a node is named, some argument was passed. If a node is anonymous it is a comma.
             // If we encounter a comma right after a previous comma, we have a defaulted argument.
-            if n.is_named() {
-                v.push(Some(func_node.clone().replace_node(n).into()));
-                previous_was_comma = false;
-            } else {
-                if previous_was_comma {
-                    v.push(None);
+            if !n.is_error() {
+                if n.is_named() {
+                    v.push(Some(func_node.clone().replace_node(n).into()));
+                    previous_was_comma = false;
+                } else {
+                    if previous_was_comma {
+                        v.push(None);
+                    }
+                    previous_was_comma = true;
                 }
-                previous_was_comma = true;
             }
 
             if !cursor.goto_next_sibling() {
