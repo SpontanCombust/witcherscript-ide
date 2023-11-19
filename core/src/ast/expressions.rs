@@ -11,7 +11,7 @@ impl NamedSyntaxNode for NestedExpression {
 
 impl SyntaxNode<'_, NestedExpression> {
     pub fn value(&self) -> SyntaxNode<'_, Expression> {
-        self.first_child().into()
+        self.first_child().unwrap().into()
     }
 }
 
@@ -65,7 +65,7 @@ impl NamedSyntaxNode for FunctionCallExpression {
 
 impl SyntaxNode<'_, FunctionCallExpression> {
     pub fn func(&self) -> SyntaxNode<'_, Identifier> {
-        self.field_child("func").into()
+        self.field_child("func").unwrap().into()
     }
 
     pub fn args(&self) -> impl Iterator<Item = FuncCallArg<'_>> {
@@ -128,11 +128,11 @@ impl NamedSyntaxNode for ArrayExpression {
 
 impl SyntaxNode<'_, ArrayExpression> {
     pub fn accessor(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("accessor").into()
+        self.field_child("accessor").unwrap().into()
     }
 
     pub fn index(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("index").into()
+        self.field_child("index").unwrap().into()
     }
 }
 
@@ -146,11 +146,11 @@ impl NamedSyntaxNode for MemberFieldExpression {
 
 impl SyntaxNode<'_, MemberFieldExpression> {
     pub fn accessor(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("accessor").into()
+        self.field_child("accessor").unwrap().into()
     }
 
     pub fn member(&self) -> SyntaxNode<'_, Identifier> {
-        self.field_child("member").into()
+        self.field_child("member").unwrap().into()
     }
 }
 
@@ -164,11 +164,11 @@ impl NamedSyntaxNode for MethodCallExpression {
 
 impl SyntaxNode<'_, MethodCallExpression> {
     pub fn accessor(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("accessor").into()
+        self.field_child("accessor").unwrap().into()
     }
 
     pub fn func(&self) -> SyntaxNode<'_, Identifier> {
-        self.field_child("func").into()
+        self.field_child("func").unwrap().into()
     }
 
     pub fn args(&self) -> impl Iterator<Item = Option<SyntaxNode<'_, Expression>>> {
@@ -186,11 +186,11 @@ impl NamedSyntaxNode for InstantiationExpression {
 
 impl SyntaxNode<'_, InstantiationExpression> {
     pub fn class(&self) -> SyntaxNode<'_, Identifier> {
-        self.field_child("class").into()
+        self.field_child("class").unwrap().into()
     }
 
     pub fn lifetime_obj(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("func").into()
+        self.field_child("func").unwrap().into()
     }
 }
 
@@ -204,11 +204,11 @@ impl NamedSyntaxNode for TypeCastExpression {
 
 impl SyntaxNode<'_, TypeCastExpression> {
     pub fn target_type(&self) -> SyntaxNode<'_, Identifier> {
-        self.field_child("type").into()
+        self.field_child("type").unwrap().into()
     }
 
     pub fn value(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("value").into()
+        self.field_child("value").unwrap().into()
     }
 }
 
@@ -222,18 +222,18 @@ impl NamedSyntaxNode for UnaryOperationExpression {
 
 impl SyntaxNode<'_, UnaryOperationExpression> {
     pub fn op(&self) -> UnaryOperator {
-        let child = self.field_child("op");
+        let child = self.field_child("op").unwrap();
         match child.tree_node.kind() {
             "unary_op_neg" => UnaryOperator::Negation,
             "unary_op_not" => UnaryOperator::Not,
             "unary_op_bitnot" => UnaryOperator::BitNot,
             "unary_op_plus" => UnaryOperator::Plus,
-            _ => panic!("Unknown unary operator")
+            _ => panic!("Unknown unary operator: {}", child.tree_node.kind())
         }
     }
 
     pub fn right(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("right").into()
+        self.field_child("right").unwrap().into()
     }
 }
 
@@ -247,7 +247,7 @@ impl NamedSyntaxNode for BinaryOperationExpression {
 
 impl SyntaxNode<'_, BinaryOperationExpression> {
     pub fn op(&self) -> BinaryOperator {
-        let child = self.field_child("op");
+        let child = self.field_child("op").unwrap();
         match child.tree_node.kind() {
             "binary_op_or" => BinaryOperator::Or,
             "binary_op_and" => BinaryOperator::And,
@@ -264,16 +264,16 @@ impl SyntaxNode<'_, BinaryOperationExpression> {
             "binary_op_mod" => BinaryOperator::Mod,
             "binary_op_div" => BinaryOperator::Div,
             "binary_op_mult" => BinaryOperator::Mult,
-            _ => panic!("Unknown binary operator")
+            _ => panic!("Unknown binary operator: {}", child.tree_node.kind())
         }
     }
 
     pub fn left(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("left").into()
+        self.field_child("left").unwrap().into()
     }
 
     pub fn right(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("right").into()
+        self.field_child("right").unwrap().into()
     }
 }
 
@@ -287,7 +287,7 @@ impl NamedSyntaxNode for AssignmentOperationExpression {
 
 impl SyntaxNode<'_, AssignmentOperationExpression> {
     pub fn op(&self) -> AssignmentOperator {
-        let child = self.field_child("op");
+        let child = self.field_child("op").unwrap();
         match child.tree_node.kind() {
             "assign_op_direct" => AssignmentOperator::Direct,
             "assign_op_sum" => AssignmentOperator::Sum,
@@ -295,16 +295,16 @@ impl SyntaxNode<'_, AssignmentOperationExpression> {
             "assign_op_mult" => AssignmentOperator::Mult,
             "assign_op_div" => AssignmentOperator::Div,
             "assign_op_mod" => AssignmentOperator::Mod,
-            _ => panic!("Unknown assignment operator")
+            _ => panic!("Unknown assignment operator: {}", child.tree_node.kind())
         }
     }
 
     pub fn left(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("left").into()
+        self.field_child("left").unwrap().into()
     }
 
     pub fn right(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("right").into()
+        self.field_child("right").unwrap().into()
     }
 }
 
@@ -318,15 +318,15 @@ impl NamedSyntaxNode for TernaryConditionalExpression {
 
 impl SyntaxNode<'_, TernaryConditionalExpression> {
     pub fn cond(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("cond").into()
+        self.field_child("cond").unwrap().into()
     }
 
     pub fn conseq(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("conseq").into()
+        self.field_child("conseq").unwrap().into()
     }
 
     pub fn alt(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("alt").into()
+        self.field_child("alt").unwrap().into()
     }
 }
 
@@ -373,7 +373,7 @@ impl SyntaxNode<'_, Expression<'_>> {
             VirtualParentExpression::NODE_NAME => Expression::VirtualParent(self.clone().into()),
             Identifier::NODE_NAME => Expression::Identifier(self.clone().into()),
             Literal::NODE_NAME => Expression::Literal(self.clone().into()),
-            _ => panic!("Unknown expression type")
+            _ => panic!("Unknown expression type: {}", self.tree_node.kind())
         }
     }
 }

@@ -41,24 +41,23 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
         }
     }
 
-    /// Replaces tree-sitter node in self
-    pub(crate) fn replace_node(self, node: Node<'script>) -> Self {
-        Self {
+    /// Consume self, replace its tree-sitter node and return 'any' node
+    pub(crate) fn replace_node(self, node: Node<'script>) -> SyntaxNode<'_, ()> {
+        SyntaxNode::<'_, ()> {
             tree_node: node,
-            ..self
+            rope: self.rope,
+            phantom: PhantomData
         }
     }
 
     /// Returns the first child of this node as an 'any' node
-    /// Panics if there was no child node
-    pub(crate) fn first_child(&self) -> SyntaxNode<'_, ()> {
-        self.clone().replace_node(self.tree_node.named_child(0).unwrap()).into()
+    pub(crate) fn first_child(&self) -> Option<SyntaxNode<'_, ()>> {
+        self.tree_node.named_child(0).map(|n| self.clone().replace_node(n).into())
     }
 
     /// Returns the first child of this node with a given field name as an 'any' node
-    /// Panics if there was no child node with this field name
-    pub(crate) fn field_child(&self, field: &'static str) -> SyntaxNode<'_, ()> {
-        self.clone().replace_node(self.tree_node.child_by_field_name(field).unwrap()).into()
+    pub(crate) fn field_child(&self, field: &'static str) -> Option<SyntaxNode<'_, ()>> {
+        self.tree_node.child_by_field_name(field).map(|n| self.clone().replace_node(n).into()) 
     }
 
 
