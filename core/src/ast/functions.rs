@@ -1,28 +1,61 @@
 use std::str::FromStr;
-
-use crate::{SyntaxNode, NamedSyntaxNode, tokens::Keyword};
+use crate::{SyntaxNode, NamedSyntaxNode, tokens::{Keyword, Identifier}};
 use super::{vars::*, expressions::*, nop::Nop, loops::*, conditionals::*, classes::AccessModifier};
 
-/*
-#[derive(Debug, Clone, PartialEq)]
-pub struct FunctionDeclaration {
-    pub imported: bool,
-    pub access_modifier: Option<Spanned<AccessModifier>>,
-    pub specifiers: Spanned<Vec<Spanned<FunctionSpecifier>>>,
-    pub speciality: Spanned<FunctionSpeciality>,
 
-    pub name: Spanned<Identifier>,
-    pub params: Spanned<Vec<Spanned<FunctionParameterGroup>>>,
-    pub return_type: Option<Spanned<TypeAnnotation>>,
-    pub body: Option<Spanned<FunctionBody>> // if there is no body it doesn't have a definition
+#[derive(Debug, Clone)]
+pub struct FunctionDeclaration;
+
+impl NamedSyntaxNode for FunctionDeclaration {
+    const NODE_NAME: &'static str = "func_decl_stmt";
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct FunctionParameterGroup {
-    pub names: Vec<Spanned<Identifier>>,
-    pub optional: bool,
-    pub output: bool,
-    pub param_type: Spanned<TypeAnnotation>
+impl SyntaxNode<'_, FunctionDeclaration> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionSpecifier>> {
+        self.field_children("specifiers").map(|n| n.into())
+    }
+
+    pub fn flavour(&self) -> SyntaxNode<'_, FunctionFlavour> {
+        self.field_child("flavour").unwrap().into()
+    }
+
+    pub fn name(&self) -> SyntaxNode<'_, Identifier> {
+        self.field_child("name").unwrap().into()
+    }
+
+    pub fn params(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionParameterGroup>> {
+        self.field_children("params").map(|n| n.into())
+    }
+
+    pub fn return_type(&self) -> Option<SyntaxNode<'_, TypeAnnotation>> {
+        self.field_child("return_type").map(|n| n.into())
+    }
+
+    pub fn definition(&self) -> Option<SyntaxNode<'_, FunctionBlock>> {
+        self.field_child("definition").map(|n| n.into())
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct FunctionParameterGroup;
+
+impl NamedSyntaxNode for FunctionParameterGroup {
+    const NODE_NAME: &'static str = "func_param_group";
+}
+
+impl SyntaxNode<'_, FunctionParameterGroup> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionParameterSpecifier>> {
+        self.field_children("specifiers").map(|n| n.into())
+    }
+
+    pub fn names(&self) -> impl Iterator<Item = SyntaxNode<'_, Identifier>> {
+        self.field_children("names").map(|n| n.into())
+    }
+
+    pub fn param_type(&self) -> SyntaxNode<'_, TypeAnnotation> {
+        self.field_child("param_type").unwrap().into()
+    }
 }
 
 
@@ -37,8 +70,17 @@ impl NamedSyntaxNode for FunctionParameterSpecifier {
 }
 
 impl SyntaxNode<'_, FunctionParameterSpecifier> {
-    pub fn value(&self) -> FunctionSpecifier {
+    pub fn value(&self) -> FunctionParameterSpecifier {
+        let s = self.first_child(None).unwrap().tree_node.kind();
+        if let Ok(k) = Keyword::from_str(s) {
+            match k {
+                Keyword::Optional => return FunctionParameterSpecifier::Optional,
+                Keyword::Out => return FunctionParameterSpecifier::Out,
+                _ => {}
+            }
+        }
 
+        panic!("Unknown function parameter specifier: {}", s)
     }
 }
 
@@ -84,7 +126,7 @@ impl NamedSyntaxNode for FunctionSpecifier {
 
 impl SyntaxNode<'_, FunctionSpecifier> {
     pub fn value(&self) -> FunctionSpecifier {
-        let s = self.tree_node.kind();
+        let s = self.first_child(None).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
             match k {
                 Keyword::Private => return FunctionSpecifier::AccessModifier(AccessModifier::Private),
@@ -100,7 +142,8 @@ impl SyntaxNode<'_, FunctionSpecifier> {
         panic!("Unknown function specifier: {}", s)
     }
 }
-*/
+
+
 
 
 
