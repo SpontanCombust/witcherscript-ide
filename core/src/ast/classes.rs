@@ -1,5 +1,5 @@
-use crate::tokens::{Identifier, Spanned};
-use super::{vars::*, functions::FunctionDeclaration, structs::*};
+// use crate::tokens::{Identifier, Spanned};
+// use super::{vars::*, functions::FunctionDeclaration, structs::*};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum AccessModifier {
@@ -7,7 +7,7 @@ pub enum AccessModifier {
     Protected,
     Public
 }
-
+/*
 #[derive(Debug, Clone, PartialEq)]
 pub struct ClassDeclaration {
     pub imported: bool,
@@ -49,3 +49,4 @@ pub enum ClassStatement {
 }
 
 pub type ClassBody = Vec<Spanned<ClassStatement>>;
+*/

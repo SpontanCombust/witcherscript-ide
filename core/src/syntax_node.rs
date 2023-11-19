@@ -60,6 +60,17 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
         self.tree_node.child_by_field_name(field).map(|n| self.clone().replace_node(n).into()) 
     }
 
+    /// Returns an iterator over children of this node with a fiven field name
+    pub(crate) fn field_children(&self, field: &'static str) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
+        let mut cursor = self.tree_node.walk();
+        let name_nodes = self.tree_node
+            .children_by_field_name(field, &mut cursor)
+            .collect::<Vec<_>>();
+
+        name_nodes.into_iter()
+        .map(|n| self.clone().replace_node(n))
+    }
+
 
     /// Returns the span at which this node is located in the text document
     pub fn span(&self) -> Range {
