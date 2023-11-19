@@ -1,23 +1,11 @@
-use super::{functions::FunctionStatement, classes::ClassStatement, module::ModuleStatement};
+use crate::{SyntaxNode, NamedSyntaxNode};
 
 // Empty type essentially representing an orphaned/trailing semicolon
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct Nop;
 
-impl From<Nop> for FunctionStatement {
-    fn from(_: Nop) -> Self {
-        FunctionStatement::Nop
-    }
+impl NamedSyntaxNode for Nop {
+    const NODE_NAME: &'static str = "nop";
 }
 
-impl From<Nop> for ClassStatement {
-    fn from(_: Nop) -> Self {
-        ClassStatement::Nop
-    }
-}
-
-impl From<Nop> for ModuleStatement {
-    fn from(_: Nop) -> Self {
-        ModuleStatement::Nop
-    }
-}
+impl SyntaxNode<'_, Nop> {}

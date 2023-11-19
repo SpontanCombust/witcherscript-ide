@@ -16,6 +16,7 @@ impl SyntaxNode<'_, NestedExpression> {
 }
 
 
+
 #[derive(Debug, Clone)]
 pub struct ThisExpression;
 
@@ -24,6 +25,7 @@ impl NamedSyntaxNode for ThisExpression {
 }
 
 impl SyntaxNode<'_, ThisExpression> {}
+
 
 
 #[derive(Debug, Clone)]
@@ -36,6 +38,7 @@ impl NamedSyntaxNode for SuperExpression {
 impl SyntaxNode<'_, SuperExpression> {}
 
 
+
 #[derive(Debug, Clone)]
 pub struct ParentExpression;
 
@@ -46,6 +49,7 @@ impl NamedSyntaxNode for ParentExpression {
 impl SyntaxNode<'_, ParentExpression> {}
 
 
+
 #[derive(Debug, Clone)]
 pub struct VirtualParentExpression;
 
@@ -54,6 +58,7 @@ impl NamedSyntaxNode for VirtualParentExpression {
 }
 
 impl SyntaxNode<'_, VirtualParentExpression> {}
+
 
 
 #[derive(Debug, Clone)]
@@ -121,6 +126,7 @@ fn func_args<'script, T: Clone>(func_node: &'script SyntaxNode<'_, T>) -> impl I
 }
 
 
+
 #[derive(Debug, Clone)]
 pub struct ArrayExpression;
 
@@ -139,6 +145,7 @@ impl SyntaxNode<'_, ArrayExpression> {
 }
 
 
+
 #[derive(Debug, Clone)]
 pub struct MemberFieldExpression;
 
@@ -155,6 +162,7 @@ impl SyntaxNode<'_, MemberFieldExpression> {
         self.field_child("member").unwrap().into()
     }
 }
+
 
 
 #[derive(Debug, Clone)]
@@ -179,6 +187,7 @@ impl SyntaxNode<'_, MethodCallExpression> {
 }
 
 
+
 #[derive(Debug, Clone)]
 pub struct InstantiationExpression;
 
@@ -195,6 +204,7 @@ impl SyntaxNode<'_, InstantiationExpression> {
         self.field_child("func").unwrap().into()
     }
 }
+
 
 
 #[derive(Debug, Clone)]
@@ -215,6 +225,7 @@ impl SyntaxNode<'_, TypeCastExpression> {
 }
 
 
+
 #[derive(Debug, Clone)]
 pub struct UnaryOperationExpression;
 
@@ -231,6 +242,7 @@ impl SyntaxNode<'_, UnaryOperationExpression> {
         self.field_child("right").unwrap().into()
     }
 }
+
 
 
 #[derive(Debug, Clone)]
@@ -255,6 +267,7 @@ impl SyntaxNode<'_, BinaryOperationExpression> {
 }
 
 
+
 #[derive(Debug, Clone)]
 pub struct AssignmentOperationExpression;
 
@@ -277,6 +290,7 @@ impl SyntaxNode<'_, AssignmentOperationExpression> {
 }
 
 
+
 #[derive(Debug, Clone)]
 pub struct TernaryConditionalExpression;
 
@@ -297,6 +311,7 @@ impl SyntaxNode<'_, TernaryConditionalExpression> {
         self.field_child("alt").unwrap().into()
     }
 }
+
 
 
 // Represents the anonymous $._expr node
@@ -343,5 +358,20 @@ impl SyntaxNode<'_, Expression<'_>> {
             Literal::NODE_NAME => Expression::Literal(self.clone().into()),
             _ => panic!("Unknown expression type: {}", self.tree_node.kind())
         }
+    }
+}
+
+
+
+#[derive(Debug, Clone)]
+pub struct ExpressionStatement;
+
+impl NamedSyntaxNode for ExpressionStatement {
+    const NODE_NAME: &'static str = "expr_stmt";
+}
+
+impl SyntaxNode<'_, ExpressionStatement> {
+    pub fn expr(&self) -> SyntaxNode<'_, Expression<'_>> {
+        self.first_child().unwrap().into()
     }
 }
