@@ -53,6 +53,6 @@ impl NamedSyntaxNode for Script {
 
 impl SyntaxNode<'_, Script> {
     pub fn statements(&self) -> impl Iterator<Item = SyntaxNode<'_, ScriptStatement>> {
-        self.children(Some(true)).map(|n| n.into())
+        self.children(true).map(|n| n.into())
     }
 }

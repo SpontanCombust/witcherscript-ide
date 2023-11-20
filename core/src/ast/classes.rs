@@ -38,7 +38,7 @@ impl NamedSyntaxNode for ClassBlock {
 
 impl SyntaxNode<'_, ClassBlock> {
     pub fn statements(&self) -> impl Iterator<Item = SyntaxNode<'_, ClassStatement>> {
-        self.children(Some(true)).map(|n| n.into())
+        self.children(true).map(|n| n.into())
     }
 }
 
@@ -56,7 +56,7 @@ impl NamedSyntaxNode for ClassSpecifier {
 
 impl SyntaxNode<'_, ClassSpecifier> {
     pub fn value(&self) -> ClassSpecifier {
-        let s = self.first_child(None).unwrap().tree_node.kind();
+        let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
             match k {
                 Keyword::Import => return ClassSpecifier::Import,
@@ -132,7 +132,7 @@ pub enum ClassAutobindValue<'script> {
 
 impl SyntaxNode<'_, ClassAutobindValue<'_>> {
     pub fn value(&self) -> ClassAutobindValue {
-        let child = self.first_child(None).unwrap();
+        let child = self.first_child(false).unwrap();
         let s = child.tree_node.kind();
         if s == LiteralString::NODE_NAME {
             return ClassAutobindValue::Concrete(child.into());
@@ -157,7 +157,7 @@ impl NamedSyntaxNode for ClassAutobindSpecifier {
 
 impl SyntaxNode<'_, ClassAutobindSpecifier> {
     pub fn value(&self) -> ClassAutobindSpecifier {
-        let s = self.first_child(None).unwrap().tree_node.kind();
+        let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
             match k {
                 Keyword::Private => return ClassAutobindSpecifier::AccessModifier(AccessModifier::Private),

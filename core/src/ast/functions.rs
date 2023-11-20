@@ -71,7 +71,7 @@ impl NamedSyntaxNode for FunctionParameterSpecifier {
 
 impl SyntaxNode<'_, FunctionParameterSpecifier> {
     pub fn value(&self) -> FunctionParameterSpecifier {
-        let s = self.first_child(None).unwrap().tree_node.kind();
+        let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
             match k {
                 Keyword::Optional => return FunctionParameterSpecifier::Optional,
@@ -126,7 +126,7 @@ impl NamedSyntaxNode for FunctionSpecifier {
 
 impl SyntaxNode<'_, FunctionSpecifier> {
     pub fn value(&self) -> FunctionSpecifier {
-        let s = self.first_child(None).unwrap().tree_node.kind();
+        let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
             match k {
                 Keyword::Private => return FunctionSpecifier::AccessModifier(AccessModifier::Private),
@@ -196,7 +196,7 @@ impl NamedSyntaxNode for FunctionBlock {
 
 impl SyntaxNode<'_, FunctionBlock> {
     pub fn statements(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionStatement>> {
-        self.children(Some(true)).map(|n| n.into())
+        self.children(true).map(|n| n.into())
     }
 }
 
@@ -233,7 +233,7 @@ impl NamedSyntaxNode for ReturnStatement {
 
 impl SyntaxNode<'_, ReturnStatement> {
     pub fn value(&self) -> Option<SyntaxNode<'_, Expression>> {
-        self.first_child(Some(true)).map(|n| n.into())
+        self.first_child(true).map(|n| n.into())
     }
 }
 
@@ -248,6 +248,6 @@ impl NamedSyntaxNode for DeleteStatement {
 
 impl SyntaxNode<'_, DeleteStatement> {
     pub fn value(&self) -> SyntaxNode<'_, Expression> {
-        self.first_child(Some(true)).unwrap().into()
+        self.first_child(true).unwrap().into()
     }
 }

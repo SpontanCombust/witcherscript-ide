@@ -29,7 +29,7 @@ impl NamedSyntaxNode for EnumBlock {
 
 impl SyntaxNode<'_, EnumBlock> {
     pub fn values(&self) -> impl Iterator<Item = SyntaxNode<'_, EnumDeclarationValue>> {
-        self.children(Some(true)).map(|n| n.into())
+        self.children(true).map(|n| n.into())
     }
 }
 

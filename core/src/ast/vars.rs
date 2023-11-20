@@ -80,7 +80,7 @@ impl NamedSyntaxNode for MemberVarSpecifier {
 
 impl SyntaxNode<'_, MemberVarSpecifier> {
     pub fn value(&self) -> MemberVarSpecifier {
-        let s = self.first_child(None).unwrap().tree_node.kind();
+        let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s)  {
             match k {
                 Keyword::Private => return MemberVarSpecifier::AccessModifier(AccessModifier::Private),

@@ -11,7 +11,7 @@ impl NamedSyntaxNode for NestedExpression {
 
 impl SyntaxNode<'_, NestedExpression> {
     pub fn value(&self) -> SyntaxNode<'_, Expression> {
-        self.first_child(Some(true)).unwrap().into()
+        self.first_child(true).unwrap().into()
     }
 }
 
@@ -372,6 +372,6 @@ impl NamedSyntaxNode for ExpressionStatement {
 
 impl SyntaxNode<'_, ExpressionStatement> {
     pub fn expr(&self) -> SyntaxNode<'_, Expression<'_>> {
-        self.first_child(Some(true)).unwrap().into()
+        self.first_child(true).unwrap().into()
     }
 }
