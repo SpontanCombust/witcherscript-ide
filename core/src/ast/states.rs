@@ -1,18 +1,32 @@
-use crate::lexing::{Identifier, Spanned};
-use super::classes::ClassBody;
+use crate::{tokens::Identifier, NamedSyntaxNode, SyntaxNode, attribs::StateSpecifier};
+use super::ClassBlock;
 
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct StateDeclaration {
-    pub imported: bool,
-    pub specifiers: Spanned<Vec<Spanned<StateSpecifier>>>,
-    pub name: Spanned<Identifier>,
-    pub parent_class: Spanned<Identifier>,
-    pub base_state: Option<Spanned<Identifier>>,
-    pub body: Spanned<ClassBody>,
+#[derive(Debug, Clone)]
+pub struct StateDeclaration;
+
+impl NamedSyntaxNode for StateDeclaration {
+    const NODE_NAME: &'static str = "state_decl_stmt";
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum StateSpecifier {
-    Abstract
+impl SyntaxNode<'_, StateDeclaration> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, StateSpecifier>> {
+        self.field_children("specifiers").map(|n| n.into())
+    }
+
+    pub fn name(&self) -> SyntaxNode<'_, Identifier> {
+        self.field_child("name").unwrap().into()
+    }
+
+    pub fn parent(&self) -> SyntaxNode<'_, Identifier> {
+        self.field_child("parent").unwrap().into()
+    }
+
+    pub fn base(&self) -> Option<SyntaxNode<'_, Identifier>> {
+        self.field_child("base").map(|n| n.into())
+    }
+
+    pub fn definition(&self) -> SyntaxNode<'_, ClassBlock> {
+        self.field_child("definition").unwrap().into()
+    }
 }

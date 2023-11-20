@@ -8,8 +8,11 @@ version = "0.1.0"
 edition = "2021"
 authors = ["SpontanCombust"]
 
+# any dependencies that are used by more than one crate should be listed here
 [workspace.dependencies]
-peg = "0.8.2"
 lazy_static = "1.4.0"
 strum = "0.25"
 strum_macros = "0.25"
+thiserror = "1.0"
+shrinkwraprs = "0.3"
+ropey = "1.6"

@@ -6,6 +6,11 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
-peg.workspace = true
 strum.workspace = true
 strum_macros.workspace = true
+thiserror.workspace = true
+shrinkwraprs.workspace = true
+ropey.workspace = true
+tree-sitter = "0.20"
+tree-sitter-witcherscript = { git = "https://github.com/SpontanCombust/tree-sitter-witcherscript.git" }
+encoding_rs_io = "0.1"

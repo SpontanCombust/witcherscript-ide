@@ -1,32 +1,64 @@
-use crate::lexing::{Identifier, Spanned};
-use super::{classes::AccessModifier, expressions::Expression};
+use crate::{tokens::Identifier, SyntaxNode, NamedSyntaxNode, attribs::MemberVarSpecifier};
+use super::Expression;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct TypeAnnotation {
-    pub name: Spanned<Identifier>,
-    pub generic_argument: Option<Spanned<Identifier>> // only used for arrays
+
+#[derive(Debug, Clone)]
+pub struct TypeAnnotation;
+
+impl NamedSyntaxNode for TypeAnnotation {
+    const NODE_NAME: &'static str = "type_annot";
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct VarDeclaration {
-    pub names: Vec<Spanned<Identifier>>,
-    pub var_type: Spanned<TypeAnnotation>,
-    pub init_value: Option<Box<Spanned<Expression>>>
+impl SyntaxNode<'_, TypeAnnotation> {
+    pub fn type_name(&self) -> SyntaxNode<'_, Identifier> {
+        self.field_child("type_name").unwrap().into()
+    }
+
+    pub fn generic_arg(&self) -> SyntaxNode<'_, Identifier> {
+        self.field_child("generic_arg").unwrap().into()
+    }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct MemberVarDeclaration {
-    pub imported: bool,
-    pub access_modifier: Option<Spanned<AccessModifier>>,
-    pub specifiers: Spanned<Vec<Spanned<VarSpecifier>>>,
-    pub names: Vec<Spanned<Identifier>>,
-    pub var_type: Spanned<TypeAnnotation>,
+
+#[derive(Debug, Clone)]
+pub struct VarDeclaration;
+
+impl NamedSyntaxNode for VarDeclaration {
+    const NODE_NAME: &'static str = "var_decl_stmt";
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum VarSpecifier {
-    Const,
-    Editable,
-    Inlined,
-    Saved,
+impl SyntaxNode<'_, VarDeclaration> {
+    pub fn names(&self) -> impl Iterator<Item = SyntaxNode<'_, Identifier>> {
+        self.field_children("names").map(|n| n.into())
+    }
+
+    pub fn var_type(&self) -> SyntaxNode<'_, TypeAnnotation> {
+        self.field_child("var_type").unwrap().into()
+    }
+
+    pub fn init_value(&self) -> Option<SyntaxNode<'_, Expression>> {
+        self.field_child("init_value").map(|c| c.into())
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct MemberVarDeclaration;
+
+impl NamedSyntaxNode for MemberVarDeclaration {
+    const NODE_NAME: &'static str = "member_var_decl_stmt";
+}
+
+impl SyntaxNode<'_, MemberVarDeclaration> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, MemberVarSpecifier>> {
+        self.field_children("specifiers").map(|n| n.into())
+    }
+
+    pub fn names(&self) -> impl Iterator<Item = SyntaxNode<'_, Identifier>> {
+        self.field_children("names").map(|n| n.into())
+    }
+
+    pub fn var_type(&self) -> SyntaxNode<'_, TypeAnnotation> {
+        self.field_child("var_type").unwrap().into()
+    }
 }
