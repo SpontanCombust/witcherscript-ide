@@ -1,5 +1,4 @@
-use crate::tokens::*;
-use crate::{SyntaxNode, NamedSyntaxNode};
+use crate::{SyntaxNode, NamedSyntaxNode, tokens::*};
 
 
 #[derive(Debug, Clone)]

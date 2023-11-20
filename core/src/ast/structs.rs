@@ -1,7 +1,5 @@
-use std::str::FromStr;
-
-use crate::{tokens::{Identifier, Keyword, LiteralString}, NamedSyntaxNode, SyntaxNode};
-use super::{vars::MemberVarDeclaration, expressions::Expression, nop::Nop};
+use crate::{tokens::{Identifier, LiteralString}, NamedSyntaxNode, SyntaxNode, attribs::StructSpecifier};
+use super::{MemberVarDeclaration, Expression, Nop};
 
 
 #[derive(Debug, Clone)]
@@ -97,30 +95,5 @@ impl SyntaxNode<'_, MemberHint> {
 
     pub fn value(&self) -> SyntaxNode<'_, LiteralString> {
         self.field_child("value").unwrap().into()
-    }
-}
-
-
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum StructSpecifier {
-    Import
-}
-
-impl NamedSyntaxNode for StructSpecifier {
-    const NODE_NAME: &'static str = "struct_specifier";
-}
-
-impl SyntaxNode<'_, StructSpecifier> {
-    pub fn value(&self) -> StructSpecifier {
-        let s = self.first_child(false).unwrap().tree_node.kind();
-        if let Ok(k) = Keyword::from_str(s) {
-            match k {
-                Keyword::Import => return StructSpecifier::Import,
-                _ => {}
-            }
-        }
-
-        panic!("Unknown struct specifier: {}", s)
     }
 }

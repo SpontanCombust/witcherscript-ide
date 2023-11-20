@@ -1,5 +1,5 @@
 use crate::{NamedSyntaxNode, SyntaxNode};
-use super::{expressions::Expression, functions::FunctionStatement};
+use super::{Expression, FunctionStatement};
 
 #[derive(Debug, Clone)]
 pub struct ForLoop;

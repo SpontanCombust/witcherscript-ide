@@ -1,24 +1,29 @@
 use crate::{SyntaxNode, NamedSyntaxNode, Script};
-use self::{
-    functions::FunctionDeclaration, 
-    classes::ClassDeclaration, 
-    states::StateDeclaration, 
-    structs::StructDeclaration, 
-    enums::EnumDeclaration, 
-    nop::Nop
-};
 
 
-pub mod expressions;
-pub mod functions;
-pub mod classes;
-pub mod loops;
-pub mod conditionals;
-pub mod vars;
-pub mod structs;
-pub mod enums;
-pub mod states;
-pub mod nop;
+mod expressions;
+mod functions;
+mod classes;
+mod loops;
+mod conditionals;
+mod vars;
+mod structs;
+mod enums;
+mod states;
+mod nop;
+
+pub use expressions::*;
+pub use functions::*;
+pub use classes::*;
+pub use loops::*;
+pub use conditionals::*;
+pub use vars::*;
+pub use structs::*;
+pub use enums::*;
+pub use states::*;
+pub use nop::*;
+
+
 
 
 #[derive(Debug, Clone)]

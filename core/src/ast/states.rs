@@ -1,6 +1,5 @@
-use std::str::FromStr;
-use crate::{tokens::{Identifier, Keyword}, NamedSyntaxNode, SyntaxNode};
-use super::classes::ClassBlock;
+use crate::{tokens::Identifier, NamedSyntaxNode, SyntaxNode, attribs::StateSpecifier};
+use super::ClassBlock;
 
 
 #[derive(Debug, Clone)]
@@ -29,31 +28,5 @@ impl SyntaxNode<'_, StateDeclaration> {
 
     pub fn definition(&self) -> SyntaxNode<'_, ClassBlock> {
         self.field_child("definition").unwrap().into()
-    }
-}
-
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum StateSpecifier {
-    Import,
-    Abstract
-}
-
-impl NamedSyntaxNode for StateSpecifier {
-    const NODE_NAME: &'static str = "state_specifier";
-}
-
-impl SyntaxNode<'_, StateSpecifier> {
-    pub fn value(&self) -> StateSpecifier {
-        let s = self.tree_node.kind();
-        if let Ok(k) = Keyword::from_str(s) {
-            match k {
-                Keyword::Import => return StateSpecifier::Import,
-                Keyword::Abstract => return StateSpecifier::Abstract,
-                _ => {}
-            }
-        }
-
-        panic!("Unknown state specifier: {}", s);
     }
 }
