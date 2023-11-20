@@ -11,7 +11,7 @@ use encoding_rs_io::DecodeReaderBytes;
 
 use crate::SyntaxNode;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Script {
     path: PathBuf,
     rope: Rope,
@@ -71,7 +71,7 @@ impl Script {
         &self.path
     }
 
-    pub fn root_node(&self) -> SyntaxNode {
+    pub fn root_node(&self) -> SyntaxNode<'_, Script> {
         SyntaxNode::new(self.parse_tree.root_node(), self.rope.clone())
     }
 }
