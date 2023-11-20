@@ -80,7 +80,7 @@ pub enum ClassStatement<'script> {
     Hint(SyntaxNode<'script, MemberHint>),
     Autobind(SyntaxNode<'script, ClassAutobind>),
     Method(SyntaxNode<'script, FunctionDeclaration>),
-    Nop(SyntaxNode<'script, Nop>)
+    Nop
 }
 
 impl SyntaxNode<'_, ClassStatement<'_>> {
@@ -91,7 +91,7 @@ impl SyntaxNode<'_, ClassStatement<'_>> {
             MemberHint::NODE_NAME => ClassStatement::Hint(self.clone().into()),
             ClassAutobind::NODE_NAME => ClassStatement::Autobind(self.clone().into()),
             FunctionDeclaration::NODE_NAME => ClassStatement::Method(self.clone().into()),
-            Nop::NODE_NAME => ClassStatement::Nop(self.clone().into()),
+            Nop::NODE_NAME => ClassStatement::Nop,
             _ => panic!("Unknown class statement type: {}", self.tree_node.kind())
         }
     }

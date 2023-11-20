@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::{tokens::{Identifier, Keyword, LiteralString}, NamedSyntaxNode, SyntaxNode};
-use super::{vars::MemberVarDeclaration, expressions::Expression};
+use super::{vars::MemberVarDeclaration, expressions::Expression, nop::Nop};
 
 
 #[derive(Debug, Clone)]
@@ -47,6 +47,7 @@ pub enum StructStatement<'script> {
     Var(SyntaxNode<'script, MemberVarDeclaration>),
     Default(SyntaxNode<'script, MemberDefaultValue>),
     Hint(SyntaxNode<'script, MemberHint>),
+    Nop
 }
 
 impl SyntaxNode<'_, StructStatement<'_>> {
@@ -55,6 +56,7 @@ impl SyntaxNode<'_, StructStatement<'_>> {
             MemberVarDeclaration::NODE_NAME => StructStatement::Var(self.clone().into()),
             MemberDefaultValue::NODE_NAME => StructStatement::Default(self.clone().into()),
             MemberHint::NODE_NAME => StructStatement::Hint(self.clone().into()),
+            Nop::NODE_NAME => StructStatement::Nop,
             _ => panic!("Unknown struct statement type: {}", self.tree_node.kind())
         }
     }

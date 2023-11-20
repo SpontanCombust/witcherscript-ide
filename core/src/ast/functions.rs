@@ -161,7 +161,7 @@ pub enum FunctionStatement<'script> {
     Return(SyntaxNode<'script, ReturnStatement>),
     Delete(SyntaxNode<'script, DeleteStatement>),
     Block(SyntaxNode<'script, FunctionBlock>),
-    Nop(SyntaxNode<'script, Nop>)
+    Nop,
 }
 
 impl SyntaxNode<'_, FunctionStatement<'_>> {
@@ -179,7 +179,7 @@ impl SyntaxNode<'_, FunctionStatement<'_>> {
             ReturnStatement::NODE_NAME => FunctionStatement::Return(self.clone().into()),
             DeleteStatement::NODE_NAME => FunctionStatement::Delete(self.clone().into()),
             FunctionBlock::NODE_NAME => FunctionStatement::Block(self.clone().into()),
-            Nop::NODE_NAME => FunctionStatement::Nop(self.clone().into()),
+            Nop::NODE_NAME => FunctionStatement::Nop,
             _ => panic!("Unknown function statement type: {}", self.tree_node.kind())
         }
     }
