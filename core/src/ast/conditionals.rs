@@ -33,7 +33,17 @@ impl NamedSyntaxNode for SwitchConditional {
 }
 
 impl SyntaxNode<'_, SwitchConditional> {
+    pub fn matched_expr(&self) -> SyntaxNode<'_, Expression> {
+        self.field_child("matched_expr").unwrap().into()
+    }
 
+    pub fn cases(&self) -> impl Iterator<Item = SyntaxNode<'_, SwitchConditionalCase>> {
+        self.field_children("cases").map(|n| n.into())
+    }
+
+    pub fn default(&self) -> Option<SyntaxNode<'_, SwitchConditionalDefault>> {
+        self.field_child("default").map(|n| n.into())
+    }
 }
 
 
