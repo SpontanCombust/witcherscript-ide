@@ -1,3 +1,4 @@
+use ropey::Rope;
 use shrinkwraprs::Shrinkwrap;
 
 use crate::{NamedSyntaxNode, SyntaxNode};
@@ -11,7 +12,7 @@ impl NamedSyntaxNode for Identifier {
 }
 
 impl SyntaxNode<'_, Identifier> {
-    pub fn value(&self) -> Identifier {
-        Identifier(self.text())
+    pub fn value(&self, rope: &Rope) -> Identifier {
+        Identifier(self.text(rope))
     }
 }

@@ -9,24 +9,21 @@ use std::marker::PhantomData;
 /// This way parsed data is retrieved only on demand and not stored anywhere else than in tree-sitter. 
 /// 
 /// It works as an adapter for tree-sitter's nodes. Generic parameter T denotes the type of node, e.g. `Identifier`. 
-/// It can also be just a marker type. What is important is to have a distinct type for a given node type in the parsed tree.
-/// Traits can be blanket-implemented for SyntaxNode by accessing the marker type.
+/// It can be just a marker type. What is important is to have a distinct type for a given node type in the parsed tree.
 /// 
 /// ## Arguments
 /// * T - marker for the concrete type of the node; () means it can be any node type
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SyntaxNode<'script, T = ()> {
     pub(crate) tree_node: Node<'script>,
-    pub(crate) rope: Rope, // ropes can be cloned cheaply
     pub(crate) phantom : PhantomData<T>
 }
 
 impl<'script, T> SyntaxNode<'script, T> where T: Clone {
     /// Constructs a completely new node from a tree-sitter node and a rope 
-    pub(crate) fn new(tree_node: Node<'script>, rope: Rope) -> Self {
+    pub(crate) fn new(tree_node: Node<'script>) -> Self {
         Self {
             tree_node,
-            rope,
             phantom: PhantomData,
         }
     }
@@ -36,7 +33,6 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
     pub(crate) fn into<U>(self) -> SyntaxNode<'script, U> {
         SyntaxNode::<'_, U> {
             tree_node: self.tree_node,
-            rope: self.rope,
             phantom: PhantomData
         }
     }
@@ -45,12 +41,10 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
     pub(crate) fn replace_node(self, node: Node<'script>) -> SyntaxNode<'_, ()> {
         SyntaxNode::<'_, ()> {
             tree_node: node,
-            rope: self.rope,
             phantom: PhantomData
         }
     }
 
-    //TODO Vec instead of iterator
     /// Returns an iterator over non-error children of this node as 'any' nodes
     pub(crate) fn children(&self, must_be_named: bool) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
         let mut cursor = self.tree_node.walk();
@@ -93,10 +87,10 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
     }
 
     /// Returns text that this node spans in the text document
-    pub fn text(&self) -> String {
+    pub fn text(&self, rope: &Rope) -> String {
         let pos_span = self.tree_node.start_position() .. self.tree_node.end_position();
-        let byte_span = self.rope.line_to_char(pos_span.start.row) + pos_span.start.column .. self.rope.line_to_char(pos_span.end.row) + pos_span.end.column;
-        let slice = self.rope.slice(byte_span);
+        let byte_span = rope.line_to_char(pos_span.start.row) + pos_span.start.column .. rope.line_to_char(pos_span.end.row) + pos_span.end.column;
+        let slice = rope.slice(byte_span);
         slice.to_string()
     }
 }

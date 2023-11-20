@@ -1,4 +1,5 @@
 use std::error::Error;
+use ropey::Rope;
 use shrinkwraprs::Shrinkwrap;
 use crate::{NamedSyntaxNode, SyntaxNode};
 
@@ -11,8 +12,8 @@ impl NamedSyntaxNode for LiteralInt {
 }
 
 impl SyntaxNode<'_, LiteralInt> {
-    pub fn value(&self) -> Result<LiteralInt, impl Error> {
-        self.text().parse::<i32>().map(|i| LiteralInt(i))
+    pub fn value(&self, rope: &Rope) -> Result<LiteralInt, impl Error> {
+        self.text(rope).parse::<i32>().map(|i| LiteralInt(i))
     }
 }
 
@@ -25,8 +26,8 @@ impl NamedSyntaxNode for LiteralFloat {
 }
 
 impl SyntaxNode<'_, LiteralFloat> {
-    pub fn value(&self) -> Result<LiteralFloat, impl Error> {
-        let s = self.text();
+    pub fn value(&self, rope: &Rope) -> Result<LiteralFloat, impl Error> {
+        let s = self.text(rope);
 
         // trim the optional trailing 'f'
         let s = if s.chars().last().unwrap() == 'f' { 
@@ -48,8 +49,8 @@ impl NamedSyntaxNode for LiteralBool {
 }
 
 impl SyntaxNode<'_, LiteralBool> {
-    pub fn value(&self) -> Result<LiteralBool, impl Error> {
-        self.text().parse::<bool>().map(|b| LiteralBool(b))
+    pub fn value(&self, rope: &Rope) -> Result<LiteralBool, impl Error> {
+        self.text(rope).parse::<bool>().map(|b| LiteralBool(b))
     }
 }
 
@@ -62,8 +63,8 @@ impl NamedSyntaxNode for LiteralString {
 }
 
 impl SyntaxNode<'_, LiteralString> {
-    pub fn value(&self) -> LiteralString {
-        let s = self.text();
+    pub fn value(&self, rope: &Rope) -> LiteralString {
+        let s = self.text(rope);
 
         let s = s[1..s.len()-1] // eliminate surrounding quotes
         .replace(r#"\""#, r#"""#); // escape internal quotes
@@ -81,8 +82,8 @@ impl NamedSyntaxNode for LiteralName {
 }
 
 impl SyntaxNode<'_, LiteralName> {
-    pub fn value(&self) -> LiteralName {
-        let s = self.text();
+    pub fn value(&self, rope: &Rope) -> LiteralName {
+        let s = self.text(rope);
 
         let s = s[1..s.len()-1].to_string(); // eliminate surrounding quotes
         // I'm not sure if names can have escaping quotes

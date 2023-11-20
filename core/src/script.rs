@@ -14,7 +14,6 @@ use crate::SyntaxNode;
 #[derive(Debug, Clone)]
 pub struct Script {
     path: PathBuf,
-    rope: Rope,
     parse_tree: Tree
 }
 
@@ -29,8 +28,7 @@ pub enum ScriptError {
 }
 
 impl Script {
-    pub fn from_file<P>(path: P) -> Result<Self, ScriptError>
-    where P: AsRef<Path> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<(Self, Rope), ScriptError> {
         use ScriptError::*;
 
         let f = File::open(&path).map_err(FileOpenError)?;
@@ -60,11 +58,12 @@ impl Script {
             }
         }, None).unwrap();
 
-        Ok(Self {
+        let script = Self {
             path: path.as_ref().into(), 
-            rope,
             parse_tree
-        })
+        };
+
+        Ok((script, rope))
     }
 
     pub fn path(&self) -> &Path {
@@ -72,6 +71,6 @@ impl Script {
     }
 
     pub fn root_node(&self) -> SyntaxNode<'_, Script> {
-        SyntaxNode::new(self.parse_tree.root_node(), self.rope.clone())
+        SyntaxNode::new(self.parse_tree.root_node())
     }
 }
