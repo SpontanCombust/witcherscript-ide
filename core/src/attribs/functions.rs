@@ -32,27 +32,32 @@ impl SyntaxNode<'_, FunctionParameterSpecifier> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FunctionFlavour {
-    Function,
     Entry,
-    Event,
     Exec,
     Quest,
     Timer,
     Storyscene,
 }
 
+impl NamedSyntaxNode for FunctionFlavour {
+    const NODE_NAME: &'static str = "func_flavour";
+}
+
 impl SyntaxNode<'_, FunctionFlavour> {
     pub fn value(&self) -> FunctionFlavour {
-        match self.tree_node.kind() {
-            "func_flavour_function" => FunctionFlavour::Function,
-            "func_flavour_entry" => FunctionFlavour::Entry,
-            "func_flavour_event" => FunctionFlavour::Event,
-            "func_flavour_exec" => FunctionFlavour::Exec,
-            "func_flavour_quest" => FunctionFlavour::Quest,
-            "func_flavour_timer" => FunctionFlavour::Timer,
-            "func_flavour_storyscene" => FunctionFlavour::Storyscene,
-            _ => panic!("Unknown function flavour")
+        let s = self.first_child(false).unwrap().tree_node.kind();
+        if let Ok(k) = Keyword::from_str(s) {
+            match k {
+                Keyword::Entry => return FunctionFlavour::Entry,
+                Keyword::Exec => return FunctionFlavour::Exec,
+                Keyword::Quest => return FunctionFlavour::Quest,
+                Keyword::Timer => return FunctionFlavour::Timer,
+                Keyword::Storyscene => return FunctionFlavour::Storyscene,
+                _ => {}
+            }
         }
+
+        panic!("Unknown function flavour")
     }
 }
 

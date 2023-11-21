@@ -3,6 +3,28 @@ use super::*;
 
 
 #[derive(Debug, Clone)]
+pub struct EventDeclaration;
+
+impl NamedSyntaxNode for EventDeclaration {
+    const NODE_NAME: &'static str = "event_decl_stmt";
+}
+
+impl SyntaxNode<'_, EventDeclaration> {
+    pub fn name(&self) -> SyntaxNode<'_, Identifier> {
+        self.field_child("name").unwrap().into()
+    }
+
+    pub fn params(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionParameterGroup>> {
+        self.field_children("params").map(|n| n.into())
+    }
+
+    pub fn definition(&self) -> Option<SyntaxNode<'_, FunctionBlock>> {
+        self.field_child("definition").map(|n| n.into())
+    }
+}
+
+
+#[derive(Debug, Clone)]
 pub struct FunctionDeclaration;
 
 impl NamedSyntaxNode for FunctionDeclaration {
@@ -14,8 +36,8 @@ impl SyntaxNode<'_, FunctionDeclaration> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn flavour(&self) -> SyntaxNode<'_, FunctionFlavour> {
-        self.field_child("flavour").unwrap().into()
+    pub fn flavour(&self) -> Option<SyntaxNode<'_, FunctionFlavour>> {
+        self.field_child("flavour").map(|n| n.into())
     }
 
     pub fn name(&self) -> SyntaxNode<'_, Identifier> {
