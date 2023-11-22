@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::str::FromStr;
 use crate::{NamedSyntaxNode, SyntaxNode, tokens::Keyword};
 
@@ -37,6 +38,12 @@ impl SyntaxNode<'_, ClassSpecifier> {
     }
 }
 
+impl Debug for SyntaxNode<'_, ClassSpecifier> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
+    }
+}
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ClassAutobindSpecifier {
@@ -62,5 +69,11 @@ impl SyntaxNode<'_, ClassAutobindSpecifier> {
         }
 
         panic!("Unknown class autobind specifier: {}", s)
+    }
+}
+
+impl Debug for SyntaxNode<'_, ClassAutobindSpecifier> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 }

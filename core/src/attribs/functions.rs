@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::str::FromStr;
 use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode};
 use super::AccessModifier;
@@ -25,6 +26,12 @@ impl SyntaxNode<'_, FunctionParameterSpecifier> {
         }
 
         panic!("Unknown function parameter specifier: {}", s)
+    }
+}
+
+impl Debug for SyntaxNode<'_, FunctionParameterSpecifier> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 }
 
@@ -57,7 +64,13 @@ impl SyntaxNode<'_, FunctionFlavour> {
             }
         }
 
-        panic!("Unknown function flavour")
+        panic!("Unknown function flavour: {}", s)
+    }
+}
+
+impl Debug for SyntaxNode<'_, FunctionFlavour> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 }
 
@@ -91,5 +104,11 @@ impl SyntaxNode<'_, FunctionSpecifier> {
         }
 
         panic!("Unknown function specifier: {}", s)
+    }
+}
+
+impl Debug for SyntaxNode<'_, FunctionSpecifier> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 }

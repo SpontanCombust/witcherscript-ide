@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crate::{SyntaxNode, NamedSyntaxNode, tokens::Identifier, attribs::*};
 use super::*;
 
@@ -20,6 +21,16 @@ impl SyntaxNode<'_, EventDeclaration> {
 
     pub fn definition(&self) -> Option<SyntaxNode<'_, FunctionBlock>> {
         self.field_child("definition").map(|n| n.into())
+    }
+}
+
+impl Debug for SyntaxNode<'_, EventDeclaration> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EventDeclaration")
+            .field("name", &self.name())
+            .field("params", &self.params().collect::<Vec<_>>())
+            .field("definition", &self.definition())
+            .finish()
     }
 }
 
@@ -57,6 +68,19 @@ impl SyntaxNode<'_, FunctionDeclaration> {
     }
 }
 
+impl Debug for SyntaxNode<'_, FunctionDeclaration> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FunctionDeclaration")
+            .field("specifiers", &self.specifiers().collect::<Vec<_>>())
+            .field("flavour", &self.flavour())
+            .field("name", &self.name())
+            .field("params", &self.params().collect::<Vec<_>>())
+            .field("return_type", &self.return_type())
+            .field("definition", &self.definition())
+            .finish()
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub struct FunctionParameterGroup;
@@ -76,6 +100,16 @@ impl SyntaxNode<'_, FunctionParameterGroup> {
 
     pub fn param_type(&self) -> SyntaxNode<'_, TypeAnnotation> {
         self.field_child("param_type").unwrap().into()
+    }
+}
+
+impl Debug for SyntaxNode<'_, FunctionParameterGroup> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FunctionParameterGroup")
+            .field("specifiers", &self.specifiers().collect::<Vec<_>>())
+            .field("names", &self.names().collect::<Vec<_>>())
+            .field("param_type", &self.param_type())
+            .finish()
     }
 }
 
@@ -119,6 +153,11 @@ impl SyntaxNode<'_, FunctionStatement<'_>> {
     }
 }
 
+impl Debug for SyntaxNode<'_, FunctionStatement<'_>> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
+    }
+}
 
 
 #[derive(Debug, Clone)]
@@ -134,6 +173,12 @@ impl SyntaxNode<'_, FunctionBlock> {
     }
 }
 
+impl Debug for SyntaxNode<'_, FunctionBlock> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "FunctionBlock{:?}", self.statements().collect::<Vec<_>>())
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -145,6 +190,12 @@ impl NamedSyntaxNode for BreakStatement {
 
 impl SyntaxNode<'_, BreakStatement> {}
 
+impl Debug for SyntaxNode<'_, BreakStatement> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "BreakStatement")
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -155,6 +206,12 @@ impl NamedSyntaxNode for ContinueStatement {
 }
 
 impl SyntaxNode<'_, ContinueStatement> {}
+
+impl Debug for SyntaxNode<'_, ContinueStatement> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ContinueStatement")
+    }
+}
 
 
 
@@ -171,6 +228,14 @@ impl SyntaxNode<'_, ReturnStatement> {
     }
 }
 
+impl Debug for SyntaxNode<'_, ReturnStatement> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("ReturnStatement")
+            .field(&self.value())
+            .finish()
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -183,5 +248,13 @@ impl NamedSyntaxNode for DeleteStatement {
 impl SyntaxNode<'_, DeleteStatement> {
     pub fn value(&self) -> SyntaxNode<'_, Expression> {
         self.first_child(true).unwrap().into()
+    }
+}
+
+impl Debug for SyntaxNode<'_, DeleteStatement> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("DeleteStatement")
+            .field(&self.value())
+            .finish()
     }
 }

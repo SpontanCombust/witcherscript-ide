@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crate::{tokens::Identifier, SyntaxNode, NamedSyntaxNode, attribs::MemberVarSpecifier};
 use super::Expression;
 
@@ -14,8 +15,17 @@ impl SyntaxNode<'_, TypeAnnotation> {
         self.field_child("type_name").unwrap().into()
     }
 
-    pub fn generic_arg(&self) -> SyntaxNode<'_, Identifier> {
-        self.field_child("generic_arg").unwrap().into()
+    pub fn generic_arg(&self) -> Option<SyntaxNode<'_, Identifier>> {
+        self.field_child("generic_arg").map(|n| n.into())
+    }
+}
+
+impl Debug for SyntaxNode<'_, TypeAnnotation> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TypeAnnotation")
+            .field("type_name", &self.type_name())
+            .field("generic_arg", &self.generic_arg())
+            .finish()
     }
 }
 
@@ -41,6 +51,16 @@ impl SyntaxNode<'_, VarDeclaration> {
     }
 }
 
+impl Debug for SyntaxNode<'_, VarDeclaration> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VarDeclaration")
+            .field("names", &self.names().collect::<Vec<_>>())
+            .field("var_type", &self.var_type())
+            .field("init_value", &self.init_value())
+            .finish()
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub struct MemberVarDeclaration;
@@ -60,5 +80,15 @@ impl SyntaxNode<'_, MemberVarDeclaration> {
 
     pub fn var_type(&self) -> SyntaxNode<'_, TypeAnnotation> {
         self.field_child("var_type").unwrap().into()
+    }
+}
+
+impl Debug for SyntaxNode<'_, MemberVarDeclaration> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MemberVarDeclaration")
+            .field("specifiers", &self.specifiers().collect::<Vec<_>>())
+            .field("names", &self.names().collect::<Vec<_>>())
+            .field("var_type", &self.var_type())
+            .finish()
     }
 }

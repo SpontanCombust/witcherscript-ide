@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crate::{NamedSyntaxNode, SyntaxNode, tokens::*, attribs::*};
 use super::*;
 
@@ -27,6 +28,17 @@ impl SyntaxNode<'_, ClassDeclaration> {
     }
 }
 
+impl Debug for SyntaxNode<'_, ClassDeclaration> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ClassDeclaration")
+            .field("specifiers", &self.specifiers().collect::<Vec<_>>())
+            .field("name", &self.name())
+            .field("base", &self.base())
+            .field("definition", &self.definition())
+            .finish()
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub struct ClassBlock;
@@ -41,6 +53,11 @@ impl SyntaxNode<'_, ClassBlock> {
     }
 }
 
+impl Debug for SyntaxNode<'_, ClassBlock> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ClassBlock{:?}", self.statements().collect::<Vec<_>>())
+    }
+}
 
 
 #[derive(Debug, Clone)]
@@ -66,6 +83,12 @@ impl SyntaxNode<'_, ClassStatement<'_>> {
             Nop::NODE_NAME => ClassStatement::Nop,
             _ => panic!("Unknown class statement type: {}", self.tree_node.kind())
         }
+    }
+}
+
+impl Debug for SyntaxNode<'_, ClassStatement<'_>> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 }
 
@@ -95,6 +118,17 @@ impl SyntaxNode<'_, ClassAutobind> {
     }
 }
 
+impl Debug for SyntaxNode<'_, ClassAutobind> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ClassAutobind")
+            .field("specifiers", &self.specifiers().collect::<Vec<_>>())
+            .field("name", &self.name())
+            .field("autobind_type", &self.autobind_type())
+            .field("value", &self.value())
+            .finish()
+    }
+} 
+
 
 #[derive(Debug, Clone)]
 pub enum ClassAutobindValue<'script> {
@@ -113,5 +147,11 @@ impl SyntaxNode<'_, ClassAutobindValue<'_>> {
         } else {
             panic!("Unknown class autobind value type: {}", s);
         }
+    }
+} 
+
+impl Debug for SyntaxNode<'_, ClassAutobindValue<'_>> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 } 

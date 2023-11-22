@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crate::{tokens::{Identifier, LiteralInt}, NamedSyntaxNode, SyntaxNode};
 
 
@@ -18,6 +19,15 @@ impl SyntaxNode<'_, EnumDeclaration> {
     }
 }
 
+impl Debug for SyntaxNode<'_, EnumDeclaration> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EnumDeclaration")
+            .field("name", &self.name())
+            .field("definition", &self.definition())
+            .finish()
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -30,6 +40,12 @@ impl NamedSyntaxNode for EnumBlock {
 impl SyntaxNode<'_, EnumBlock> {
     pub fn values(&self) -> impl Iterator<Item = SyntaxNode<'_, EnumDeclarationValue>> {
         self.children(true).map(|n| n.into())
+    }
+}
+
+impl Debug for SyntaxNode<'_, EnumBlock> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "EnumBlock{:?}", self.values().collect::<Vec<_>>())
     }
 }
 
@@ -47,7 +63,16 @@ impl SyntaxNode<'_, EnumDeclarationValue> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn value(&self) -> SyntaxNode<'_, LiteralInt> {
-        self.field_child("value").unwrap().into()
+    pub fn value(&self) -> Option<SyntaxNode<'_, LiteralInt>> {
+        self.field_child("value").map(|n| n.into())
+    }
+}
+
+impl Debug for SyntaxNode<'_, EnumDeclarationValue> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EnumDeclarationValue")
+            .field("name", &self.name())
+            .field("value", &self.value())
+            .finish()
     }
 }

@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crate::{tokens::Identifier, NamedSyntaxNode, SyntaxNode, attribs::StateSpecifier};
 use super::ClassBlock;
 
@@ -28,5 +29,17 @@ impl SyntaxNode<'_, StateDeclaration> {
 
     pub fn definition(&self) -> SyntaxNode<'_, ClassBlock> {
         self.field_child("definition").unwrap().into()
+    }
+}
+
+impl Debug for SyntaxNode<'_, StateDeclaration> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("StateDeclaration")
+            .field("specifiers", &self.specifiers().collect::<Vec<_>>())
+            .field("name", &self.name())
+            .field("parent", &self.parent())
+            .field("base", &self.base())
+            .field("definition", &self.definition())
+            .finish()
     }
 }

@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::str::FromStr;
 use crate::{NamedSyntaxNode, SyntaxNode, tokens::Keyword};
 
@@ -24,5 +25,11 @@ impl SyntaxNode<'_, StateSpecifier> {
         }
 
         panic!("Unknown state specifier: {}", s);
+    }
+}
+
+impl Debug for SyntaxNode<'_, StateSpecifier> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 }

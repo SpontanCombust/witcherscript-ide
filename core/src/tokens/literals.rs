@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::error::Error;
 use ropey::Rope;
 use shrinkwraprs::Shrinkwrap;
@@ -14,6 +15,12 @@ impl NamedSyntaxNode for LiteralInt {
 impl SyntaxNode<'_, LiteralInt> {
     pub fn value(&self, rope: &Rope) -> Result<LiteralInt, impl Error> {
         self.text(rope).parse::<i32>().map(|i| LiteralInt(i))
+    }
+}
+
+impl Debug for SyntaxNode<'_, LiteralInt> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "LiteralInt")
     }
 }
 
@@ -40,6 +47,12 @@ impl SyntaxNode<'_, LiteralFloat> {
     }
 }
 
+impl Debug for SyntaxNode<'_, LiteralFloat> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "LiteralFloat")
+    }
+}
+
 
 #[derive(Shrinkwrap, Debug, Clone, PartialEq)]
 pub struct LiteralBool(bool);
@@ -51,6 +64,12 @@ impl NamedSyntaxNode for LiteralBool {
 impl SyntaxNode<'_, LiteralBool> {
     pub fn value(&self, rope: &Rope) -> Result<LiteralBool, impl Error> {
         self.text(rope).parse::<bool>().map(|b| LiteralBool(b))
+    }
+}
+
+impl Debug for SyntaxNode<'_, LiteralBool> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "LiteralBool")
     }
 }
 
@@ -70,6 +89,12 @@ impl SyntaxNode<'_, LiteralString> {
         .replace(r#"\""#, r#"""#); // escape internal quotes
 
         LiteralString(s)
+    }
+}
+
+impl Debug for SyntaxNode<'_, LiteralString> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "LiteralString")
     }
 }
 
@@ -94,6 +119,12 @@ impl SyntaxNode<'_, LiteralName> {
     }
 }
 
+impl Debug for SyntaxNode<'_, LiteralName> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "LiteralName")
+    }
+}
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LiteralNull;
@@ -103,6 +134,12 @@ impl NamedSyntaxNode for LiteralNull {
 }
 
 impl SyntaxNode<'_, LiteralNull> {}
+
+impl Debug for SyntaxNode<'_, LiteralNull> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "LiteralNull")
+    }
+}
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -131,5 +168,11 @@ impl SyntaxNode<'_, Literal<'_>> {
             LiteralNull::NODE_NAME => Literal::Null(child.into()),
             _ => panic!("Unknown literal type: {}", child.tree_node.kind())
         }
+    }
+}
+
+impl Debug for SyntaxNode<'_, Literal<'_>> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 }

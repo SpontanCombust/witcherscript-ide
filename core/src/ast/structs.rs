@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crate::{tokens::{Identifier, LiteralString}, NamedSyntaxNode, SyntaxNode, attribs::StructSpecifier};
 use super::{MemberVarDeclaration, Expression, Nop};
 
@@ -23,6 +24,16 @@ impl SyntaxNode<'_, StructDeclaration> {
     }
 }
 
+impl Debug for SyntaxNode<'_, StructDeclaration> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("StructDeclaration")
+            .field("specifiers", &self.specifiers().collect::<Vec<_>>())
+            .field("name", &self.name())
+            .field("definition", &self.definition())
+            .finish()
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -35,6 +46,12 @@ impl NamedSyntaxNode for StructBlock {
 impl SyntaxNode<'_, StructBlock> {
     pub fn statements(&self) -> impl Iterator<Item = SyntaxNode<'_, StructStatement>> {
         self.children(true).map(|n| n.into())
+    }
+}
+
+impl Debug for SyntaxNode<'_, StructBlock> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "StructBlock{:?}", self.statements().collect::<Vec<_>>())
     }
 }
 
@@ -60,6 +77,12 @@ impl SyntaxNode<'_, StructStatement<'_>> {
     }
 }
 
+impl Debug for SyntaxNode<'_, StructStatement<'_>> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -79,6 +102,15 @@ impl SyntaxNode<'_, MemberDefaultValue> {
     }
 }
 
+impl Debug for SyntaxNode<'_, MemberDefaultValue> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MemberDefaultValue")
+            .field("member", &self.member())
+            .field("value", &self.value())
+            .finish()
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -95,5 +127,14 @@ impl SyntaxNode<'_, MemberHint> {
 
     pub fn value(&self) -> SyntaxNode<'_, LiteralString> {
         self.field_child("value").unwrap().into()
+    }
+}
+
+impl Debug for SyntaxNode<'_, MemberHint> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MemberHint")
+            .field("member", &self.member())
+            .field("value", &self.value())
+            .finish()
     }
 }

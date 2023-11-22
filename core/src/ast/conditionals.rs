@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crate::{NamedSyntaxNode, SyntaxNode};
 use super::{Expression, FunctionStatement};
 
@@ -23,6 +24,16 @@ impl SyntaxNode<'_, IfConditional> {
     }
 }
 
+impl Debug for SyntaxNode<'_, IfConditional> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("IfConditional")
+            .field("cond", &self.cond())
+            .field("body", &self.body())
+            .field("else", &self.else_body())
+            .finish()
+    }
+} 
+
 
 
 #[derive(Debug, Clone)]
@@ -46,6 +57,16 @@ impl SyntaxNode<'_, SwitchConditional> {
     }
 }
 
+impl Debug for SyntaxNode<'_, SwitchConditional> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SwitchConditional")
+            .field("matched_expr", &self.matched_expr())
+            .field("cases", &self.cases().collect::<Vec<_>>())
+            .field("default", &self.default())
+            .finish()
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub struct SwitchConditionalCase;
@@ -64,6 +85,15 @@ impl SyntaxNode<'_, SwitchConditionalCase> {
     }
 }
 
+impl Debug for SyntaxNode<'_, SwitchConditionalCase> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SwitchConditionalCase")
+            .field("value", &self.value())
+            .field("body", &self.body().collect::<Vec<_>>())
+            .finish()
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub struct SwitchConditionalDefault;
@@ -75,5 +105,13 @@ impl NamedSyntaxNode for SwitchConditionalDefault {
 impl SyntaxNode<'_, SwitchConditionalDefault> {
     pub fn body(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionStatement>> {
         self.field_children("body").map(|n| n.into())
+    }
+}
+
+impl Debug for SyntaxNode<'_, SwitchConditionalDefault> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SwitchConditionalDefault")
+            .field("body", &self.body().collect::<Vec<_>>())
+            .finish()
     }
 }

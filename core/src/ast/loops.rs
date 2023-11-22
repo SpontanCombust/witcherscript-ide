@@ -1,5 +1,7 @@
+use std::fmt::Debug;
 use crate::{NamedSyntaxNode, SyntaxNode};
 use super::{Expression, FunctionStatement};
+
 
 #[derive(Debug, Clone)]
 pub struct ForLoop;
@@ -26,6 +28,17 @@ impl SyntaxNode<'_, ForLoop> {
     }
 }
 
+impl Debug for SyntaxNode<'_, ForLoop> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ForLoop")
+            .field("init", &self.init())
+            .field("cond", &self.cond())
+            .field("iter", &self.iter())
+            .field("body", &self.body())
+            .finish()
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -45,6 +58,15 @@ impl SyntaxNode<'_, WhileLoop> {
     }
 }
 
+impl Debug for SyntaxNode<'_, WhileLoop> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WhileLoop")
+            .field("cond", &self.cond())
+            .field("body", &self.body())
+            .finish()
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -61,5 +83,14 @@ impl SyntaxNode<'_, DoWhileLoop> {
 
     pub fn body(&self) -> SyntaxNode<'_, FunctionStatement> {
         self.field_child("body").unwrap().into()
+    }
+}
+
+impl Debug for SyntaxNode<'_, DoWhileLoop> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DoWhileLoop")
+            .field("cond", &self.cond())
+            .field("body", &self.body())
+            .finish()
     }
 }

@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::SyntaxNode;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -17,6 +19,12 @@ impl SyntaxNode<'_, UnaryOperator> {
             "unary_op_plus" => UnaryOperator::Plus,
             _ => panic!("Unknown unary operator: {}", self.tree_node.kind())
         }
+    }
+}
+
+impl Debug for SyntaxNode<'_, UnaryOperator> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 }
 
@@ -64,6 +72,12 @@ impl SyntaxNode<'_, BinaryOperator> {
     }
 }
 
+impl Debug for SyntaxNode<'_, BinaryOperator> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
+    }
+}
+
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -87,6 +101,12 @@ impl SyntaxNode<'_, AssignmentOperator> {
             "assign_op_mod" => AssignmentOperator::Mod,
             _ => panic!("Unknown assignment operator: {}", self.tree_node.kind())
         }
+    }
+}
+
+impl Debug for SyntaxNode<'_, AssignmentOperator> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 }
 

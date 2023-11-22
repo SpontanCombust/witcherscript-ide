@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::str::FromStr;
 use crate::{NamedSyntaxNode, SyntaxNode, tokens::Keyword};
 
@@ -22,5 +23,11 @@ impl SyntaxNode<'_, StructSpecifier> {
         }
 
         panic!("Unknown struct specifier: {}", s)
+    }
+}
+
+impl Debug for SyntaxNode<'_, StructSpecifier> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 }

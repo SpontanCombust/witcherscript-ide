@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::str::FromStr;
 use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode};
 use super::AccessModifier;
@@ -35,5 +36,11 @@ impl SyntaxNode<'_, MemberVarSpecifier> {
         }
 
         panic!("Unknown member var specifier: {}", s)
+    }
+}
+
+impl Debug for SyntaxNode<'_, MemberVarSpecifier> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
     }
 }

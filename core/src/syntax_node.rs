@@ -1,6 +1,6 @@
 use ropey::Rope;
 use tree_sitter::{Node, Range};
-use std::marker::PhantomData;
+use std::{marker::PhantomData, fmt::Debug};
 
 /// Represents a WitcherScript syntax tree node
 /// 
@@ -13,7 +13,7 @@ use std::marker::PhantomData;
 /// 
 /// ## Arguments
 /// * T - marker for the concrete type of the node; () means it can be any node type
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct SyntaxNode<'script, T = ()> {
     pub(crate) tree_node: Node<'script>,
     pub(crate) phantom : PhantomData<T>
@@ -52,6 +52,7 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
             .children(&mut cursor)
             .filter(|n| !n.is_error())
             .filter(|n| if must_be_named { n.is_named() } else { true })
+            .filter(|n| n.kind() != "comment")
             .collect::<Vec<_>>();
 
         name_nodes.into_iter()
@@ -68,12 +69,12 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
         self.field_children(field).next()
     }
 
-    /// Returns an iterator over non-error children of this node with a fiven field name
+    /// Returns an iterator over named, non-error children of this node with a given field name
     pub(crate) fn field_children(&self, field: &'static str) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
         let mut cursor = self.tree_node.walk();
         let name_nodes = self.tree_node
             .children_by_field_name(field, &mut cursor)
-            .filter(|n| !n.is_error())
+            .filter(|n| !n.is_error() && n.is_named())
             .collect::<Vec<_>>();
 
         name_nodes.into_iter()
@@ -92,6 +93,15 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
         let byte_span = rope.line_to_char(pos_span.start.row) + pos_span.start.column .. rope.line_to_char(pos_span.end.row) + pos_span.end.column;
         let slice = rope.slice(byte_span);
         slice.to_string()
+    }
+}
+
+
+impl Debug for SyntaxNode<'_, ()> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SyntaxNode")
+            .field("tree_node", &self.tree_node)
+            .finish()
     }
 }
 

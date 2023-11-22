@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crate::{SyntaxNode, NamedSyntaxNode, tokens::*};
 
 
@@ -14,6 +15,14 @@ impl SyntaxNode<'_, NestedExpression> {
     }
 }
 
+impl Debug for SyntaxNode<'_, NestedExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("NestedExpression")
+            .field(&self.value())
+            .finish()
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -24,6 +33,12 @@ impl NamedSyntaxNode for ThisExpression {
 }
 
 impl SyntaxNode<'_, ThisExpression> {}
+
+impl Debug for SyntaxNode<'_, ThisExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ThisExpression")
+    }
+}
 
 
 
@@ -36,6 +51,12 @@ impl NamedSyntaxNode for SuperExpression {
 
 impl SyntaxNode<'_, SuperExpression> {}
 
+impl Debug for SyntaxNode<'_, SuperExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "SuperExpression")
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -47,6 +68,12 @@ impl NamedSyntaxNode for ParentExpression {
 
 impl SyntaxNode<'_, ParentExpression> {}
 
+impl Debug for SyntaxNode<'_, ParentExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ParentExpression")
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -57,6 +84,13 @@ impl NamedSyntaxNode for VirtualParentExpression {
 }
 
 impl SyntaxNode<'_, VirtualParentExpression> {}
+
+impl Debug for SyntaxNode<'_, VirtualParentExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "VirtualParentExpression")
+    }
+}
+
 
 
 
@@ -76,6 +110,16 @@ impl SyntaxNode<'_, FunctionCallExpression> {
         func_args(self)
     }
 }
+
+impl Debug for SyntaxNode<'_, FunctionCallExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FunctionCallExpression")
+            .field("func", &self.func())
+            .field("args", &self.args().collect::<Vec<_>>())
+            .finish()
+    }
+}
+
 
 type FuncCallArg<'script> = Option<SyntaxNode<'script, Expression<'script>>>;
 
@@ -143,6 +187,15 @@ impl SyntaxNode<'_, ArrayExpression> {
     }
 }
 
+impl Debug for SyntaxNode<'_, ArrayExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ArrayExpression")
+            .field("accessor", &self.accessor())
+            .field("index", &self.index())
+            .finish()
+    }
+} 
+
 
 
 #[derive(Debug, Clone)]
@@ -161,6 +214,15 @@ impl SyntaxNode<'_, MemberFieldExpression> {
         self.field_child("member").unwrap().into()
     }
 }
+
+impl Debug for SyntaxNode<'_, MemberFieldExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MemberFieldExpression")
+            .field("accessor", &self.accessor())
+            .field("member", &self.member())
+            .finish()
+    }
+} 
 
 
 
@@ -185,6 +247,16 @@ impl SyntaxNode<'_, MethodCallExpression> {
     }
 }
 
+impl Debug for SyntaxNode<'_, MethodCallExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FunctionCallExpression")
+            .field("accessor", &self.accessor())
+            .field("func", &self.func())
+            .field("args", &self.args().collect::<Vec<_>>())
+            .finish()
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -200,7 +272,16 @@ impl SyntaxNode<'_, InstantiationExpression> {
     }
 
     pub fn lifetime_obj(&self) -> SyntaxNode<'_, Expression> {
-        self.field_child("func").unwrap().into()
+        self.field_child("lifetime_obj").unwrap().into()
+    }
+}
+
+impl Debug for SyntaxNode<'_, InstantiationExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("InstantiationExpression")
+            .field("class", &self.class())
+            .field("lifetime_obj", &self.lifetime_obj())
+            .finish()
     }
 }
 
@@ -223,6 +304,15 @@ impl SyntaxNode<'_, TypeCastExpression> {
     }
 }
 
+impl Debug for SyntaxNode<'_, TypeCastExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TypeCastExpression")
+            .field("type", &self.target_type())
+            .field("value", &self.value())
+            .finish()
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -239,6 +329,15 @@ impl SyntaxNode<'_, UnaryOperationExpression> {
 
     pub fn right(&self) -> SyntaxNode<'_, Expression> {
         self.field_child("right").unwrap().into()
+    }
+}
+
+impl Debug for SyntaxNode<'_, UnaryOperationExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("UnaryOperationExpression")
+            .field("op", &self.op())
+            .field("right", &self.right())
+            .finish()
     }
 }
 
@@ -265,6 +364,16 @@ impl SyntaxNode<'_, BinaryOperationExpression> {
     }
 }
 
+impl Debug for SyntaxNode<'_, BinaryOperationExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BinaryOperationExpression")
+            .field("op", &self.op())
+            .field("left", &self.left())
+            .field("right", &self.right())
+            .finish()
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -288,6 +397,16 @@ impl SyntaxNode<'_, AssignmentOperationExpression> {
     }
 }
 
+impl Debug for SyntaxNode<'_, AssignmentOperationExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AssignmentOperationExpression")
+            .field("op", &self.op())
+            .field("left", &self.left())
+            .field("right", &self.right())
+            .finish()
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -308,6 +427,16 @@ impl SyntaxNode<'_, TernaryConditionalExpression> {
 
     pub fn alt(&self) -> SyntaxNode<'_, Expression> {
         self.field_child("alt").unwrap().into()
+    }
+}
+
+impl Debug for SyntaxNode<'_, TernaryConditionalExpression> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TernaryConditionalExpression")
+            .field("cond", &self.cond())
+            .field("conseq", &self.conseq())
+            .field("alt", &self.alt())
+            .finish()
     }
 }
 
@@ -360,6 +489,12 @@ impl SyntaxNode<'_, Expression<'_>> {
     }
 }
 
+impl Debug for SyntaxNode<'_, Expression<'_>> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -372,5 +507,13 @@ impl NamedSyntaxNode for ExpressionStatement {
 impl SyntaxNode<'_, ExpressionStatement> {
     pub fn expr(&self) -> SyntaxNode<'_, Expression<'_>> {
         self.first_child(true).unwrap().into()
+    }
+}
+
+impl Debug for SyntaxNode<'_, ExpressionStatement> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("ExpressionStatement")
+            .field(&self.expr())
+            .finish()
     }
 }

@@ -12,5 +12,5 @@ thiserror.workspace = true
 shrinkwraprs.workspace = true
 ropey.workspace = true
 tree-sitter = "0.20"
-tree-sitter-witcherscript = { git = "https://github.com/SpontanCombust/tree-sitter-witcherscript.git" }
+tree-sitter-witcherscript = { git = "https://github.com/SpontanCombust/tree-sitter-witcherscript.git", branch = "master" }
 encoding_rs_io = "0.1"

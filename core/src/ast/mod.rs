@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crate::{SyntaxNode, NamedSyntaxNode, Script};
 
 
@@ -51,6 +52,12 @@ impl SyntaxNode<'_, ScriptStatement<'_>> {
     }
 }
 
+impl Debug for SyntaxNode<'_, ScriptStatement<'_>> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
+    }
+}
+
 
 impl NamedSyntaxNode for Script {
     const NODE_NAME: &'static str = "script";
@@ -59,5 +66,11 @@ impl NamedSyntaxNode for Script {
 impl SyntaxNode<'_, Script> {
     pub fn statements(&self) -> impl Iterator<Item = SyntaxNode<'_, ScriptStatement>> {
         self.children(true).map(|n| n.into())
+    }
+}
+
+impl Debug for SyntaxNode<'_, Script> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Script{:?}", &self.statements().collect::<Vec<_>>())
     }
 }
