@@ -1,6 +1,6 @@
 [package]
 name = "witcherscript"
-description = "Core library containing the AST and parser"
+description = "Core library with grammar parsing utilities"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

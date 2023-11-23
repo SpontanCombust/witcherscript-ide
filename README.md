@@ -1,3 +1,3 @@
 # WitcherScript
 
-A toolkit for parsing and analyzing WitcherScript code.
+Toolkit for parsing and analyzing WitcherScript code together with Language Server implementation.

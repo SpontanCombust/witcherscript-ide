@@ -1,6 +1,6 @@
 [package]
 name = "witcherscript-analyzer"
-description = "Utilities for analyzing WitcherScript code and its validity"
+description = "WitcherScript semantic analysis toolset"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

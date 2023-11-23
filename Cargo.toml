@@ -3,7 +3,6 @@ members = ["core", "analyzer"]
 resolver = "2"
 
 [workspace.package]
-description = "A toolkit for parsing and analyzing WitcherScript code"
 version = "0.1.0"
 edition = "2021"
 authors = ["SpontanCombust"]
