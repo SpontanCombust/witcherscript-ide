@@ -8,3 +8,4 @@ authors.workspace = true
 [dependencies]
 witcherscript = { path = "../core" }
 lazy_static.workspace = true
+uuid.workspace = true
