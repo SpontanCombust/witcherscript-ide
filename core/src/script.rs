@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::{self, BufReader, BufRead},
-    path::{PathBuf, Path}
+    path::Path
 };
 
 use ropey::{Rope, RopeBuilder};
@@ -13,7 +13,6 @@ use crate::SyntaxNode;
 
 #[derive(Debug, Clone)]
 pub struct Script {
-    path: PathBuf,
     parse_tree: Tree
 }
 
@@ -28,6 +27,13 @@ pub enum ScriptError {
 }
 
 impl Script {
+    pub fn from_str(s: &str) -> Result<(Self, Rope), ScriptError> {
+        let rope = Rope::from_str(s);
+        let script = Self::from_rope(&rope)?;
+
+        Ok((script, rope))
+    }
+
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<(Self, Rope), ScriptError> {
         use ScriptError::*;
 
@@ -44,7 +50,15 @@ impl Script {
             builder.append(&line);
             line.clear();
         }
+
         let rope = builder.finish();
+        let script = Self::from_rope(&rope)?;
+
+        Ok((script, rope))
+    }
+
+    fn from_rope(rope: &Rope) -> Result<Self, ScriptError> {
+        use ScriptError::*;
 
         let mut parser = Parser::new();
         parser.set_language(tree_sitter_witcherscript::language()).map_err(ParserInitError)?;
@@ -59,16 +73,12 @@ impl Script {
         }, None).unwrap();
 
         let script = Self {
-            path: path.as_ref().into(), 
             parse_tree
         };
 
-        Ok((script, rope))
+        Ok(script)
     }
 
-    pub fn path(&self) -> &Path {
-        &self.path
-    }
 
     pub fn root_node(&self) -> SyntaxNode<'_, Script> {
         SyntaxNode::new(self.parse_tree.root_node())
