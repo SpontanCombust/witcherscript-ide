@@ -46,5 +46,5 @@ pub trait ChildSymbolInfo: SymbolInfo {
     fn parent_symbol_id(&self) -> Uuid;
 }
 
-pub const ERROR_SYMBOL_ID: Uuid = uuid!("00000000-0000-0000-0000-000000000000");
+pub const ERROR_SYMBOL_ID: Uuid         = uuid!("00000000-0000-0000-0000-000000000000");
 pub const NATIVE_SYMBOL_SCRIPT_ID: Uuid = uuid!("00000000-0000-0000-0000-000000000001");
