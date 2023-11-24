@@ -21,11 +21,6 @@ impl MemberVarInfo {
             type_id,
         }
     }
-
-    
-    pub fn type_id(&self) -> Uuid {
-        self.type_id
-    }
 }
 
 impl SymbolInfo for MemberVarInfo {

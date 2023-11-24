@@ -47,15 +47,11 @@ pub struct EnumMemberInfo {
 }
 
 impl EnumMemberInfo {
-    pub fn new(enum_info: &EnumInfo, name: &str, value: Option<i32>) -> Self {
-        let value = if let Some(v) = value { 
-            v 
-        } else { 
-            enum_info.members
-                .last()
-                .map(|m| m.value)
-                .unwrap_or(-1) + 1 
-        };
+    pub fn new(enum_info: &EnumInfo, name: &str) -> Self {
+        let value = enum_info.members
+            .last()
+            .map(|m| m.value)
+            .unwrap_or(-1) + 1;
 
         Self {
             enum_id: enum_info.symbol_id,

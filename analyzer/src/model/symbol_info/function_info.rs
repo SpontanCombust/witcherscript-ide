@@ -1,6 +1,6 @@
 use uuid::Uuid;
 use witcherscript::attribs::*;
-use super::{FunctionParameterInfo, SymbolInfo, SymbolType, GlobalSymbolInfo, ChildSymbolInfo};
+use super::{FunctionParameterInfo, SymbolInfo, SymbolType, GlobalSymbolInfo, ChildSymbolInfo, ERROR_SYMBOL_ID};
 
 
 pub struct GlobalFunctionInfo {
@@ -14,7 +14,7 @@ pub struct GlobalFunctionInfo {
 }
 
 impl GlobalFunctionInfo {
-    pub fn new(script_id: Uuid, name: &str, return_type_id: Uuid) -> Self {
+    pub fn new(script_id: Uuid, name: &str) -> Self {
         Self {
             script_id,
             symbol_id: Uuid::new_v4(),
@@ -22,7 +22,7 @@ impl GlobalFunctionInfo {
             specifiers: Vec::new(),
             flavour: None,
             params: Vec::new(),
-            return_type_id
+            return_type_id: ERROR_SYMBOL_ID //TODO change to void when that's set as const Uuid
         }
     }
 }
@@ -59,7 +59,7 @@ pub struct MemberFunctionInfo {
 }
 
 impl MemberFunctionInfo {
-    pub fn new(class_id: Uuid, name: &str, return_type_id: Uuid) -> Self {
+    pub fn new(class_id: Uuid, name: &str) -> Self {
         Self {
             class_id,
             symbol_id: Uuid::new_v4(),
@@ -67,7 +67,7 @@ impl MemberFunctionInfo {
             specifiers: Vec::new(),
             flavour: None,
             params: Vec::new(),
-            return_type_id
+            return_type_id: ERROR_SYMBOL_ID //TODO change to void when that's set as const Uuid
         }
     }
 }
