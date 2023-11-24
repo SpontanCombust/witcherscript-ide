@@ -16,4 +16,4 @@ encoding_rs_io = "0.1"
 
 [dependencies.tree-sitter-witcherscript]
 git = "https://github.com/SpontanCombust/tree-sitter-witcherscript.git"
-branch = "master"
+tag = "v0.3.0"

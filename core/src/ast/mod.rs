@@ -29,7 +29,7 @@ pub use nop::*;
 
 #[derive(Debug, Clone)]
 pub enum ScriptStatement<'script> {
-    Function(SyntaxNode<'script, FunctionDeclaration>),
+    Function(SyntaxNode<'script, GlobalFunctionDeclaration>),
     Class(SyntaxNode<'script, ClassDeclaration>),
     State(SyntaxNode<'script, StateDeclaration>),
     Struct(SyntaxNode<'script, StructDeclaration>),
@@ -41,7 +41,7 @@ impl SyntaxNode<'_, ScriptStatement<'_>> {
     pub fn value(&self) -> ScriptStatement {
         let s = self.tree_node.kind();
         match s {
-            FunctionDeclaration::NODE_NAME => ScriptStatement::Function(self.clone().into()),
+            GlobalFunctionDeclaration::NODE_NAME => ScriptStatement::Function(self.clone().into()),
             ClassDeclaration::NODE_NAME => ScriptStatement::Class(self.clone().into()),
             StateDeclaration::NODE_NAME => ScriptStatement::State(self.clone().into()),
             StructDeclaration::NODE_NAME => ScriptStatement::Struct(self.clone().into()),

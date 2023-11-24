@@ -37,38 +37,67 @@ impl Debug for SyntaxNode<'_, FunctionParameterSpecifier> {
 
 
 
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FunctionFlavour {
-    Entry,
-    Exec,
-    Quest,
-    Timer,
-    Storyscene,
+pub enum GlobalFunctionSpecifier {
+    Import,
+    Latent,
 }
 
-impl NamedSyntaxNode for FunctionFlavour {
-    const NODE_NAME: &'static str = "func_flavour";
+impl NamedSyntaxNode for GlobalFunctionSpecifier {
+    const NODE_NAME: &'static str = "global_func_specifier";
 }
 
-impl SyntaxNode<'_, FunctionFlavour> {
-    pub fn value(&self) -> FunctionFlavour {
+impl SyntaxNode<'_, GlobalFunctionSpecifier> {
+    pub fn value(&self) -> GlobalFunctionSpecifier {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
             match k {
-                Keyword::Entry => return FunctionFlavour::Entry,
-                Keyword::Exec => return FunctionFlavour::Exec,
-                Keyword::Quest => return FunctionFlavour::Quest,
-                Keyword::Timer => return FunctionFlavour::Timer,
-                Keyword::Storyscene => return FunctionFlavour::Storyscene,
+                Keyword::Import => return GlobalFunctionSpecifier::Import,
+                Keyword::Latent => return GlobalFunctionSpecifier::Latent,
                 _ => {}
             }
         }
 
-        panic!("Unknown function flavour: {}", s)
+        panic!("Unknown global function specifier: {}", s)
     }
 }
 
-impl Debug for SyntaxNode<'_, FunctionFlavour> {
+impl Debug for SyntaxNode<'_, GlobalFunctionSpecifier> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
+    }
+}
+
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GlobalFunctionFlavour {
+    Exec,
+    Quest,
+    Storyscene,
+}
+
+impl NamedSyntaxNode for GlobalFunctionFlavour {
+    const NODE_NAME: &'static str = "global_func_flavour";
+}
+
+impl SyntaxNode<'_, GlobalFunctionFlavour> {
+    pub fn value(&self) -> GlobalFunctionFlavour {
+        let s = self.first_child(false).unwrap().tree_node.kind();
+        if let Ok(k) = Keyword::from_str(s) {
+            match k {
+                Keyword::Exec => return GlobalFunctionFlavour::Exec,
+                Keyword::Quest => return GlobalFunctionFlavour::Quest,
+                Keyword::Storyscene => return GlobalFunctionFlavour::Storyscene,
+                _ => {}
+            }
+        }
+
+        panic!("Unknown global function flavour: {}", s)
+    }
+}
+
+impl Debug for SyntaxNode<'_, GlobalFunctionFlavour> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }
@@ -76,38 +105,71 @@ impl Debug for SyntaxNode<'_, FunctionFlavour> {
 
 
 
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FunctionSpecifier {
+pub enum MemberFunctionSpecifier {
     AccessModifier(AccessModifier),
     Import,
     Final,
     Latent,
 }
 
-impl NamedSyntaxNode for FunctionSpecifier {
-    const NODE_NAME: &'static str = "func_specifier";
+impl NamedSyntaxNode for MemberFunctionSpecifier {
+    const NODE_NAME: &'static str = "member_func_specifier";
 }
 
-impl SyntaxNode<'_, FunctionSpecifier> {
-    pub fn value(&self) -> FunctionSpecifier {
+impl SyntaxNode<'_, MemberFunctionSpecifier> {
+    pub fn value(&self) -> MemberFunctionSpecifier {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
             match k {
-                Keyword::Private => return FunctionSpecifier::AccessModifier(AccessModifier::Private),
-                Keyword::Protected => return FunctionSpecifier::AccessModifier(AccessModifier::Protected),
-                Keyword::Public => return FunctionSpecifier::AccessModifier(AccessModifier::Public),
-                Keyword::Import => return FunctionSpecifier::Import,
-                Keyword::Final => return FunctionSpecifier::Final,
-                Keyword::Latent => return FunctionSpecifier::Latent,
+                Keyword::Private => return MemberFunctionSpecifier::AccessModifier(AccessModifier::Private),
+                Keyword::Protected => return MemberFunctionSpecifier::AccessModifier(AccessModifier::Protected),
+                Keyword::Public => return MemberFunctionSpecifier::AccessModifier(AccessModifier::Public),
+                Keyword::Import => return MemberFunctionSpecifier::Import,
+                Keyword::Final => return MemberFunctionSpecifier::Final,
+                Keyword::Latent => return MemberFunctionSpecifier::Latent,
                 _ => {}
             }
         }
 
-        panic!("Unknown function specifier: {}", s)
+        panic!("Unknown member function specifier: {}", s)
     }
 }
 
-impl Debug for SyntaxNode<'_, FunctionSpecifier> {
+impl Debug for SyntaxNode<'_, MemberFunctionSpecifier> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.value())
+    }
+}
+
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MemberFunctionFlavour {
+    Entry,
+    Timer
+}
+
+impl NamedSyntaxNode for MemberFunctionFlavour {
+    const NODE_NAME: &'static str = "member_func_flavour";
+}
+
+impl SyntaxNode<'_, MemberFunctionFlavour> {
+    pub fn value(&self) -> MemberFunctionFlavour {
+        let s = self.first_child(false).unwrap().tree_node.kind();
+        if let Ok(k) = Keyword::from_str(s) {
+            match k {
+                Keyword::Entry => return MemberFunctionFlavour::Entry,
+                Keyword::Timer => return MemberFunctionFlavour::Timer,
+                _ => {}
+            }
+        }
+
+        panic!("Unknown member function flavour: {}", s)
+    }
+}
+
+impl Debug for SyntaxNode<'_, MemberFunctionFlavour> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }

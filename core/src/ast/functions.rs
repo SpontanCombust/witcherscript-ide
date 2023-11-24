@@ -36,18 +36,18 @@ impl Debug for SyntaxNode<'_, EventDeclaration> {
 
 
 #[derive(Debug, Clone)]
-pub struct FunctionDeclaration;
+pub struct GlobalFunctionDeclaration;
 
-impl NamedSyntaxNode for FunctionDeclaration {
-    const NODE_NAME: &'static str = "func_decl_stmt";
+impl NamedSyntaxNode for GlobalFunctionDeclaration {
+    const NODE_NAME: &'static str = "global_func_decl_stmt";
 }
 
-impl SyntaxNode<'_, FunctionDeclaration> {
-    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionSpecifier>> {
+impl SyntaxNode<'_, GlobalFunctionDeclaration> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, GlobalFunctionSpecifier>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn flavour(&self) -> Option<SyntaxNode<'_, FunctionFlavour>> {
+    pub fn flavour(&self) -> Option<SyntaxNode<'_, GlobalFunctionFlavour>> {
         self.field_child("flavour").map(|n| n.into())
     }
 
@@ -68,9 +68,9 @@ impl SyntaxNode<'_, FunctionDeclaration> {
     }
 }
 
-impl Debug for SyntaxNode<'_, FunctionDeclaration> {
+impl Debug for SyntaxNode<'_, GlobalFunctionDeclaration> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FunctionDeclaration")
+        f.debug_struct("GlobalFunctionDeclaration")
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("flavour", &self.flavour())
             .field("name", &self.name())
@@ -80,6 +80,55 @@ impl Debug for SyntaxNode<'_, FunctionDeclaration> {
             .finish()
     }
 }
+
+
+#[derive(Debug, Clone)]
+pub struct MemberFunctionDeclaration;
+
+impl NamedSyntaxNode for MemberFunctionDeclaration {
+    const NODE_NAME: &'static str = "member_func_decl_stmt";
+}
+
+impl SyntaxNode<'_, MemberFunctionDeclaration> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, MemberFunctionSpecifier>> {
+        self.field_children("specifiers").map(|n| n.into())
+    }
+
+    pub fn flavour(&self) -> Option<SyntaxNode<'_, MemberFunctionFlavour>> {
+        self.field_child("flavour").map(|n| n.into())
+    }
+
+    pub fn name(&self) -> SyntaxNode<'_, Identifier> {
+        self.field_child("name").unwrap().into()
+    }
+
+    pub fn params(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionParameterGroup>> {
+        self.field_children("params").map(|n| n.into())
+    }
+
+    pub fn return_type(&self) -> Option<SyntaxNode<'_, TypeAnnotation>> {
+        self.field_child("return_type").map(|n| n.into())
+    }
+
+    pub fn definition(&self) -> Option<SyntaxNode<'_, FunctionBlock>> {
+        self.field_child("definition").map(|n| n.into())
+    }
+}
+
+impl Debug for SyntaxNode<'_, MemberFunctionDeclaration> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MemberFunctionDeclaration")
+            .field("specifiers", &self.specifiers().collect::<Vec<_>>())
+            .field("flavour", &self.flavour())
+            .field("name", &self.name())
+            .field("params", &self.params().collect::<Vec<_>>())
+            .field("return_type", &self.return_type())
+            .field("definition", &self.definition())
+            .finish()
+    }
+}
+
+
 
 
 #[derive(Debug, Clone)]
