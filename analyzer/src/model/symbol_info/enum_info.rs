@@ -6,7 +6,7 @@ pub struct EnumInfo {
     script_id: Uuid,
     symbol_id: Uuid,
     name: String,
-    members: Vec<EnumMemberInfo>,
+    pub members: Vec<EnumMemberInfo>,
 }
 
 impl EnumInfo {
@@ -17,15 +17,6 @@ impl EnumInfo {
             name: name.to_owned(),
             members: Vec::new(),
         }
-    }
-
-
-    pub fn members(&self) -> &[EnumMemberInfo] {
-        &self.members
-    }
-
-    pub fn add_member(&mut self, member: EnumMemberInfo) {
-        self.members.push(member);
     }
 }
 
@@ -52,7 +43,7 @@ pub struct EnumMemberInfo {
     enum_id: Uuid,
     symbol_id: Uuid,
     name: String,
-    value: i32
+    pub value: i32
 }
 
 impl EnumMemberInfo {
@@ -72,15 +63,6 @@ impl EnumMemberInfo {
             name: name.to_owned(),
             value
         }
-    }
-
-
-    pub fn value(&self) -> i32 {
-        self.value
-    }
-
-    pub fn set_value(&mut self, value: i32) {
-        self.value = value;
     }
 }
 

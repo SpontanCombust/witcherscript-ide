@@ -1,11 +1,13 @@
 use uuid::Uuid;
+use witcherscript::attribs::StructSpecifier;
 use super::{SymbolInfo, SymbolType, MemberVarInfo, GlobalSymbolInfo};
 
 pub struct StructInfo {
     script_id: Uuid,
     symbol_id: Uuid,
     name: String,
-    fields: Vec<MemberVarInfo>
+    pub specifiers: Vec<StructSpecifier>,
+    pub fields: Vec<MemberVarInfo>,
 }
 
 impl StructInfo {
@@ -14,17 +16,9 @@ impl StructInfo {
             script_id,
             symbol_id: Uuid::new_v4(),
             name: name.to_owned(),
+            specifiers: Vec::new(),
             fields: Vec::new()
         }
-    }
-
-
-    pub fn fields(&self) -> &[MemberVarInfo] {
-        &self.fields
-    }
-
-    pub fn add_field(&mut self, field: MemberVarInfo) {
-        self.fields.push(field);
     }
 }
 

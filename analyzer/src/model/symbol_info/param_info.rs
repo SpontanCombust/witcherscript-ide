@@ -6,8 +6,8 @@ pub struct FunctionParameterInfo {
     func_id: Uuid,
     symbol_id: Uuid,
     name: String,
-    specifiers: Vec<FunctionParameterSpecifier>,
-    type_id: Uuid
+    pub specifiers: Vec<FunctionParameterSpecifier>,
+    pub type_id: Uuid
 }
 
 impl FunctionParameterInfo {
@@ -19,20 +19,6 @@ impl FunctionParameterInfo {
             specifiers: Vec::new(),
             type_id
         }
-    }
-
-    
-    pub fn specifiers(&self) -> &[FunctionParameterSpecifier] {
-        &self.specifiers
-    }
-
-    pub fn add_specifier(&mut self, specifier: FunctionParameterSpecifier) {
-        self.specifiers.push(specifier)
-    }
-
-
-    pub fn type_id(&self) -> Uuid {
-        self.type_id
     }
 }
 

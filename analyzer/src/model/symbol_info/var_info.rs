@@ -7,8 +7,8 @@ pub struct MemberVarInfo {
     owner_id: Uuid,
     symbol_id: Uuid,
     name: String,
-    specifiers: Vec<MemberVarSpecifier>,
-    type_id: Uuid,
+    pub specifiers: Vec<MemberVarSpecifier>,
+    pub type_id: Uuid,
 }
 
 impl MemberVarInfo {
@@ -20,15 +20,6 @@ impl MemberVarInfo {
             name: name.to_owned(),
             type_id,
         }
-    }
-
-
-    pub fn specifiers(&self) -> &[MemberVarSpecifier] {
-        &self.specifiers
-    }
-
-    pub fn add_specifier(&mut self, specifier: MemberVarSpecifier) {
-        self.specifiers.push(specifier)
     }
 
     
@@ -61,7 +52,7 @@ pub struct VarInfo {
     func_id: Uuid,
     symbol_id: Uuid,
     name: String,
-    type_id: Uuid,
+    pub type_id: Uuid,
 }
 
 impl VarInfo {
@@ -72,11 +63,6 @@ impl VarInfo {
             name: name.to_owned(),
             type_id
         }
-    }
-
-
-    pub fn type_id(&self) -> Uuid {
-        self.type_id
     }
 }
 
