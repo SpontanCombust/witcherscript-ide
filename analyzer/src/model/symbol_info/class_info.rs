@@ -1,6 +1,6 @@
 use uuid::Uuid;
-use witcherscript::attribs::{ClassSpecifier, StateSpecifier};
-use super::{MemberVarInfo, MemberFunctionInfo, EventInfo, SymbolInfo, SymbolType, GlobalSymbolInfo, TypeParameterInfo};
+use witcherscript::attribs::{ClassSpecifier, StateSpecifier, ClassAutobindSpecifier};
+use super::{MemberVarInfo, MemberFunctionInfo, EventInfo, SymbolInfo, SymbolType, GlobalSymbolInfo, TypeParameterInfo, ChildSymbolInfo};
 
 
 #[derive(Debug, Clone)]
@@ -83,6 +83,47 @@ impl GlobalSymbolInfo for ClassInfo {
         self.script_id
     }
 }
+
+
+#[derive(Debug, Clone)]
+pub struct AutobindInfo {
+    class_id: Uuid,
+    symbol_id: Uuid,
+    name: String,
+    pub specifiers: Vec<ClassAutobindSpecifier>,
+    pub type_id: Uuid,
+}
+
+impl AutobindInfo {
+    pub fn new(class_id: Uuid, name: &str, type_id: Uuid) -> Self {
+        Self {
+            class_id,
+            symbol_id: Uuid::new_v4(),
+            name: name.to_owned(),
+            type_id,
+            specifiers: Vec::new()
+        }
+    }
+}
+
+impl SymbolInfo for AutobindInfo {
+    const TYPE: SymbolType = SymbolType::Field;
+
+    fn symbol_id(&self) -> Uuid {
+        self.symbol_id
+    }
+
+    fn name(&self) -> &str {
+        self.name.as_str()
+    }
+}
+
+impl ChildSymbolInfo for AutobindInfo {
+    fn parent_symbol_id(&self) -> Uuid {
+        self.class_id
+    }
+}
+
 
 
 
