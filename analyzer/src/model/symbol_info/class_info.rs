@@ -9,7 +9,6 @@ pub struct ClassInfo {
     symbol_id: Uuid,
     name: String, // doesn't include possible type parameter 
     type_param: Option<TypeParameterInfo>, // the only generic type in WS i.e. array<T> takes only one type argument
-    full_name: String, // includes type parameter (if there is any)
     pub specifiers: Vec<ClassSpecifier>,
     pub base_id: Option<Uuid>,
     pub member_vars: Vec<MemberVarInfo>,
@@ -23,7 +22,6 @@ impl ClassInfo {
             script_id,
             symbol_id: Uuid::new_v4(),
             name: name.to_owned(),
-            full_name: if let Some(t) = &type_param { format!("{}<{}>", name, t.name()) } else { name.to_owned() },
             type_param,
             specifiers: Vec::new(),
             base_id: None,
@@ -33,22 +31,39 @@ impl ClassInfo {
         }
     }
 
-    /*
+    
+    pub fn type_param(&self) -> &Option<TypeParameterInfo> {
+        &self.type_param
+    }
+
     /// Returns new symbol for this class, but with all generics replaced with actual types.
     /// Returns Err if this class doesn't take any type arguments.
     /// 
-    /// Due to an extremly sparse use of generics in WS this should be enough. There is only "array", 
-    /// which doesn't have any members that also take type arguments. Besides, it you cannot declare 
-    /// your own generic classes. 
-    pub fn with_generic_substituted(&self, substitute: Uuid) -> Result<Self, String> {
+    /// Due to an extremly sparse use of generics in WS (there's only the "array" type and you can't declare your own generic types)
+    /// the approach taken here to handling them is extremely minimalisitc. If at some point for some reason
+    /// there will exist a need for universal generic support this will need to be rewritten. 
+    pub fn with_generic_substituted(&self, substitute_id: Uuid, substitute_name: &str) -> Result<Self, String> {
         if self.type_param.is_none() {
             return Err(format!("Class {} doesn't take any type arguments.", self.name));
         }
 
-        let symbol_id = Uuid::new_v4();
-        let name = 
+        let type_param_id = self.type_param.as_ref().unwrap().symbol_id();
+        let new_symbol_id = Uuid::new_v4();
+        let name = format!("{}<{}>", self.name, substitute_name);
+        let subst_members = self.member_funcs.iter()
+                                .map(|m| m.with_type_substituted(new_symbol_id, (type_param_id, substitute_id)))
+                                .collect::<Vec<_>>();
+
+        // array doesn't have any properties exposed other than member functions
+
+        Ok(Self {
+            symbol_id: new_symbol_id,
+            name,
+            type_param: None,
+            member_funcs: subst_members,
+            ..self.clone()
+        })
     }
-    */
 }
 
 impl SymbolInfo for ClassInfo {
@@ -59,7 +74,7 @@ impl SymbolInfo for ClassInfo {
     }
 
     fn name(&self) -> &str {
-        self.full_name.as_str()
+        self.name.as_str()
     }
 }
 
