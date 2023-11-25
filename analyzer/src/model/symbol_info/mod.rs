@@ -4,17 +4,19 @@ mod basic_type_info;
 mod enum_info;
 mod struct_info;
 mod var_info;
-mod param_info;
+mod func_param_info;
 mod function_info;
 mod class_info;
+// mod type_param_info;
 
 pub use basic_type_info::*;
 pub use enum_info::*;
 pub use struct_info::*;
 pub use var_info::*;
-pub use param_info::*;
+pub use func_param_info::*;
 pub use function_info::*;
 pub use class_info::*;
+// pub use type_param_info::*;
 
 
 pub trait SymbolInfo {
