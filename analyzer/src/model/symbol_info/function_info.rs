@@ -3,6 +3,7 @@ use witcherscript::attribs::*;
 use super::{FunctionParameterInfo, SymbolInfo, SymbolType, GlobalSymbolInfo, ChildSymbolInfo, ERROR_SYMBOL_ID};
 
 
+#[derive(Debug, Clone)]
 pub struct GlobalFunctionInfo {
     script_id: Uuid,
     symbol_id: Uuid,
@@ -48,6 +49,7 @@ impl GlobalSymbolInfo for GlobalFunctionInfo {
 
 
 
+#[derive(Debug, Clone)]
 pub struct MemberFunctionInfo {
     class_id: Uuid,
     symbol_id: Uuid,
@@ -68,6 +70,31 @@ impl MemberFunctionInfo {
             flavour: None,
             params: Vec::new(),
             return_type_id: ERROR_SYMBOL_ID //TODO change to void when that's set as const Uuid
+        }
+    }
+
+    /// Returns a new instance with all occurances of mapping.0 replaced with mapping.1.
+    /// Used in handling the array type.
+    pub fn with_type_substituted(&self, class_id: Uuid, mapping: (Uuid, Uuid)) -> Self {
+        let symbol_id = Uuid::new_v4();
+
+        let subst_params = self.params.iter()
+                                .filter(|p| p.type_id == mapping.0)
+                                .map(|p| p.with_type_substituted(symbol_id, mapping.1))
+                                .collect::<Vec<_>>();
+
+        let subst_ret_type = if self.return_type_id == mapping.0 {
+            mapping.1
+        } else {
+            self.return_type_id
+        };
+
+        Self {
+            class_id,
+            symbol_id,
+            params: subst_params,
+            return_type_id: subst_ret_type,
+            ..self.clone()
         }
     }
 }
@@ -93,6 +120,7 @@ impl ChildSymbolInfo for MemberFunctionInfo {
 
 
 
+#[derive(Debug, Clone)]
 pub struct EventInfo {
     class_id: Uuid,
     symbol_id: Uuid,

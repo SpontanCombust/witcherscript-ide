@@ -2,6 +2,8 @@ use uuid::Uuid;
 use witcherscript::attribs::FunctionParameterSpecifier;
 use super::{SymbolInfo, SymbolType, ChildSymbolInfo};
 
+
+#[derive(Debug, Clone)]
 pub struct FunctionParameterInfo {
     func_id: Uuid,
     symbol_id: Uuid,
@@ -20,10 +22,20 @@ impl FunctionParameterInfo {
             type_id
         }
     }
+
+    /// Used in handling array type.
+    pub fn with_type_substituted(&self, func_id: Uuid, substitute: Uuid) -> Self {
+        Self {
+            func_id,
+            symbol_id: Uuid::new_v4(),
+            type_id: substitute,
+            ..self.clone()
+        }
+    }
 }
 
 impl SymbolInfo for FunctionParameterInfo {
-    const TYPE: super::SymbolType = SymbolType::Parameter;
+    const TYPE: SymbolType = SymbolType::Parameter;
 
     fn symbol_id(&self) -> Uuid {
         self.symbol_id

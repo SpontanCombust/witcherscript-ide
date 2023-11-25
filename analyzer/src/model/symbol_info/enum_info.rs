@@ -1,7 +1,8 @@
 use uuid::Uuid;
-
 use super::{SymbolInfo, SymbolType, GlobalSymbolInfo, ChildSymbolInfo};
 
+
+#[derive(Debug, Clone)]
 pub struct EnumInfo {
     script_id: Uuid,
     symbol_id: Uuid,
@@ -39,6 +40,7 @@ impl GlobalSymbolInfo for EnumInfo {
 }
 
 
+#[derive(Debug, Clone)]
 pub struct EnumMemberInfo {
     enum_id: Uuid,
     symbol_id: Uuid,

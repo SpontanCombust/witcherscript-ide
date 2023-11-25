@@ -1,7 +1,7 @@
 use uuid::Uuid;
-
 use super::{SymbolInfo, SymbolType, GlobalSymbolInfo, NATIVE_SYMBOL_SCRIPT_ID};
 
+#[derive(Debug, Clone)]
 pub struct BasicTypeInfo {
     symbol_id: Uuid,
     name: String

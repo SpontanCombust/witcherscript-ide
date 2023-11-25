@@ -2,6 +2,8 @@ use uuid::Uuid;
 use witcherscript::attribs::StructSpecifier;
 use super::{SymbolInfo, SymbolType, MemberVarInfo, GlobalSymbolInfo};
 
+
+#[derive(Debug, Clone)]
 pub struct StructInfo {
     script_id: Uuid,
     symbol_id: Uuid,

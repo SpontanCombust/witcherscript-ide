@@ -3,6 +3,7 @@ use witcherscript::attribs::MemberVarSpecifier;
 use super::{SymbolInfo, SymbolType, ChildSymbolInfo, GlobalSymbolInfo, NATIVE_SYMBOL_SCRIPT_ID};
 
 
+#[derive(Debug, Clone)]
 pub struct MemberVarInfo {
     owner_id: Uuid,
     symbol_id: Uuid,
@@ -43,6 +44,7 @@ impl ChildSymbolInfo for MemberVarInfo {
 
 
 
+#[derive(Debug, Clone)]
 pub struct VarInfo {
     func_id: Uuid,
     symbol_id: Uuid,
@@ -81,6 +83,7 @@ impl ChildSymbolInfo for VarInfo {
 
 
 
+#[derive(Debug, Clone)]
 pub struct GlobalVarInfo {
     symbol_id: Uuid,
     name: String,
