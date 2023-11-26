@@ -73,18 +73,18 @@ impl MemberFunctionSymbol {
         }
     }
 
-    /// Returns a new instance with all occurances of mapping.0 replaced with mapping.1.
+    /// Returns a new instance with all occurances of `type_id` replaced with `substitute_id`.
     /// Used in handling the array type.
-    pub fn with_type_substituted(&self, class_id: Uuid, mapping: (Uuid, Uuid)) -> Self {
+    pub fn with_type_substituted(&self, class_id: Uuid, type_id: Uuid, substitute_id: Uuid) -> Self {
         let symbol_id = Uuid::new_v4();
 
         let subst_params = self.params.iter()
-                                .filter(|p| p.type_id == mapping.0)
-                                .map(|p| p.with_type_substituted(symbol_id, mapping.1))
+                                .filter(|p| p.type_id == type_id) // doesn't take into account nested types like Nasted<mapping.0> as there are no such cases needed to be checked for now
+                                .map(|p| p.with_type_substituted(symbol_id, substitute_id))
                                 .collect::<Vec<_>>();
 
-        let subst_ret_type = if self.return_type_id == mapping.0 {
-            mapping.1
+        let subst_ret_type = if self.return_type_id == type_id {
+            substitute_id
         } else {
             self.return_type_id
         };

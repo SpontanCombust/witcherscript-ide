@@ -8,6 +8,7 @@ mod func_param_symbol;
 mod function_symbol;
 mod class_symbol;
 mod type_param_symbol;
+mod generic_type_symbol;
 
 pub use basic_type_symbol::*;
 pub use enum_symbol::*;
@@ -17,6 +18,7 @@ pub use func_param_symbol::*;
 pub use function_symbol::*;
 pub use class_symbol::*;
 pub use type_param_symbol::*;
+pub use generic_type_symbol::*;
 
 
 pub trait Symbol {
