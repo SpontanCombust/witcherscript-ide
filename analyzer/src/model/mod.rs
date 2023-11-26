@@ -1,3 +1,3 @@
-pub mod symbol_info;
+pub mod symbols;
 pub mod globals;
 pub mod native_types;
