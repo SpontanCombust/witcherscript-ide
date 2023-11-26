@@ -1,6 +1,6 @@
 use uuid::Uuid;
 use witcherscript::attribs::*;
-use super::{FunctionParameterSymbol, Symbol, SymbolType, GlobalSymbol, ChildSymbol, ERROR_SYMBOL_ID};
+use super::{FunctionParameterSymbol, Symbol, SymbolType, GlobalSymbol, ChildSymbol};
 
 
 #[derive(Debug, Clone)]
@@ -15,7 +15,7 @@ pub struct GlobalFunctionSymbol {
 }
 
 impl GlobalFunctionSymbol {
-    pub fn new(script_id: Uuid, name: &str) -> Self {
+    pub fn new(script_id: Uuid, name: &str, return_type_id: Uuid) -> Self {
         Self {
             script_id,
             symbol_id: Uuid::new_v4(),
@@ -23,7 +23,7 @@ impl GlobalFunctionSymbol {
             specifiers: Vec::new(),
             flavour: None,
             params: Vec::new(),
-            return_type_id: ERROR_SYMBOL_ID //TODO change to void when that's set as const Uuid
+            return_type_id
         }
     }
 }
@@ -61,7 +61,7 @@ pub struct MemberFunctionSymbol {
 }
 
 impl MemberFunctionSymbol {
-    pub fn new(class_id: Uuid, name: &str) -> Self {
+    pub fn new(class_id: Uuid, name: &str, return_type_id: Uuid) -> Self {
         Self {
             class_id,
             symbol_id: Uuid::new_v4(),
@@ -69,7 +69,7 @@ impl MemberFunctionSymbol {
             specifiers: Vec::new(),
             flavour: None,
             params: Vec::new(),
-            return_type_id: ERROR_SYMBOL_ID //TODO change to void when that's set as const Uuid
+            return_type_id
         }
     }
 
