@@ -19,7 +19,7 @@ pub use class_info::*;
 pub use type_param_info::*;
 
 
-pub trait SymbolInfo {
+pub trait Symbol {
     const TYPE: SymbolType;
     
     fn symbol_id(&self) -> Uuid;
@@ -43,11 +43,11 @@ pub enum SymbolType {
     Variable
 }
 
-pub trait GlobalSymbolInfo: SymbolInfo {
+pub trait GlobalSymbol: Symbol {
     fn script_id(&self) -> Uuid;
 }
 
-pub trait ChildSymbolInfo: SymbolInfo {
+pub trait ChildSymbol: Symbol {
     fn parent_symbol_id(&self) -> Uuid;
 }
 

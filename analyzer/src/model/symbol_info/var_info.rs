@@ -1,10 +1,10 @@
 use uuid::Uuid;
 use witcherscript::attribs::MemberVarSpecifier;
-use super::{SymbolInfo, SymbolType, ChildSymbolInfo, GlobalSymbolInfo, NATIVE_SYMBOL_SCRIPT_ID};
+use super::{Symbol, SymbolType, ChildSymbol, GlobalSymbol, NATIVE_SYMBOL_SCRIPT_ID};
 
 
 #[derive(Debug, Clone)]
-pub struct MemberVarInfo {
+pub struct MemberVarSymbol {
     owner_id: Uuid,
     symbol_id: Uuid,
     name: String,
@@ -12,8 +12,8 @@ pub struct MemberVarInfo {
     pub type_id: Uuid,
 }
 
-impl MemberVarInfo {
-    pub fn new(owner_info: &impl SymbolInfo, name: &str, type_id: Uuid) -> Self {
+impl MemberVarSymbol {
+    pub fn new(owner_info: &impl Symbol, name: &str, type_id: Uuid) -> Self {
         Self {
             owner_id: owner_info.symbol_id(),
             symbol_id: Uuid::new_v4(),
@@ -24,7 +24,7 @@ impl MemberVarInfo {
     }
 }
 
-impl SymbolInfo for MemberVarInfo {
+impl Symbol for MemberVarSymbol {
     const TYPE: SymbolType = SymbolType::Field;
 
     fn symbol_id(&self) -> Uuid {
@@ -36,7 +36,7 @@ impl SymbolInfo for MemberVarInfo {
     }
 }
 
-impl ChildSymbolInfo for MemberVarInfo {
+impl ChildSymbol for MemberVarSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.owner_id
     }
@@ -45,15 +45,15 @@ impl ChildSymbolInfo for MemberVarInfo {
 
 
 #[derive(Debug, Clone)]
-pub struct VarInfo {
+pub struct LocalVarSymbol {
     func_id: Uuid,
     symbol_id: Uuid,
     name: String,
     pub type_id: Uuid,
 }
 
-impl VarInfo {
-    pub fn new(func_info: &impl SymbolInfo, name: &str, type_id: Uuid) -> Self {
+impl LocalVarSymbol {
+    pub fn new(func_info: &impl Symbol, name: &str, type_id: Uuid) -> Self {
         Self {
             func_id: func_info.symbol_id(),
             symbol_id: Uuid::new_v4(),
@@ -63,7 +63,7 @@ impl VarInfo {
     }
 }
 
-impl SymbolInfo for VarInfo {
+impl Symbol for LocalVarSymbol {
     const TYPE: SymbolType = SymbolType::Variable;
 
     fn symbol_id(&self) -> Uuid {
@@ -75,7 +75,7 @@ impl SymbolInfo for VarInfo {
     }
 }
 
-impl ChildSymbolInfo for VarInfo {
+impl ChildSymbol for LocalVarSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.func_id
     }
@@ -84,13 +84,13 @@ impl ChildSymbolInfo for VarInfo {
 
 
 #[derive(Debug, Clone)]
-pub struct GlobalVarInfo {
+pub struct GlobalVarSymbol {
     symbol_id: Uuid,
     name: String,
     type_id: Uuid
 }
 
-impl GlobalVarInfo {
+impl GlobalVarSymbol {
     pub fn new(name: &str, type_id: Uuid) -> Self {
         Self {
             symbol_id: Uuid::new_v4(),
@@ -105,7 +105,7 @@ impl GlobalVarInfo {
     }
 }
 
-impl SymbolInfo for GlobalVarInfo {
+impl Symbol for GlobalVarSymbol {
     const TYPE: SymbolType = SymbolType::Variable;
 
     fn symbol_id(&self) -> Uuid {
@@ -117,7 +117,7 @@ impl SymbolInfo for GlobalVarInfo {
     }
 }
 
-impl GlobalSymbolInfo for GlobalVarInfo {
+impl GlobalSymbol for GlobalVarSymbol {
     fn script_id(&self) -> Uuid {
         NATIVE_SYMBOL_SCRIPT_ID
     }

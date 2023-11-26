@@ -1,15 +1,15 @@
 use uuid::Uuid;
-use super::{SymbolInfo, SymbolType, ChildSymbolInfo};
+use super::{Symbol, SymbolType, ChildSymbol};
 
 
 #[derive(Debug, Clone)]
-pub struct TypeParameterInfo {
+pub struct TypeParameterSymbol {
     symbol_id: Uuid,
     name: String,
     owner_id: Uuid,
 }
 
-impl TypeParameterInfo {
+impl TypeParameterSymbol {
     pub fn new(owner_id: Uuid, name: &str) -> Self {
         Self {
             symbol_id: Uuid::new_v4(),
@@ -19,7 +19,7 @@ impl TypeParameterInfo {
     }
 }
 
-impl SymbolInfo for TypeParameterInfo {
+impl Symbol for TypeParameterSymbol {
     const TYPE: SymbolType = SymbolType::Type;
 
     fn symbol_id(&self) -> Uuid {
@@ -31,7 +31,7 @@ impl SymbolInfo for TypeParameterInfo {
     }
 }
 
-impl ChildSymbolInfo for TypeParameterInfo {
+impl ChildSymbol for TypeParameterSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.owner_id
     }

@@ -1,23 +1,23 @@
 use uuid::Uuid;
 use witcherscript::attribs::{ClassSpecifier, StateSpecifier, ClassAutobindSpecifier};
-use super::{MemberVarInfo, MemberFunctionInfo, EventInfo, SymbolInfo, SymbolType, GlobalSymbolInfo, TypeParameterInfo, ChildSymbolInfo};
+use super::{MemberVarSymbol, MemberFunctionSymbol, EventSymbol, Symbol, SymbolType, GlobalSymbol, TypeParameterSymbol, ChildSymbol};
 
 
 #[derive(Debug, Clone)]
-pub struct ClassInfo {
+pub struct ClassSymbol {
     script_id: Uuid,
     symbol_id: Uuid,
     name: String, // doesn't include possible type parameter 
-    type_param: Option<TypeParameterInfo>, // the only generic type in WS i.e. array<T> takes only one type argument
+    type_param: Option<TypeParameterSymbol>, // the only generic type in WS i.e. array<T> takes only one type argument
     pub specifiers: Vec<ClassSpecifier>,
     pub base_id: Option<Uuid>,
-    pub member_vars: Vec<MemberVarInfo>,
-    pub member_funcs: Vec<MemberFunctionInfo>,
-    pub events: Vec<EventInfo>,
+    pub member_vars: Vec<MemberVarSymbol>,
+    pub member_funcs: Vec<MemberFunctionSymbol>,
+    pub events: Vec<EventSymbol>,
 }
 
-impl ClassInfo {
-    pub fn new(script_id: Uuid, name: &str, type_param: Option<TypeParameterInfo>) -> Self {
+impl ClassSymbol {
+    pub fn new(script_id: Uuid, name: &str, type_param: Option<TypeParameterSymbol>) -> Self {
         Self {
             script_id,
             symbol_id: Uuid::new_v4(),
@@ -32,7 +32,7 @@ impl ClassInfo {
     }
 
     
-    pub fn type_param(&self) -> &Option<TypeParameterInfo> {
+    pub fn type_param(&self) -> &Option<TypeParameterSymbol> {
         &self.type_param
     }
 
@@ -66,7 +66,7 @@ impl ClassInfo {
     }
 }
 
-impl SymbolInfo for ClassInfo {
+impl Symbol for ClassSymbol {
     const TYPE: SymbolType = SymbolType::Class;
 
     fn symbol_id(&self) -> Uuid {
@@ -78,7 +78,7 @@ impl SymbolInfo for ClassInfo {
     }
 }
 
-impl GlobalSymbolInfo for ClassInfo {
+impl GlobalSymbol for ClassSymbol {
     fn script_id(&self) -> Uuid {
         self.script_id
     }
@@ -86,7 +86,7 @@ impl GlobalSymbolInfo for ClassInfo {
 
 
 #[derive(Debug, Clone)]
-pub struct AutobindInfo {
+pub struct AutobindSymbol {
     class_id: Uuid,
     symbol_id: Uuid,
     name: String,
@@ -94,7 +94,7 @@ pub struct AutobindInfo {
     pub type_id: Uuid,
 }
 
-impl AutobindInfo {
+impl AutobindSymbol {
     pub fn new(class_id: Uuid, name: &str, type_id: Uuid) -> Self {
         Self {
             class_id,
@@ -106,7 +106,7 @@ impl AutobindInfo {
     }
 }
 
-impl SymbolInfo for AutobindInfo {
+impl Symbol for AutobindSymbol {
     const TYPE: SymbolType = SymbolType::Field;
 
     fn symbol_id(&self) -> Uuid {
@@ -118,7 +118,7 @@ impl SymbolInfo for AutobindInfo {
     }
 }
 
-impl ChildSymbolInfo for AutobindInfo {
+impl ChildSymbol for AutobindSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.class_id
     }
@@ -128,19 +128,19 @@ impl ChildSymbolInfo for AutobindInfo {
 
 
 #[derive(Debug, Clone)]
-pub struct StateInfo {
+pub struct StateSymbol {
     script_id: Uuid,
     symbol_id: Uuid,
     name: String,
     pub specifiers: Vec<StateSpecifier>,
     pub parent_id: Uuid,
     pub base_id: Option<Uuid>,
-    pub member_vars: Vec<MemberVarInfo>,
-    pub member_funcs: Vec<MemberFunctionInfo>,
-    pub events: Vec<EventInfo>,
+    pub member_vars: Vec<MemberVarSymbol>,
+    pub member_funcs: Vec<MemberFunctionSymbol>,
+    pub events: Vec<EventSymbol>,
 }
 
-impl StateInfo {
+impl StateSymbol {
     pub fn new(script_id: Uuid, name: &str, parent_id: Uuid) -> Self {
         Self {
             script_id,
@@ -156,7 +156,7 @@ impl StateInfo {
     }
 }
 
-impl SymbolInfo for StateInfo {
+impl Symbol for StateSymbol {
     const TYPE: SymbolType = SymbolType::State;
 
     fn symbol_id(&self) -> Uuid {
@@ -168,7 +168,7 @@ impl SymbolInfo for StateInfo {
     }
 }
 
-impl GlobalSymbolInfo for StateInfo {
+impl GlobalSymbol for StateSymbol {
     fn script_id(&self) -> Uuid {
         self.script_id
     }

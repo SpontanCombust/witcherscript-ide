@@ -1,16 +1,16 @@
 use uuid::Uuid;
-use super::{SymbolInfo, SymbolType, GlobalSymbolInfo, ChildSymbolInfo};
+use super::{Symbol, SymbolType, GlobalSymbol, ChildSymbol};
 
 
 #[derive(Debug, Clone)]
-pub struct EnumInfo {
+pub struct EnumSymbol {
     script_id: Uuid,
     symbol_id: Uuid,
     name: String,
-    pub members: Vec<EnumMemberInfo>,
+    pub members: Vec<EnumMemberSymbol>,
 }
 
-impl EnumInfo {
+impl EnumSymbol {
     pub fn new(script_id: Uuid, name: &str) -> Self {
         Self {
             script_id,
@@ -21,7 +21,7 @@ impl EnumInfo {
     }
 }
 
-impl SymbolInfo for EnumInfo {
+impl Symbol for EnumSymbol {
     const TYPE: SymbolType = SymbolType::Enum;
 
     fn symbol_id(&self) -> Uuid {
@@ -33,7 +33,7 @@ impl SymbolInfo for EnumInfo {
     }
 }
 
-impl GlobalSymbolInfo for EnumInfo {
+impl GlobalSymbol for EnumSymbol {
     fn script_id(&self) -> Uuid {
         self.script_id
     }
@@ -41,15 +41,15 @@ impl GlobalSymbolInfo for EnumInfo {
 
 
 #[derive(Debug, Clone)]
-pub struct EnumMemberInfo {
+pub struct EnumMemberSymbol {
     enum_id: Uuid,
     symbol_id: Uuid,
     name: String,
     pub value: i32
 }
 
-impl EnumMemberInfo {
-    pub fn new(enum_info: &EnumInfo, name: &str) -> Self {
+impl EnumMemberSymbol {
+    pub fn new(enum_info: &EnumSymbol, name: &str) -> Self {
         let value = enum_info.members
             .last()
             .map(|m| m.value)
@@ -64,7 +64,7 @@ impl EnumMemberInfo {
     }
 }
 
-impl SymbolInfo for EnumMemberInfo {
+impl Symbol for EnumMemberSymbol {
     const TYPE: SymbolType = SymbolType::EnumMember;
 
     fn symbol_id(&self) -> Uuid {
@@ -76,7 +76,7 @@ impl SymbolInfo for EnumMemberInfo {
     }
 }
 
-impl ChildSymbolInfo for EnumMemberInfo {
+impl ChildSymbol for EnumMemberSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.enum_id
     }

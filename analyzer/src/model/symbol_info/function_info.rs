@@ -1,20 +1,20 @@
 use uuid::Uuid;
 use witcherscript::attribs::*;
-use super::{FunctionParameterInfo, SymbolInfo, SymbolType, GlobalSymbolInfo, ChildSymbolInfo, ERROR_SYMBOL_ID};
+use super::{FunctionParameterSymbol, Symbol, SymbolType, GlobalSymbol, ChildSymbol, ERROR_SYMBOL_ID};
 
 
 #[derive(Debug, Clone)]
-pub struct GlobalFunctionInfo {
+pub struct GlobalFunctionSymbol {
     script_id: Uuid,
     symbol_id: Uuid,
     name: String,
     pub specifiers: Vec<GlobalFunctionSpecifier>,
     pub flavour: Option<GlobalFunctionFlavour>,
-    pub params: Vec<FunctionParameterInfo>,
+    pub params: Vec<FunctionParameterSymbol>,
     pub return_type_id: Uuid
 }
 
-impl GlobalFunctionInfo {
+impl GlobalFunctionSymbol {
     pub fn new(script_id: Uuid, name: &str) -> Self {
         Self {
             script_id,
@@ -28,7 +28,7 @@ impl GlobalFunctionInfo {
     }
 }
 
-impl SymbolInfo for GlobalFunctionInfo {
+impl Symbol for GlobalFunctionSymbol {
     const TYPE: SymbolType = SymbolType::Function;
 
     fn symbol_id(&self) -> Uuid {
@@ -40,7 +40,7 @@ impl SymbolInfo for GlobalFunctionInfo {
     }
 }
 
-impl GlobalSymbolInfo for GlobalFunctionInfo {
+impl GlobalSymbol for GlobalFunctionSymbol {
     fn script_id(&self) -> Uuid {
         self.script_id
     }
@@ -50,17 +50,17 @@ impl GlobalSymbolInfo for GlobalFunctionInfo {
 
 
 #[derive(Debug, Clone)]
-pub struct MemberFunctionInfo {
+pub struct MemberFunctionSymbol {
     class_id: Uuid,
     symbol_id: Uuid,
     name: String,
     pub specifiers: Vec<MemberFunctionSpecifier>,
     pub flavour: Option<MemberFunctionFlavour>,
-    pub params: Vec<FunctionParameterInfo>,
+    pub params: Vec<FunctionParameterSymbol>,
     pub return_type_id: Uuid
 }
 
-impl MemberFunctionInfo {
+impl MemberFunctionSymbol {
     pub fn new(class_id: Uuid, name: &str) -> Self {
         Self {
             class_id,
@@ -99,7 +99,7 @@ impl MemberFunctionInfo {
     }
 }
 
-impl SymbolInfo for MemberFunctionInfo {
+impl Symbol for MemberFunctionSymbol {
     const TYPE: SymbolType = SymbolType::Method;
 
     fn symbol_id(&self) -> Uuid {
@@ -111,7 +111,7 @@ impl SymbolInfo for MemberFunctionInfo {
     }
 }
 
-impl ChildSymbolInfo for MemberFunctionInfo {
+impl ChildSymbol for MemberFunctionSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.class_id
     }
@@ -121,14 +121,14 @@ impl ChildSymbolInfo for MemberFunctionInfo {
 
 
 #[derive(Debug, Clone)]
-pub struct EventInfo {
+pub struct EventSymbol {
     class_id: Uuid,
     symbol_id: Uuid,
     name: String,
-    pub params: Vec<FunctionParameterInfo>
+    pub params: Vec<FunctionParameterSymbol>
 }
 
-impl EventInfo {
+impl EventSymbol {
     pub fn new(class_id: Uuid, name: &str) -> Self {
         Self {
             class_id,
@@ -139,7 +139,7 @@ impl EventInfo {
     }
 }
 
-impl SymbolInfo for EventInfo {
+impl Symbol for EventSymbol {
     const TYPE: SymbolType = SymbolType::Event;
 
     fn symbol_id(&self) -> Uuid {
@@ -151,7 +151,7 @@ impl SymbolInfo for EventInfo {
     }
 }
 
-impl ChildSymbolInfo for EventInfo {
+impl ChildSymbol for EventSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.class_id
     }

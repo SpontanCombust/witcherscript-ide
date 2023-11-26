@@ -1,18 +1,18 @@
 use uuid::Uuid;
 use witcherscript::attribs::StructSpecifier;
-use super::{SymbolInfo, SymbolType, MemberVarInfo, GlobalSymbolInfo};
+use super::{Symbol, SymbolType, MemberVarSymbol, GlobalSymbol};
 
 
 #[derive(Debug, Clone)]
-pub struct StructInfo {
+pub struct StructSymbol {
     script_id: Uuid,
     symbol_id: Uuid,
     name: String,
     pub specifiers: Vec<StructSpecifier>,
-    pub fields: Vec<MemberVarInfo>,
+    pub fields: Vec<MemberVarSymbol>,
 }
 
-impl StructInfo {
+impl StructSymbol {
     pub fn new(script_id: Uuid, name: &str) -> Self {
         Self {
             script_id,
@@ -24,7 +24,7 @@ impl StructInfo {
     }
 }
 
-impl SymbolInfo for StructInfo {
+impl Symbol for StructSymbol {
     const TYPE: SymbolType = SymbolType::Struct;
 
     fn symbol_id(&self) -> Uuid {
@@ -36,7 +36,7 @@ impl SymbolInfo for StructInfo {
     }
 }
 
-impl GlobalSymbolInfo for StructInfo {
+impl GlobalSymbol for StructSymbol {
     fn script_id(&self) -> Uuid {
         self.script_id
     }
