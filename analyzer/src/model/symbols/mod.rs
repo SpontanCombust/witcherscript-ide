@@ -7,6 +7,7 @@ mod var_symbol;
 mod func_param_symbol;
 mod function_symbol;
 mod class_symbol;
+mod state_symbol;
 mod type_param_symbol;
 mod generic_type_symbol;
 
@@ -19,6 +20,7 @@ pub use function_symbol::*;
 pub use class_symbol::*;
 pub use type_param_symbol::*;
 pub use generic_type_symbol::*;
+pub use state_symbol::*;
 
 
 pub trait Symbol {
