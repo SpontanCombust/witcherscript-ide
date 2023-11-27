@@ -19,7 +19,6 @@ impl SyntaxNode<'_, Identifier> {
 
 impl Debug for SyntaxNode<'_, Identifier> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let span = self.span();
-        write!(f, "Identifier [{}, {}] - [{}, {}]", span.start_point.row + 1, span.start_point.column + 1, span.end_point.row + 1, span.end_point.column + 1)
+        write!(f, "Identifier {:?}", self.span())
     }
 }

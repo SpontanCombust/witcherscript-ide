@@ -1,6 +1,7 @@
 use ropey::Rope;
-use tree_sitter::{Node, Range};
+use tree_sitter::Node;
 use std::{marker::PhantomData, fmt::Debug};
+use super::DocSpan;
 
 /// Represents a WitcherScript syntax tree node
 /// 
@@ -83,8 +84,8 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
 
 
     /// Returns the span at which this node is located in the text document
-    pub fn span(&self) -> Range {
-        self.tree_node.range()
+    pub fn span(&self) -> DocSpan {
+        self.tree_node.range().into()
     }
 
     /// Returns text that this node spans in the text document
