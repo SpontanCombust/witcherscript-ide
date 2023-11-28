@@ -26,6 +26,12 @@ impl GlobalFunctionSymbol {
             return_type_id: ERROR_SYMBOL_ID
         }
     }
+
+
+    pub fn add_param(&mut self, name: &str) -> &mut FunctionParameterSymbol {
+        self.params.push(FunctionParameterSymbol::new(self.symbol_id(), name));
+        self.params.last_mut().unwrap()
+    }
 }
 
 impl Symbol for GlobalFunctionSymbol {
@@ -70,6 +76,13 @@ impl MemberFunctionSymbol {
             return_type_id: ERROR_SYMBOL_ID
         }
     }
+
+
+    pub fn add_param(&mut self, name: &str) -> &mut FunctionParameterSymbol {
+        self.params.push(FunctionParameterSymbol::new(self.symbol_id(), name));
+        self.params.last_mut().unwrap()
+    }
+
 
     /// Returns a new instance with all occurances of `type_id` replaced with `substitute_id`.
     /// Used in handling the array type.
@@ -132,6 +145,12 @@ impl EventSymbol {
             name: name.to_owned(),
             params: Vec::new()
         }
+    }
+
+
+    pub fn add_param(&mut self, name: &str) -> &mut FunctionParameterSymbol {
+        self.params.push(FunctionParameterSymbol::new(self.symbol_id(), name));
+        self.params.last_mut().unwrap()
     }
 }
 

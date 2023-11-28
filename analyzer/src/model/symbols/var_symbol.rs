@@ -1,6 +1,6 @@
 use uuid::Uuid;
 use witcherscript::attribs::MemberVarSpecifier;
-use super::{Symbol, SymbolType, NATIVE_SYMBOL_SCRIPT_ID};
+use super::{Symbol, SymbolType, NATIVE_SYMBOL_SCRIPT_ID, ERROR_SYMBOL_ID};
 
 
 #[derive(Debug, Clone)]
@@ -13,13 +13,13 @@ pub struct MemberVarSymbol {
 }
 
 impl MemberVarSymbol {
-    pub fn new(owner_info: &impl Symbol, name: &str, type_id: Uuid) -> Self {
+    pub fn new(owner_id: Uuid, name: &str) -> Self {
         Self {
-            owner_id: owner_info.symbol_id(),
+            owner_id,
             symbol_id: Uuid::new_v4(),
             specifiers: Vec::new(),
             name: name.to_owned(),
-            type_id,
+            type_id: ERROR_SYMBOL_ID,
         }
     }
 }
@@ -51,9 +51,9 @@ pub struct LocalVarSymbol {
 }
 
 impl LocalVarSymbol {
-    pub fn new(func_info: &impl Symbol, name: &str, type_id: Uuid) -> Self {
+    pub fn new(func_id: Uuid, name: &str, type_id: Uuid) -> Self {
         Self {
-            func_id: func_info.symbol_id(),
+            func_id,
             symbol_id: Uuid::new_v4(),
             name: name.to_owned(),
             type_id

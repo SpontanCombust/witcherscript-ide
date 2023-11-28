@@ -28,6 +28,22 @@ impl ClassSymbol {
             events: Vec::new(),
         }
     }
+
+
+    pub fn add_member_var(&mut self, name: &str) -> &mut MemberVarSymbol {
+        self.member_vars.push(MemberVarSymbol::new(self.symbol_id, name));
+        self.member_vars.last_mut().unwrap()
+    }
+
+    pub fn add_member_func(&mut self, name: &str) -> &mut MemberFunctionSymbol {
+        self.member_funcs.push(MemberFunctionSymbol::new(self.symbol_id, name));
+        self.member_funcs.last_mut().unwrap()
+    }
+
+    pub fn add_event(&mut self, name: &str) -> &mut EventSymbol {
+        self.events.push(EventSymbol::new(self.symbol_id, name));
+        self.events.last_mut().unwrap()
+    }
 }
 
 impl Symbol for ClassSymbol {

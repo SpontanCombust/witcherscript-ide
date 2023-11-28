@@ -13,9 +13,9 @@ pub struct FunctionParameterSymbol {
 }
 
 impl FunctionParameterSymbol {
-    pub fn new(func_info: &impl Symbol, name: &str) -> Self {
+    pub fn new(func_id: Uuid, name: &str) -> Self {
         Self {
-            func_id: func_info.symbol_id(),
+            func_id,
             symbol_id: Uuid::new_v4(),
             name: name.to_owned(),
             specifiers: Vec::new(),

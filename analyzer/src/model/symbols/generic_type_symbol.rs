@@ -12,12 +12,13 @@ pub struct GenericTypeSymbol {
 }
 
 impl GenericTypeSymbol {
-    pub fn new(name: &str, type_param: TypeParameterSymbol) -> Self {
+    pub fn new(name: &str, type_param_name: &str) -> Self {
+        let symbol_id = Uuid::new_v4();
         Self {
-            symbol_id: Uuid::new_v4(),
+            symbol_id,
             name: name.to_owned(),
-            full_name: format!("{}<{}>", name, type_param.symbol_name()),
-            type_param,
+            full_name: format!("{}<{}>", name, type_param_name),
+            type_param: TypeParameterSymbol::new(symbol_id, type_param_name),
             funcs: Vec::new()
         }
     }
@@ -26,6 +27,12 @@ impl GenericTypeSymbol {
     pub fn type_param(&self) -> &TypeParameterSymbol {
         &self.type_param
     }
+
+    pub fn add_func(&mut self, name: &str) -> &mut MemberFunctionSymbol {
+        self.funcs.push(MemberFunctionSymbol::new(self.symbol_id(), name));
+        self.funcs.last_mut().unwrap()
+    }
+
 
     /// Creates a concrete class type by replacing all occurances of generic type parameter with a given type
     /// 
