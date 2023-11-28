@@ -1,6 +1,6 @@
 use uuid::Uuid;
 use witcherscript::attribs::*;
-use super::{FunctionParameterSymbol, Symbol, SymbolType, GlobalSymbol, ChildSymbol};
+use super::{FunctionParameterSymbol, Symbol, SymbolType, ERROR_SYMBOL_ID};
 
 
 #[derive(Debug, Clone)]
@@ -15,7 +15,7 @@ pub struct GlobalFunctionSymbol {
 }
 
 impl GlobalFunctionSymbol {
-    pub fn new(script_id: Uuid, name: &str, return_type_id: Uuid) -> Self {
+    pub fn new(script_id: Uuid, name: &str) -> Self {
         Self {
             script_id,
             symbol_id: Uuid::new_v4(),
@@ -23,7 +23,7 @@ impl GlobalFunctionSymbol {
             specifiers: Vec::new(),
             flavour: None,
             params: Vec::new(),
-            return_type_id
+            return_type_id: ERROR_SYMBOL_ID
         }
     }
 }
@@ -35,13 +35,11 @@ impl Symbol for GlobalFunctionSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl GlobalSymbol for GlobalFunctionSymbol {
-    fn script_id(&self) -> Uuid {
+    fn parent_symbol_id(&self) -> Uuid {
         self.script_id
     }
 }
@@ -61,7 +59,7 @@ pub struct MemberFunctionSymbol {
 }
 
 impl MemberFunctionSymbol {
-    pub fn new(class_id: Uuid, name: &str, return_type_id: Uuid) -> Self {
+    pub fn new(class_id: Uuid, name: &str) -> Self {
         Self {
             class_id,
             symbol_id: Uuid::new_v4(),
@@ -69,7 +67,7 @@ impl MemberFunctionSymbol {
             specifiers: Vec::new(),
             flavour: None,
             params: Vec::new(),
-            return_type_id
+            return_type_id: ERROR_SYMBOL_ID
         }
     }
 
@@ -106,12 +104,10 @@ impl Symbol for MemberFunctionSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl ChildSymbol for MemberFunctionSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.class_id
     }
@@ -146,12 +142,10 @@ impl Symbol for EventSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl ChildSymbol for EventSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.class_id
     }

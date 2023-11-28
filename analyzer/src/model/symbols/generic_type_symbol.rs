@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use super::{MemberFunctionSymbol, Symbol, SymbolType, TypeParameterSymbol, ClassSymbol, NATIVE_SYMBOL_SCRIPT_ID, GlobalSymbol};
+use super::{MemberFunctionSymbol, Symbol, SymbolType, TypeParameterSymbol, ClassSymbol, NATIVE_SYMBOL_SCRIPT_ID};
 
 // Used for the "array" type
 #[derive(Debug, Clone)]
@@ -16,7 +16,7 @@ impl GenericTypeSymbol {
         Self {
             symbol_id: Uuid::new_v4(),
             name: name.to_owned(),
-            full_name: format!("{}<{}>", name, type_param.name()),
+            full_name: format!("{}<{}>", name, type_param.symbol_name()),
             type_param,
             funcs: Vec::new()
         }
@@ -51,13 +51,11 @@ impl Symbol for GenericTypeSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.full_name.as_str()
     }
-}
 
-impl GlobalSymbol for GenericTypeSymbol {
-    fn script_id(&self) -> Uuid {
+    fn parent_symbol_id(&self) -> Uuid {
         NATIVE_SYMBOL_SCRIPT_ID
     }
 }

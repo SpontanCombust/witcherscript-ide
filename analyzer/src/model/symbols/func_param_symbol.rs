@@ -1,6 +1,6 @@
 use uuid::Uuid;
 use witcherscript::attribs::FunctionParameterSpecifier;
-use super::{Symbol, SymbolType, ChildSymbol};
+use super::{Symbol, SymbolType, ERROR_SYMBOL_ID};
 
 
 #[derive(Debug, Clone)]
@@ -13,13 +13,13 @@ pub struct FunctionParameterSymbol {
 }
 
 impl FunctionParameterSymbol {
-    pub fn new(func_info: &impl Symbol, name: &str, type_id: Uuid) -> Self {
+    pub fn new(func_info: &impl Symbol, name: &str) -> Self {
         Self {
             func_id: func_info.symbol_id(),
             symbol_id: Uuid::new_v4(),
             name: name.to_owned(),
             specifiers: Vec::new(),
-            type_id
+            type_id: ERROR_SYMBOL_ID
         }
     }
 
@@ -41,12 +41,10 @@ impl Symbol for FunctionParameterSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl ChildSymbol for FunctionParameterSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.func_id
     }

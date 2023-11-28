@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use super::{Symbol, SymbolType, ChildSymbol};
+use super::{Symbol, SymbolType};
 
 
 #[derive(Debug, Clone)]
@@ -26,12 +26,10 @@ impl Symbol for TypeParameterSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl ChildSymbol for TypeParameterSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.owner_id
     }

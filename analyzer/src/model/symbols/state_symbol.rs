@@ -1,6 +1,6 @@
 use uuid::Uuid;
 use witcherscript::attribs::StateSpecifier;
-use super::{MemberVarSymbol, MemberFunctionSymbol, SymbolType, Symbol, GlobalSymbol, EventSymbol};
+use super::{MemberVarSymbol, MemberFunctionSymbol, SymbolType, Symbol, EventSymbol};
 
 
 #[derive(Debug, Clone)]
@@ -39,13 +39,11 @@ impl Symbol for StateSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl GlobalSymbol for StateSymbol {
-    fn script_id(&self) -> Uuid {
+    fn parent_symbol_id(&self) -> Uuid {
         self.script_id
     }
 }

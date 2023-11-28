@@ -26,9 +26,13 @@ pub use state_symbol::*;
 pub trait Symbol {
     const TYPE: SymbolType;
     
+    /// Unique identifier of the symbol
     fn symbol_id(&self) -> Uuid;
-    //TODO symbol_span(&self) -> Span;
-    fn name(&self) -> &str;
+    /// Name of the symbol to be used in the symbol table
+    fn symbol_name(&self) -> &str;
+    /// Identifier of the symbol higher in the symbol tree
+    /// If self is a global symbol it should return script identifier or NATIVE_SYMBOL_SCRIPT_ID
+    fn parent_symbol_id(&self) -> Uuid;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -45,14 +49,6 @@ pub enum SymbolType {
     Event,
     Parameter,
     Variable
-}
-
-pub trait GlobalSymbol: Symbol {
-    fn script_id(&self) -> Uuid;
-}
-
-pub trait ChildSymbol: Symbol {
-    fn parent_symbol_id(&self) -> Uuid;
 }
 
 //TODO manually prepare UUIDs for native types 

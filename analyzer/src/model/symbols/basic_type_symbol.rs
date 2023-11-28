@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use super::{Symbol, SymbolType, GlobalSymbol, NATIVE_SYMBOL_SCRIPT_ID};
+use super::{Symbol, SymbolType, NATIVE_SYMBOL_SCRIPT_ID};
 
 #[derive(Debug, Clone)]
 pub struct BasicTypeSymbol {
@@ -23,13 +23,11 @@ impl Symbol for BasicTypeSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl GlobalSymbol for BasicTypeSymbol {
-    fn script_id(&self) -> Uuid {
+    fn parent_symbol_id(&self) -> Uuid {
         NATIVE_SYMBOL_SCRIPT_ID
     }
 }

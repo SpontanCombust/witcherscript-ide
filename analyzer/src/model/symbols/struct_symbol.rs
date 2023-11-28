@@ -1,6 +1,6 @@
 use uuid::Uuid;
 use witcherscript::attribs::StructSpecifier;
-use super::{Symbol, SymbolType, MemberVarSymbol, GlobalSymbol};
+use super::{Symbol, SymbolType, MemberVarSymbol};
 
 
 #[derive(Debug, Clone)]
@@ -31,13 +31,11 @@ impl Symbol for StructSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl GlobalSymbol for StructSymbol {
-    fn script_id(&self) -> Uuid {
+    fn parent_symbol_id(&self) -> Uuid {
         self.script_id
     }
 }

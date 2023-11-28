@@ -1,6 +1,6 @@
 use uuid::Uuid;
 use witcherscript::attribs::{ClassSpecifier, ClassAutobindSpecifier};
-use super::{MemberVarSymbol, MemberFunctionSymbol, EventSymbol, Symbol, SymbolType, GlobalSymbol, ChildSymbol};
+use super::{MemberVarSymbol, MemberFunctionSymbol, EventSymbol, Symbol, SymbolType, ERROR_SYMBOL_ID};
 
 
 #[derive(Debug, Clone)]
@@ -37,16 +37,15 @@ impl Symbol for ClassSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl GlobalSymbol for ClassSymbol {
-    fn script_id(&self) -> Uuid {
+    fn parent_symbol_id(&self) -> Uuid {
         self.script_id
     }
 }
+
 
 
 #[derive(Debug, Clone)]
@@ -59,12 +58,12 @@ pub struct AutobindSymbol {
 }
 
 impl AutobindSymbol {
-    pub fn new(class_id: Uuid, name: &str, type_id: Uuid) -> Self {
+    pub fn new(class_id: Uuid, name: &str) -> Self {
         Self {
             class_id,
             symbol_id: Uuid::new_v4(),
             name: name.to_owned(),
-            type_id,
+            type_id: ERROR_SYMBOL_ID,
             specifiers: Vec::new()
         }
     }
@@ -77,12 +76,10 @@ impl Symbol for AutobindSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl ChildSymbol for AutobindSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.class_id
     }

@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use super::{Symbol, SymbolType, GlobalSymbol, ChildSymbol};
+use super::{Symbol, SymbolType};
 
 
 #[derive(Debug, Clone)]
@@ -28,13 +28,11 @@ impl Symbol for EnumSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl GlobalSymbol for EnumSymbol {
-    fn script_id(&self) -> Uuid {
+    fn parent_symbol_id(&self) -> Uuid {
         self.script_id
     }
 }
@@ -71,12 +69,10 @@ impl Symbol for EnumMemberSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl ChildSymbol for EnumMemberSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.enum_id
     }

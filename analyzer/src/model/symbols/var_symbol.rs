@@ -1,6 +1,6 @@
 use uuid::Uuid;
 use witcherscript::attribs::MemberVarSpecifier;
-use super::{Symbol, SymbolType, ChildSymbol, GlobalSymbol, NATIVE_SYMBOL_SCRIPT_ID};
+use super::{Symbol, SymbolType, NATIVE_SYMBOL_SCRIPT_ID};
 
 
 #[derive(Debug, Clone)]
@@ -31,12 +31,10 @@ impl Symbol for MemberVarSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl ChildSymbol for MemberVarSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.owner_id
     }
@@ -70,12 +68,10 @@ impl Symbol for LocalVarSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl ChildSymbol for LocalVarSymbol {
     fn parent_symbol_id(&self) -> Uuid {
         self.func_id
     }
@@ -112,13 +108,11 @@ impl Symbol for GlobalVarSymbol {
         self.symbol_id
     }
 
-    fn name(&self) -> &str {
+    fn symbol_name(&self) -> &str {
         self.name.as_str()
     }
-}
 
-impl GlobalSymbol for GlobalVarSymbol {
-    fn script_id(&self) -> Uuid {
+    fn parent_symbol_id(&self) -> Uuid {
         NATIVE_SYMBOL_SCRIPT_ID
     }
 }
