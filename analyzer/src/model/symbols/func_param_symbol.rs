@@ -22,16 +22,6 @@ impl FunctionParameterSymbol {
             type_id: ERROR_SYMBOL_ID
         }
     }
-
-    /// Used in handling array type.
-    pub fn with_type_substituted(&self, func_id: Uuid, substitute_id: Uuid) -> Self {
-        Self {
-            func_id,
-            symbol_id: Uuid::new_v4(),
-            type_id: substitute_id,
-            ..self.clone()
-        }
-    }
 }
 
 impl Symbol for FunctionParameterSymbol {

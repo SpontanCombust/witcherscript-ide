@@ -82,32 +82,6 @@ impl MemberFunctionSymbol {
         self.params.push(FunctionParameterSymbol::new(self.symbol_id(), name));
         self.params.last_mut().unwrap()
     }
-
-
-    /// Returns a new instance with all occurances of `type_id` replaced with `substitute_id`.
-    /// Used in handling the array type.
-    pub fn with_type_substituted(&self, class_id: Uuid, type_id: Uuid, substitute_id: Uuid) -> Self {
-        let symbol_id = Uuid::new_v4();
-
-        let subst_params = self.params.iter()
-                                .filter(|p| p.type_id == type_id) // doesn't take into account nested types like Nasted<mapping.0> as there are no such cases needed to be checked for now
-                                .map(|p| p.with_type_substituted(symbol_id, substitute_id))
-                                .collect::<Vec<_>>();
-
-        let subst_ret_type = if self.return_type_id == type_id {
-            substitute_id
-        } else {
-            self.return_type_id
-        };
-
-        Self {
-            class_id,
-            symbol_id,
-            params: subst_params,
-            return_type_id: subst_ret_type,
-            ..self.clone()
-        }
-    }
 }
 
 impl Symbol for MemberFunctionSymbol {

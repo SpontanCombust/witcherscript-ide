@@ -1,6 +1,6 @@
 use uuid::{Uuid, uuid};
 
-mod basic_type_symbol;
+mod primitive_type_symbol;
 mod enum_symbol;
 mod struct_symbol;
 mod var_symbol;
@@ -8,18 +8,16 @@ mod func_param_symbol;
 mod function_symbol;
 mod class_symbol;
 mod state_symbol;
-mod type_param_symbol;
-mod generic_type_symbol;
+mod array_type_symbol;
 
-pub use basic_type_symbol::*;
+pub use primitive_type_symbol::*;
 pub use enum_symbol::*;
 pub use struct_symbol::*;
 pub use var_symbol::*;
 pub use func_param_symbol::*;
 pub use function_symbol::*;
 pub use class_symbol::*;
-pub use type_param_symbol::*;
-pub use generic_type_symbol::*;
+pub use array_type_symbol::*;
 pub use state_symbol::*;
 
 
@@ -38,6 +36,7 @@ pub trait Symbol {
 #[derive(Debug, Clone, Copy)]
 pub enum SymbolType {
     Type,
+    Array,
     Class,
     Struct,
     State,
