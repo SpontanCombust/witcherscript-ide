@@ -33,7 +33,7 @@ pub trait Symbol {
     fn parent_symbol_id(&self) -> Uuid;
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SymbolType {
     Type,
     Array,
