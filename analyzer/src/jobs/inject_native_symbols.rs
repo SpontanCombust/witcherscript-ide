@@ -18,7 +18,7 @@ pub fn inject_primitives(db: &mut SymbolDb) {
         PrimitiveTypeSymbol::new("CName", Some("name")),
 
     ].into_iter()
-    .for_each(|sym| db.insert(sym.into()));
+    .for_each(|sym| { db.primitives.insert(sym.symbol_id(), sym); });
 }
 
 
@@ -51,7 +51,10 @@ pub fn inject_globals(db: &mut SymbolDb, symtab: &SymbolTable) {
         ("theInput", "CInputManager")
 
     ].into_iter()
-    .for_each(|(var, class)| db.insert(GlobalVarSymbol::new(var, symtab.get(class).unwrap().id).into()));
+    .for_each(|(var_name, class_name)| { 
+        let gv = GlobalVarSymbol::new(var_name, symtab.get(class_name).unwrap().id);
+        db.global_vars.insert(gv.symbol_id(), gv); 
+    });
 }
 
 
