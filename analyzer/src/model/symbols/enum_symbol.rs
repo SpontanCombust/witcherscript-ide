@@ -7,7 +7,7 @@ pub struct EnumSymbol {
     script_id: Uuid,
     symbol_id: Uuid,
     name: String,
-    pub members: Vec<EnumMemberSymbol>,
+    pub member_ids: Vec<Uuid>,
 }
 
 impl EnumSymbol {
@@ -16,23 +16,26 @@ impl EnumSymbol {
             script_id,
             symbol_id: Uuid::new_v4(),
             name: name.to_owned(),
-            members: Vec::new(),
+            member_ids: Vec::new(),
         }
     }
 
 
-    pub fn add_member(&mut self, name: &str, value: Option<i32>) -> &mut EnumMemberSymbol {
-        let mut m = EnumMemberSymbol::new(self.symbol_id, name);
-        if let Some(value) = value {
-            m.value = value;
-        } else {
-            m.value = self.members.last().map(|l| l.value).unwrap_or(-1) + 1;
-        }
+    #[must_use]
+    pub fn add_member(&mut self, name: &str) -> EnumMemberSymbol {
+        let m = EnumMemberSymbol::new(self.symbol_id, name);
+        // if let Some(value) = value {
+        //     m.value = value;
+        // } else {
+        //     m.value = self.member_ids.last().map(|l| l.value).unwrap_or(-1) + 1;
+        // }
 
-        self.members.push(m);
-        self.members.last_mut().unwrap()
+        self.member_ids.push(m.symbol_id);
+        m
     }
 }
+
+//TODO EnumSymbolBuilder
 
 impl Symbol for EnumSymbol {
     const TYPE: SymbolType = SymbolType::Enum;

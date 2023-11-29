@@ -9,7 +9,7 @@ pub struct StructSymbol {
     symbol_id: Uuid,
     name: String,
     pub specifiers: Vec<StructSpecifier>,
-    pub member_vars: Vec<MemberVarSymbol>,
+    pub member_var_ids: Vec<Uuid>,
 }
 
 impl StructSymbol {
@@ -19,14 +19,16 @@ impl StructSymbol {
             symbol_id: Uuid::new_v4(),
             name: name.to_owned(),
             specifiers: Vec::new(),
-            member_vars: Vec::new()
+            member_var_ids: Vec::new()
         }
     }
 
 
-    pub fn add_member_var(&mut self, name: &str) -> &mut MemberVarSymbol {
-        self.member_vars.push(MemberVarSymbol::new(self.symbol_id, name));
-        self.member_vars.last_mut().unwrap()
+    #[must_use]
+    pub fn add_member_var(&mut self, name: &str) -> MemberVarSymbol {
+        let s = MemberVarSymbol::new(self.symbol_id, name);
+        self.member_var_ids.push(s.symbol_id());
+        s
     }
 }
 

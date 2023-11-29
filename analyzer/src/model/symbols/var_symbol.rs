@@ -25,7 +25,7 @@ impl MemberVarSymbol {
 }
 
 impl Symbol for MemberVarSymbol {
-    const TYPE: SymbolType = SymbolType::Field;
+    const TYPE: SymbolType = SymbolType::MemberVar;
 
     fn symbol_id(&self) -> Uuid {
         self.symbol_id
@@ -62,7 +62,7 @@ impl LocalVarSymbol {
 }
 
 impl Symbol for LocalVarSymbol {
-    const TYPE: SymbolType = SymbolType::Variable;
+    const TYPE: SymbolType = SymbolType::LocalVar;
 
     fn symbol_id(&self) -> Uuid {
         self.symbol_id
@@ -102,7 +102,7 @@ impl GlobalVarSymbol {
 }
 
 impl Symbol for GlobalVarSymbol {
-    const TYPE: SymbolType = SymbolType::Variable;
+    const TYPE: SymbolType = SymbolType::GlobalVar;
 
     fn symbol_id(&self) -> Uuid {
         self.symbol_id

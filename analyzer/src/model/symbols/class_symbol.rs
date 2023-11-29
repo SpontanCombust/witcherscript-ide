@@ -10,9 +10,10 @@ pub struct ClassSymbol {
     name: String,
     pub specifiers: Vec<ClassSpecifier>,
     pub base_id: Option<Uuid>,
-    pub member_vars: Vec<MemberVarSymbol>,
-    pub member_funcs: Vec<MemberFunctionSymbol>,
-    pub events: Vec<EventSymbol>,
+    pub member_var_ids: Vec<Uuid>,
+    pub autobind_ids: Vec<Uuid>,
+    pub member_func_ids: Vec<Uuid>,
+    pub event_ids: Vec<Uuid>,
 }
 
 impl ClassSymbol {
@@ -23,26 +24,40 @@ impl ClassSymbol {
             name: name.to_owned(),
             specifiers: Vec::new(),
             base_id: None,
-            member_vars: Vec::new(),
-            member_funcs: Vec::new(),
-            events: Vec::new(),
+            member_var_ids: Vec::new(),
+            autobind_ids: Vec::new(),
+            member_func_ids: Vec::new(),
+            event_ids: Vec::new(),
         }
     }
 
 
-    pub fn add_member_var(&mut self, name: &str) -> &mut MemberVarSymbol {
-        self.member_vars.push(MemberVarSymbol::new(self.symbol_id, name));
-        self.member_vars.last_mut().unwrap()
+    #[must_use]
+    pub fn add_member_var(&mut self, name: &str) -> MemberVarSymbol {
+        let s = MemberVarSymbol::new(self.symbol_id, name);
+        self.member_var_ids.push(s.symbol_id());
+        s
     }
 
-    pub fn add_member_func(&mut self, name: &str) -> &mut MemberFunctionSymbol {
-        self.member_funcs.push(MemberFunctionSymbol::new(self.symbol_id, name));
-        self.member_funcs.last_mut().unwrap()
+    #[must_use]
+    pub fn add_autobind(&mut self, name: &str) -> AutobindSymbol {
+        let s = AutobindSymbol::new(self.symbol_id, name);
+        self.autobind_ids.push(s.symbol_id());
+        s
     }
 
-    pub fn add_event(&mut self, name: &str) -> &mut EventSymbol {
-        self.events.push(EventSymbol::new(self.symbol_id, name));
-        self.events.last_mut().unwrap()
+    #[must_use]
+    pub fn add_member_func(&mut self, name: &str) -> MemberFunctionSymbol {
+        let s = MemberFunctionSymbol::new(self.symbol_id, name);
+        self.member_func_ids.push(s.symbol_id());
+        s
+    }
+
+    #[must_use]
+    pub fn add_event(&mut self, name: &str) -> EventSymbol {
+        let s = EventSymbol::new(self.symbol_id, name);
+        self.event_ids.push(s.symbol_id());
+        s
     }
 }
 
@@ -86,7 +101,7 @@ impl AutobindSymbol {
 }
 
 impl Symbol for AutobindSymbol {
-    const TYPE: SymbolType = SymbolType::Field;
+    const TYPE: SymbolType = SymbolType::Autobind;
 
     fn symbol_id(&self) -> Uuid {
         self.symbol_id

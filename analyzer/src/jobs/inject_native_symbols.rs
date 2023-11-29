@@ -65,6 +65,8 @@ pub fn inject_array_type(db: &mut SymbolDb, symtab: &SymbolTable, data_type_id: 
     let int_id = symtab.get("int").unwrap().id;
     let bool_id = symtab.get("bool").unwrap().id;
 
-    let arr = ArrayTypeSymbol::new(data_type_id, data_type_name, void_id, int_id, bool_id);
+    let (arr, funcs, params) = ArrayTypeSymbol::new(data_type_id, data_type_name, void_id, int_id, bool_id);
     db.arrays.insert(arr.symbol_id(), arr);
+    funcs.into_iter().for_each(|f| { db.member_funcs.insert(f.symbol_id(), f); } );
+    params.into_iter().for_each(|p| { db.params.insert(p.symbol_id(), p); } );
 }

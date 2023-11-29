@@ -10,7 +10,7 @@ pub struct GlobalFunctionSymbol {
     name: String,
     pub specifiers: Vec<GlobalFunctionSpecifier>,
     pub flavour: Option<GlobalFunctionFlavour>,
-    pub params: Vec<FunctionParameterSymbol>,
+    pub param_ids: Vec<Uuid>,
     pub return_type_id: Uuid
 }
 
@@ -22,20 +22,22 @@ impl GlobalFunctionSymbol {
             name: name.to_owned(),
             specifiers: Vec::new(),
             flavour: None,
-            params: Vec::new(),
+            param_ids: Vec::new(),
             return_type_id: ERROR_SYMBOL_ID
         }
     }
 
 
-    pub fn add_param(&mut self, name: &str) -> &mut FunctionParameterSymbol {
-        self.params.push(FunctionParameterSymbol::new(self.symbol_id(), name));
-        self.params.last_mut().unwrap()
+    #[must_use]
+    pub fn add_param(&mut self, name: &str) -> FunctionParameterSymbol {
+        let s = FunctionParameterSymbol::new(self.symbol_id, name);
+        self.param_ids.push(s.symbol_id());
+        s
     }
 }
 
 impl Symbol for GlobalFunctionSymbol {
-    const TYPE: SymbolType = SymbolType::Function;
+    const TYPE: SymbolType = SymbolType::GlobalFunction;
 
     fn symbol_id(&self) -> Uuid {
         self.symbol_id
@@ -60,7 +62,7 @@ pub struct MemberFunctionSymbol {
     name: String,
     pub specifiers: Vec<MemberFunctionSpecifier>,
     pub flavour: Option<MemberFunctionFlavour>,
-    pub params: Vec<FunctionParameterSymbol>,
+    pub param_ids: Vec<Uuid>,
     pub return_type_id: Uuid
 }
 
@@ -72,20 +74,22 @@ impl MemberFunctionSymbol {
             name: name.to_owned(),
             specifiers: Vec::new(),
             flavour: None,
-            params: Vec::new(),
+            param_ids: Vec::new(),
             return_type_id: ERROR_SYMBOL_ID
         }
     }
 
 
-    pub fn add_param(&mut self, name: &str) -> &mut FunctionParameterSymbol {
-        self.params.push(FunctionParameterSymbol::new(self.symbol_id(), name));
-        self.params.last_mut().unwrap()
+    #[must_use]
+    pub fn add_param(&mut self, name: &str) -> FunctionParameterSymbol {
+        let s = FunctionParameterSymbol::new(self.symbol_id, name);
+        self.param_ids.push(s.symbol_id());
+        s
     }
 }
 
 impl Symbol for MemberFunctionSymbol {
-    const TYPE: SymbolType = SymbolType::Method;
+    const TYPE: SymbolType = SymbolType::MemberFunction;
 
     fn symbol_id(&self) -> Uuid {
         self.symbol_id
@@ -108,7 +112,7 @@ pub struct EventSymbol {
     class_id: Uuid,
     symbol_id: Uuid,
     name: String,
-    pub params: Vec<FunctionParameterSymbol>
+    pub param_ids: Vec<Uuid>
 }
 
 impl EventSymbol {
@@ -117,14 +121,15 @@ impl EventSymbol {
             class_id,
             symbol_id: Uuid::new_v4(),
             name: name.to_owned(),
-            params: Vec::new()
+            param_ids: Vec::new()
         }
     }
 
-
-    pub fn add_param(&mut self, name: &str) -> &mut FunctionParameterSymbol {
-        self.params.push(FunctionParameterSymbol::new(self.symbol_id(), name));
-        self.params.last_mut().unwrap()
+    #[must_use]
+    pub fn add_param(&mut self, name: &str) -> FunctionParameterSymbol {
+        let s = FunctionParameterSymbol::new(self.symbol_id, name);
+        self.param_ids.push(s.symbol_id());
+        s
     }
 }
 

@@ -36,18 +36,24 @@ pub trait Symbol {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SymbolType {
     Type,
-    Array,
-    Class,
-    Struct,
-    State,
-    Field,
     Enum,
+    Struct,
+    Class,
+    State,
+    Array,
+    
     EnumMember,
-    Function,
-    Method,
+
+    GlobalFunction,
+    MemberFunction,
     Event,
+
     Parameter,
-    Variable
+
+    GlobalVar,
+    MemberVar,
+    Autobind,
+    LocalVar,
 }
 
 //TODO manually prepare UUIDs for native types 
