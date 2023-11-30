@@ -1,8 +1,23 @@
+use std::num::{ParseIntError, ParseFloatError};
 use std::fmt::Debug;
-use std::error::Error;
+use std::str::ParseBoolError;
 use ropey::Rope;
 use shrinkwraprs::Shrinkwrap;
+use thiserror::Error;
 use crate::{NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}};
+
+
+#[derive(Debug, Error)]
+pub enum LiteralValueError {
+    #[error("literal node is marked as missing")]
+    NodeMissing,
+    #[error("failed to parse integer number: {0}")]
+    ParseIntError(#[from] ParseIntError),
+    #[error("failed to parse floating point number: {0}")]
+    ParseFloatError(#[from] ParseFloatError),
+    #[error("failed to parse bool: {0}")]
+    ParseBoolError(#[from] ParseBoolError),
+}
 
 
 #[derive(Shrinkwrap, Debug, Clone, PartialEq)]
@@ -13,8 +28,10 @@ impl NamedSyntaxNode for LiteralInt {
 }
 
 impl SyntaxNode<'_, LiteralInt> {
-    pub fn value(&self, rope: &Rope) -> Result<LiteralInt, impl Error> {
-        self.text(rope).parse::<i32>().map(|i| LiteralInt(i))
+    pub fn value(&self, rope: &Rope) -> Result<LiteralInt, LiteralValueError> {
+        let s = self.text(rope).ok_or(LiteralValueError::NodeMissing)?;
+        let i = s.parse::<i32>()?;
+        Ok(LiteralInt(i))
     }
 }
 
@@ -33,8 +50,8 @@ impl NamedSyntaxNode for LiteralFloat {
 }
 
 impl SyntaxNode<'_, LiteralFloat> {
-    pub fn value(&self, rope: &Rope) -> Result<LiteralFloat, impl Error> {
-        let s = self.text(rope);
+    pub fn value(&self, rope: &Rope) -> Result<LiteralFloat, LiteralValueError> {
+        let s = self.text(rope).ok_or(LiteralValueError::NodeMissing)?;
 
         // trim the optional trailing 'f'
         let s = if s.chars().last().unwrap() == 'f' { 
@@ -43,7 +60,8 @@ impl SyntaxNode<'_, LiteralFloat> {
             &s
         };
 
-        s.parse::<f32>().map(|f| LiteralFloat(f))
+        let f = s.parse::<f32>()?;
+        Ok(LiteralFloat(f))
     }
 }
 
@@ -62,8 +80,10 @@ impl NamedSyntaxNode for LiteralBool {
 }
 
 impl SyntaxNode<'_, LiteralBool> {
-    pub fn value(&self, rope: &Rope) -> Result<LiteralBool, impl Error> {
-        self.text(rope).parse::<bool>().map(|b| LiteralBool(b))
+    pub fn value(&self, rope: &Rope) -> Result<LiteralBool, LiteralValueError> {
+        let s = self.text(rope).ok_or(LiteralValueError::NodeMissing)?;
+        let b = s.parse::<bool>()?;
+        Ok(LiteralBool(b))
     }
 }
 
@@ -82,13 +102,13 @@ impl NamedSyntaxNode for LiteralString {
 }
 
 impl SyntaxNode<'_, LiteralString> {
-    pub fn value(&self, rope: &Rope) -> LiteralString {
-        let s = self.text(rope);
+    pub fn value(&self, rope: &Rope) -> Result<LiteralString, LiteralValueError> {
+        let s = self.text(rope).ok_or(LiteralValueError::NodeMissing)?;
 
         let s = s[1..s.len()-1] // eliminate surrounding quotes
         .replace(r#"\""#, r#"""#); // escape internal quotes
 
-        LiteralString(s)
+        Ok(LiteralString(s))
     }
 }
 
@@ -107,15 +127,15 @@ impl NamedSyntaxNode for LiteralName {
 }
 
 impl SyntaxNode<'_, LiteralName> {
-    pub fn value(&self, rope: &Rope) -> LiteralName {
-        let s = self.text(rope);
+    pub fn value(&self, rope: &Rope) -> Result<LiteralName, LiteralValueError> {
+        let s = self.text(rope).ok_or(LiteralValueError::NodeMissing)?;
 
         let s = s[1..s.len()-1].to_string(); // eliminate surrounding quotes
         // I'm not sure if names can have escaping quotes
         // They are supposed to be rather simple in their form
         // For now I'll asume they can't have any escape sequences
 
-        LiteralName(s)
+        Ok(LiteralName(s))
     }
 }
 

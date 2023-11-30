@@ -7,13 +7,20 @@ use crate::{NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVi
 #[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Identifier(String);
 
+impl Into<String> for Identifier {
+    fn into(self) -> String {
+        self.0
+    }
+}
+
 impl NamedSyntaxNode for Identifier {
     const NODE_NAME: &'static str = "ident";
 }
 
 impl SyntaxNode<'_, Identifier> {
-    pub fn value(&self, rope: &Rope) -> Identifier {
-        Identifier(self.text(rope))
+    /// Returns None if the node is marked as missing
+    pub fn value(&self, rope: &Rope) -> Option<Identifier> {
+        self.text(rope).map(|s| Identifier(s))
     }
 }
 
