@@ -1,6 +1,6 @@
 use uuid::Uuid;
 use witcherscript::attribs::StateSpecifier;
-use super::{MemberVarSymbol, MemberFunctionSymbol, SymbolType, Symbol, EventSymbol, AutobindSymbol};
+use super::{MemberVarSymbol, MemberFunctionSymbol, SymbolType, Symbol, EventSymbol, AutobindSymbol, ERROR_SYMBOL_ID};
 
 
 #[derive(Debug, Clone)]
@@ -18,19 +18,24 @@ pub struct StateSymbol {
 }
 
 impl StateSymbol {
-    pub fn new(script_id: Uuid, name: &str, parent_id: Uuid) -> Self {
+    /// Use class_name to construct complete name
+    pub fn new(script_id: Uuid, name: &str) -> Self {
         Self {
             script_id,
             symbol_id: Uuid::new_v4(),
             name: name.to_owned(),
             specifiers: Vec::new(),
-            parent_id,
+            parent_id: ERROR_SYMBOL_ID,
             base_id: None,
             member_var_ids: Vec::new(),
             autobind_ids: Vec::new(),
             member_func_ids: Vec::new(),
             event_ids: Vec::new(),
         }
+    }
+
+    pub fn class_name(state_name: &str, parent_name: &str) -> String {
+        format!("{}State{}", parent_name, state_name)
     }
 
 
