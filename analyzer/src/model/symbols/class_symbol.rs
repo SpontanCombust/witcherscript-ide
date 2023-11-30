@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use witcherscript::attribs::{ClassSpecifier, ClassAutobindSpecifier};
+use witcherscript::attribs::{ClassSpecifier, AutobindSpecifier};
 use super::{MemberVarSymbol, MemberFunctionSymbol, EventSymbol, Symbol, SymbolType, ERROR_SYMBOL_ID};
 
 
@@ -84,7 +84,7 @@ pub struct AutobindSymbol {
     class_id: Uuid,
     symbol_id: Uuid,
     name: String,
-    pub specifiers: Vec<ClassAutobindSpecifier>,
+    pub specifiers: Vec<AutobindSpecifier>,
     pub type_id: Uuid,
 }
 

@@ -46,24 +46,24 @@ impl Debug for SyntaxNode<'_, ClassSpecifier> {
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ClassAutobindSpecifier {
+pub enum AutobindSpecifier {
     AccessModifier(AccessModifier),
     Optional
 }
 
-impl NamedSyntaxNode for ClassAutobindSpecifier {
+impl NamedSyntaxNode for AutobindSpecifier {
     const NODE_NAME: &'static str = "class_autobind_specifier";
 }
 
-impl SyntaxNode<'_, ClassAutobindSpecifier> {
-    pub fn value(&self) -> ClassAutobindSpecifier {
+impl SyntaxNode<'_, AutobindSpecifier> {
+    pub fn value(&self) -> AutobindSpecifier {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
             match k {
-                Keyword::Private => return ClassAutobindSpecifier::AccessModifier(AccessModifier::Private),
-                Keyword::Protected => return ClassAutobindSpecifier::AccessModifier(AccessModifier::Protected),
-                Keyword::Public => return ClassAutobindSpecifier::AccessModifier(AccessModifier::Public),
-                Keyword::Optional => return ClassAutobindSpecifier::Optional,
+                Keyword::Private => return AutobindSpecifier::AccessModifier(AccessModifier::Private),
+                Keyword::Protected => return AutobindSpecifier::AccessModifier(AccessModifier::Protected),
+                Keyword::Public => return AutobindSpecifier::AccessModifier(AccessModifier::Public),
+                Keyword::Optional => return AutobindSpecifier::Optional,
                 _ => {}
             }
         }
@@ -72,7 +72,7 @@ impl SyntaxNode<'_, ClassAutobindSpecifier> {
     }
 }
 
-impl Debug for SyntaxNode<'_, ClassAutobindSpecifier> {
+impl Debug for SyntaxNode<'_, AutobindSpecifier> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }

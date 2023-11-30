@@ -75,7 +75,7 @@ pub enum ClassStatement<'script> {
     Var(SyntaxNode<'script, MemberVarDeclaration>),
     Default(SyntaxNode<'script, MemberDefaultValue>),
     Hint(SyntaxNode<'script, MemberHint>),
-    Autobind(SyntaxNode<'script, Autobind>),
+    Autobind(SyntaxNode<'script, AutobindDeclaration>),
     Method(SyntaxNode<'script, MemberFunctionDeclaration>),
     Event(SyntaxNode<'script, EventDeclaration>),
     Nop
@@ -87,7 +87,7 @@ impl SyntaxNode<'_, ClassStatement<'_>> {
             MemberVarDeclaration::NODE_NAME => ClassStatement::Var(self.clone().into()),
             MemberDefaultValue::NODE_NAME => ClassStatement::Default(self.clone().into()),
             MemberHint::NODE_NAME => ClassStatement::Hint(self.clone().into()),
-            Autobind::NODE_NAME => ClassStatement::Autobind(self.clone().into()),
+            AutobindDeclaration::NODE_NAME => ClassStatement::Autobind(self.clone().into()),
             MemberFunctionDeclaration::NODE_NAME => ClassStatement::Method(self.clone().into()),
             EventDeclaration::NODE_NAME => ClassStatement::Event(self.clone().into()),
             Nop::NODE_NAME => ClassStatement::Nop,
@@ -119,14 +119,14 @@ impl StatementTraversal for SyntaxNode<'_, ClassStatement<'_>> {
 
 
 #[derive(Debug, Clone)]
-pub struct Autobind; //TODO rename to AutobindDeclaration
+pub struct AutobindDeclaration;
 
-impl NamedSyntaxNode for Autobind {
+impl NamedSyntaxNode for AutobindDeclaration {
     const NODE_NAME: &'static str = "class_autobind_stmt";
 }
 
-impl SyntaxNode<'_, Autobind> {
-    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, ClassAutobindSpecifier>> {
+impl SyntaxNode<'_, AutobindDeclaration> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, AutobindSpecifier>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
@@ -143,9 +143,9 @@ impl SyntaxNode<'_, Autobind> {
     }
 }
 
-impl Debug for SyntaxNode<'_, Autobind> {
+impl Debug for SyntaxNode<'_, AutobindDeclaration> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Autobind")
+        f.debug_struct("AutobindDeclaration")
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("name", &self.name())
             .field("autobind_type", &self.autobind_type())
@@ -154,9 +154,9 @@ impl Debug for SyntaxNode<'_, Autobind> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, Autobind> {
+impl StatementTraversal for SyntaxNode<'_, AutobindDeclaration> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_autobind(self);
+        visitor.visit_autobind_decl(self);
     }
 }
 

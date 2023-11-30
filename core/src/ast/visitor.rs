@@ -41,7 +41,7 @@ pub trait StatementVisitor {
     fn visit_member_var_decl(&mut self, _node: &SyntaxNode<'_, MemberVarDeclaration>) {}
     fn visit_member_default_val(&mut self, _node: &SyntaxNode<'_, MemberDefaultValue>) {}
     fn visit_member_hint(&mut self, _node: &SyntaxNode<'_, MemberHint>) {}
-    fn visit_autobind(&mut self, _node: &SyntaxNode<'_, Autobind>) {}
+    fn visit_autobind_decl(&mut self, _node: &SyntaxNode<'_, AutobindDeclaration>) {}
     
     fn visit_func_param_group(&mut self, _node: &SyntaxNode<'_, FunctionParameterGroup>) {}
     fn visit_global_func_decl(&mut self, _node: &SyntaxNode<'_, GlobalFunctionDeclaration>) {}
