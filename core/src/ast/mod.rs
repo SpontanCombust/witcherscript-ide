@@ -12,6 +12,7 @@ mod structs;
 mod enums;
 mod states;
 mod nop;
+mod visitor;
 
 pub use expressions::*;
 pub use functions::*;
@@ -23,6 +24,7 @@ pub use structs::*;
 pub use enums::*;
 pub use states::*;
 pub use nop::*;
+pub use visitor::*;
 
 
 
@@ -58,6 +60,19 @@ impl Debug for SyntaxNode<'_, ScriptStatement<'_>> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, ScriptStatement<'_>> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        match self.value() {
+            ScriptStatement::Function(s) => s.accept(visitor),
+            ScriptStatement::Class(s) => s.accept(visitor),
+            ScriptStatement::State(s) => s.accept(visitor),
+            ScriptStatement::Struct(s) => s.accept(visitor),
+            ScriptStatement::Enum(s) => s.accept(visitor),
+            ScriptStatement::Nop => visitor.visit_nop_stmt(),
+        }
+    }
+}
+
 
 impl NamedSyntaxNode for Script {
     const NODE_NAME: &'static str = "script";
@@ -72,5 +87,11 @@ impl SyntaxNode<'_, Script> {
 impl Debug for SyntaxNode<'_, Script> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Script{:?}", &self.statements().collect::<Vec<_>>())
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, Script> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        self.statements().for_each(|s| s.accept(visitor));
     }
 }

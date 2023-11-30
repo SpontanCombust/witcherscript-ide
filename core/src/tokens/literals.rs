@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use std::error::Error;
 use ropey::Rope;
 use shrinkwraprs::Shrinkwrap;
-use crate::{NamedSyntaxNode, SyntaxNode};
+use crate::{NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}};
 
 
 #[derive(Shrinkwrap, Debug, Clone, PartialEq)]
@@ -174,5 +174,11 @@ impl SyntaxNode<'_, Literal<'_>> {
 impl Debug for SyntaxNode<'_, Literal<'_>> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
+    }
+}
+
+impl ExpressionTraversal for SyntaxNode<'_, Literal<'_>> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        visitor.visit_literal_expr(self);
     }
 }

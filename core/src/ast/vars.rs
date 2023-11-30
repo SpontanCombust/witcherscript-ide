@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{tokens::Identifier, SyntaxNode, NamedSyntaxNode, attribs::MemberVarSpecifier};
-use super::Expression;
+use super::{Expression, StatementTraversal, StatementVisitor};
 
 
 #[derive(Debug, Clone)]
@@ -61,6 +61,12 @@ impl Debug for SyntaxNode<'_, VarDeclaration> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, VarDeclaration> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_local_var_decl_stmt(self);
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub struct MemberVarDeclaration;
@@ -90,5 +96,11 @@ impl Debug for SyntaxNode<'_, MemberVarDeclaration> {
             .field("names", &self.names().collect::<Vec<_>>())
             .field("var_type", &self.var_type())
             .finish()
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, MemberVarDeclaration> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_member_var_decl(self);
     }
 }

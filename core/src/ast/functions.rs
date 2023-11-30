@@ -34,6 +34,16 @@ impl Debug for SyntaxNode<'_, EventDeclaration> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, EventDeclaration> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_event_decl(self);
+        if visitor.should_visit_inner() {
+            self.definition().map(|s| s.accept(visitor));
+        }
+    }
+}
+
+
 
 #[derive(Debug, Clone)]
 pub struct GlobalFunctionDeclaration;
@@ -80,6 +90,16 @@ impl Debug for SyntaxNode<'_, GlobalFunctionDeclaration> {
             .finish()
     }
 }
+
+impl StatementTraversal for SyntaxNode<'_, GlobalFunctionDeclaration> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_global_func_decl(self);
+        if visitor.should_visit_inner() {
+            self.definition().map(|s| s.accept(visitor));
+        }
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -128,6 +148,15 @@ impl Debug for SyntaxNode<'_, MemberFunctionDeclaration> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, MemberFunctionDeclaration> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_member_func_decl(self);
+        if visitor.should_visit_inner() {
+            self.definition().map(|s| s.accept(visitor));
+        }
+    }
+}
+
 
 
 
@@ -159,6 +188,12 @@ impl Debug for SyntaxNode<'_, FunctionParameterGroup> {
             .field("names", &self.names().collect::<Vec<_>>())
             .field("param_type", &self.param_type())
             .finish()
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, FunctionParameterGroup> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_func_param_group(self);
     }
 }
 
@@ -208,6 +243,26 @@ impl Debug for SyntaxNode<'_, FunctionStatement<'_>> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, FunctionStatement<'_>> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        match self.value() {
+            FunctionStatement::Var(s) => s.accept(visitor),
+            FunctionStatement::Expr(s) => s.accept(visitor),
+            FunctionStatement::For(s) => s.accept(visitor),
+            FunctionStatement::While(s) => s.accept(visitor),
+            FunctionStatement::DoWhile(s) => s.accept(visitor),
+            FunctionStatement::If(s) => s.accept(visitor),
+            FunctionStatement::Switch(s) => s.accept(visitor),
+            FunctionStatement::Break(s) => s.accept(visitor),
+            FunctionStatement::Continue(s) => s.accept(visitor),
+            FunctionStatement::Return(s) => s.accept(visitor),
+            FunctionStatement::Delete(s) => s.accept(visitor),
+            FunctionStatement::Block(s) => s.accept(visitor),
+            FunctionStatement::Nop => visitor.visit_nop_stmt(),
+        }
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub struct FunctionBlock;
@@ -228,6 +283,15 @@ impl Debug for SyntaxNode<'_, FunctionBlock> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, FunctionBlock> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_block_stmt(self);
+        if visitor.should_visit_inner() {
+            self.statements().for_each(|s| s.accept(visitor));
+        }
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -245,6 +309,12 @@ impl Debug for SyntaxNode<'_, BreakStatement> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, BreakStatement> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_break_stmt(self);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -259,6 +329,12 @@ impl SyntaxNode<'_, ContinueStatement> {}
 impl Debug for SyntaxNode<'_, ContinueStatement> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "ContinueStatement")
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, ContinueStatement> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_continue_stmt(self);
     }
 }
 
@@ -285,6 +361,12 @@ impl Debug for SyntaxNode<'_, ReturnStatement> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, ReturnStatement> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_return_stmt(self);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -305,5 +387,11 @@ impl Debug for SyntaxNode<'_, DeleteStatement> {
         f.debug_tuple("DeleteStatement")
             .field(&self.value())
             .finish()
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, DeleteStatement> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_delete_stmt(self);
     }
 }

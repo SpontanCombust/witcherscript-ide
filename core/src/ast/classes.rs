@@ -39,6 +39,16 @@ impl Debug for SyntaxNode<'_, ClassDeclaration> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, ClassDeclaration> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_class_decl(self);
+        if visitor.should_visit_inner() {
+            self.definition().statements().for_each(|s| s.accept(visitor));
+        }
+    }
+}
+
+
 
 #[derive(Debug, Clone)]
 pub struct ClassBlock;
@@ -92,9 +102,24 @@ impl Debug for SyntaxNode<'_, ClassStatement<'_>> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, ClassStatement<'_>> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        match self.value() {
+            ClassStatement::Var(s) => s.accept(visitor),
+            ClassStatement::Default(s) => s.accept(visitor),
+            ClassStatement::Hint(s) => s.accept(visitor),
+            ClassStatement::Autobind(s) => s.accept(visitor),
+            ClassStatement::Method(s) => s.accept(visitor),
+            ClassStatement::Event(s) => s.accept(visitor),
+            ClassStatement::Nop => visitor.visit_nop_stmt(),
+        }
+    }
+}
+
+
 
 #[derive(Debug, Clone)]
-pub struct Autobind;
+pub struct Autobind; //TODO rename to AutobindDeclaration
 
 impl NamedSyntaxNode for Autobind {
     const NODE_NAME: &'static str = "class_autobind_stmt";
@@ -127,7 +152,14 @@ impl Debug for SyntaxNode<'_, Autobind> {
             .field("value", &self.value())
             .finish()
     }
-} 
+}
+
+impl StatementTraversal for SyntaxNode<'_, Autobind> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_autobind(self);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]

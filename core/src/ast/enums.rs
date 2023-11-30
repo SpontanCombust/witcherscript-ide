@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use crate::{tokens::{Identifier, LiteralInt}, NamedSyntaxNode, SyntaxNode};
+use super::{StatementTraversal, StatementVisitor};
 
 
 #[derive(Debug, Clone)]
@@ -25,6 +26,15 @@ impl Debug for SyntaxNode<'_, EnumDeclaration> {
             .field("name", &self.name())
             .field("definition", &self.definition())
             .finish()
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, EnumDeclaration> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_enum_decl(self);
+        if visitor.should_visit_inner() {
+            self.definition().values().for_each(|s| s.accept(visitor));
+        }
     }
 }
 
@@ -74,5 +84,11 @@ impl Debug for SyntaxNode<'_, EnumDeclarationValue> {
             .field("name", &self.name())
             .field("value", &self.value())
             .finish()
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, EnumDeclarationValue> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_enum_decl_value(self);
     }
 }

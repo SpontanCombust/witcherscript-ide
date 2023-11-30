@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{tokens::Identifier, NamedSyntaxNode, SyntaxNode, attribs::StateSpecifier};
-use super::ClassBlock;
+use super::{ClassBlock, StatementTraversal, StatementVisitor};
 
 
 #[derive(Debug, Clone)]
@@ -41,5 +41,14 @@ impl Debug for SyntaxNode<'_, StateDeclaration> {
             .field("base", &self.base())
             .field("definition", &self.definition())
             .finish()
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, StateDeclaration> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_state_decl(self);
+        if visitor.should_visit_inner() {
+            self.definition().statements().for_each(|s| s.accept(visitor));
+        }
     }
 }

@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{NamedSyntaxNode, SyntaxNode};
-use super::{Expression, FunctionStatement};
+use super::{Expression, FunctionStatement, StatementTraversal, StatementVisitor};
 
 
 #[derive(Debug, Clone)]
@@ -39,6 +39,13 @@ impl Debug for SyntaxNode<'_, ForLoop> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, ForLoop> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_for_stmt(self);
+        self.body().accept(visitor);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -67,6 +74,13 @@ impl Debug for SyntaxNode<'_, WhileLoop> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, WhileLoop> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_while_stmt(self);
+        self.body().accept(visitor);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -92,5 +106,12 @@ impl Debug for SyntaxNode<'_, DoWhileLoop> {
             .field("cond", &self.cond())
             .field("body", &self.body())
             .finish()
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, DoWhileLoop> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_do_while_stmt(self);
+        self.body().accept(visitor);
     }
 }

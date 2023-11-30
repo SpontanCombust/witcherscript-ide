@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use crate::{SyntaxNode, NamedSyntaxNode, tokens::*};
+use super::{StatementTraversal, ExpressionVisitor, ExpressionTraversal, StatementVisitor};
 
 
 #[derive(Debug, Clone)]
@@ -23,6 +24,13 @@ impl Debug for SyntaxNode<'_, NestedExpression> {
     }
 }
 
+impl ExpressionTraversal for SyntaxNode<'_, NestedExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.value().accept(visitor);
+        visitor.visit_nested_expr(self);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -37,6 +45,12 @@ impl SyntaxNode<'_, ThisExpression> {}
 impl Debug for SyntaxNode<'_, ThisExpression> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "ThisExpression")
+    }
+}
+
+impl ExpressionTraversal for SyntaxNode<'_, ThisExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        visitor.visit_this_expr(self);
     }
 }
 
@@ -57,6 +71,12 @@ impl Debug for SyntaxNode<'_, SuperExpression> {
     }
 }
 
+impl ExpressionTraversal for SyntaxNode<'_, SuperExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        visitor.visit_super_expr(self);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -74,6 +94,12 @@ impl Debug for SyntaxNode<'_, ParentExpression> {
     }
 }
 
+impl ExpressionTraversal for SyntaxNode<'_, ParentExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        visitor.visit_parent_expr(self);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -88,6 +114,12 @@ impl SyntaxNode<'_, VirtualParentExpression> {}
 impl Debug for SyntaxNode<'_, VirtualParentExpression> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "VirtualParentExpression")
+    }
+}
+
+impl ExpressionTraversal for SyntaxNode<'_, VirtualParentExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        visitor.visit_virtual_parent_expr(self);
     }
 }
 
@@ -120,8 +152,24 @@ impl Debug for SyntaxNode<'_, FunctionCallExpression> {
     }
 }
 
+impl ExpressionTraversal for SyntaxNode<'_, FunctionCallExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.args().for_each(|arg| arg.accept(visitor));
+        visitor.visit_func_call_expr(self);
+    }
+}
+
 
 type FuncCallArg<'script> = Option<SyntaxNode<'script, Expression<'script>>>;
+
+impl ExpressionTraversal for FuncCallArg<'_> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        if let Some(expr) = self {
+            expr.accept(visitor);
+        }
+        visitor.visit_func_call_arg(self);
+    }
+}
 
 fn func_args<'script, T: Clone>(func_node: &'script SyntaxNode<'_, T>) -> impl Iterator<Item = FuncCallArg<'script>> {
     if let Some(args_node) = func_node.tree_node.child_by_field_name("args") {
@@ -194,7 +242,15 @@ impl Debug for SyntaxNode<'_, ArrayExpression> {
             .field("index", &self.index())
             .finish()
     }
-} 
+}
+
+impl ExpressionTraversal for SyntaxNode<'_, ArrayExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.accessor().accept(visitor);
+        self.index().accept(visitor);
+        visitor.visit_array_expr(self);
+    }
+}
 
 
 
@@ -222,7 +278,14 @@ impl Debug for SyntaxNode<'_, MemberFieldExpression> {
             .field("member", &self.member())
             .finish()
     }
-} 
+}
+
+impl ExpressionTraversal for SyntaxNode<'_, MemberFieldExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.accessor().accept(visitor);
+        visitor.visit_member_field_expr(self);
+    }
+}
 
 
 
@@ -257,6 +320,14 @@ impl Debug for SyntaxNode<'_, MethodCallExpression> {
     }
 }
 
+impl ExpressionTraversal for SyntaxNode<'_, MethodCallExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.accessor().accept(visitor);
+        self.args().for_each(|arg| arg.accept(visitor));
+        visitor.visit_method_call_expr(self);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -282,6 +353,13 @@ impl Debug for SyntaxNode<'_, InstantiationExpression> {
             .field("class", &self.class())
             .field("lifetime_obj", &self.lifetime_obj())
             .finish()
+    }
+}
+
+impl ExpressionTraversal for SyntaxNode<'_, InstantiationExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.lifetime_obj().accept(visitor);
+        visitor.visit_instantiation_expr(self);
     }
 }
 
@@ -313,6 +391,13 @@ impl Debug for SyntaxNode<'_, TypeCastExpression> {
     }
 }
 
+impl ExpressionTraversal for SyntaxNode<'_, TypeCastExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.value().accept(visitor);
+        visitor.visit_type_cast_expr(self);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -338,6 +423,13 @@ impl Debug for SyntaxNode<'_, UnaryOperationExpression> {
             .field("op", &self.op())
             .field("right", &self.right())
             .finish()
+    }
+}
+
+impl ExpressionTraversal for SyntaxNode<'_, UnaryOperationExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.right().accept(visitor);
+        visitor.visit_unary_op_expr(self);
     }
 }
 
@@ -374,6 +466,14 @@ impl Debug for SyntaxNode<'_, BinaryOperationExpression> {
     }
 }
 
+impl ExpressionTraversal for SyntaxNode<'_, BinaryOperationExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.left().accept(visitor);
+        self.right().accept(visitor);
+        visitor.visit_binary_op_expr(self);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -407,6 +507,14 @@ impl Debug for SyntaxNode<'_, AssignmentOperationExpression> {
     }
 }
 
+impl ExpressionTraversal for SyntaxNode<'_, AssignmentOperationExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.left().accept(visitor);
+        self.right().accept(visitor);
+        visitor.visit_assign_op_expr(self);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -437,6 +545,15 @@ impl Debug for SyntaxNode<'_, TernaryConditionalExpression> {
             .field("conseq", &self.conseq())
             .field("alt", &self.alt())
             .finish()
+    }
+}
+
+impl ExpressionTraversal for SyntaxNode<'_, TernaryConditionalExpression> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.cond().accept(visitor);
+        self.conseq().accept(visitor);
+        self.alt().accept(visitor);
+        visitor.visit_ternary_cond_expr(self);
     }
 }
 
@@ -495,6 +612,30 @@ impl Debug for SyntaxNode<'_, Expression<'_>> {
     }
 }
 
+impl ExpressionTraversal for SyntaxNode<'_, Expression<'_>> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        match self.value() {
+            Expression::Nested(n) => n.accept(visitor),
+            Expression::Literal(n) => n.accept(visitor),
+            Expression::This(n) => n.accept(visitor),
+            Expression::Super(n) => n.accept(visitor),
+            Expression::Parent(n) => n.accept(visitor),
+            Expression::VirtualParent(n) => n.accept(visitor),
+            Expression::Identifier(n) => n.accept(visitor),
+            Expression::FunctionCall(n) => n.accept(visitor),
+            Expression::Array(n) => n.accept(visitor),
+            Expression::MemberField(n) => n.accept(visitor),
+            Expression::MethodCall(n) => n.accept(visitor),
+            Expression::Instantiation(n) => n.accept(visitor),
+            Expression::TypeCast(n) => n.accept(visitor),
+            Expression::UnaryOperation(n) => n.accept(visitor),
+            Expression::BinaryOperation(n) => n.accept(visitor),
+            Expression::AssignmentOperation(n) => n.accept(visitor),
+            Expression::TernaryConditional(n) => n.accept(visitor),
+        }
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -515,5 +656,11 @@ impl Debug for SyntaxNode<'_, ExpressionStatement> {
         f.debug_tuple("ExpressionStatement")
             .field(&self.expr())
             .finish()
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, ExpressionStatement> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_expr_stmt(self);
     }
 }

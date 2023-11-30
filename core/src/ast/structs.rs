@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{tokens::{Identifier, LiteralString}, NamedSyntaxNode, SyntaxNode, attribs::StructSpecifier};
-use super::{MemberVarDeclaration, Expression, Nop};
+use super::{MemberVarDeclaration, Expression, Nop, StatementTraversal, StatementVisitor};
 
 
 #[derive(Debug, Clone)]
@@ -31,6 +31,15 @@ impl Debug for SyntaxNode<'_, StructDeclaration> {
             .field("name", &self.name())
             .field("definition", &self.definition())
             .finish()
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, StructDeclaration> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_struct_decl(self);
+        if visitor.should_visit_inner() {
+            self.definition().statements().for_each(|s| s.accept(visitor));
+        }
     }
 }
 
@@ -83,6 +92,17 @@ impl Debug for SyntaxNode<'_, StructStatement<'_>> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, StructStatement<'_>> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        match self.value() {
+            StructStatement::Var(s) => s.accept(visitor),
+            StructStatement::Default(s) => s.accept(visitor),
+            StructStatement::Hint(s) => s.accept(visitor),
+            StructStatement::Nop => visitor.visit_nop_stmt(),
+        }
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -111,6 +131,12 @@ impl Debug for SyntaxNode<'_, MemberDefaultValue> {
     }
 }
 
+impl StatementTraversal for SyntaxNode<'_, MemberDefaultValue> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_member_default_val(self);
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -136,5 +162,11 @@ impl Debug for SyntaxNode<'_, MemberHint> {
             .field("member", &self.member())
             .field("value", &self.value())
             .finish()
+    }
+}
+
+impl StatementTraversal for SyntaxNode<'_, MemberHint> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_member_hint(self);
     }
 }
