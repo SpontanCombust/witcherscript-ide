@@ -1,6 +1,6 @@
-use std::fmt::{self, Debug};
-
+use std::fmt::{self, Debug, Display};
 use tree_sitter::{Point, Range};
+
 
 /// Zero-based document position
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -12,6 +12,13 @@ pub struct DocPos {
 impl Debug for DocPos {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {})", self.line, self.col)
+    }
+}
+
+impl Display for DocPos {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // +1 to convert from zero-based to one-based notation
+        write!(f, "line {}, column {}", self.line + 1, self.col + 1)
     }
 }
 

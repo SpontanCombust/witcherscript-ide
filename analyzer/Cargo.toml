@@ -9,3 +9,5 @@ authors.workspace = true
 witcherscript = { path = "../core" }
 lazy_static.workspace = true
 uuid.workspace = true
+ropey.workspace = true
+thiserror.workspace = true
