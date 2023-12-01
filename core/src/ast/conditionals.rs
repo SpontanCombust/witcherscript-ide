@@ -37,10 +37,8 @@ impl Debug for SyntaxNode<'_, IfConditional> {
 impl StatementTraversal for SyntaxNode<'_, IfConditional> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_if_stmt(self);
-        if visitor.should_visit_inner() {
-            self.body().accept(visitor);
-            self.else_body().map(|s| { s.accept(visitor) });
-        }
+        self.body().accept(visitor);
+        self.else_body().map(|s| { s.accept(visitor) });
     }
 }
 
@@ -80,10 +78,8 @@ impl Debug for SyntaxNode<'_, SwitchConditional> {
 impl StatementTraversal for SyntaxNode<'_, SwitchConditional> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt(self);
-        if visitor.should_visit_inner() {
-            self.cases().for_each(|s| s.accept(visitor));
-            self.default().map(|s| { s.accept(visitor) });
-        }
+        self.cases().for_each(|s| s.accept(visitor));
+        self.default().map(|s| { s.accept(visitor) });
     }
 }
 
@@ -117,9 +113,7 @@ impl Debug for SyntaxNode<'_, SwitchConditionalCase> {
 impl StatementTraversal for SyntaxNode<'_, SwitchConditionalCase> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt_case(self);
-        if visitor.should_visit_inner() {
-            self.body().for_each(|s| s.accept(visitor));
-        }
+        self.body().for_each(|s| s.accept(visitor));
     }
 }
 
@@ -148,8 +142,6 @@ impl Debug for SyntaxNode<'_, SwitchConditionalDefault> {
 impl StatementTraversal for SyntaxNode<'_, SwitchConditionalDefault> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt_default(self);
-        if visitor.should_visit_inner() {
-            self.body().for_each(|s| s.accept(visitor));
-        }
+        self.body().for_each(|s| s.accept(visitor));
     }
 }

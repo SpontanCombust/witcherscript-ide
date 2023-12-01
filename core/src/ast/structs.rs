@@ -36,8 +36,7 @@ impl Debug for SyntaxNode<'_, StructDeclaration> {
 
 impl StatementTraversal for SyntaxNode<'_, StructDeclaration> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_struct_decl(self);
-        if visitor.should_visit_inner() {
+        if visitor.visit_struct_decl(self) {
             self.definition().statements().for_each(|s| s.accept(visitor));
         }
     }

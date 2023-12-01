@@ -19,8 +19,6 @@ pub enum SymbolCollectionError {
     },
     #[error("type {0} is missing")]
     TypeMissing(DocPos),
-    // #[error("failed to parse integer number: {0}")]
-    // ParseIntError(#[from] ParseIntError),
 }
 
 use SymbolCollectionError::*;
@@ -61,13 +59,7 @@ impl TypeCollectingVisitor {
 }
 
 impl StatementVisitor for TypeCollectingVisitor {
-    fn should_visit_inner(&self) -> bool {
-        // visit only top level declarations
-        // we're only collecting types and these are always in the most outer scope
-        false 
-    }
-
-    fn visit_class_decl(&mut self, n: &SyntaxNode<'_, ClassDeclaration>) {
+    fn visit_class_decl(&mut self, n: &SyntaxNode<'_, ClassDeclaration>) -> bool {
         if let Some(c) = self.check_missing_node(&n.name()) {
             let pos = n.span().start;
             if self.check_duplicate(c.as_str(), pos) {
@@ -76,9 +68,11 @@ impl StatementVisitor for TypeCollectingVisitor {
                 self.db.classes.insert(sym.symbol_id(), sym);
             }
         }
+
+        false
     }
 
-    fn visit_state_decl(&mut self, n: &SyntaxNode<'_, StateDeclaration>) {
+    fn visit_state_decl(&mut self, n: &SyntaxNode<'_, StateDeclaration>) -> bool {
         if let (Some(state_name), Some(parent_name)) = (self.check_missing_node(&n.name()), self.check_missing_node(&n.parent())) {
             let state_class = StateSymbol::class_name(&state_name, &parent_name);
             let pos = n.span().start;
@@ -88,9 +82,11 @@ impl StatementVisitor for TypeCollectingVisitor {
                 self.db.states.insert(sym.symbol_id(), sym);
             }
         }
+
+        false
     }
 
-    fn visit_struct_decl(&mut self, n: &SyntaxNode<'_, StructDeclaration>) {
+    fn visit_struct_decl(&mut self, n: &SyntaxNode<'_, StructDeclaration>) -> bool {
         if let Some(s) = self.check_missing_node(&n.name()) {
             let pos = n.span().start;
             if self.check_duplicate(s.as_str(), pos) {
@@ -99,9 +95,11 @@ impl StatementVisitor for TypeCollectingVisitor {
                 self.db.structs.insert(sym.symbol_id(), sym);
             }
         }
+
+        false
     }
 
-    fn visit_enum_decl(&mut self, n: &SyntaxNode<'_, EnumDeclaration>) {
+    fn visit_enum_decl(&mut self, n: &SyntaxNode<'_, EnumDeclaration>) -> bool {
         if let Some(e) = self.check_missing_node(&n.name()) {
             let pos = n.span().start;
             if self.check_duplicate(e.as_str(), pos) {
@@ -110,5 +108,7 @@ impl StatementVisitor for TypeCollectingVisitor {
                 self.db.enums.insert(sym.symbol_id(), sym);
             }
         }
+
+        false
     }
 }

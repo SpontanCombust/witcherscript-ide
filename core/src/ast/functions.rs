@@ -36,8 +36,8 @@ impl Debug for SyntaxNode<'_, EventDeclaration> {
 
 impl StatementTraversal for SyntaxNode<'_, EventDeclaration> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_event_decl(self);
-        if visitor.should_visit_inner() {
+        if visitor.visit_event_decl(self) {
+            self.params().for_each(|p| p.accept(visitor));
             self.definition().map(|s| s.accept(visitor));
         }
     }
@@ -93,8 +93,8 @@ impl Debug for SyntaxNode<'_, GlobalFunctionDeclaration> {
 
 impl StatementTraversal for SyntaxNode<'_, GlobalFunctionDeclaration> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_global_func_decl(self);
-        if visitor.should_visit_inner() {
+        if visitor.visit_global_func_decl(self) {
+            self.params().for_each(|p| p.accept(visitor));
             self.definition().map(|s| s.accept(visitor));
         }
     }
@@ -150,8 +150,8 @@ impl Debug for SyntaxNode<'_, MemberFunctionDeclaration> {
 
 impl StatementTraversal for SyntaxNode<'_, MemberFunctionDeclaration> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_member_func_decl(self);
-        if visitor.should_visit_inner() {
+        if visitor.visit_member_func_decl(self) {
+            self.params().for_each(|p| p.accept(visitor));
             self.definition().map(|s| s.accept(visitor));
         }
     }
@@ -285,10 +285,7 @@ impl Debug for SyntaxNode<'_, FunctionBlock> {
 
 impl StatementTraversal for SyntaxNode<'_, FunctionBlock> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_block_stmt(self);
-        if visitor.should_visit_inner() {
-            self.statements().for_each(|s| s.accept(visitor));
-        }
+        self.statements().for_each(|s| s.accept(visitor));
     }
 }
 

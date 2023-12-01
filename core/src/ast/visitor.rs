@@ -31,10 +31,14 @@ pub trait ExpressionTraversal {
 
 
 pub trait StatementVisitor {
-    fn visit_class_decl(&mut self, _: &SyntaxNode<'_, ClassDeclaration>) {}
-    fn visit_state_decl(&mut self, _: &SyntaxNode<'_, StateDeclaration>) {}
-    fn visit_struct_decl(&mut self, _: &SyntaxNode<'_, StructDeclaration>) {}
-    fn visit_enum_decl(&mut self, _: &SyntaxNode<'_, EnumDeclaration>) {}
+    /// Should return whether to traverse into the body of the class. True by default.
+    fn visit_class_decl(&mut self, _: &SyntaxNode<'_, ClassDeclaration>) -> bool { true }
+    /// Should return whether to traverse into the body of the state. True by default.
+    fn visit_state_decl(&mut self, _: &SyntaxNode<'_, StateDeclaration>) -> bool { true }
+    /// Should return whether to traverse into the body of the struct. True by default.
+    fn visit_struct_decl(&mut self, _: &SyntaxNode<'_, StructDeclaration>) -> bool { true }
+    /// Should return whether to traverse into the body of the enum. True by default.
+    fn visit_enum_decl(&mut self, _: &SyntaxNode<'_, EnumDeclaration>) -> bool { true }
 
     fn visit_enum_decl_value(&mut self, _: &SyntaxNode<'_, EnumDeclarationValue>) {}
 
@@ -44,9 +48,12 @@ pub trait StatementVisitor {
     fn visit_autobind_decl(&mut self, _: &SyntaxNode<'_, AutobindDeclaration>) {}
     
     fn visit_func_param_group(&mut self, _: &SyntaxNode<'_, FunctionParameterGroup>) {}
-    fn visit_global_func_decl(&mut self, _: &SyntaxNode<'_, GlobalFunctionDeclaration>) {}
-    fn visit_member_func_decl(&mut self, _: &SyntaxNode<'_, MemberFunctionDeclaration>) {}
-    fn visit_event_decl(&mut self, _: &SyntaxNode<'_, EventDeclaration>) {}
+    /// Should return whether to traverse into params and body of the function. True by default.
+    fn visit_global_func_decl(&mut self, _: &SyntaxNode<'_, GlobalFunctionDeclaration>) -> bool { true }
+    /// Should return whether to traverse into params and body of the function. True by default.
+    fn visit_member_func_decl(&mut self, _: &SyntaxNode<'_, MemberFunctionDeclaration>) -> bool { true }
+    /// Should return whether to traverse into params and body of the event. True by default.
+    fn visit_event_decl(&mut self, _: &SyntaxNode<'_, EventDeclaration>) -> bool { true }
     
     fn visit_local_var_decl_stmt(&mut self, _: &SyntaxNode<'_, VarDeclaration>) {}
     fn visit_expr_stmt(&mut self, _: &SyntaxNode<'_, ExpressionStatement>) {}
@@ -63,11 +70,6 @@ pub trait StatementVisitor {
     fn visit_delete_stmt(&mut self, _: &SyntaxNode<'_, DeleteStatement>) {}
     fn visit_block_stmt(&mut self, _: &SyntaxNode<'_, FunctionBlock>) {}
     fn visit_nop_stmt(&mut self) {}
-
-
-    /// Specify whether traversal should be done on statements that may be nested in a statement
-    /// Can be used to, for example, ignore what's inside of the function 
-    fn should_visit_inner(&self) -> bool;
 }
 
 /// Do a left-to-right tree traversal using left-recursion.

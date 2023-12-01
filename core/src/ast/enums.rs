@@ -31,8 +31,7 @@ impl Debug for SyntaxNode<'_, EnumDeclaration> {
 
 impl StatementTraversal for SyntaxNode<'_, EnumDeclaration> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_enum_decl(self);
-        if visitor.should_visit_inner() {
+        if visitor.visit_enum_decl(self) {
             self.definition().values().for_each(|s| s.accept(visitor));
         }
     }
