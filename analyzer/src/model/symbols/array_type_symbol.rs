@@ -26,7 +26,7 @@ pub type ArrayTypeSymbol = Symbol<ArrayTypeSymbolData>;
 
 impl ArrayTypeSymbol {
     pub fn new_with_type(data_type_id: Uuid, data_type_name: &str, void_id: Uuid, int_id: Uuid, bool_id: Uuid) -> (Self, Vec<MemberFunctionSymbol>, Vec<FunctionParameterSymbol>) {
-        let mut arr = Self::new_with_data(
+        let mut arr = Self::new(
             &format!("array<{}>", data_type_name), 
             NATIVE_SYMBOL_SCRIPT_ID, 
             ArrayTypeSymbolData { 
@@ -39,7 +39,7 @@ impl ArrayTypeSymbol {
     }
 
     fn new_func(&mut self, name: &str) -> MemberFunctionSymbol {
-        let f = MemberFunctionSymbol::new(name, self.id);
+        let f = MemberFunctionSymbol::new_with_default(name, self.id);
         self.data.func_ids.push(f.id);
         f
     }

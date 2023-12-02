@@ -43,28 +43,28 @@ impl StateSymbol {
 
     #[must_use]
     pub fn add_member_var(&mut self, name: &str) -> MemberVarSymbol {
-        let s = MemberVarSymbol::new(name, self.id);
+        let s = MemberVarSymbol::new_with_default(name, self.id);
         self.data.member_var_ids.push(s.id);
         s
     }
 
     #[must_use]
     pub fn add_autobind(&mut self, name: &str) -> AutobindSymbol {
-        let s = AutobindSymbol::new(name, self.id);
+        let s = AutobindSymbol::new_with_default(name, self.id);
         self.data.autobind_ids.push(s.id);
         s
     }
 
     #[must_use]
     pub fn add_member_func(&mut self, name: &str) -> MemberFunctionSymbol {
-        let s = MemberFunctionSymbol::new(name, self.id);
+        let s = MemberFunctionSymbol::new_with_default(name, self.id);
         self.data.member_func_ids.push(s.id);
         s
     }
 
     #[must_use]
     pub fn add_event(&mut self, name: &str) -> EventSymbol {
-        let s = EventSymbol::new(name, self.id);
+        let s = EventSymbol::new_with_default(name, self.id);
         self.data.event_ids.push(s.id);
         s
     }

@@ -15,7 +15,7 @@ pub type PrimitiveTypeSymbol = Symbol<PrimitiveTypeSymbolData>;
 
 impl PrimitiveTypeSymbol {
     pub fn new_with_alias(name: &str, alias: Option<&str>) -> Self {
-        Self::new_with_data(
+        Self::new(
             name, 
             NATIVE_SYMBOL_SCRIPT_ID, 
             PrimitiveTypeSymbolData { 

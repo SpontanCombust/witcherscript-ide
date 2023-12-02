@@ -16,7 +16,7 @@ pub type EnumSymbol = Symbol<EnumSymbolData>;
 impl EnumSymbol {
     #[must_use]
     pub fn add_member(&mut self, name: &str, value: i32) -> EnumMemberSymbol {
-        let m = EnumMemberSymbol::new_with_data(name, self.id, EnumMemberSymbolData::new(value));
+        let m = EnumMemberSymbol::new(name, self.id, EnumMemberSymbolData::new(value));
         self.data.member_ids.push(m.id);
         m
     }
@@ -54,7 +54,7 @@ pub struct EnumSymbolBuilder {
 impl EnumSymbolBuilder {
     pub fn new(script_id: Uuid, enum_name: &str) -> Self {
         Self { 
-            sym: EnumSymbol::new(enum_name, script_id), 
+            sym: EnumSymbol::new_with_default(enum_name, script_id), 
             members: Vec::new(), 
             prev_val: -1
         }

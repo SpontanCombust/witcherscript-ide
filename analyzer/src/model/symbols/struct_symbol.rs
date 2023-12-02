@@ -18,7 +18,7 @@ pub type StructSymbol = Symbol<StructSymbolData>;
 impl StructSymbol {
     #[must_use]
     pub fn add_member_var(&mut self, name: &str) -> MemberVarSymbol {
-        let s = MemberVarSymbol::new(name, self.id);
+        let s = MemberVarSymbol::new_with_default(name, self.id);
         self.data.member_var_ids.push(s.id);
         s
     }

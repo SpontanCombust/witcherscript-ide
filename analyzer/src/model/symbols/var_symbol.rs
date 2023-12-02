@@ -66,6 +66,6 @@ pub type GlobalVarSymbol = Symbol<GlobalVarSymbolData>;
 
 impl GlobalVarSymbol {
     pub fn new_with_type(name: &str, type_id: Uuid) -> Self {
-        Self::new_with_data(name, NATIVE_SYMBOL_SCRIPT_ID, GlobalVarSymbolData { type_id })
+        Self::new(name, NATIVE_SYMBOL_SCRIPT_ID, GlobalVarSymbolData { type_id })
     }
 }

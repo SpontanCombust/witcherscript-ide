@@ -33,7 +33,7 @@ where T: SymbolData {
 }
 
 impl<T: SymbolData> Symbol<T> {
-    pub fn new_with_data(name: &str, parent_id: Uuid, data: T) -> Self {
+    pub fn new(name: &str, parent_id: Uuid, data: T) -> Self {
         Self {
             id: Uuid::new_v4(),
             name: name.to_string(),
@@ -42,7 +42,7 @@ impl<T: SymbolData> Symbol<T> {
         }
     }
 
-    pub fn new<U: SymbolData + Default>(name: &str, parent_id: Uuid) -> Symbol<U> {
+    pub fn new_with_default<U: SymbolData + Default>(name: &str, parent_id: Uuid) -> Symbol<U> {
         Symbol::<U> {
             id: Uuid::new_v4(),
             name: name.to_string(),

@@ -31,7 +31,7 @@ pub type GlobalFunctionSymbol = Symbol<GlobalFunctionSymbolData>;
 impl GlobalFunctionSymbol {
     #[must_use]
     pub fn add_param(&mut self, name: &str) -> FunctionParameterSymbol {
-        let s = FunctionParameterSymbol::new(name, self.id);
+        let s = FunctionParameterSymbol::new_with_default(name, self.id);
         self.data.param_ids.push(s.id);
         s
     }
@@ -67,7 +67,7 @@ pub type MemberFunctionSymbol = Symbol<MemberFunctionSymbolData>;
 impl MemberFunctionSymbol {
     #[must_use]
     pub fn add_param(&mut self, name: &str) -> FunctionParameterSymbol {
-        let s = FunctionParameterSymbol::new(name, self.id);
+        let s = FunctionParameterSymbol::new_with_default(name, self.id);
         self.data.param_ids.push(s.id);
         s
     }
@@ -89,7 +89,7 @@ pub type EventSymbol = Symbol<EventSymbolData>;
 impl EventSymbol {
     #[must_use]
     pub fn add_param(&mut self, name: &str) -> FunctionParameterSymbol {
-        let s = FunctionParameterSymbol::new(name, self.id);
+        let s = FunctionParameterSymbol::new_with_default(name, self.id);
         self.data.param_ids.push(s.id);
         s
     }
