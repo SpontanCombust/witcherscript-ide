@@ -1,118 +1,71 @@
 use uuid::Uuid;
 use witcherscript::attribs::MemberVarSpecifier;
-use super::{Symbol, SymbolType, NATIVE_SYMBOL_SCRIPT_ID, ERROR_SYMBOL_ID};
+use super::{Symbol, SymbolType, ERROR_SYMBOL_ID, SymbolData, NATIVE_SYMBOL_SCRIPT_ID};
 
 
 #[derive(Debug, Clone)]
-pub struct MemberVarSymbol {
-    owner_id: Uuid,
-    symbol_id: Uuid,
-    name: String,
+pub struct MemberVarSymbolData {
     pub specifiers: Vec<MemberVarSpecifier>,
     pub type_id: Uuid,
 }
 
-impl MemberVarSymbol {
-    pub fn new(owner_id: Uuid, name: &str) -> Self {
-        Self {
-            owner_id,
-            symbol_id: Uuid::new_v4(),
+impl Default for MemberVarSymbolData {
+    fn default() -> Self {
+        Self { 
             specifiers: Vec::new(),
-            name: name.to_owned(),
             type_id: ERROR_SYMBOL_ID,
         }
     }
 }
 
-impl Symbol for MemberVarSymbol {
-    const TYPE: SymbolType = SymbolType::MemberVar;
-
-    fn symbol_id(&self) -> Uuid {
-        self.symbol_id
-    }
-
-    fn symbol_name(&self) -> &str {
-        self.name.as_str()
-    }
-
-    fn parent_symbol_id(&self) -> Uuid {
-        self.owner_id
-    }
+impl SymbolData for MemberVarSymbolData {
+    const SYMBOL_TYPE: SymbolType = SymbolType::MemberVar;
 }
+
+pub type MemberVarSymbol = Symbol<MemberVarSymbolData>;
 
 
 
 #[derive(Debug, Clone)]
-pub struct LocalVarSymbol {
-    func_id: Uuid,
-    symbol_id: Uuid,
-    name: String,
+pub struct LocalVarSymbolData {
     pub type_id: Uuid,
 }
 
-impl LocalVarSymbol {
-    pub fn new(func_id: Uuid, name: &str, type_id: Uuid) -> Self {
-        Self {
-            func_id,
-            symbol_id: Uuid::new_v4(),
-            name: name.to_owned(),
-            type_id
+impl Default for LocalVarSymbolData {
+    fn default() -> Self {
+        Self { 
+            type_id: ERROR_SYMBOL_ID 
         }
     }
 }
 
-impl Symbol for LocalVarSymbol {
-    const TYPE: SymbolType = SymbolType::LocalVar;
-
-    fn symbol_id(&self) -> Uuid {
-        self.symbol_id
-    }
-
-    fn symbol_name(&self) -> &str {
-        self.name.as_str()
-    }
-
-    fn parent_symbol_id(&self) -> Uuid {
-        self.func_id
-    }
+impl SymbolData for LocalVarSymbolData {
+    const SYMBOL_TYPE: SymbolType = SymbolType::LocalVar;
 }
+
+pub type LocalVarSymbol = Symbol<LocalVarSymbolData>;
 
 
 
 #[derive(Debug, Clone)]
-pub struct GlobalVarSymbol {
-    symbol_id: Uuid,
-    name: String,
+pub struct GlobalVarSymbolData {
     type_id: Uuid
 }
 
-impl GlobalVarSymbol {
-    pub fn new(name: &str, type_id: Uuid) -> Self {
-        Self {
-            symbol_id: Uuid::new_v4(),
-            name: name.to_owned(),
-            type_id
-        }
-    }
-
-
+impl GlobalVarSymbolData {
     pub fn type_id(&self) -> Uuid {
         self.type_id
     }
 }
 
-impl Symbol for GlobalVarSymbol {
-    const TYPE: SymbolType = SymbolType::GlobalVar;
+impl SymbolData for GlobalVarSymbolData {
+    const SYMBOL_TYPE: SymbolType = SymbolType::GlobalVar;
+}
 
-    fn symbol_id(&self) -> Uuid {
-        self.symbol_id
-    }
+pub type GlobalVarSymbol = Symbol<GlobalVarSymbolData>;
 
-    fn symbol_name(&self) -> &str {
-        self.name.as_str()
-    }
-
-    fn parent_symbol_id(&self) -> Uuid {
-        NATIVE_SYMBOL_SCRIPT_ID
+impl GlobalVarSymbol {
+    pub fn new_with_type(name: &str, type_id: Uuid) -> Self {
+        Self::new_with_data(name, NATIVE_SYMBOL_SCRIPT_ID, GlobalVarSymbolData { type_id })
     }
 }

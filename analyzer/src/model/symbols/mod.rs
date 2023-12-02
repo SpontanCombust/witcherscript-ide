@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use uuid::{Uuid, uuid};
 
 mod primitive_type_symbol;
@@ -21,17 +22,58 @@ pub use array_type_symbol::*;
 pub use state_symbol::*;
 
 
-pub trait Symbol {
-    const TYPE: SymbolType;
-    
-    /// Unique identifier of the symbol
-    fn symbol_id(&self) -> Uuid;
-    /// Name of the symbol to be used in the symbol table
-    fn symbol_name(&self) -> &str;
-    /// Identifier of the symbol higher in the symbol tree
-    /// If self is a global symbol it should return script identifier or NATIVE_SYMBOL_SCRIPT_ID
-    fn parent_symbol_id(&self) -> Uuid;
+#[derive(Debug, Clone)]
+pub struct Symbol<T> 
+where T: SymbolData {
+    id: Uuid,
+    name: String,
+    parent_id: Uuid,
+    //TODO relative_span - a span relative to parent scope
+    pub data: T
 }
+
+impl<T: SymbolData> Symbol<T> {
+    pub fn new_with_data(name: &str, parent_id: Uuid, data: T) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            name: name.to_string(),
+            parent_id,
+            data,
+        }
+    }
+
+    pub fn new<U: SymbolData + Default>(name: &str, parent_id: Uuid) -> Symbol<U> {
+        Symbol::<U> {
+            id: Uuid::new_v4(),
+            name: name.to_string(),
+            parent_id,
+            data: U::default(),
+        }
+    }
+
+    
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref()
+    }
+
+    pub fn parent_id(&self) -> Uuid {
+        self.parent_id
+    }
+
+    pub fn typ(&self) -> SymbolType {
+        T::SYMBOL_TYPE
+    }
+}
+
+pub trait SymbolData {
+    const SYMBOL_TYPE: SymbolType;
+}
+
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SymbolType {
@@ -56,6 +98,5 @@ pub enum SymbolType {
     LocalVar,
 }
 
-//TODO manually prepare UUIDs for native types 
 pub const ERROR_SYMBOL_ID: Uuid         = uuid!("00000000-0000-0000-0000-000000000000");
 pub const NATIVE_SYMBOL_SCRIPT_ID: Uuid = uuid!("00000000-0000-0000-0000-000000000001");

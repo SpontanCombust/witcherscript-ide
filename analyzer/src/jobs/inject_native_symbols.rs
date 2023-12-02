@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use crate::model::{symbols::{PrimitiveTypeSymbol, ArrayTypeSymbol, Symbol, GlobalVarSymbol}, collections::{SymbolTable, SymbolDb}};
+use crate::model::{symbols::{PrimitiveTypeSymbol, GlobalVarSymbol, ArrayTypeSymbol}, collections::{SymbolTable, SymbolDb}};
 
 /// Should be called at the start, before parsing WS files.
 /// 
@@ -7,18 +7,18 @@ use crate::model::{symbols::{PrimitiveTypeSymbol, ArrayTypeSymbol, Symbol, Globa
 /// If only lower case can be found in vanilla code, then the type name is a guess.
 pub fn inject_primitives(db: &mut SymbolDb) {
     [
-        PrimitiveTypeSymbol::new("Void", Some("void")),
-        PrimitiveTypeSymbol::new("Byte", Some("byte")),
-        PrimitiveTypeSymbol::new("Int8", None),
-        PrimitiveTypeSymbol::new("Int32", Some("int")),
-        PrimitiveTypeSymbol::new("UInt64", None),
-        PrimitiveTypeSymbol::new("Float", Some("float")),
-        PrimitiveTypeSymbol::new("Bool", Some("bool")),
-        PrimitiveTypeSymbol::new("String", Some("string")),
-        PrimitiveTypeSymbol::new("CName", Some("name")),
+        PrimitiveTypeSymbol::new_with_alias("Void", Some("void")),
+        PrimitiveTypeSymbol::new_with_alias("Byte", Some("byte")),
+        PrimitiveTypeSymbol::new_with_alias("Int8", None),
+        PrimitiveTypeSymbol::new_with_alias("Int32", Some("int")),
+        PrimitiveTypeSymbol::new_with_alias("UInt64", None),
+        PrimitiveTypeSymbol::new_with_alias("Float", Some("float")),
+        PrimitiveTypeSymbol::new_with_alias("Bool", Some("bool")),
+        PrimitiveTypeSymbol::new_with_alias("String", Some("string")),
+        PrimitiveTypeSymbol::new_with_alias("CName", Some("name")),
 
     ].into_iter()
-    .for_each(|sym| { db.primitives.insert(sym.symbol_id(), sym); });
+    .for_each(|sym| { db.primitives.insert(sym.id(), sym); });
 }
 
 
@@ -52,8 +52,8 @@ pub fn inject_globals(db: &mut SymbolDb, symtab: &SymbolTable) {
 
     ].into_iter()
     .for_each(|(var_name, class_name)| { 
-        let gv = GlobalVarSymbol::new(var_name, symtab.get(class_name).unwrap().id);
-        db.global_vars.insert(gv.symbol_id(), gv); 
+        let gv = GlobalVarSymbol::new_with_type(var_name, symtab.get(class_name).unwrap().id);
+        db.global_vars.insert(gv.id(), gv); 
     });
 }
 
@@ -65,8 +65,8 @@ pub fn inject_array_type(db: &mut SymbolDb, symtab: &SymbolTable, data_type_id: 
     let int_id = symtab.get("int").unwrap().id;
     let bool_id = symtab.get("bool").unwrap().id;
 
-    let (arr, funcs, params) = ArrayTypeSymbol::new(data_type_id, data_type_name, void_id, int_id, bool_id);
-    db.arrays.insert(arr.symbol_id(), arr);
-    funcs.into_iter().for_each(|f| { db.member_funcs.insert(f.symbol_id(), f); } );
-    params.into_iter().for_each(|p| { db.params.insert(p.symbol_id(), p); } );
+    let (arr, funcs, params) = ArrayTypeSymbol::new_with_type(data_type_id, data_type_name, void_id, int_id, bool_id);
+    db.arrays.insert(arr.id(), arr);
+    funcs.into_iter().for_each(|f| { db.member_funcs.insert(f.id(), f); } );
+    params.into_iter().for_each(|p| { db.params.insert(p.id(), p); } );
 }

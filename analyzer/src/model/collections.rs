@@ -10,18 +10,20 @@ pub struct SymbolTableValue {
 }
 
 impl SymbolTableValue {
-    pub fn from_symbol<S: Symbol>(sym: &S) -> Self {
+    pub fn from_symbol<S: SymbolData>(sym: &Symbol<S>) -> Self {
         Self {
-            id: sym.symbol_id(),
-            typ: S::TYPE
+            id: sym.id(),
+            typ: sym.typ()
         }
     }
 }
 
+//TODO make into struct
+// introduce scopes arranged in a stack
 pub type SymbolTable = HashMap<String, SymbolTableValue>;
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SymbolDb {
     pub primitives: HashMap<Uuid, PrimitiveTypeSymbol>,
     pub enums: HashMap<Uuid, EnumSymbol>,
@@ -46,22 +48,6 @@ pub struct SymbolDb {
 
 impl SymbolDb {
     pub fn new() -> Self {
-        Self {
-            primitives: HashMap::new(),
-            enums: HashMap::new(),
-            structs: HashMap::new(),
-            classes: HashMap::new(),
-            states: HashMap::new(),
-            arrays: HashMap::new(),
-            enum_members: HashMap::new(),
-            global_funcs: HashMap::new(),
-            member_funcs: HashMap::new(),
-            events: HashMap::new(),
-            params: HashMap::new(),
-            global_vars: HashMap::new(),
-            member_vars: HashMap::new(),
-            autobinds: HashMap::new(),
-            local_vars: HashMap::new(),
-        }
+        Self::default()
     }
 }

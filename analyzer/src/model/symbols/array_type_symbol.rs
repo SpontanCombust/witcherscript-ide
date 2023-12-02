@@ -1,32 +1,46 @@
 use uuid::Uuid;
-use super::{MemberFunctionSymbol, Symbol, SymbolType, NATIVE_SYMBOL_SCRIPT_ID, FunctionParameterSymbol};
+use super::{MemberFunctionSymbol, Symbol, SymbolType, NATIVE_SYMBOL_SCRIPT_ID, FunctionParameterSymbol, SymbolData};
 
 
-#[derive(Debug, Clone)]
-pub struct ArrayTypeSymbol {
-    symbol_id: Uuid,
-    name: String,
+#[derive(Debug, Clone, Default)]
+pub struct ArrayTypeSymbolData {
     data_type_id: Uuid,
     func_ids: Vec<Uuid>
 }
 
-impl ArrayTypeSymbol {
-    pub fn new(data_type_id: Uuid, data_type_name: &str, void_id: Uuid, int_id: Uuid, bool_id: Uuid) -> (Self, Vec<MemberFunctionSymbol>, Vec<FunctionParameterSymbol>) {
-        let symbol_id = Uuid::new_v4();
-        let mut arr = Self {
-            symbol_id,
-            name: format!("array<{}>", data_type_name),
-            data_type_id,
-            func_ids: Vec::new()
-        };
+impl ArrayTypeSymbolData {
+    pub fn data_type_id(&self) -> Uuid {
+        self.data_type_id
+    }
 
+    pub fn func_ids(&self) -> &[Uuid] {
+        self.func_ids.as_ref()
+    }
+}
+
+impl SymbolData for ArrayTypeSymbolData {
+    const SYMBOL_TYPE: SymbolType = SymbolType::Array;
+}
+
+pub type ArrayTypeSymbol = Symbol<ArrayTypeSymbolData>;
+
+impl ArrayTypeSymbol {
+    pub fn new_with_type(data_type_id: Uuid, data_type_name: &str, void_id: Uuid, int_id: Uuid, bool_id: Uuid) -> (Self, Vec<MemberFunctionSymbol>, Vec<FunctionParameterSymbol>) {
+        let mut arr = Self::new_with_data(
+            &format!("array<{}>", data_type_name), 
+            NATIVE_SYMBOL_SCRIPT_ID, 
+            ArrayTypeSymbolData { 
+                data_type_id, 
+                func_ids: Vec::new() 
+            }
+        );
         let (funcs, params) = arr.add_functions(void_id, int_id, bool_id);
         (arr, funcs, params)
     }
 
     fn new_func(&mut self, name: &str) -> MemberFunctionSymbol {
-        let f = MemberFunctionSymbol::new(self.symbol_id, name);
-        self.func_ids.push(f.symbol_id());
+        let f = MemberFunctionSymbol::new(name, self.id);
+        self.data.func_ids.push(f.id);
         f
     }
 
@@ -36,129 +50,103 @@ impl ArrayTypeSymbol {
 
         {
             let mut f = self.new_func("operator[]");
-            f.return_type_id = self.data_type_id;
+            f.data.return_type_id = self.data.data_type_id;
             let mut p = f.add_param("index");
-            p.type_id = int_id;
+            p.data.type_id = int_id;
             params.push(p);
             funcs.push(f);
         }
         {
             let mut f = self.new_func("Clear");
-            f.return_type_id = void_id;
+            f.data.return_type_id = void_id;
             funcs.push(f);
         }
         {
             let mut f = self.new_func("Size");
-            f.return_type_id = int_id;
+            f.data.return_type_id = int_id;
             funcs.push(f);
         }
         {
             let mut f = self.new_func("PushBack");
-            f.return_type_id = self.data_type_id;
+            f.data.return_type_id = self.data.data_type_id;
             let mut p = f.add_param("element");
-            p.type_id = self.data_type_id;
+            p.data.type_id = self.data.data_type_id;
             params.push(p);
             funcs.push(f);
         }
         {
             let mut f = self.new_func("Resize");
-            f.return_type_id = void_id;
+            f.data.return_type_id = void_id;
             let mut p = f.add_param("newSize");
-            p.type_id = int_id;
+            p.data.type_id = int_id;
             params.push(p);
             funcs.push(f);
         }
         {
             let mut f = self.new_func("Remove");
-            f.return_type_id = bool_id;
+            f.data.return_type_id = bool_id;
             let mut p = f.add_param("element");
-            p.type_id = self.data_type_id;
+            p.data.type_id = self.data.data_type_id;
             params.push(p);
             funcs.push(f);
         }
         {
             let mut f = self.new_func("Contains");
-            f.return_type_id = bool_id;
+            f.data.return_type_id = bool_id;
             let mut p = f.add_param("element");
-            p.type_id = self.data_type_id;
+            p.data.type_id = self.data.data_type_id;
             params.push(p);
             funcs.push(f);
         }
         {
             let mut f = self.new_func("FindFirst");
-            f.return_type_id = int_id;
+            f.data.return_type_id = int_id;
             let mut p = f.add_param("element");
-            p.type_id = self.data_type_id;
+            p.data.type_id = self.data.data_type_id;
             params.push(p);
             funcs.push(f);
         }
         {
             let mut f = self.new_func("FindLast");
-            f.return_type_id = int_id;
+            f.data.return_type_id = int_id;
             let mut p = f.add_param("element");
-            p.type_id = self.data_type_id;
+            p.data.type_id = self.data.data_type_id;
             params.push(p);
             funcs.push(f);
         }
         {
             let mut f = self.new_func("Grow");
-            f.return_type_id = int_id;
+            f.data.return_type_id = int_id;
             let mut p = f.add_param("numElements");
-            p.type_id = int_id;
+            p.data.type_id = int_id;
             params.push(p);
             funcs.push(f);
         }
         {
             let mut f = self.new_func("Erase");
-            f.return_type_id = void_id;
+            f.data.return_type_id = void_id;
             let mut p = f.add_param("index");
-            p.type_id = int_id;
+            p.data.type_id = int_id;
             params.push(p);
             funcs.push(f);
         }
         {
             let mut f = self.new_func("Insert");
-            f.return_type_id = void_id;
+            f.data.return_type_id = void_id;
             let mut p = f.add_param("index");
-            p.type_id = int_id;
+            p.data.type_id = int_id;
             params.push(p);
             let mut p = f.add_param("element");
-            p.type_id = self.data_type_id;
+            p.data.type_id = self.data.data_type_id;
             params.push(p);
             funcs.push(f);
         }
         {
             let mut f = self.new_func("Last");
-            f.return_type_id = self.data_type_id;
+            f.data.return_type_id = self.data.data_type_id;
             funcs.push(f);
         }
 
         (funcs, params)
-    }
-
-
-
-    pub fn data_type_id(&self) -> Uuid {
-        self.data_type_id
-    }
-
-    pub fn funcs(&self) -> &[Uuid] {
-        self.func_ids.as_ref()
-    }
-}
-
-impl Symbol for ArrayTypeSymbol {
-    const TYPE: SymbolType = SymbolType::Array;
-
-    fn symbol_id(&self) -> Uuid {
-        self.symbol_id
-    }
-
-    fn symbol_name(&self) -> &str {
-        self.name.as_str()
-    }
-
-    fn parent_symbol_id(&self) -> Uuid {
-        NATIVE_SYMBOL_SCRIPT_ID
     }
 }

@@ -1,49 +1,25 @@
 use uuid::Uuid;
 use witcherscript::attribs::StructSpecifier;
-use super::{Symbol, SymbolType, MemberVarSymbol};
+use super::{Symbol, SymbolType, MemberVarSymbol, SymbolData};
 
 
-#[derive(Debug, Clone)]
-pub struct StructSymbol {
-    script_id: Uuid,
-    symbol_id: Uuid,
-    name: String,
+#[derive(Debug, Clone, Default)]
+pub struct StructSymbolData {
     pub specifiers: Vec<StructSpecifier>,
     pub member_var_ids: Vec<Uuid>,
 }
 
-impl StructSymbol {
-    pub fn new(script_id: Uuid, name: &str) -> Self {
-        Self {
-            script_id,
-            symbol_id: Uuid::new_v4(),
-            name: name.to_owned(),
-            specifiers: Vec::new(),
-            member_var_ids: Vec::new()
-        }
-    }
-
-
-    #[must_use]
-    pub fn add_member_var(&mut self, name: &str) -> MemberVarSymbol {
-        let s = MemberVarSymbol::new(self.symbol_id, name);
-        self.member_var_ids.push(s.symbol_id());
-        s
-    }
+impl SymbolData for StructSymbolData {
+    const SYMBOL_TYPE: SymbolType = SymbolType::Struct;
 }
 
-impl Symbol for StructSymbol {
-    const TYPE: SymbolType = SymbolType::Struct;
+pub type StructSymbol = Symbol<StructSymbolData>;
 
-    fn symbol_id(&self) -> Uuid {
-        self.symbol_id
-    }
-
-    fn symbol_name(&self) -> &str {
-        self.name.as_str()
-    }
-
-    fn parent_symbol_id(&self) -> Uuid {
-        self.script_id
+impl StructSymbol {
+    #[must_use]
+    pub fn add_member_var(&mut self, name: &str) -> MemberVarSymbol {
+        let s = MemberVarSymbol::new(name, self.id);
+        self.data.member_var_ids.push(s.id);
+        s
     }
 }

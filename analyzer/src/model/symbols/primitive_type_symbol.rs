@@ -1,37 +1,26 @@
-use uuid::Uuid;
-use super::{Symbol, SymbolType, NATIVE_SYMBOL_SCRIPT_ID};
+use super::{Symbol, SymbolType, SymbolData, NATIVE_SYMBOL_SCRIPT_ID};
 
 /// For basic arithmetic and string-like types
 #[derive(Debug, Clone)]
-pub struct PrimitiveTypeSymbol {
-    symbol_id: Uuid,
-    name: String,
+pub struct PrimitiveTypeSymbolData {
     /// Most of the primitive types have a lowercase keyword name, e.g. `CName` has the `name` alias
     pub alias: Option<String>,
 }
 
-impl PrimitiveTypeSymbol {
-    pub fn new(name: &str, alias: Option<&str>) -> Self {
-        Self {
-            symbol_id: Uuid::new_v4(),
-            name: name.to_owned(),
-            alias: alias.map(|s| s.to_owned())
-        }
-    }
+impl SymbolData for PrimitiveTypeSymbolData {
+    const SYMBOL_TYPE: SymbolType = SymbolType::Type;
 }
 
-impl Symbol for PrimitiveTypeSymbol {
-    const TYPE: SymbolType = SymbolType::Type;
-    
-    fn symbol_id(&self) -> Uuid {
-        self.symbol_id
-    }
+pub type PrimitiveTypeSymbol = Symbol<PrimitiveTypeSymbolData>;
 
-    fn symbol_name(&self) -> &str {
-        self.name.as_str()
-    }
-
-    fn parent_symbol_id(&self) -> Uuid {
-        NATIVE_SYMBOL_SCRIPT_ID
+impl PrimitiveTypeSymbol {
+    pub fn new_with_alias(name: &str, alias: Option<&str>) -> Self {
+        Self::new_with_data(
+            name, 
+            NATIVE_SYMBOL_SCRIPT_ID, 
+            PrimitiveTypeSymbolData { 
+                alias: alias.map(|a| a.to_string())
+            }
+        )
     }
 }
