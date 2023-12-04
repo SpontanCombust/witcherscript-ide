@@ -15,8 +15,8 @@ pub type EnumSymbol = Symbol<EnumSymbolData>;
 
 impl EnumSymbol {
     #[must_use]
-    pub fn add_member(&mut self, name: &str, value: i32) -> EnumMemberSymbol {
-        let m = EnumMemberSymbol::new(name, self.id, EnumMemberSymbolData::new(value));
+    pub fn add_member(&mut self, name: &str /*, value: i32*/) -> EnumMemberSymbol {
+        let m = EnumMemberSymbol::new(name, self.id, EnumMemberSymbolData::new());
         self.data.member_ids.push(m.id);
         m
     }
@@ -24,15 +24,15 @@ impl EnumSymbol {
 
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct EnumMemberSymbolData {
-    pub value: i32
+    // pub value: i32
 }
 
 impl EnumMemberSymbolData {
-    pub fn new(value: i32) -> Self {
+    pub fn new(/*value: i32*/) -> Self {
         Self {
-            value
+            // value
         }
     }
 }
@@ -44,7 +44,7 @@ impl SymbolData for EnumMemberSymbolData {
 pub type EnumMemberSymbol = Symbol<EnumMemberSymbolData>;
 
 
-
+/* 
 pub struct EnumSymbolBuilder {
     sym: EnumSymbol,
     members: Vec<EnumMemberSymbol>,
@@ -78,3 +78,4 @@ impl EnumSymbolBuilder {
         (self.sym, self.members)
     } 
 }
+*/

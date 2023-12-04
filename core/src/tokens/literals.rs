@@ -7,7 +7,7 @@ use thiserror::Error;
 use crate::{NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}};
 
 
-#[derive(Debug, Error)]
+#[derive(Debug, Clone, Error)]
 pub enum LiteralValueError {
     #[error("literal node is marked as missing")]
     NodeMissing,
