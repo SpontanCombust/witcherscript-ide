@@ -42,12 +42,13 @@ impl<T: SymbolData> Symbol<T> {
         }
     }
 
-    pub fn new_with_default<U: SymbolData + Default>(name: &str, parent_id: Uuid) -> Symbol<U> {
-        Symbol::<U> {
+    pub fn new_with_default(name: &str, parent_id: Uuid) -> Self 
+    where T: Default {
+        Self {
             id: Uuid::new_v4(),
             name: name.to_string(),
             parent_id,
-            data: U::default(),
+            data: T::default(),
         }
     }
 
@@ -96,6 +97,24 @@ pub enum SymbolType {
     MemberVar,
     Autobind,
     LocalVar,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SymbolCategory {
+    Type,
+    Data,
+    Callable
+}
+
+impl SymbolType {
+    pub fn category(&self) -> SymbolCategory {
+        use SymbolType::*;
+        match self {
+            Type | Enum | Struct | Class | State | Array => SymbolCategory::Type,
+            EnumMember | Parameter | GlobalVar | MemberVar | Autobind | LocalVar => SymbolCategory::Data,
+            GlobalFunction | MemberFunction | Event => SymbolCategory::Callable,
+        }
+    }
 }
 
 pub const ERROR_SYMBOL_ID: Uuid         = uuid!("00000000-0000-0000-0000-000000000000");
