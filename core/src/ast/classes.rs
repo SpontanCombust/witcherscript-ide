@@ -44,6 +44,7 @@ impl StatementTraversal for SyntaxNode<'_, ClassDeclaration> {
         if visitor.visit_class_decl(self) {
             self.definition().statements().for_each(|s| s.accept(visitor));
         }
+        visitor.exit_class_decl(self);
     }
 }
 

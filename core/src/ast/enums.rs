@@ -34,6 +34,7 @@ impl StatementTraversal for SyntaxNode<'_, EnumDeclaration> {
         if visitor.visit_enum_decl(self) {
             self.definition().values().for_each(|s| s.accept(visitor));
         }
+        visitor.exit_enum_decl(self);
     }
 }
 

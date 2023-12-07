@@ -39,6 +39,7 @@ impl StatementTraversal for SyntaxNode<'_, StructDeclaration> {
         if visitor.visit_struct_decl(self) {
             self.definition().statements().for_each(|s| s.accept(visitor));
         }
+        visitor.exit_struct_decl(self);
     }
 }
 

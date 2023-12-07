@@ -49,5 +49,6 @@ impl StatementTraversal for SyntaxNode<'_, StateDeclaration> {
         if visitor.visit_state_decl(self) {
             self.definition().statements().for_each(|s| s.accept(visitor));
         }
+        visitor.exit_state_decl(self);
     }
 }

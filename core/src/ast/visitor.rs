@@ -33,12 +33,16 @@ pub trait ExpressionTraversal {
 pub trait StatementVisitor {
     /// Should return whether to traverse into the body of the class. True by default.
     fn visit_class_decl(&mut self, _: &SyntaxNode<'_, ClassDeclaration>) -> bool { true }
+    fn exit_class_decl(&mut self, _: &SyntaxNode<'_, ClassDeclaration>) {}
     /// Should return whether to traverse into the body of the state. True by default.
     fn visit_state_decl(&mut self, _: &SyntaxNode<'_, StateDeclaration>) -> bool { true }
+    fn exit_state_decl(&mut self, _: &SyntaxNode<'_, StateDeclaration>) {}
     /// Should return whether to traverse into the body of the struct. True by default.
     fn visit_struct_decl(&mut self, _: &SyntaxNode<'_, StructDeclaration>) -> bool { true }
+    fn exit_struct_decl(&mut self, _: &SyntaxNode<'_, StructDeclaration>) {}
     /// Should return whether to traverse into the body of the enum. True by default.
     fn visit_enum_decl(&mut self, _: &SyntaxNode<'_, EnumDeclaration>) -> bool { true }
+    fn exit_enum_decl(&mut self, _: &SyntaxNode<'_, EnumDeclaration>) {}
 
     fn visit_enum_decl_value(&mut self, _: &SyntaxNode<'_, EnumDeclarationValue>) {}
 
@@ -50,10 +54,13 @@ pub trait StatementVisitor {
     fn visit_func_param_group(&mut self, _: &SyntaxNode<'_, FunctionParameterGroup>) {}
     /// Should return whether to traverse into params and body of the function. True by default.
     fn visit_global_func_decl(&mut self, _: &SyntaxNode<'_, GlobalFunctionDeclaration>) -> bool { true }
+    fn exit_global_func_decl(&mut self, _: &SyntaxNode<'_, GlobalFunctionDeclaration>) {}
     /// Should return whether to traverse into params and body of the function. True by default.
     fn visit_member_func_decl(&mut self, _: &SyntaxNode<'_, MemberFunctionDeclaration>) -> bool { true }
+    fn exit_member_func_decl(&mut self, _: &SyntaxNode<'_, MemberFunctionDeclaration>) {}
     /// Should return whether to traverse into params and body of the event. True by default.
     fn visit_event_decl(&mut self, _: &SyntaxNode<'_, EventDeclaration>) -> bool { true }
+    fn exit_event_decl(&mut self, _: &SyntaxNode<'_, EventDeclaration>) {}
     
     fn visit_local_var_decl_stmt(&mut self, _: &SyntaxNode<'_, VarDeclaration>) {}
     fn visit_expr_stmt(&mut self, _: &SyntaxNode<'_, ExpressionStatement>) {}

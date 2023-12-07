@@ -40,6 +40,7 @@ impl StatementTraversal for SyntaxNode<'_, EventDeclaration> {
             self.params().for_each(|p| p.accept(visitor));
             self.definition().map(|s| s.accept(visitor));
         }
+        visitor.exit_event_decl(self);
     }
 }
 
@@ -97,6 +98,7 @@ impl StatementTraversal for SyntaxNode<'_, GlobalFunctionDeclaration> {
             self.params().for_each(|p| p.accept(visitor));
             self.definition().map(|s| s.accept(visitor));
         }
+        visitor.exit_global_func_decl(self);
     }
 }
 
@@ -154,6 +156,7 @@ impl StatementTraversal for SyntaxNode<'_, MemberFunctionDeclaration> {
             self.params().for_each(|p| p.accept(visitor));
             self.definition().map(|s| s.accept(visitor));
         }
+        visitor.exit_member_func_decl(self);
     }
 }
 
