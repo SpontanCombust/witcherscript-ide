@@ -49,7 +49,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
             if self.check_duplicate(&class_name, sym_typ, n.span()) {
                 let sym = ClassSymbol::new_with_default(&class_name, self.script_id);
                 self.symtab.insert(&class_name, sym.id(), sym_typ);
-                self.db.classes.insert(sym.id(), sym);
+                self.db.insert_class(sym);
             }
         }
 
@@ -65,7 +65,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
             if self.check_duplicate(&state_class_name, sym_typ, n.span()) {
                 let sym = StateSymbol::new_with_default(&state_class_name, self.script_id);
                 self.symtab.insert(&state_class_name, sym.id(), sym_typ);
-                self.db.states.insert(sym.id(), sym);
+                self.db.insert_state(sym);
             }
         }
 
@@ -78,7 +78,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
             if self.check_duplicate(&struct_name, sym_typ, n.span()) {
                 let sym = StructSymbol::new_with_default(&struct_name, self.script_id);
                 self.symtab.insert(&struct_name, sym.id(), sym_typ);
-                self.db.structs.insert(sym.id(), sym);
+                self.db.insert_struct(sym);
             }
         }
 
@@ -100,12 +100,12 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
                         if self.check_duplicate(&member_name, memsym_typ, member.span()) {
                             let memsym = sym.add_member(&member_name);
                             self.symtab.insert(&member_name, sym.id(), memsym_typ);
-                            self.db.enum_members.insert(memsym.id(), memsym);
+                            self.db.insert_enum_member(memsym);
                         }
                     }
                 }
 
-                self.db.enums.insert(sym.id(), sym);
+                self.db.insert_enum(sym);
             }
         }
 
@@ -118,7 +118,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
             if self.check_duplicate(&func_name, sym_typ, n.span()) {
                 let sym = GlobalFunctionSymbol::new_with_default(&func_name, self.script_id);
                 self.symtab.insert(&func_name, sym.id(), sym.typ());
-                self.db.global_funcs.insert(sym.id(), sym);
+                self.db.insert_global_func(sym);
             }
         }
 

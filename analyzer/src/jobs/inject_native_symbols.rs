@@ -25,7 +25,7 @@ pub fn inject_primitives(db: &mut SymbolDb, symtab: &mut SymbolTable) {
         if let Some(ref alias) = sym.data.alias {
             symtab.insert(alias, sym.id(), sym.typ());
         }
-        db.primitives.insert(sym.id(), sym);
+        db.insert_primitive(sym);
     });
 }
 
@@ -62,7 +62,7 @@ pub fn inject_globals(db: &mut SymbolDb, symtab: &mut SymbolTable) {
     .for_each(|(var_name, class_name)| { 
         let gv = GlobalVarSymbol::new_with_type(var_name, symtab.get(class_name, SymbolCategory::Type).unwrap().id);
         symtab.insert(var_name, gv.id(), gv.typ());
-        db.global_vars.insert(gv.id(), gv); 
+        db.insert_global_var(gv); 
     });
 }
 
@@ -76,7 +76,7 @@ pub fn inject_array_type(db: &mut SymbolDb, symtab: &mut SymbolTable, data_type_
 
     let (arr, funcs, params) = ArrayTypeSymbol::new_with_type(data_type_id, data_type_name, void_id, int_id, bool_id);
     symtab.insert(arr.name(), arr.id(), SymbolType::Array);
-    db.arrays.insert(arr.id(), arr);
-    funcs.into_iter().for_each(|f| { db.member_funcs.insert(f.id(), f); } );
-    params.into_iter().for_each(|p| { db.params.insert(p.id(), p); } );
+    db.insert_array(arr);
+    funcs.into_iter().for_each(|f| { db.insert_member_func(f); } );
+    params.into_iter().for_each(|p| { db.insert_func_param(p); } );
 }
