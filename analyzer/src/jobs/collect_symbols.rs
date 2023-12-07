@@ -13,6 +13,8 @@ struct GlobalSymbolCollector<'a> {
     script_id: Uuid,
     rope: Rope,
     diagnostics: Vec<Diagnostic>,
+
+    current_enum: Option<EnumSymbol>,
 }
 
 impl GlobalSymbolCollector<'_> {
@@ -89,27 +91,34 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
         if let Some(enum_name) = n.name().value(&self.rope) {
             let sym_typ = SymbolType::Enum;
             if self.check_duplicate(&enum_name, sym_typ, n.span()) {
-                let mut sym = EnumSymbol::new_with_default(&enum_name, self.script_id);
-                self.symtab.insert(&enum_name, sym.id(), sym.typ());
-
-                // enum member is WS work just like they do in C - they are global scoped constants
-                // enum type doesn't create any sort of scope for them
-                let memsym_typ = SymbolType::EnumMember;
-                for member in n.definition().members() {
-                    if let Some(member_name) = member.name().value(&self.rope) {
-                        if self.check_duplicate(&member_name, memsym_typ, member.span()) {
-                            let memsym = sym.add_member(&member_name);
-                            self.symtab.insert(&member_name, sym.id(), memsym_typ);
-                            self.db.insert_enum_member(memsym);
-                        }
-                    }
-                }
-
-                self.db.insert_enum(sym);
+                let sym = EnumSymbol::new_with_default(&enum_name, self.script_id);
+                self.current_enum = Some(sym);
+                // symbol added to db and symtab during exit
+                return true;
             }
         }
 
         false
+    }
+
+    // enum member is WS work just like they do in C - they are global scoped constants
+    // enum type doesn't create any sort of scope for them
+    fn visit_enum_member_decl(&mut self, n: &SyntaxNode<'_, EnumMemberDeclaration>) {
+        if let Some(member_name) = n.name().value(&self.rope) {
+            let sym_typ = SymbolType::EnumMember;
+            if self.check_duplicate(&member_name, sym_typ, n.span()) {
+                let sym = self.current_enum.as_mut().unwrap().add_member(&member_name);
+                self.symtab.insert(&member_name, sym.id(), sym_typ);
+                self.db.insert_enum_member(sym);
+            }
+        }
+    }
+
+    fn exit_enum_decl(&mut self, _: &SyntaxNode<'_, EnumDeclaration>) {
+        if let Some(sym) = self.current_enum.take() {
+            self.symtab.insert(sym.name(), sym.id(), sym.typ());
+            self.db.insert_enum(sym);
+        }
     }
 
     fn visit_global_func_decl(&mut self, n: &SyntaxNode<'_, GlobalFunctionDeclaration>) -> bool {
