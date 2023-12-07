@@ -32,7 +32,7 @@ impl Debug for SyntaxNode<'_, EnumDeclaration> {
 impl StatementTraversal for SyntaxNode<'_, EnumDeclaration> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_enum_decl(self) {
-            self.definition().values().for_each(|s| s.accept(visitor));
+            self.definition().members().for_each(|s| s.accept(visitor));
         }
         visitor.exit_enum_decl(self);
     }
@@ -48,27 +48,27 @@ impl NamedSyntaxNode for EnumBlock {
 }
 
 impl SyntaxNode<'_, EnumBlock> {
-    pub fn values(&self) -> impl Iterator<Item = SyntaxNode<'_, EnumDeclarationValue>> {
+    pub fn members(&self) -> impl Iterator<Item = SyntaxNode<'_, EnumMemberDeclaration>> {
         self.children(true).map(|n| n.into())
     }
 }
 
 impl Debug for SyntaxNode<'_, EnumBlock> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "EnumBlock{:?}", self.values().collect::<Vec<_>>())
+        write!(f, "EnumBlock{:?}", self.members().collect::<Vec<_>>())
     }
 }
 
 
 
 #[derive(Debug, Clone)]
-pub struct EnumDeclarationValue;
+pub struct EnumMemberDeclaration;
 
-impl NamedSyntaxNode for EnumDeclarationValue {
+impl NamedSyntaxNode for EnumMemberDeclaration {
     const NODE_NAME: &'static str = "enum_decl_value";
 }
 
-impl SyntaxNode<'_, EnumDeclarationValue> {
+impl SyntaxNode<'_, EnumMemberDeclaration> {
     pub fn name(&self) -> SyntaxNode<'_, Identifier> {
         self.field_child("name").unwrap().into()
     }
@@ -78,17 +78,17 @@ impl SyntaxNode<'_, EnumDeclarationValue> {
     }
 }
 
-impl Debug for SyntaxNode<'_, EnumDeclarationValue> {
+impl Debug for SyntaxNode<'_, EnumMemberDeclaration> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("EnumDeclarationValue")
+        f.debug_struct("EnumMemberDeclaration")
             .field("name", &self.name())
             .field("value", &self.value())
             .finish()
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, EnumDeclarationValue> {
+impl StatementTraversal for SyntaxNode<'_, EnumMemberDeclaration> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_enum_decl_value(self);
+        visitor.visit_enum_member_decl(self);
     }
 }

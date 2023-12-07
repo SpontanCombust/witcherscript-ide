@@ -44,7 +44,7 @@ pub trait StatementVisitor {
     fn visit_enum_decl(&mut self, _: &SyntaxNode<'_, EnumDeclaration>) -> bool { true }
     fn exit_enum_decl(&mut self, _: &SyntaxNode<'_, EnumDeclaration>) {}
 
-    fn visit_enum_decl_value(&mut self, _: &SyntaxNode<'_, EnumDeclarationValue>) {}
+    fn visit_enum_member_decl(&mut self, _: &SyntaxNode<'_, EnumMemberDeclaration>) {}
 
     fn visit_member_var_decl(&mut self, _: &SyntaxNode<'_, MemberVarDeclaration>) {}
     fn visit_member_default_val(&mut self, _: &SyntaxNode<'_, MemberDefaultValue>) {}

@@ -95,7 +95,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
                 // enum member is WS work just like they do in C - they are global scoped constants
                 // enum type doesn't create any sort of scope for them
                 let memsym_typ = SymbolType::EnumMember;
-                for member in n.definition().values() {
+                for member in n.definition().members() {
                     if let Some(member_name) = member.name().value(&self.rope) {
                         if self.check_duplicate(&member_name, memsym_typ, member.span()) {
                             let memsym = sym.add_member(&member_name);

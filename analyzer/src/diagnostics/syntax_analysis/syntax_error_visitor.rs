@@ -66,9 +66,9 @@ impl StatementVisitor for SyntaxErrorVisitor {
         true   
     }
 
-    fn visit_enum_decl_value(&mut self, n: &SyntaxNode<'_, EnumDeclarationValue>) {
+    fn visit_enum_member_decl(&mut self, n: &SyntaxNode<'_, EnumMemberDeclaration>) {
         if n.name().is_missing() {
-            self.missing_element(n.name().span(), "enum variant name");
+            self.missing_element(n.name().span(), "enum member name");
         }
     }
 
