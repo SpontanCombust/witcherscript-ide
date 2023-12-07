@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use uuid::Uuid;
 use witcherscript::attribs::{ClassSpecifier, AutobindSpecifier};
 use super::{MemberFunctionSymbol, EventSymbol, Symbol, SymbolType, ERROR_SYMBOL_ID, SymbolData, MemberVarSymbol};
@@ -5,7 +6,7 @@ use super::{MemberFunctionSymbol, EventSymbol, Symbol, SymbolType, ERROR_SYMBOL_
 
 #[derive(Debug, Clone, Default)]
 pub struct ClassSymbolData {
-    pub specifiers: Vec<ClassSpecifier>,
+    pub specifiers: HashSet<ClassSpecifier>,
     pub base_id: Option<Uuid>,
     pub member_var_ids: Vec<Uuid>,
     pub autobind_ids: Vec<Uuid>,
@@ -53,14 +54,14 @@ impl ClassSymbol {
 
 #[derive(Debug, Clone)]
 pub struct AutobindSymbolData {
-    pub specifiers: Vec<AutobindSpecifier>,
+    pub specifiers: HashSet<AutobindSpecifier>,
     pub type_id: Uuid,
 }
 
 impl Default for AutobindSymbolData {
     fn default() -> Self {
         Self { 
-            specifiers: Vec::new(), 
+            specifiers: HashSet::new(), 
             type_id: ERROR_SYMBOL_ID 
         }
     }

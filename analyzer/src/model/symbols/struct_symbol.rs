@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use uuid::Uuid;
 use witcherscript::attribs::StructSpecifier;
 use super::{Symbol, SymbolType, MemberVarSymbol, SymbolData};
@@ -5,7 +6,7 @@ use super::{Symbol, SymbolType, MemberVarSymbol, SymbolData};
 
 #[derive(Debug, Clone, Default)]
 pub struct StructSymbolData {
-    pub specifiers: Vec<StructSpecifier>,
+    pub specifiers: HashSet<StructSpecifier>,
     pub member_var_ids: Vec<Uuid>,
 }
 

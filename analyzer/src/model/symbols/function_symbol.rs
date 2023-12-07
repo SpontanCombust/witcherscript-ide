@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use uuid::Uuid;
 use witcherscript::attribs::*;
 use super::{FunctionParameterSymbol, Symbol, SymbolType, ERROR_SYMBOL_ID, SymbolData};
@@ -5,7 +6,7 @@ use super::{FunctionParameterSymbol, Symbol, SymbolType, ERROR_SYMBOL_ID, Symbol
 
 #[derive(Debug, Clone)]
 pub struct GlobalFunctionSymbolData {
-    pub specifiers: Vec<GlobalFunctionSpecifier>,
+    pub specifiers: HashSet<GlobalFunctionSpecifier>,
     pub flavour: Option<GlobalFunctionFlavour>,
     pub param_ids: Vec<Uuid>,
     pub return_type_id: Uuid
@@ -14,7 +15,7 @@ pub struct GlobalFunctionSymbolData {
 impl Default for GlobalFunctionSymbolData {
     fn default() -> Self {
         Self { 
-            specifiers: Vec::new(), 
+            specifiers: HashSet::new(), 
             flavour: None, 
             param_ids: Vec::new(), 
             return_type_id: ERROR_SYMBOL_ID
@@ -41,7 +42,7 @@ impl GlobalFunctionSymbol {
 
 #[derive(Debug, Clone)]
 pub struct MemberFunctionSymbolData {
-    pub specifiers: Vec<MemberFunctionSpecifier>,
+    pub specifiers: HashSet<MemberFunctionSpecifier>,
     pub flavour: Option<MemberFunctionFlavour>,
     pub param_ids: Vec<Uuid>,
     pub return_type_id: Uuid
@@ -50,7 +51,7 @@ pub struct MemberFunctionSymbolData {
 impl Default for MemberFunctionSymbolData {
     fn default() -> Self {
         Self { 
-            specifiers: Vec::new(), 
+            specifiers: HashSet::new(), 
             flavour: None, 
             param_ids: Vec::new(), 
             return_type_id: ERROR_SYMBOL_ID

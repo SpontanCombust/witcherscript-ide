@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use uuid::Uuid;
 use witcherscript::attribs::StateSpecifier;
 use super::{MemberFunctionSymbol, SymbolType, Symbol, EventSymbol, AutobindSymbol, ERROR_SYMBOL_ID, MemberVarSymbol, SymbolData};
@@ -5,7 +6,7 @@ use super::{MemberFunctionSymbol, SymbolType, Symbol, EventSymbol, AutobindSymbo
 
 #[derive(Debug, Clone)]
 pub struct StateSymbolData {
-    pub specifiers: Vec<StateSpecifier>,
+    pub specifiers: HashSet<StateSpecifier>,
     pub parent_id: Uuid,
     pub base_id: Option<Uuid>,
     pub member_var_ids: Vec<Uuid>,
@@ -17,7 +18,7 @@ pub struct StateSymbolData {
 impl Default for StateSymbolData {
     fn default() -> Self {
         Self { 
-            specifiers: Vec::new(), 
+            specifiers: HashSet::new(), 
             parent_id: ERROR_SYMBOL_ID, 
             base_id: None, 
             member_var_ids: Vec::new(), 

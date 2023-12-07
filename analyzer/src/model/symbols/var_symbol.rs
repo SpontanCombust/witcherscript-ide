@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use uuid::Uuid;
 use witcherscript::attribs::MemberVarSpecifier;
 use super::{Symbol, SymbolType, ERROR_SYMBOL_ID, SymbolData, NATIVE_SYMBOL_SCRIPT_ID};
@@ -5,14 +6,14 @@ use super::{Symbol, SymbolType, ERROR_SYMBOL_ID, SymbolData, NATIVE_SYMBOL_SCRIP
 
 #[derive(Debug, Clone)]
 pub struct MemberVarSymbolData {
-    pub specifiers: Vec<MemberVarSpecifier>,
+    pub specifiers: HashSet<MemberVarSpecifier>,
     pub type_id: Uuid,
 }
 
 impl Default for MemberVarSymbolData {
     fn default() -> Self {
         Self { 
-            specifiers: Vec::new(),
+            specifiers: HashSet::new(),
             type_id: ERROR_SYMBOL_ID,
         }
     }

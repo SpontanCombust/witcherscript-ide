@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use uuid::Uuid;
 use witcherscript::attribs::FunctionParameterSpecifier;
 use super::{SymbolType, ERROR_SYMBOL_ID, SymbolData, Symbol};
@@ -5,14 +6,14 @@ use super::{SymbolType, ERROR_SYMBOL_ID, SymbolData, Symbol};
 
 #[derive(Debug, Clone)]
 pub struct FunctionParameterSymbolData {
-    pub specifiers: Vec<FunctionParameterSpecifier>,
+    pub specifiers: HashSet<FunctionParameterSpecifier>,
     pub type_id: Uuid
 }
 
 impl Default for FunctionParameterSymbolData {
     fn default() -> Self {
         Self { 
-            specifiers: Vec::new(),
+            specifiers: HashSet::new(),
             type_id: ERROR_SYMBOL_ID,
         }
     }
