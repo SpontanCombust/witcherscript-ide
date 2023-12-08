@@ -25,13 +25,19 @@ impl SymbolData for ArrayTypeSymbolData {
 pub type ArrayTypeSymbol = Symbol<ArrayTypeSymbolData>;
 
 impl ArrayTypeSymbol {
+    pub const TYPE_NAME: &str = "array";
+
+    pub fn final_type_name(data_type_name: &str) -> String {
+        format!("array<{}>", data_type_name)
+    }
+
     pub fn new_with_type(data_type_id: Uuid, data_type_name: &str, void_id: Uuid, int_id: Uuid, bool_id: Uuid) -> (Self, Vec<MemberFunctionSymbol>, Vec<FunctionParameterSymbol>) {
         let mut arr = Self::new(
-            &format!("array<{}>", data_type_name), 
+            &Self::final_type_name(data_type_name),
             NATIVE_SYMBOL_SCRIPT_ID, 
             ArrayTypeSymbolData { 
                 data_type_id, 
-                func_ids: Vec::new() 
+                func_ids: Vec::new()
             }
         );
         let (funcs, params) = arr.add_functions(void_id, int_id, bool_id);

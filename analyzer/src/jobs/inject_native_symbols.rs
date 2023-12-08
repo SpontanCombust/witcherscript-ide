@@ -69,14 +69,17 @@ pub fn inject_globals(db: &mut SymbolDb, symtab: &mut SymbolTable) {
 
 /// Called when coming accross an array type that hasn't been inserted into DB yet.
 /// Assumes the data type is not some error type and corresponding array type does not yet exist in the symbol table.
-pub fn inject_array_type(db: &mut SymbolDb, symtab: &mut SymbolTable, data_type_id: Uuid, data_type_name: &str) {
+pub fn inject_array_type(db: &mut SymbolDb, symtab: &mut SymbolTable, data_type_id: Uuid, data_type_name: &str) -> Uuid {
     let void_id = symtab.get("void", SymbolCategory::Type).unwrap().id;
     let int_id = symtab.get("int", SymbolCategory::Type).unwrap().id;
     let bool_id = symtab.get("bool", SymbolCategory::Type).unwrap().id;
 
     let (arr, funcs, params) = ArrayTypeSymbol::new_with_type(data_type_id, data_type_name, void_id, int_id, bool_id);
+    let arr_id = arr.id();
     symtab.insert(arr.name(), arr.id(), SymbolType::Array);
     db.insert_array(arr);
     funcs.into_iter().for_each(|f| { db.insert_member_func(f); } );
     params.into_iter().for_each(|p| { db.insert_func_param(p); } );
+
+    arr_id
 }

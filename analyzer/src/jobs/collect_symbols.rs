@@ -1,14 +1,20 @@
+use std::collections::HashSet;
 use ropey::Rope;
 use uuid::Uuid;
 use witcherscript::{SyntaxNode, DocSpan};
 use witcherscript::ast::*;
 use crate::diagnostics::*;
 use crate::model::{collections::*, symbols::*};
+use super::inject_native_symbols::inject_array_type;
+
 
 
 trait SymbolCollectorCommons {
+    fn db(&mut self) -> &mut SymbolDb;
     fn symtab(&mut self) -> &mut SymbolTable;
+    fn db_and_symtab(&mut self) -> (&mut SymbolDb, &mut SymbolTable);
     fn diagnostics(&mut self) -> &mut Vec<Diagnostic>;
+
 
     fn check_duplicate(&mut self, sym_name: &str, sym_typ: SymbolType, span: DocSpan) -> bool {
         if let Some(err) = self.symtab().can_insert(sym_name, sym_typ) {
@@ -34,9 +40,53 @@ trait SymbolCollectorCommons {
             true
         }
     }
+
+    fn check_array_type(&mut self, generic_arg: Option<&str>, span: DocSpan) -> Option<Uuid> {
+        if let Some(t) = generic_arg {
+            if let Some(t_id) = self.check_type_missing(t, None, span) {
+                let final_typ = ArrayTypeSymbol::final_type_name(t);
+                if let Some(SymbolTableValue { id, .. }) = self.symtab().get(&final_typ, SymbolCategory::Type) {
+                    Some(*id)
+                } else {
+                    let (db, symtab) = self.db_and_symtab();
+                    Some(inject_array_type(db, symtab, t_id, t))
+                }
+            } else {
+                None
+            }
+
+        } else {
+            self.diagnostics().push(Diagnostic { 
+                span, 
+                severity: DiagnosticSeverity::Error, 
+                body: DiagnosticBody::MissingGenericArg 
+            });
+    
+            None
+        }
+    }
+
+    fn check_type_missing(&mut self, typ: &str, generic_arg: Option<&str>, span: DocSpan) -> Option<Uuid> {
+        if typ == ArrayTypeSymbol::TYPE_NAME {
+            self.check_array_type(generic_arg, span)
+        } else {
+            if let Some(SymbolTableValue { id, .. }) = self.symtab().get(typ, SymbolCategory::Type) {
+                Some(*id)
+            } else {
+                self.diagnostics().push(Diagnostic { 
+                    span, 
+                    severity: DiagnosticSeverity::Error, 
+                    body: DiagnosticBody::TypeNotFound 
+                });
+                None
+            }
+        }
+
+    }
 }
 
 //TODO be able to update existing db and symtab instead of assuming they are new
+//TODO rename back to TypeSymbolCollector, remove global func
 struct GlobalSymbolCollector<'a> {
     db: &'a mut SymbolDb,
     symtab: &'a mut SymbolTable,
@@ -48,13 +98,22 @@ struct GlobalSymbolCollector<'a> {
 }
 
 impl SymbolCollectorCommons for GlobalSymbolCollector<'_> {
+    fn db(&mut self) -> &mut SymbolDb {
+        &mut self.db
+    }
+
     fn symtab(&mut self) -> &mut SymbolTable {
         &mut self.symtab
+    }
+    /// So they can both be borrowed at the same time
+    fn db_and_symtab(&mut self) -> (&mut SymbolDb, &mut SymbolTable) {
+        (&mut self.db, &mut self.symtab)    
     }
 
     fn diagnostics(&mut self) -> &mut Vec<Diagnostic> {
         &mut self.diagnostics
     }
+
 }
 
 impl StatementVisitor for GlobalSymbolCollector<'_> {
@@ -151,16 +210,98 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
 
 
 
-// struct ChildSymbolCollector<'a> {
-//     db: &'a mut SymbolDb,
-//     symtab: &'a mut SymbolTable,
-//     script_id: Uuid,
-//     rope: Rope,
-//     diagnostics: Vec<Diagnostic>,
+struct ChildSymbolCollector<'a> {
+    db: &'a mut SymbolDb,
+    symtab: &'a mut SymbolTable,
+    rope: Rope,
+    diagnostics: Vec<Diagnostic>,
 
-//     current_class: Option<ClassSymbol>,
-//     current_member_func: Option<MemberFunctionSymbol>,
-//     current_event: Option<EventSymbol>,
-//     current_struct: Option<StructSymbol>,
-//     current_global_func: Option<GlobalFunctionSymbol>,
-// }
+    current_class: Option<ClassSymbol>,
+    current_state: Option<StateSymbol>,
+    current_struct: Option<StructSymbol>,
+    current_member_func: Option<MemberFunctionSymbol>,
+    current_event: Option<EventSymbol>,
+    current_global_func: Option<GlobalFunctionSymbol>,
+}
+
+impl SymbolCollectorCommons for ChildSymbolCollector<'_> {
+    fn db(&mut self) -> &mut SymbolDb {
+        &mut self.db
+    }
+
+    fn symtab(&mut self) -> &mut SymbolTable {
+        &mut self.symtab
+    }
+
+    fn db_and_symtab(&mut self) -> (&mut SymbolDb, &mut SymbolTable) {
+        (&mut self.db, &mut self.symtab)    
+    }
+
+    fn diagnostics(&mut self) -> &mut Vec<Diagnostic> {
+        &mut self.diagnostics
+    }
+}
+
+impl StatementVisitor for ChildSymbolCollector<'_> {
+    fn visit_class_decl(&mut self, n: &SyntaxNode<'_, ClassDeclaration>) -> bool {
+        if let Some(class_name) = n.name().value(&self.rope) {
+            if let Some(SymbolTableValue { id, .. }) = self.symtab.get(&class_name, SymbolCategory::Type) {
+                let mut sym = self.db.remove_class(*id).expect("class absent in db despite being in symtab");
+
+                n.specifiers()
+                .map(|specn| (specn.value(), specn.span()))
+                .for_each(|(spec, span)| {
+                    if !sym.data.specifiers.insert(spec) {
+                        self.diagnostics.push(Diagnostic { 
+                            span, 
+                            severity: DiagnosticSeverity::Error, 
+                            body: DiagnosticBody::RepeatedSpecifier
+                        });
+                    }
+                });
+
+                if let Some(base_node) = n.base() {
+                    if let Some(id) = base_node.value(&self.rope).and_then(|base| self.check_type_missing(&base, None, base_node.span())) {
+                        sym.data.base_id = Some(id);
+                    }
+                }
+
+                self.current_class = Some(sym);
+                self.symtab.push_scope();
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn exit_class_decl(&mut self, _: &SyntaxNode<'_, ClassDeclaration>) {
+        if let Some(sym) = self.current_class.take() {
+            self.symtab.pop_scope();
+            self.db.insert_class(sym);
+        }
+    }
+
+    fn visit_member_var_decl(&mut self, n: &SyntaxNode<'_, MemberVarDeclaration>) {
+        let syms: Vec<_> = n.names()
+                            .filter_map(|nn| nn.value(&self.rope))
+                            .map(|n| self.current_class.as_mut().unwrap().add_member_var(&n))
+                            .collect();
+
+        if !syms.is_empty() {
+            let mut specifiers = HashSet::new();
+
+            n.specifiers()
+            .map(|specn| (specn.value(), specn.span()))
+            .for_each(|(spec, span)| {
+                if !specifiers.insert(spec) {
+                    self.diagnostics.push(Diagnostic { 
+                        span, 
+                        severity: DiagnosticSeverity::Error, 
+                        body: DiagnosticBody::RepeatedSpecifier
+                    });
+                }
+            });
+        }
+    }
+}

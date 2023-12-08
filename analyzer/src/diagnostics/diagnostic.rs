@@ -9,6 +9,7 @@ pub struct Diagnostic {
     pub body: DiagnosticBody
 }
 
+//TODO remove this enum, make DiagnosticBody an enum of Error(ErrorBody), Warning(WarningBody), Info(InfoBody)
 #[derive(Debug, Clone, Copy)]
 pub enum DiagnosticSeverity {
     Error,
@@ -27,5 +28,8 @@ pub enum DiagnosticBody {
         precursor_type: SymbolType,
         // precursor_span: DocSpan, //TODO symbols storing their spans
     },
-    TypeNotFound
+    TypeNotFound,
+    MissingGenericArg,
+    RepeatedSpecifier,
+    MultipleAccessModifiers
 }
