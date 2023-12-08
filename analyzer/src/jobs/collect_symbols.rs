@@ -6,20 +6,12 @@ use crate::diagnostics::*;
 use crate::model::{collections::*, symbols::*};
 
 
-//TODO be able to update existing db and symtab instead of assuming they are new
-struct GlobalSymbolCollector<'a> {
-    db: &'a mut SymbolDb,
-    symtab: &'a mut SymbolTable<'a>,
-    script_id: Uuid,
-    rope: Rope,
-    diagnostics: Vec<Diagnostic>,
+trait SymbolCollectorCommons {
+    fn symtab(&mut self) -> &mut SymbolTable;
+    fn diagnostics(&mut self) -> &mut Vec<Diagnostic>;
 
-    current_enum: Option<EnumSymbol>,
-}
-
-impl GlobalSymbolCollector<'_> {
     fn check_duplicate(&mut self, sym_name: &str, sym_typ: SymbolType, span: DocSpan) -> bool {
-        if let Some(err) = self.symtab.can_insert(sym_name, sym_typ) {
+        if let Some(err) = self.symtab().can_insert(sym_name, sym_typ) {
             let precursor_type = match err {
                 SymbolTableError::GlobalVarAlreadyExists(_, v) => v.typ,
                 SymbolTableError::TypeAlreadyExists(_, v) => v.typ,
@@ -27,7 +19,7 @@ impl GlobalSymbolCollector<'_> {
                 SymbolTableError::CallableAlreadyExists(_, v) => v.typ,
             };
             
-            self.diagnostics.push(Diagnostic { 
+            self.diagnostics().push(Diagnostic { 
                 span, 
                 severity: DiagnosticSeverity::Error, 
                 body: DiagnosticBody::SymbolNameTaken { 
@@ -41,6 +33,27 @@ impl GlobalSymbolCollector<'_> {
         } else {
             true
         }
+    }
+}
+
+//TODO be able to update existing db and symtab instead of assuming they are new
+struct GlobalSymbolCollector<'a> {
+    db: &'a mut SymbolDb,
+    symtab: &'a mut SymbolTable,
+    script_id: Uuid,
+    rope: Rope,
+    diagnostics: Vec<Diagnostic>,
+
+    current_enum: Option<EnumSymbol>,
+}
+
+impl SymbolCollectorCommons for GlobalSymbolCollector<'_> {
+    fn symtab(&mut self) -> &mut SymbolTable {
+        &mut self.symtab
+    }
+
+    fn diagnostics(&mut self) -> &mut Vec<Diagnostic> {
+        &mut self.diagnostics
     }
 }
 
@@ -134,3 +147,20 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
         false
     }
 }
+
+
+
+
+// struct ChildSymbolCollector<'a> {
+//     db: &'a mut SymbolDb,
+//     symtab: &'a mut SymbolTable,
+//     script_id: Uuid,
+//     rope: Rope,
+//     diagnostics: Vec<Diagnostic>,
+
+//     current_class: Option<ClassSymbol>,
+//     current_member_func: Option<MemberFunctionSymbol>,
+//     current_event: Option<EventSymbol>,
+//     current_struct: Option<StructSymbol>,
+//     current_global_func: Option<GlobalFunctionSymbol>,
+// }
