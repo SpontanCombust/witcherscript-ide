@@ -4,7 +4,7 @@ use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode};
 use super::AccessModifier;
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FunctionParameterSpecifier {
     Optional,
     Out
@@ -38,7 +38,7 @@ impl Debug for SyntaxNode<'_, FunctionParameterSpecifier> {
 
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GlobalFunctionSpecifier {
     Import,
     Latent,
@@ -70,7 +70,7 @@ impl Debug for SyntaxNode<'_, GlobalFunctionSpecifier> {
 }
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GlobalFunctionFlavour {
     Exec,
     Quest,
@@ -106,7 +106,7 @@ impl Debug for SyntaxNode<'_, GlobalFunctionFlavour> {
 
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MemberFunctionSpecifier {
     AccessModifier(AccessModifier),
     Import,
@@ -144,7 +144,7 @@ impl Debug for SyntaxNode<'_, MemberFunctionSpecifier> {
 }
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MemberFunctionFlavour {
     Entry,
     Timer

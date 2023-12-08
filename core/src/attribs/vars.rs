@@ -4,7 +4,7 @@ use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode};
 use super::AccessModifier;
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MemberVarSpecifier {
     AccessModifier(AccessModifier),
     Const,

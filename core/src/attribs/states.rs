@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::{NamedSyntaxNode, SyntaxNode, tokens::Keyword};
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum StateSpecifier {
     Import,
     Abstract

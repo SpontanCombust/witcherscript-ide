@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::{NamedSyntaxNode, SyntaxNode, tokens::Keyword};
 
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AccessModifier {
     Private,
     Protected,
@@ -11,7 +11,7 @@ pub enum AccessModifier {
 }
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ClassSpecifier {
     Import,
     Abstract,
@@ -45,7 +45,7 @@ impl Debug for SyntaxNode<'_, ClassSpecifier> {
 }
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AutobindSpecifier {
     AccessModifier(AccessModifier),
     Optional
