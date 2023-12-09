@@ -45,7 +45,7 @@ trait SymbolCollectorCommons {
 
     fn check_array_type(&mut self, generic_arg: Option<&str>, span: DocSpan) -> Option<Uuid> {
         if let Some(t) = generic_arg {
-            if let Some(t_id) = self.check_type_missing(t, None, span) {
+            if let Some(t_id) = self.check_type(t, None, span) {
                 let final_typ = ArrayTypeSymbol::final_type_name(t);
                 if let Some(SymbolTableValue { id, .. }) = self.symtab().get(&final_typ, SymbolCategory::Type) {
                     Some(*id)
@@ -68,7 +68,7 @@ trait SymbolCollectorCommons {
         }
     }
 
-    fn check_type_missing(&mut self, typ: &str, generic_arg: Option<&str>, span: DocSpan) -> Option<Uuid> {
+    fn check_type(&mut self, typ: &str, generic_arg: Option<&str>, span: DocSpan) -> Option<Uuid> {
         if typ == ArrayTypeSymbol::TYPE_NAME {
             self.check_array_type(generic_arg, span)
         } else {
@@ -86,13 +86,13 @@ trait SymbolCollectorCommons {
     }
 
 
-    fn type_id_from_node(&mut self, n: SyntaxNode<'_, TypeAnnotation>) -> Uuid {
+    fn get_type_from_node(&mut self, n: SyntaxNode<'_, TypeAnnotation>) -> Uuid {
         let mut type_id: Uuid = ERROR_SYMBOL_ID;
         if let Some(primary_type) = n.type_name().value(self.rope()) {
             let generic_arg = n.generic_arg().and_then(|g| g.value(self.rope()));
             let generic_arg_ref = generic_arg.as_ref().map(|s| s.as_str());
 
-            if let Some(id) = self.check_type_missing(&primary_type, generic_arg_ref, n.span()) {
+            if let Some(id) = self.check_type(&primary_type, generic_arg_ref, n.span()) {
                 type_id = id;
             }
         }
@@ -271,7 +271,7 @@ impl SymbolCollectorCommons for ChildSymbolCollector<'_> {
 impl StatementVisitor for ChildSymbolCollector<'_> {
     fn visit_class_decl(&mut self, n: &SyntaxNode<'_, ClassDeclaration>) -> bool {
         if let Some(class_name) = n.name().value(&self.rope) {
-            if let Some(SymbolTableValue { id, .. }) = self.symtab.get(&class_name, SymbolCategory::Type) {
+            if let Some(SymbolTableValue { id, typ: SymbolType::Class }) = self.symtab.get(&class_name, SymbolCategory::Type) {
                 let mut sym = self.db.remove_class(*id).expect("class absent in db despite being in symtab");
 
                 n.specifiers()
@@ -287,7 +287,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 });
 
                 if let Some(base_node) = n.base() {
-                    if let Some(id) = base_node.value(&self.rope).and_then(|base| self.check_type_missing(&base, None, base_node.span())) {
+                    if let Some(id) = base_node.value(&self.rope).and_then(|base| self.check_type(&base, None, base_node.span())) {
                         sym.data.base_id = Some(id);
                     }
                 }
@@ -305,6 +305,86 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
         if let Some(sym) = self.current_class.take() {
             self.symtab.pop_scope();
             self.db.insert_class(sym);
+        }
+    }
+
+    fn visit_state_decl(&mut self, n: &SyntaxNode<'_, StateDeclaration>) -> bool {
+        let state_name = n.name().value(&self.rope);
+        let parent_name = n.parent().value(&self.rope);
+        if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
+            let state_class_name = StateSymbol::class_name(&state_name, &parent_name);
+
+            if let Some(SymbolTableValue { id, typ: SymbolType::State }) = self.symtab.get(&state_class_name, SymbolCategory::Type) {
+                let mut sym = self.db.remove_state(*id).expect("state absent in db despite being in symtab");
+
+                n.specifiers()
+                .map(|specn| (specn.value(), specn.span()))
+                .for_each(|(spec, span)| {
+                    if !sym.data.specifiers.insert(spec) {
+                        self.diagnostics.push(Diagnostic { 
+                            span, 
+                            severity: DiagnosticSeverity::Error, 
+                            body: DiagnosticBody::RepeatedSpecifier
+                        });
+                    }
+                });
+
+                if let Some(base_node) = n.base() {
+                    if let Some(id) = base_node.value(&self.rope).and_then(|base| self.check_type(&base, None, base_node.span())) {
+                        sym.data.base_id = Some(id);
+                    }
+                }
+
+                if let Some(id) = n.parent().value(&self.rope).and_then(|parent| self.check_type(&parent, None, n.parent().span())) {
+                    sym.data.parent_id = id;
+                }
+
+                self.current_state = Some(sym);
+                self.symtab.push_scope();
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn exit_state_decl(&mut self, _: &SyntaxNode<'_, StateDeclaration>) {
+        if let Some(sym) = self.current_state.take() {
+            self.symtab.pop_scope();
+            self.db.insert_state(sym);
+        }
+    }
+
+    fn visit_struct_decl(&mut self, n: &SyntaxNode<'_, StructDeclaration>) -> bool {
+        if let Some(struct_name) = n.name().value(&self.rope) {
+            if let Some(SymbolTableValue { id, typ: SymbolType::Struct }) = self.symtab.get(&struct_name, SymbolCategory::Type) {
+                let mut sym = self.db.remove_struct(*id).expect("struct absent in db despite being in symtab");
+
+                n.specifiers()
+                .map(|specn| (specn.value(), specn.span()))
+                .for_each(|(spec, span)| {
+                    if !sym.data.specifiers.insert(spec) {
+                        self.diagnostics.push(Diagnostic { 
+                            span, 
+                            severity: DiagnosticSeverity::Error, 
+                            body: DiagnosticBody::RepeatedSpecifier
+                        });
+                    }
+                });
+
+                self.current_struct = Some(sym);
+                self.symtab.push_scope();
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn exit_struct_decl(&mut self, _: &SyntaxNode<'_, StructDeclaration>) {
+        if let Some(sym) = self.current_struct.take() {
+            self.symtab.pop_scope();
+            self.db.insert_struct(sym);
         }
     }
 
@@ -364,7 +444,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
             }
 
 
-            let type_id = self.type_id_from_node(n.var_type());
+            let type_id = self.get_type_from_node(n.var_type());
 
 
             syms.into_iter().for_each(|mut sym| {
@@ -417,7 +497,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
             }
 
 
-            let type_id = self.type_id_from_node(n.autobind_type());
+            let type_id = self.get_type_from_node(n.autobind_type());
 
 
             sym.data.specifiers = specifiers;
