@@ -1,6 +1,6 @@
 use witcherscript::{SyntaxNode, ast::*, DocSpan};
 
-use crate::diagnostics::{Diagnostic, DiagnosticSeverity, DiagnosticBody};
+use crate::diagnostics::{Diagnostic, ErrorDiagnostic};
 
 pub struct SyntaxErrorVisitor {
     diagnostics: Vec<Diagnostic>   
@@ -10,8 +10,7 @@ impl SyntaxErrorVisitor {
     fn missing_element(&mut self, span: DocSpan, what: &str) {
         self.diagnostics.push(Diagnostic { 
             span, 
-            severity: DiagnosticSeverity::Error, 
-            body: DiagnosticBody::MissingElement { what: what.to_string() }
+            body: ErrorDiagnostic::MissingElement { what: what.to_string() }.into()
         })
     }
 }
@@ -79,4 +78,6 @@ impl StatementVisitor for SyntaxErrorVisitor {
 
         true
     }
+
+    // TODO the rest of visitors
 } 

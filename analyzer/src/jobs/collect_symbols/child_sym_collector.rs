@@ -57,8 +57,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                     if !sym.data.specifiers.insert(spec) {
                         self.diagnostics.push(Diagnostic { 
                             span, 
-                            severity: DiagnosticSeverity::Error, 
-                            body: DiagnosticBody::RepeatedSpecifier
+                            body: ErrorDiagnostic::RepeatedSpecifier.into()
                         });
                     }
                 });
@@ -100,8 +99,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                     if !sym.data.specifiers.insert(spec) {
                         self.diagnostics.push(Diagnostic { 
                             span, 
-                            severity: DiagnosticSeverity::Error, 
-                            body: DiagnosticBody::RepeatedSpecifier
+                            body: ErrorDiagnostic::RepeatedSpecifier.into()
                         });
                     }
                 });
@@ -143,8 +141,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                     if !sym.data.specifiers.insert(spec) {
                         self.diagnostics.push(Diagnostic { 
                             span, 
-                            severity: DiagnosticSeverity::Error, 
-                            body: DiagnosticBody::RepeatedSpecifier
+                            body: ErrorDiagnostic::RepeatedSpecifier.into()
                         });
                     }
                 });
@@ -204,8 +201,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                     if found_access_modif_before {
                         self.diagnostics.push(Diagnostic { 
                             span, 
-                            severity: DiagnosticSeverity::Error, 
-                            body: DiagnosticBody::MultipleAccessModifiers 
+                            body: ErrorDiagnostic::MultipleAccessModifiers.into()
                         })
                     }
                     found_access_modif_before = true;
@@ -214,8 +210,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 if !specifiers.insert(spec) {
                     self.diagnostics.push(Diagnostic { 
                         span, 
-                        severity: DiagnosticSeverity::Error, 
-                        body: DiagnosticBody::RepeatedSpecifier
+                        body: ErrorDiagnostic::RepeatedSpecifier.into()
                     });
                 }
             }
@@ -257,8 +252,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                     if found_access_modif_before {
                         self.diagnostics.push(Diagnostic { 
                             span, 
-                            severity: DiagnosticSeverity::Error, 
-                            body: DiagnosticBody::MultipleAccessModifiers 
+                            body: ErrorDiagnostic::MultipleAccessModifiers.into()
                         })
                     }
                     found_access_modif_before = true;
@@ -267,8 +261,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 if !specifiers.insert(spec) {
                     self.diagnostics.push(Diagnostic { 
                         span, 
-                        severity: DiagnosticSeverity::Error, 
-                        body: DiagnosticBody::RepeatedSpecifier
+                        body: ErrorDiagnostic::RepeatedSpecifier.into()
                     });
                 }
             }

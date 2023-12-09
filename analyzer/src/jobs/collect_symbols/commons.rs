@@ -27,12 +27,11 @@ pub(super) trait SymbolCollectorCommons {
             
             self.diagnostics().push(Diagnostic { 
                 span, 
-                severity: DiagnosticSeverity::Error, 
-                body: DiagnosticBody::SymbolNameTaken { 
+                body: ErrorDiagnostic::SymbolNameTaken { 
                     name: sym_name, 
                     this_type: sym_typ, 
                     precursor_type
-                }
+                }.into()
             });
 
             None
@@ -58,8 +57,7 @@ pub(super) trait SymbolCollectorCommons {
         } else {
             self.diagnostics().push(Diagnostic { 
                 span, 
-                severity: DiagnosticSeverity::Error, 
-                body: DiagnosticBody::MissingGenericArg 
+                body: ErrorDiagnostic::MissingGenericArg.into()
             });
     
             None
@@ -75,8 +73,7 @@ pub(super) trait SymbolCollectorCommons {
             } else {
                 self.diagnostics().push(Diagnostic { 
                     span, 
-                    severity: DiagnosticSeverity::Error, 
-                    body: DiagnosticBody::TypeNotFound 
+                    body: ErrorDiagnostic::TypeNotFound.into()
                 });
                 None
             }
