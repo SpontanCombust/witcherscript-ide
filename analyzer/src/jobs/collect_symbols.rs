@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use ropey::Rope;
 use uuid::Uuid;
+use witcherscript::attribs::{MemberVarSpecifier, AutobindSpecifier};
 use witcherscript::{SyntaxNode, DocSpan};
 use witcherscript::ast::*;
 use crate::diagnostics::*;
@@ -14,6 +15,7 @@ trait SymbolCollectorCommons {
     fn symtab(&mut self) -> &mut SymbolTable;
     fn db_and_symtab(&mut self) -> (&mut SymbolDb, &mut SymbolTable);
     fn diagnostics(&mut self) -> &mut Vec<Diagnostic>;
+    fn rope(&self) -> &Rope;
 
 
     fn check_duplicate(&mut self, sym_name: String, sym_typ: SymbolType, span: DocSpan) -> Option<String> {
@@ -81,7 +83,21 @@ trait SymbolCollectorCommons {
                 None
             }
         }
+    }
 
+
+    fn type_id_from_node(&mut self, n: SyntaxNode<'_, TypeAnnotation>) -> Uuid {
+        let mut type_id: Uuid = ERROR_SYMBOL_ID;
+        if let Some(primary_type) = n.type_name().value(self.rope()) {
+            let generic_arg = n.generic_arg().and_then(|g| g.value(self.rope()));
+            let generic_arg_ref = generic_arg.as_ref().map(|s| s.as_str());
+
+            if let Some(id) = self.check_type_missing(&primary_type, generic_arg_ref, n.span()) {
+                type_id = id;
+            }
+        }
+
+        type_id
     }
 }
 
@@ -113,6 +129,9 @@ impl SymbolCollectorCommons for GlobalSymbolCollector<'_> {
         &mut self.diagnostics
     }
 
+    fn rope(&self) -> &Rope {
+        &self.rope
+    }
 }
 
 impl StatementVisitor for GlobalSymbolCollector<'_> {
@@ -243,6 +262,10 @@ impl SymbolCollectorCommons for ChildSymbolCollector<'_> {
     fn diagnostics(&mut self) -> &mut Vec<Diagnostic> {
         &mut self.diagnostics
     }
+
+    fn rope(&self) -> &Rope {
+        &self.rope
+    }
 }
 
 impl StatementVisitor for ChildSymbolCollector<'_> {
@@ -318,10 +341,19 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
 
             
             let mut specifiers = HashSet::new();
+            let mut found_access_modif_before = false;
+            for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+                if matches!(spec, MemberVarSpecifier::AccessModifier(_)) {
+                    if found_access_modif_before {
+                        self.diagnostics.push(Diagnostic { 
+                            span, 
+                            severity: DiagnosticSeverity::Error, 
+                            body: DiagnosticBody::MultipleAccessModifiers 
+                        })
+                    }
+                    found_access_modif_before = true;
+                }
 
-            n.specifiers()
-            .map(|specn| (specn.value(), specn.span()))
-            .for_each(|(spec, span)| {
                 if !specifiers.insert(spec) {
                     self.diagnostics.push(Diagnostic { 
                         span, 
@@ -329,18 +361,11 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                         body: DiagnosticBody::RepeatedSpecifier
                     });
                 }
-            });
-
-            let mut type_id: Uuid = ERROR_SYMBOL_ID;
-            let var_typen = n.var_type();
-            if let Some(primary_type) = var_typen.type_name().value(&self.rope) {
-                let generic_arg = var_typen.generic_arg().and_then(|g| g.value(&self.rope));
-                let generic_arg_ref = generic_arg.as_ref().map(|s| s.as_str());
-
-                if let Some(id) = self.check_type_missing(&primary_type, generic_arg_ref, var_typen.span()) {
-                    type_id = id;
-                }
             }
+
+
+            let type_id = self.type_id_from_node(n.var_type());
+
 
             syms.into_iter().for_each(|mut sym| {
                 sym.data.specifiers = specifiers.clone();
@@ -349,6 +374,57 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 self.symtab.insert(sym.name(), sym.id(), sym.typ());
                 self.db.insert_member_var(sym);
             });
+        }
+    }
+
+    fn visit_autobind_decl(&mut self, n: &SyntaxNode<'_, AutobindDeclaration>) {
+        let autobind_name = n.name()
+                            .value(&self.rope)
+                            .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Autobind, n.span()));
+
+        if let Some(autobind_name) = autobind_name {
+            let mut sym: AutobindSymbol;
+            if self.current_class.is_some() {
+                sym = self.current_class.as_mut().unwrap().add_autobind(&autobind_name);
+            } else if self.current_state.is_some() {
+                sym = self.current_state.as_mut().unwrap().add_autobind(&autobind_name);
+            } else {
+                panic!("No type to create autobind for");
+            }
+
+
+            let mut specifiers = HashSet::new();
+            let mut found_access_modif_before = false;
+            for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+                if matches!(spec, AutobindSpecifier::AccessModifier(_)) {
+                    if found_access_modif_before {
+                        self.diagnostics.push(Diagnostic { 
+                            span, 
+                            severity: DiagnosticSeverity::Error, 
+                            body: DiagnosticBody::MultipleAccessModifiers 
+                        })
+                    }
+                    found_access_modif_before = true;
+                }
+
+                if !specifiers.insert(spec) {
+                    self.diagnostics.push(Diagnostic { 
+                        span, 
+                        severity: DiagnosticSeverity::Error, 
+                        body: DiagnosticBody::RepeatedSpecifier
+                    });
+                }
+            }
+
+
+            let type_id = self.type_id_from_node(n.autobind_type());
+
+
+            sym.data.specifiers = specifiers;
+            sym.data.type_id = type_id;
+
+            self.symtab.insert(sym.name(), sym.id(), sym.typ());
+            self.db.insert_autobind(sym);
         }
     }
 }
