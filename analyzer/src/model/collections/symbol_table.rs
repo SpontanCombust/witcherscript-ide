@@ -113,6 +113,8 @@ pub enum SymbolTableError {
     DataAlreadyExists(String, SymbolTableValue),
     #[error("callable already exists in the same scope for name {0:?}")]
     CallableAlreadyExists(String, SymbolTableValue),
+    #[error("type with name {0:?} doesn't exist in symbol table")]
+    TypeDoesntExist(String),
 }
 
 impl SymbolTable {
@@ -154,9 +156,8 @@ impl SymbolTable {
         self.get_with_rel_scope(name, category).map(|v| v.0)
     }
     
-    /// If a symbol with that configuration can be inserted, returns None.
-    /// Otherwise, returns the reason as to why that can't be done.
-    pub fn can_insert(&self, name: &str, typ: SymbolType) -> Option<SymbolTableError> {
+    /// If a symbol with that configuration cannot be inserted, returns Err as to why that can't be done.
+    pub fn can_insert(&self, name: &str, typ: SymbolType) -> Result<(), SymbolTableError> {
         use SymbolTableError::*;
 
         let exist_data = self.get_with_rel_scope(name, SymbolCategory::Data);
@@ -164,7 +165,7 @@ impl SymbolTable {
             // global var names are prohibited from being re-used in any context
             // globals are actually already defined on the lexel level (in the WS compiler)
             if data_val.typ == SymbolType::GlobalVar {
-                return Some(GlobalVarAlreadyExists(name.to_string(), data_val.clone()));
+                return Err(GlobalVarAlreadyExists(name.to_string(), data_val.clone()));
             }
         }
         
@@ -174,14 +175,14 @@ impl SymbolTable {
             SymbolCategory::Data => {
                 // If there is a type defined with that name, always fail.
                 if let Some((typ_val, _)) = self.get_with_rel_scope(name, SymbolCategory::Type) {
-                    return Some(TypeAlreadyExists(name.to_string(), typ_val.clone()));
+                    return Err(TypeAlreadyExists(name.to_string(), typ_val.clone()));
                 }
                 // If there is a var or constant defined, but it exists in a higher scope, allow to obstruct it.
                 // In the case of types, they can only be defined in the global scope. So when they check against
                 // data, they check against defined enum members.
                 else if let Some((data_val, data_scope)) = exist_data {
                     if data_scope == 0 {
-                        return Some(DataAlreadyExists(name.to_string(), data_val.clone()));
+                        return Err(DataAlreadyExists(name.to_string(), data_val.clone()));
                     }
                 } 
             },
@@ -191,31 +192,47 @@ impl SymbolTable {
                 // - they are always used with `()` operator. Functions in WS are not first-class objects afaik.
                 if let Some((callable_val, callable_scope)) = self.get_with_rel_scope(name, SymbolCategory::Callable) {
                     if callable_scope == 0 {
-                        return Some(CallableAlreadyExists(name.to_string(), callable_val.clone()));
+                        return Err(CallableAlreadyExists(name.to_string(), callable_val.clone()));
                     }
                 }                 
             },
         }
 
-        None
+        Ok(())
     }
 
     /// Inserts a symbol mapping into the table.
     /// Make sure to check with `can_insert` beforehand.
-    pub fn insert(&mut self, name: &str, id: Uuid, typ: SymbolType) {
-        let cat = typ.category();
+    pub fn insert<S: SymbolData>(&mut self, sym: &Symbol<S>) {
+        let cat = sym.typ().category();
+        let kv = (
+            Key::new(sym.name(), cat), 
+            SymbolTableValue::new(sym.id(), sym.typ())
+        );
+
         if cat == SymbolCategory::Type {
             // always insert types into the highest (global) scope
-            self.stack.first_mut().unwrap().insert(
-                Key::new(name, cat), 
-                SymbolTableValue::new(id, typ)
-            );
+            self.stack.first_mut().unwrap().insert(kv.0, kv.1);
         } else {
             // the rest of symbols can be scope dependant
-            self.stack.last_mut().unwrap().insert(
-                Key::new(name, cat), 
-                SymbolTableValue::new(id, typ)
-            );
+            self.stack.last_mut().unwrap().insert(kv.0, kv.1);
         }
+    }
+
+    /// Inserts a name alias for a symbol. Symbol must be a type.
+    /// Used for primitives.
+    pub fn insert_alias<S: SymbolData>(&mut self, sym: &Symbol<S>, alias: &str) -> Result<(), SymbolTableError> {
+        if !self.contains(sym.name(), SymbolCategory::Type) {
+            return Err(SymbolTableError::TypeDoesntExist(sym.name().to_string()));
+        }
+
+        let kv = (
+            Key::new(alias, SymbolCategory::Type), 
+            SymbolTableValue::new(sym.id(), sym.typ())
+        );
+
+        self.stack.first_mut().unwrap().insert(kv.0, kv.1);
+
+        Ok(())
     }
 }

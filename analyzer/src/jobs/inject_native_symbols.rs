@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use crate::model::symbols::{PrimitiveTypeSymbol, GlobalVarSymbol, ArrayTypeSymbol, SymbolCategory, SymbolType};
+use crate::model::symbols::{PrimitiveTypeSymbol, GlobalVarSymbol, ArrayTypeSymbol, SymbolCategory};
 use crate::model::collections::{SymbolTable, SymbolDb};
 
 
@@ -21,9 +21,9 @@ pub fn inject_primitives(db: &mut SymbolDb, symtab: &mut SymbolTable) {
 
     ].into_iter()
     .for_each(|sym| { 
-        symtab.insert(sym.name(), sym.id(), sym.typ());
+        symtab.insert(&sym);
         if let Some(ref alias) = sym.data.alias {
-            symtab.insert(alias, sym.id(), sym.typ());
+            symtab.insert_alias(&sym, alias);
         }
         db.insert_primitive(sym);
     });
@@ -61,7 +61,7 @@ pub fn inject_globals(db: &mut SymbolDb, symtab: &mut SymbolTable) {
     ].into_iter()
     .for_each(|(var_name, class_name)| { 
         let gv = GlobalVarSymbol::new_with_type(var_name, symtab.get(class_name, SymbolCategory::Type).unwrap().id);
-        symtab.insert(var_name, gv.id(), gv.typ());
+        symtab.insert(&gv);
         db.insert_global_var(gv); 
     });
 }
@@ -76,7 +76,7 @@ pub fn inject_array_type(db: &mut SymbolDb, symtab: &mut SymbolTable, data_type_
 
     let (arr, funcs, params) = ArrayTypeSymbol::new_with_type(data_type_id, data_type_name, void_id, int_id, bool_id);
     let arr_id = arr.id();
-    symtab.insert(arr.name(), arr.id(), SymbolType::Array);
+    symtab.insert(&arr);
     db.insert_array(arr);
     funcs.into_iter().for_each(|f| { db.insert_member_func(f); } );
     params.into_iter().for_each(|p| { db.insert_func_param(p); } );

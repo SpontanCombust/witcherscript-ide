@@ -1,235 +1,12 @@
 use std::collections::HashSet;
 use ropey::Rope;
-use uuid::Uuid;
-use witcherscript::attribs::{MemberVarSpecifier, AutobindSpecifier};
-use witcherscript::{SyntaxNode, DocSpan};
+use witcherscript::SyntaxNode;
+use witcherscript::attribs::*;
 use witcherscript::ast::*;
+use crate::model::collections::*;
 use crate::diagnostics::*;
-use crate::model::{collections::*, symbols::*};
-use super::inject_native_symbols::inject_array_type;
-
-
-
-trait SymbolCollectorCommons {
-    fn db(&mut self) -> &mut SymbolDb;
-    fn symtab(&mut self) -> &mut SymbolTable;
-    fn db_and_symtab(&mut self) -> (&mut SymbolDb, &mut SymbolTable);
-    fn diagnostics(&mut self) -> &mut Vec<Diagnostic>;
-    fn rope(&self) -> &Rope;
-
-
-    fn check_duplicate(&mut self, sym_name: String, sym_typ: SymbolType, span: DocSpan) -> Option<String> {
-        if let Some(err) = self.symtab().can_insert(&sym_name, sym_typ) {
-            let precursor_type = match err {
-                SymbolTableError::GlobalVarAlreadyExists(_, v) => v.typ,
-                SymbolTableError::TypeAlreadyExists(_, v) => v.typ,
-                SymbolTableError::DataAlreadyExists(_, v) => v.typ,
-                SymbolTableError::CallableAlreadyExists(_, v) => v.typ,
-            };
-            
-            self.diagnostics().push(Diagnostic { 
-                span, 
-                severity: DiagnosticSeverity::Error, 
-                body: DiagnosticBody::SymbolNameTaken { 
-                    name: sym_name, 
-                    this_type: sym_typ, 
-                    precursor_type
-                }
-            });
-
-            None
-        } else {
-            Some(sym_name)
-        }
-    }
-
-    fn check_array_type(&mut self, generic_arg: Option<&str>, span: DocSpan) -> Option<Uuid> {
-        if let Some(t) = generic_arg {
-            if let Some(t_id) = self.check_type(t, None, span) {
-                let final_typ = ArrayTypeSymbol::final_type_name(t);
-                if let Some(SymbolTableValue { id, .. }) = self.symtab().get(&final_typ, SymbolCategory::Type) {
-                    Some(*id)
-                } else {
-                    let (db, symtab) = self.db_and_symtab();
-                    Some(inject_array_type(db, symtab, t_id, t))
-                }
-            } else {
-                None
-            }
-
-        } else {
-            self.diagnostics().push(Diagnostic { 
-                span, 
-                severity: DiagnosticSeverity::Error, 
-                body: DiagnosticBody::MissingGenericArg 
-            });
-    
-            None
-        }
-    }
-
-    fn check_type(&mut self, typ: &str, generic_arg: Option<&str>, span: DocSpan) -> Option<Uuid> {
-        if typ == ArrayTypeSymbol::TYPE_NAME {
-            self.check_array_type(generic_arg, span)
-        } else {
-            if let Some(SymbolTableValue { id, .. }) = self.symtab().get(typ, SymbolCategory::Type) {
-                Some(*id)
-            } else {
-                self.diagnostics().push(Diagnostic { 
-                    span, 
-                    severity: DiagnosticSeverity::Error, 
-                    body: DiagnosticBody::TypeNotFound 
-                });
-                None
-            }
-        }
-    }
-
-
-    fn get_type_from_node(&mut self, n: SyntaxNode<'_, TypeAnnotation>) -> Uuid {
-        let mut type_id: Uuid = ERROR_SYMBOL_ID;
-        if let Some(primary_type) = n.type_name().value(self.rope()) {
-            let generic_arg = n.generic_arg().and_then(|g| g.value(self.rope()));
-            let generic_arg_ref = generic_arg.as_ref().map(|s| s.as_str());
-
-            if let Some(id) = self.check_type(&primary_type, generic_arg_ref, n.span()) {
-                type_id = id;
-            }
-        }
-
-        type_id
-    }
-}
-
-//TODO be able to update existing db and symtab instead of assuming they are new
-struct GlobalSymbolCollector<'a> {
-    db: &'a mut SymbolDb,
-    symtab: &'a mut SymbolTable,
-    script_id: Uuid,
-    rope: Rope,
-    diagnostics: Vec<Diagnostic>,
-
-    current_enum: Option<EnumSymbol>,
-}
-
-impl SymbolCollectorCommons for GlobalSymbolCollector<'_> {
-    fn db(&mut self) -> &mut SymbolDb {
-        &mut self.db
-    }
-
-    fn symtab(&mut self) -> &mut SymbolTable {
-        &mut self.symtab
-    }
-    /// So they can both be borrowed at the same time
-    fn db_and_symtab(&mut self) -> (&mut SymbolDb, &mut SymbolTable) {
-        (&mut self.db, &mut self.symtab)    
-    }
-
-    fn diagnostics(&mut self) -> &mut Vec<Diagnostic> {
-        &mut self.diagnostics
-    }
-
-    fn rope(&self) -> &Rope {
-        &self.rope
-    }
-}
-
-impl StatementVisitor for GlobalSymbolCollector<'_> {
-    fn visit_class_decl(&mut self, n: &SyntaxNode<'_, ClassDeclaration>) -> bool {
-        let class_name = n.name()
-                        .value(&self.rope)
-                        .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Class, n.span()));
-
-        if let Some(class_name) = class_name {
-            let sym = ClassSymbol::new_with_default(&class_name, self.script_id);
-            self.symtab.insert(&class_name, sym.id(), SymbolType::Class);
-            self.db.insert_class(sym);
-        }
-
-        false
-    }
-
-    fn visit_state_decl(&mut self, n: &SyntaxNode<'_, StateDeclaration>) -> bool {
-        let state_name = n.name().value(&self.rope);
-        let parent_name = n.parent().value(&self.rope);
-        if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
-            let state_class_name = StateSymbol::class_name(&state_name, &parent_name);
-            if let Some(state_class_name) = self.check_duplicate(state_class_name, SymbolType::State, n.span()) {
-                let sym = StateSymbol::new_with_default(&state_class_name, self.script_id);
-                self.symtab.insert(&state_class_name, sym.id(), SymbolType::State);
-                self.db.insert_state(sym);
-            }
-        }
-
-        false
-    }
-
-    fn visit_struct_decl(&mut self, n: &SyntaxNode<'_, StructDeclaration>) -> bool {
-        let struct_name = n.name()
-                          .value(&self.rope)
-                          .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Struct, n.span()));
-
-        if let Some(struct_name) = struct_name {
-            let sym = StructSymbol::new_with_default(&struct_name, self.script_id);
-            self.symtab.insert(&struct_name, sym.id(), SymbolType::Struct);
-            self.db.insert_struct(sym);
-        }
-
-        false
-    }
-
-    fn visit_enum_decl(&mut self, n: &SyntaxNode<'_, EnumDeclaration>) -> bool {
-        let enum_name = n.name()
-                        .value(&self.rope)
-                        .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Enum, n.span()));
-
-        if let Some(enum_name) = enum_name {
-            let sym = EnumSymbol::new_with_default(&enum_name, self.script_id);
-            self.current_enum = Some(sym);
-            // symbol added to db and symtab during exit
-            return true;
-        }
-
-        false
-    }
-
-    // enum member is WS work just like they do in C - they are global scoped constants
-    // enum type doesn't create any sort of scope for them
-    fn visit_enum_member_decl(&mut self, n: &SyntaxNode<'_, EnumMemberDeclaration>) {
-        let member_name = n.name()
-                          .value(&self.rope)
-                          .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::EnumMember, n.span()));
-
-        if let Some(member_name) = member_name {
-            let sym = self.current_enum.as_mut().unwrap().add_member(&member_name);
-            self.symtab.insert(&member_name, sym.id(), SymbolType::EnumMember);
-            self.db.insert_enum_member(sym);
-        }
-    }
-
-    fn exit_enum_decl(&mut self, _: &SyntaxNode<'_, EnumDeclaration>) {
-        if let Some(sym) = self.current_enum.take() {
-            self.symtab.insert(sym.name(), sym.id(), sym.typ());
-            self.db.insert_enum(sym);
-        }
-    }
-
-    fn visit_global_func_decl(&mut self, n: &SyntaxNode<'_, GlobalFunctionDeclaration>) -> bool {
-        let func_name = n.name()
-                        .value(&self.rope)
-                        .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::GlobalFunction, n.span()));
-
-        if let Some(func_name) = func_name {
-            let sym = GlobalFunctionSymbol::new_with_default(&func_name, self.script_id);
-            self.symtab.insert(&func_name, sym.id(), sym.typ());
-            self.db.insert_global_func(sym);
-        }
-
-        false
-    }
-}
-
-
+use crate::model::symbols::*;
+use super::commons::SymbolCollectorCommons;
 
 
 struct ChildSymbolCollector<'a> {
@@ -451,7 +228,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 sym.data.specifiers = specifiers.clone();
                 sym.data.type_id = type_id;
 
-                self.symtab.insert(sym.name(), sym.id(), sym.typ());
+                self.symtab.insert(&sym);
                 self.db.insert_member_var(sym);
             });
         }
@@ -503,7 +280,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
             sym.data.specifiers = specifiers;
             sym.data.type_id = type_id;
 
-            self.symtab.insert(sym.name(), sym.id(), sym.typ());
+            self.symtab.insert(&sym);
             self.db.insert_autobind(sym);
         }
     }
