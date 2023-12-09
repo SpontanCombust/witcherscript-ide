@@ -86,7 +86,6 @@ trait SymbolCollectorCommons {
 }
 
 //TODO be able to update existing db and symtab instead of assuming they are new
-//TODO rename back to TypeSymbolCollector, remove global func
 struct GlobalSymbolCollector<'a> {
     db: &'a mut SymbolDb,
     symtab: &'a mut SymbolTable,
@@ -283,12 +282,37 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
     }
 
     fn visit_member_var_decl(&mut self, n: &SyntaxNode<'_, MemberVarDeclaration>) {
-        let syms: Vec<_> = n.names()
-                            .filter_map(|nn| nn.value(&self.rope))
-                            .map(|n| self.current_class.as_mut().unwrap().add_member_var(&n))
-                            .collect();
+        let names = n.names()
+                    .map(|identn| (identn.span(), identn))
+                    .filter_map(|(span, identn)| {
+                        if let Some(ident) = identn.value(&self.rope) {
+                            Some((span, ident))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>(); // need to collect because of later mut borrow
 
-        if !syms.is_empty() {
+        let mut checked_names: Vec<String> = Vec::new();
+        for (span, name) in names.into_iter() {
+            if self.check_duplicate(&name, SymbolType::MemberVar, span) {
+                checked_names.push(name.into());
+            }
+        }
+                
+        if !checked_names.is_empty() {
+            let syms: Vec<MemberVarSymbol>;
+            if self.current_class.is_some() {
+                syms = checked_names.into_iter().map(|n| self.current_class.as_mut().unwrap().add_member_var(&n)).collect();
+            } else if self.current_state.is_some() {
+                syms = checked_names.into_iter().map(|n| self.current_state.as_mut().unwrap().add_member_var(&n)).collect();
+            } else if self.current_struct.is_some() {
+                syms = checked_names.into_iter().map(|n| self.current_struct.as_mut().unwrap().add_member_var(&n)).collect();
+            } else {
+                panic!("No type to create member var symbol for");
+            }
+
+            
             let mut specifiers = HashSet::new();
 
             n.specifiers()
@@ -301,6 +325,25 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                         body: DiagnosticBody::RepeatedSpecifier
                     });
                 }
+            });
+
+            let mut type_id: Uuid = ERROR_SYMBOL_ID;
+            let var_typen = n.var_type();
+            if let Some(primary_type) = var_typen.type_name().value(&self.rope) {
+                let generic_arg = var_typen.generic_arg().and_then(|g| g.value(&self.rope));
+                let generic_arg_ref = generic_arg.as_ref().map(|s| s.as_str());
+
+                if let Some(id) = self.check_type_missing(&primary_type, generic_arg_ref, var_typen.span()) {
+                    type_id = id;
+                }
+            }
+
+            syms.into_iter().for_each(|mut sym| {
+                sym.data.specifiers = specifiers.clone();
+                sym.data.type_id = type_id;
+
+                self.symtab.insert(sym.name(), sym.id(), sym.typ());
+                self.db.insert_member_var(sym);
             });
         }
     }
