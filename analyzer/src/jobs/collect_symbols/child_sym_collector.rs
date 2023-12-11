@@ -8,7 +8,11 @@ use crate::diagnostics::*;
 use crate::model::symbols::*;
 use super::commons::SymbolCollectorCommons;
 
-
+//TODO use this visitor to only collect symbol data
+// So have 3 visitors:
+// 1. GlobalSymbolCollector, 2. ChildSymbolCollector, 3. SymbolDataCollector
+// first two only create symbols
+// the last one uses node id for fast lookup
 struct ChildSymbolCollector<'a> {
     db: &'a mut SymbolDb,
     symtab: &'a mut SymbolTable,
@@ -275,6 +279,198 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
 
             self.symtab.insert(&sym);
             self.db.insert_autobind(sym);
+        }
+    }
+
+    fn visit_global_func_decl(&mut self, n: &SyntaxNode<'_, GlobalFunctionDeclaration>) -> bool {
+        if let Some(func_name) = n.name().value(&self.rope) {
+            if let Some(SymbolTableValue { id, typ: SymbolType::GlobalFunction }) = self.symtab.get(&func_name, SymbolCategory::Callable) {
+                let mut sym = self.db.remove_global_func(*id).expect("global function absent from db despite being in symtab");
+
+                n.specifiers()
+                .map(|specn| (specn.value(), specn.span()))
+                .for_each(|(spec, span)| {
+                    if !sym.data.specifiers.insert(spec) {
+                        self.diagnostics.push(Diagnostic { 
+                            span, 
+                            body: ErrorDiagnostic::RepeatedSpecifier.into()
+                        });
+                    }
+                });
+
+
+                if let Some(flavour) = n.flavour().map(|flavn| flavn.value()) {
+                    sym.data.flavour = Some(flavour);
+                } else {
+                    sym.data.flavour = None;
+                }
+
+
+                if let Some(ret_typn) = n.return_type() {
+                    sym.data.return_type_id = self.get_type_from_node(ret_typn);
+                } else {
+                    sym.data.return_type_id = self.symtab.get("void", SymbolCategory::Type).unwrap().id;
+                }
+
+
+                self.current_global_func = Some(sym);
+                self.symtab.push_scope();
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn exit_global_func_decl(&mut self, _: &SyntaxNode<'_, GlobalFunctionDeclaration>) {
+        if let Some(sym) = self.current_global_func.take() {
+            self.symtab.pop_scope();
+            self.db.insert_global_func(sym);
+        }
+    }
+
+    fn visit_member_func_decl(&mut self, n: &SyntaxNode<'_, MemberFunctionDeclaration>) -> bool {
+        let func_name = n.name()
+                        .value(&self.rope)
+                        .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::MemberFunction, n.span()));
+
+        if let Some(func_name) = func_name {
+            let mut sym: MemberFunctionSymbol;
+            if self.current_class.is_some() {
+                sym = self.current_class.as_mut().unwrap().add_member_func(&func_name);
+            } else if self.current_state.is_some() {
+                sym = self.current_state.as_mut().unwrap().add_member_func(&func_name);
+            } else {
+                panic!("No type to create member function for");
+            }
+
+
+            n.specifiers()
+            .map(|specn| (specn.value(), specn.span()))
+            .for_each(|(spec, span)| {
+                if !sym.data.specifiers.insert(spec) {
+                    self.diagnostics.push(Diagnostic { 
+                        span, 
+                        body: ErrorDiagnostic::RepeatedSpecifier.into()
+                    });
+                }
+            });
+
+
+            if let Some(flavour) = n.flavour().map(|flavn| flavn.value()) {
+                sym.data.flavour = Some(flavour);
+            } else {
+                sym.data.flavour = None;
+            }
+
+
+            if let Some(ret_typn) = n.return_type() {
+                sym.data.return_type_id = self.get_type_from_node(ret_typn);
+            } else {
+                sym.data.return_type_id = self.symtab.get("void", SymbolCategory::Type).unwrap().id;
+            }
+
+
+            self.symtab.insert(&sym);
+            self.symtab.push_scope();
+            self.current_member_func = Some(sym);
+            return true;
+        }
+
+        false
+    }
+
+    fn exit_member_func_decl(&mut self, _: &SyntaxNode<'_, MemberFunctionDeclaration>) {
+        if let Some(sym) = self.current_member_func.take() {
+            self.symtab.pop_scope();
+            self.db.insert_member_func(sym);
+        }
+    }
+
+    fn visit_event_decl(&mut self, n: &SyntaxNode<'_, EventDeclaration>) -> bool {
+        let event_name = n.name()
+                        .value(&self.rope)
+                        .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Event, n.span()));
+
+        if let Some(event_name) = event_name {
+            let sym: EventSymbol;
+            if self.current_class.is_some() {
+                sym = self.current_class.as_mut().unwrap().add_event(&event_name);
+            } else if self.current_state.is_some() {
+                sym = self.current_state.as_mut().unwrap().add_event(&event_name);
+            } else {
+                panic!("No type to create event for");
+            }
+
+            self.symtab.insert(&sym);
+            self.symtab.push_scope();
+            self.current_event = Some(sym);
+            return true;
+        }
+
+        false
+    }
+
+    fn exit_event_decl(&mut self, _: &SyntaxNode<'_, EventDeclaration>) {
+        if let Some(sym) = self.current_event.take() {
+            self.symtab.pop_scope();
+            self.db.insert_event(sym);
+        }
+    }
+
+    fn visit_func_param_group(&mut self, n: &SyntaxNode<'_, FunctionParameterGroup>) {
+        let names = n.names()
+                    .map(|identn| (identn.span(), identn))
+                    .filter_map(|(span, identn)| {
+                        if let Some(ident) = identn.value(&self.rope) {
+                            Some((span, ident))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+        let mut checked_names: Vec<String> = Vec::new();
+        for (span, name) in names.into_iter() {
+            if let Some(checked_name) = self.check_duplicate(name.into(), SymbolType::Parameter, span) {
+                checked_names.push(checked_name);
+            }
+        }
+                
+        if !checked_names.is_empty() {
+            let syms: Vec<FunctionParameterSymbol>;
+            if self.current_global_func.is_some() {
+                syms = checked_names.into_iter().map(|n| self.current_global_func.as_mut().unwrap().add_param(&n)).collect();
+            } else if self.current_member_func.is_some() {
+                syms = checked_names.into_iter().map(|n| self.current_member_func.as_mut().unwrap().add_param(&n)).collect();
+            } else if self.current_event.is_some() {
+                syms = checked_names.into_iter().map(|n| self.current_event.as_mut().unwrap().add_param(&n)).collect();
+            } else {
+                panic!("No function to create parameter for");
+            }
+
+
+            let mut specifiers = HashSet::new();
+            for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+                if !specifiers.insert(spec) {
+                    self.diagnostics.push(Diagnostic { 
+                        span, 
+                        body: ErrorDiagnostic::RepeatedSpecifier.into()
+                    });
+                }
+            }
+
+
+            let type_id = self.get_type_from_node(n.param_type());
+
+
+            syms.into_iter().for_each(|mut sym| {
+                sym.data.specifiers = specifiers.clone();
+                sym.data.type_id = type_id;
+
+                self.symtab.insert(&sym);
+                self.db.insert_func_param(sym);
+            });
         }
     }
 }

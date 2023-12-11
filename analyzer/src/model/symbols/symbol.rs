@@ -5,6 +5,7 @@ use uuid::Uuid;
 pub struct Symbol<T> 
 where T: SymbolData {
     pub(super) id: Uuid,
+    //TODO optional node id?
     pub(super) name: String,
     pub(super) parent_id: Uuid,
     //TODO relative_span - a span relative to parent scope
