@@ -75,6 +75,7 @@ pub enum GlobalFunctionFlavour {
     Exec,
     Quest,
     Storyscene,
+    Reward,
 }
 
 impl NamedSyntaxNode for GlobalFunctionFlavour {
@@ -89,6 +90,7 @@ impl SyntaxNode<'_, GlobalFunctionFlavour> {
                 Keyword::Exec => return GlobalFunctionFlavour::Exec,
                 Keyword::Quest => return GlobalFunctionFlavour::Quest,
                 Keyword::Storyscene => return GlobalFunctionFlavour::Storyscene,
+                Keyword::Reward => return GlobalFunctionFlavour::Reward,
                 _ => {}
             }
         }
@@ -147,6 +149,7 @@ impl Debug for SyntaxNode<'_, MemberFunctionSpecifier> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MemberFunctionFlavour {
     Entry,
+    Cleanup,
     Timer
 }
 
@@ -160,6 +163,7 @@ impl SyntaxNode<'_, MemberFunctionFlavour> {
         if let Ok(k) = Keyword::from_str(s) {
             match k {
                 Keyword::Entry => return MemberFunctionFlavour::Entry,
+                Keyword::Cleanup => return MemberFunctionFlavour::Cleanup,
                 Keyword::Timer => return MemberFunctionFlavour::Timer,
                 _ => {}
             }
