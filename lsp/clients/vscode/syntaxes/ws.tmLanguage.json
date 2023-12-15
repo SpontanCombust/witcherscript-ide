@@ -1,0 +1,152 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Witcher Script",
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#operators"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#names"
+		},
+		{
+			"include": "#numbers"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.double-slash.ws",
+					"match": "\/\/.*"
+				},
+				{
+					"name": "comment.block.ws",
+					"begin": "/\\*",
+    				"end": "\\*/"
+				}
+			]
+		},
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.control.ws",
+					"match": "\\b(break|case|continue|delete|do|else|for|if|return|switch|while)\\b"
+				},
+				{
+					"match": "\\b(default)\\b\\s*:",
+					"captures": {
+						"1": {
+							"name": "keyword.control.ws"
+						}
+					}
+				},
+				{
+					"name": "keyword.other.ws",
+					"match": "\\b(default|extends|import|hint|in|new|single)\\b"
+				},
+				{
+					"name": "constant.language.ws",
+					"match": "\\b(false|NULL|true)\\b"
+				},
+				{
+					"name": "storage.type.ws",
+					"match": "\\b(autobind|class|enum|event|function|state|struct|var)\\b"
+				},
+				{
+					"include": "#special-vars"
+				},
+				{
+					"include": "#modifiers"
+				}
+			]
+		},
+		"operators": {
+			"patterns": [
+				{
+					"name": "keyword.operator.logic.ws",
+					"match": "\\b(!|\\|\\||&&)\\b"
+				},
+				{
+					"name": "keyword.operator.compare.ws",
+					"match": "\\b(>|>=|<|<=|==|!=)\\b"
+				},
+				{
+					"name": "keyword.operator.arithmetic.ws",
+					"match": "\\b(-|\\+|%|/|\\*)\\b"
+				},
+				{
+					"name": "keyword.operator.bitwise.ws",
+					"match": "\\b(~|\\||&)\\b"
+				},
+				{
+					"name": "keyword.operator.assign.ws",
+					"match": "\\b(=|\\+=|-=|\\*=|/=|%=)\\b"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.ws",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.ws",
+					"match": "\\\\\""
+				}
+			]
+		},
+		"names": {
+			"name": "string.quoted.single.ws",
+			"begin": "'",
+			"end": "'"
+		},
+		"numbers": {
+			"patterns": [{
+				"name": "constant.numeric.ws",
+				"match": "\\b[0-9]+(\\.[0-9]*f?)?\\b"
+			}]
+		},
+		"modifiers": {
+			"patterns": [
+				{
+					"name": "storage.modifier.class.ws",
+					"match": "\\b(abstract|statemachine)\\b"
+				},
+				{
+					"name": "storage.modifier.function.ws",
+					"match": "\\b(cleanup|entry|exec|final|latent|quest|reward|storyscene|timer)\\b"
+				},
+				{
+					"name": "storage.modifier.var.ws",
+					"match": "\\b(const|editable|inlined|optional|out|saved)\\b"
+				},
+				{
+					"name": "storage.modifier.access.ws",
+					"match": "\\b(private|protected|public)\\b"
+				}
+			]
+		},
+		"special-vars": {
+			"patterns": [
+				{
+					"name": "variable.language.global.ws",
+					"match": "\\b(theGame|theServer|thePlayer|theCamera|theUI|theSound|theDebug|theTimer|theInput)\\b"
+				},
+				{
+					"name": "variable.language.object.ws",
+					"match": "\\b(parent|super|this|virtual_parent)\\b"
+				}
+			]
+		}
+	},
+	"scopeName": "source.ws"
+}
