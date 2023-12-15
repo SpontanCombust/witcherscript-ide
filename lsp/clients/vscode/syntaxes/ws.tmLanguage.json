@@ -9,6 +9,21 @@
 			"include": "#keywords"
 		},
 		{
+			"include": "#modifiers"
+		},
+		{
+			"include": "#types"
+		},
+		{
+			"include": "#declarations"
+		},
+		{
+			"include": "#expressions"
+		},
+		{
+			"include": "#special-vars"
+		},
+		{
 			"include": "#operators"
 		},
 		{
@@ -56,16 +71,6 @@
 				{
 					"name": "constant.language.ws",
 					"match": "\\b(false|NULL|true)\\b"
-				},
-				{
-					"name": "storage.type.ws",
-					"match": "\\b(autobind|class|enum|event|function|state|struct|var)\\b"
-				},
-				{
-					"include": "#special-vars"
-				},
-				{
-					"include": "#modifiers"
 				}
 			]
 		},
@@ -115,6 +120,155 @@
 				"match": "\\b[0-9]+(\\.[0-9]*f?)?\\b"
 			}]
 		},
+		"declarations": {
+			"patterns": [
+				{
+					"match": "(?<=(?:class|struct))\\s+(\\w+)",
+					"captures": {
+						"1": {
+							"name": "support.class.ws"
+						}
+					}
+				},
+				{
+					"match": "(?<=state)\\s+(\\w+)\\s+(in)\\s+(\\w+)",
+					"captures": {
+						"1": {
+							"name": "support.class.ws"
+						},
+						"2": {
+							"name": "keyword.other.ws"
+						},
+						"3": {
+							"name": "support.class.ws"
+						}
+					}
+				},
+				{
+					"match": "(?<=extends)\\s+(\\w+)",
+					"captures": {
+						"1": {
+							"name": "support.class.ws"
+						}
+					}
+				},
+				{
+					"begin": "(?<=enum)\\s+(\\w+)\\s*",
+					"beginCaptures": {
+						"1": {
+							"name": "support.class.ws"
+						}
+					},
+					"end": "\\}",
+					"patterns": [
+						{
+							"name": "variable.other.enummember.ws",
+							"match": "\\b[a-zA-Z]\\w*\\b"
+						},
+						{
+							"name": "constant.numeric.ws",
+							"match": "\\b[0-9]+\\b"
+						},
+						{
+							"include": "#comments"
+						}
+					]
+				},
+				{
+					"begin": "(?<=(?:function|event))\\s+(\\w+)\\s*",
+					"beginCaptures": {
+						"1": {
+							"name": "support.function.ws"
+						}
+					},
+					"end": "\\)(\\s*:\\s*(\\w+)(\\s*<\\s*(\\w+)\\s*>\\s*)?)?",
+					"endCaptures": {
+						"2": {
+							"name": "support.type.ws"
+						},
+						"4": {
+							"name": "support.type.ws"
+						}
+					},
+					"patterns": [
+						{
+							"begin": "(?!\\boptional\\b)(?!\\bout\\b)(\\b\\w+\\b)",
+							"beginCaptures": {
+								"1": {
+									"name": "variable.parameter.ws"
+								}
+							},
+							"end": "\\s*:\\s*(\\w+)(?:\\s*<\\s*(\\w+)\\s*>\\s*)?",
+							"endCaptures": {
+								"1": {
+									"name": "support.type.ws"
+								},
+								"2": {
+									"name": "support.type.ws"
+								}
+							},
+							"patterns": [
+								{
+									"name": "variable.parameter.ws",
+									"match": "\\b\\w+\\b"
+								},
+								{
+									"include": "#comments"
+								}
+							]
+						},
+						{
+							"name": "storage.modifier.var.ws",
+							"match": "\\b(optional|out)\\b"
+						},
+						{
+							"include": "#comments"
+						}
+					]
+				},
+				{
+					"begin": "(?<=(?:var|autobind)\\s+)",
+					"end": "\\s*:\\s*(\\w+)(?:\\s*<\\s*(\\w+)\\s*>\\s*)?",
+					"endCaptures": {
+						"1": {
+							"name": "support.type.ws"
+						},
+						"2": {
+							"name": "support.type.ws"
+						}
+					},
+					"patterns": [
+						{
+							"name": "variable.name.ws",
+							"match": "\\b\\w+\\b"
+						},
+						{
+							"include": "#comments"
+						}
+					]
+				},
+				{
+					"match": "(?<=(?:hint|default)\\s+)(\\w+)",
+					"captures": {
+						"1": {
+							"name": "variable.name.ws"
+						}
+					}
+				}
+			]
+		},
+		"expressions": {
+			"patterns": [
+				{
+					"match": "(?<=new)\\s+(\\w+)",
+					"captures": {
+						"1": {
+							"name": "support.type.ws"
+						}
+					}
+				}
+			]
+		},
 		"modifiers": {
 			"patterns": [
 				{
@@ -146,6 +300,10 @@
 					"match": "\\b(parent|super|this|virtual_parent)\\b"
 				}
 			]
+		},
+		"types": {
+			"name": "storage.type.ws",
+			"match": "\\b(autobind|class|enum|event|function|state|struct|var)\\b"
 		}
 	},
 	"scopeName": "source.ws"

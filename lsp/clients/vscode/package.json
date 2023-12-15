@@ -1,6 +1,7 @@
 {
   "name": "witcherscript",
   "displayName": "witcherscript",
+  "publisher": "SpontanCombust",
   "description": "Language support for Witcher 3's scripting language WitcherScript",
   "repository": { "url": "https://github.com/SpontanCombust/witcherscript-ide" },
   "version": "0.1.0",
