@@ -1,30 +1,32 @@
 use std::fmt::Debug;
 use crate::{NamedSyntaxNode, SyntaxNode};
-use super::{Expression, FunctionStatement, StatementTraversal, StatementVisitor};
+use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
 
 
 #[derive(Debug, Clone)]
 pub struct IfConditional;
 
-impl NamedSyntaxNode for IfConditional {
+pub type IfConditionalNode<'script> = SyntaxNode<'script, IfConditional>;
+
+impl NamedSyntaxNode for IfConditionalNode<'_> {
     const NODE_NAME: &'static str = "if_stmt";
 }
 
-impl SyntaxNode<'_, IfConditional> {
-    pub fn cond(&self) -> SyntaxNode<'_, Expression> {
+impl IfConditionalNode<'_> {
+    pub fn cond(&self) -> ExpressionNode {
         self.field_child("cond").unwrap().into()
     }
 
-    pub fn body(&self) -> SyntaxNode<'_, FunctionStatement> {
+    pub fn body(&self) -> FunctionStatementNode {
         self.field_child("body").unwrap().into()
     }
 
-    pub fn else_body(&self) -> Option<SyntaxNode<'_, FunctionStatement>> {
+    pub fn else_body(&self) -> Option<FunctionStatementNode> {
         self.field_child("else").map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, IfConditional> {
+impl Debug for IfConditionalNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("IfConditional")
             .field("cond", &self.cond())
@@ -34,7 +36,7 @@ impl Debug for SyntaxNode<'_, IfConditional> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, IfConditional> {
+impl StatementTraversal for IfConditionalNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_if_stmt(self);
         self.body().accept(visitor);
@@ -47,25 +49,27 @@ impl StatementTraversal for SyntaxNode<'_, IfConditional> {
 #[derive(Debug, Clone)]
 pub struct SwitchConditional;
 
-impl NamedSyntaxNode for SwitchConditional {
+pub type SwitchConditionalNode<'script> = SyntaxNode<'script, SwitchConditional>;
+
+impl NamedSyntaxNode for SwitchConditionalNode<'_> {
     const NODE_NAME: &'static str = "switch_stmt";
 }
 
-impl SyntaxNode<'_, SwitchConditional> {
-    pub fn matched_expr(&self) -> SyntaxNode<'_, Expression> {
+impl SwitchConditionalNode<'_> {
+    pub fn matched_expr(&self) -> ExpressionNode {
         self.field_child("matched_expr").unwrap().into()
     }
 
-    pub fn cases(&self) -> impl Iterator<Item = SyntaxNode<'_, SwitchConditionalCase>> {
+    pub fn cases(&self) -> impl Iterator<Item = SwitchConditionalCaseNode> {
         self.field_children("cases").map(|n| n.into())
     }
 
-    pub fn default(&self) -> Option<SyntaxNode<'_, SwitchConditionalDefault>> {
+    pub fn default(&self) -> Option<SwitchConditionalDefaultNode> {
         self.field_child("default").map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, SwitchConditional> {
+impl Debug for SwitchConditionalNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SwitchConditional")
             .field("matched_expr", &self.matched_expr())
@@ -75,7 +79,7 @@ impl Debug for SyntaxNode<'_, SwitchConditional> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, SwitchConditional> {
+impl StatementTraversal for SwitchConditionalNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt(self);
         self.cases().for_each(|s| s.accept(visitor));
@@ -87,21 +91,23 @@ impl StatementTraversal for SyntaxNode<'_, SwitchConditional> {
 #[derive(Debug, Clone)]
 pub struct SwitchConditionalCase;
 
-impl NamedSyntaxNode for SwitchConditionalCase {
+pub type SwitchConditionalCaseNode<'script> = SyntaxNode<'script, SwitchConditionalCase>;
+
+impl NamedSyntaxNode for SwitchConditionalCaseNode<'_> {
     const NODE_NAME: &'static str = "switch_case";
 }
 
-impl SyntaxNode<'_, SwitchConditionalCase> {
-    pub fn value(&self) -> SyntaxNode<'_, Expression> {
+impl SwitchConditionalCaseNode<'_> {
+    pub fn value(&self) -> ExpressionNode {
         self.field_child("value").unwrap().into()
     }
 
-    pub fn body(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionStatement>> {
+    pub fn body(&self) -> impl Iterator<Item = FunctionStatementNode> {
         self.field_children("body").map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, SwitchConditionalCase> {
+impl Debug for SwitchConditionalCaseNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SwitchConditionalCase")
             .field("value", &self.value())
@@ -110,7 +116,7 @@ impl Debug for SyntaxNode<'_, SwitchConditionalCase> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, SwitchConditionalCase> {
+impl StatementTraversal for SwitchConditionalCaseNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt_case(self);
         self.body().for_each(|s| s.accept(visitor));
@@ -121,17 +127,19 @@ impl StatementTraversal for SyntaxNode<'_, SwitchConditionalCase> {
 #[derive(Debug, Clone)]
 pub struct SwitchConditionalDefault;
 
-impl NamedSyntaxNode for SwitchConditionalDefault {
+pub type SwitchConditionalDefaultNode<'script> = SyntaxNode<'script, SwitchConditionalDefault>;
+
+impl NamedSyntaxNode for SwitchConditionalDefaultNode<'_> {
     const NODE_NAME: &'static str = "switch_default";
 }
 
-impl SyntaxNode<'_, SwitchConditionalDefault> {
-    pub fn body(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionStatement>> {
+impl SwitchConditionalDefaultNode<'_> {
+    pub fn body(&self) -> impl Iterator<Item = FunctionStatementNode> {
         self.field_children("body").map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, SwitchConditionalDefault> {
+impl Debug for SwitchConditionalDefaultNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SwitchConditionalDefault")
             .field("body", &self.body().collect::<Vec<_>>())
@@ -139,7 +147,7 @@ impl Debug for SyntaxNode<'_, SwitchConditionalDefault> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, SwitchConditionalDefault> {
+impl StatementTraversal for SwitchConditionalDefaultNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt_default(self);
         self.body().for_each(|s| s.accept(visitor));

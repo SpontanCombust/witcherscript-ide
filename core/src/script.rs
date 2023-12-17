@@ -1,15 +1,12 @@
-use std::{
-    fs::File,
-    io::{self, BufReader, BufRead},
-    path::Path
-};
-
+use std::fs::File;
+use std::io::{self, BufReader, BufRead};
+use std::path::Path;
 use ropey::{Rope, RopeBuilder};
 use thiserror::Error;
 use tree_sitter::{Parser, Tree, LanguageError};
 use encoding_rs_io::DecodeReaderBytes;
+use crate::ast::ScriptNode;
 
-use crate::SyntaxNode;
 
 #[derive(Debug, Clone)]
 pub struct Script {
@@ -80,7 +77,7 @@ impl Script {
     }
 
 
-    pub fn root_node(&self) -> SyntaxNode<'_, Script> {
-        SyntaxNode::new(self.parse_tree.root_node())
+    pub fn root_node(&self) -> ScriptNode {
+        ScriptNode::new(self.parse_tree.root_node())
     }
 }

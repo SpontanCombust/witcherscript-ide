@@ -9,11 +9,13 @@ pub enum StateSpecifier {
     Abstract
 }
 
-impl NamedSyntaxNode for StateSpecifier {
+pub type StateSpecifierNode<'script> = SyntaxNode<'script, StateSpecifier>;
+
+impl NamedSyntaxNode for StateSpecifierNode<'_> {
     const NODE_NAME: &'static str = "state_specifier";
 }
 
-impl SyntaxNode<'_, StateSpecifier> {
+impl StateSpecifierNode<'_> {
     pub fn value(&self) -> StateSpecifier {
         let s = self.tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
@@ -28,7 +30,7 @@ impl SyntaxNode<'_, StateSpecifier> {
     }
 }
 
-impl Debug for SyntaxNode<'_, StateSpecifier> {
+impl Debug for StateSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }

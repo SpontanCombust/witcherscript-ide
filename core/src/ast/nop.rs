@@ -4,8 +4,10 @@ use crate::{SyntaxNode, NamedSyntaxNode};
 #[derive(Debug, Clone)]
 pub struct Nop;
 
-impl NamedSyntaxNode for Nop {
+pub type NopNode<'script> = SyntaxNode<'script, Nop>;
+
+impl NamedSyntaxNode for NopNode<'_> {
     const NODE_NAME: &'static str = "nop";
 }
 
-impl SyntaxNode<'_, Nop> {}
+impl NopNode<'_> {}

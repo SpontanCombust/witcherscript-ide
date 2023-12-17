@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 use ropey::Rope;
-use witcherscript::SyntaxNode;
 use witcherscript::attribs::*;
 use witcherscript::ast::*;
 use crate::model::collections::*;
@@ -50,7 +49,7 @@ impl SymbolCollectorCommons for ChildSymbolCollector<'_> {
 }
 
 impl StatementVisitor for ChildSymbolCollector<'_> {
-    fn visit_class_decl(&mut self, n: &SyntaxNode<'_, ClassDeclaration>) -> bool {
+    fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> bool {
         if let Some(class_name) = n.name().value(&self.rope) {
             if let Some(SymbolTableValue { id, typ: SymbolType::Class }) = self.symtab.get(&class_name, SymbolCategory::Type) {
                 let mut sym = self.db.remove_class(*id).expect("class absent in db despite being in symtab");
@@ -81,14 +80,14 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
         false
     }
 
-    fn exit_class_decl(&mut self, _: &SyntaxNode<'_, ClassDeclaration>) {
+    fn exit_class_decl(&mut self, _: &ClassDeclarationNode) {
         if let Some(sym) = self.current_class.take() {
             self.symtab.pop_scope();
             self.db.insert_class(sym);
         }
     }
 
-    fn visit_state_decl(&mut self, n: &SyntaxNode<'_, StateDeclaration>) -> bool {
+    fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> bool {
         let state_name = n.name().value(&self.rope);
         let parent_name = n.parent().value(&self.rope);
         if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
@@ -127,14 +126,14 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
         false
     }
 
-    fn exit_state_decl(&mut self, _: &SyntaxNode<'_, StateDeclaration>) {
+    fn exit_state_decl(&mut self, _: &StateDeclarationNode) {
         if let Some(sym) = self.current_state.take() {
             self.symtab.pop_scope();
             self.db.insert_state(sym);
         }
     }
 
-    fn visit_struct_decl(&mut self, n: &SyntaxNode<'_, StructDeclaration>) -> bool {
+    fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
         if let Some(struct_name) = n.name().value(&self.rope) {
             if let Some(SymbolTableValue { id, typ: SymbolType::Struct }) = self.symtab.get(&struct_name, SymbolCategory::Type) {
                 let mut sym = self.db.remove_struct(*id).expect("struct absent in db despite being in symtab");
@@ -159,14 +158,14 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
         false
     }
 
-    fn exit_struct_decl(&mut self, _: &SyntaxNode<'_, StructDeclaration>) {
+    fn exit_struct_decl(&mut self, _: &StructDeclarationNode) {
         if let Some(sym) = self.current_struct.take() {
             self.symtab.pop_scope();
             self.db.insert_struct(sym);
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &SyntaxNode<'_, MemberVarDeclaration>) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode) {
         let names = n.names()
                     .map(|identn| (identn.span(), identn))
                     .filter_map(|(span, identn)| {
@@ -233,7 +232,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &SyntaxNode<'_, AutobindDeclaration>) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode) {
         let autobind_name = n.name()
                             .value(&self.rope)
                             .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Autobind, n.span()));
@@ -282,7 +281,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &SyntaxNode<'_, GlobalFunctionDeclaration>) -> bool {
+    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> bool {
         if let Some(func_name) = n.name().value(&self.rope) {
             if let Some(SymbolTableValue { id, typ: SymbolType::GlobalFunction }) = self.symtab.get(&func_name, SymbolCategory::Callable) {
                 let mut sym = self.db.remove_global_func(*id).expect("global function absent from db despite being in symtab");
@@ -322,14 +321,14 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
         false
     }
 
-    fn exit_global_func_decl(&mut self, _: &SyntaxNode<'_, GlobalFunctionDeclaration>) {
+    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
         if let Some(sym) = self.current_global_func.take() {
             self.symtab.pop_scope();
             self.db.insert_global_func(sym);
         }
     }
 
-    fn visit_member_func_decl(&mut self, n: &SyntaxNode<'_, MemberFunctionDeclaration>) -> bool {
+    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> bool {
         let func_name = n.name()
                         .value(&self.rope)
                         .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::MemberFunction, n.span()));
@@ -380,14 +379,14 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
         false
     }
 
-    fn exit_member_func_decl(&mut self, _: &SyntaxNode<'_, MemberFunctionDeclaration>) {
+    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) {
         if let Some(sym) = self.current_member_func.take() {
             self.symtab.pop_scope();
             self.db.insert_member_func(sym);
         }
     }
 
-    fn visit_event_decl(&mut self, n: &SyntaxNode<'_, EventDeclaration>) -> bool {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> bool {
         let event_name = n.name()
                         .value(&self.rope)
                         .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Event, n.span()));
@@ -411,14 +410,14 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
         false
     }
 
-    fn exit_event_decl(&mut self, _: &SyntaxNode<'_, EventDeclaration>) {
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode) {
         if let Some(sym) = self.current_event.take() {
             self.symtab.pop_scope();
             self.db.insert_event(sym);
         }
     }
 
-    fn visit_func_param_group(&mut self, n: &SyntaxNode<'_, FunctionParameterGroup>) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode) {
         let names = n.names()
                     .map(|identn| (identn.span(), identn))
                     .filter_map(|(span, identn)| {

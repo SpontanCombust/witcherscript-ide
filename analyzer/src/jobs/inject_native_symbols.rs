@@ -23,7 +23,7 @@ pub fn inject_primitives(db: &mut SymbolDb, symtab: &mut SymbolTable) {
     .for_each(|sym| { 
         symtab.insert(&sym);
         if let Some(ref alias) = sym.data.alias {
-            symtab.insert_alias(&sym, alias);
+            symtab.insert_alias(&sym, alias).unwrap();
         }
         db.insert_primitive(sym);
     });

@@ -1,26 +1,28 @@
 use std::fmt::Debug;
-use crate::{tokens::{Identifier, LiteralInt}, NamedSyntaxNode, SyntaxNode};
+use crate::{tokens::{IdentifierNode, LiteralIntNode}, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor};
 
 
 #[derive(Debug, Clone)]
 pub struct EnumDeclaration;
 
-impl NamedSyntaxNode for EnumDeclaration {
+pub type EnumDeclarationNode<'script> = SyntaxNode<'script, EnumDeclaration>;
+
+impl NamedSyntaxNode for EnumDeclarationNode<'_> {
     const NODE_NAME: &'static str = "enum_decl_stmt";
 }
 
-impl SyntaxNode<'_, EnumDeclaration> {
-    pub fn name(&self) -> SyntaxNode<'_, Identifier> {
+impl EnumDeclarationNode<'_> {
+    pub fn name(&self) -> IdentifierNode {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn definition(&self) -> SyntaxNode<'_, EnumBlock> {
+    pub fn definition(&self) -> EnumBlockNode {
         self.field_child("definition").unwrap().into()
     }
 }
 
-impl Debug for SyntaxNode<'_, EnumDeclaration> {
+impl Debug for EnumDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("EnumDeclaration")
             .field("name", &self.name())
@@ -29,7 +31,7 @@ impl Debug for SyntaxNode<'_, EnumDeclaration> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, EnumDeclaration> {
+impl StatementTraversal for EnumDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_enum_decl(self) {
             self.definition().members().for_each(|s| s.accept(visitor));
@@ -43,17 +45,19 @@ impl StatementTraversal for SyntaxNode<'_, EnumDeclaration> {
 #[derive(Debug, Clone)]
 pub struct EnumBlock;
 
-impl NamedSyntaxNode for EnumBlock {
+pub type EnumBlockNode<'script> = SyntaxNode<'script, EnumBlock>;
+
+impl NamedSyntaxNode for EnumBlockNode<'_> {
     const NODE_NAME: &'static str = "enum_block";
 }
 
-impl SyntaxNode<'_, EnumBlock> {
-    pub fn members(&self) -> impl Iterator<Item = SyntaxNode<'_, EnumMemberDeclaration>> {
+impl EnumBlockNode<'_> {
+    pub fn members(&self) -> impl Iterator<Item = EnumMemberDeclarationNode> {
         self.children(true).map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, EnumBlock> {
+impl Debug for EnumBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "EnumBlock{:?}", self.members().collect::<Vec<_>>())
     }
@@ -64,21 +68,23 @@ impl Debug for SyntaxNode<'_, EnumBlock> {
 #[derive(Debug, Clone)]
 pub struct EnumMemberDeclaration;
 
-impl NamedSyntaxNode for EnumMemberDeclaration {
+pub type EnumMemberDeclarationNode<'script> = SyntaxNode<'script, EnumMemberDeclaration>;
+
+impl NamedSyntaxNode for EnumMemberDeclarationNode<'_> {
     const NODE_NAME: &'static str = "enum_decl_value";
 }
 
-impl SyntaxNode<'_, EnumMemberDeclaration> {
-    pub fn name(&self) -> SyntaxNode<'_, Identifier> {
+impl EnumMemberDeclarationNode<'_> {
+    pub fn name(&self) -> IdentifierNode {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn value(&self) -> Option<SyntaxNode<'_, LiteralInt>> {
+    pub fn value(&self) -> Option<LiteralIntNode> {
         self.field_child("value").map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, EnumMemberDeclaration> {
+impl Debug for EnumMemberDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("EnumMemberDeclaration")
             .field("name", &self.name())
@@ -87,7 +93,7 @@ impl Debug for SyntaxNode<'_, EnumMemberDeclaration> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, EnumMemberDeclaration> {
+impl StatementTraversal for EnumMemberDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_enum_member_decl(self);
     }

@@ -14,11 +14,13 @@ pub enum MemberVarSpecifier {
     Saved,
 }
 
-impl NamedSyntaxNode for MemberVarSpecifier {
+pub type MemberVarSpecifierNode<'script> = SyntaxNode<'script, MemberVarSpecifier>;
+
+impl NamedSyntaxNode for MemberVarSpecifierNode<'_> {
     const NODE_NAME: &'static str = "member_var_specifier";
 }
 
-impl SyntaxNode<'_, MemberVarSpecifier> {
+impl MemberVarSpecifierNode<'_> {
     pub fn value(&self) -> MemberVarSpecifier {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s)  {
@@ -39,7 +41,7 @@ impl SyntaxNode<'_, MemberVarSpecifier> {
     }
 }
 
-impl Debug for SyntaxNode<'_, MemberVarSpecifier> {
+impl Debug for MemberVarSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }

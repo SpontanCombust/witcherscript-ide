@@ -31,36 +31,38 @@ pub use visitor::*;
 
 #[derive(Debug, Clone)]
 pub enum ScriptStatement<'script> {
-    Function(SyntaxNode<'script, GlobalFunctionDeclaration>),
-    Class(SyntaxNode<'script, ClassDeclaration>),
-    State(SyntaxNode<'script, StateDeclaration>),
-    Struct(SyntaxNode<'script, StructDeclaration>),
-    Enum(SyntaxNode<'script, EnumDeclaration>),
+    Function(GlobalFunctionDeclarationNode<'script>),
+    Class(ClassDeclarationNode<'script>),
+    State(StateDeclarationNode<'script>),
+    Struct(StructDeclarationNode<'script>),
+    Enum(EnumDeclarationNode<'script>),
     Nop
 }
 
-impl SyntaxNode<'_, ScriptStatement<'_>> {
+pub type ScriptStatementNode<'script> = SyntaxNode<'script, ScriptStatement<'script>>;
+
+impl ScriptStatementNode<'_> {
     pub fn value(&self) -> ScriptStatement {
         let s = self.tree_node.kind();
         match s {
-            GlobalFunctionDeclaration::NODE_NAME => ScriptStatement::Function(self.clone().into()),
-            ClassDeclaration::NODE_NAME => ScriptStatement::Class(self.clone().into()),
-            StateDeclaration::NODE_NAME => ScriptStatement::State(self.clone().into()),
-            StructDeclaration::NODE_NAME => ScriptStatement::Struct(self.clone().into()),
-            EnumDeclaration::NODE_NAME => ScriptStatement::Enum(self.clone().into()),
-            Nop::NODE_NAME => ScriptStatement::Nop,
+            GlobalFunctionDeclarationNode::NODE_NAME => ScriptStatement::Function(self.clone().into()),
+            ClassDeclarationNode::NODE_NAME => ScriptStatement::Class(self.clone().into()),
+            StateDeclarationNode::NODE_NAME => ScriptStatement::State(self.clone().into()),
+            StructDeclarationNode::NODE_NAME => ScriptStatement::Struct(self.clone().into()),
+            EnumDeclarationNode::NODE_NAME => ScriptStatement::Enum(self.clone().into()),
+            NopNode::NODE_NAME => ScriptStatement::Nop,
             _ => panic!("Unknown script statement: {}", s)
         }
     }
 }
 
-impl Debug for SyntaxNode<'_, ScriptStatement<'_>> {
+impl Debug for ScriptStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, ScriptStatement<'_>> {
+impl StatementTraversal for ScriptStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         match self.value() {
             ScriptStatement::Function(s) => s.accept(visitor),
@@ -74,23 +76,25 @@ impl StatementTraversal for SyntaxNode<'_, ScriptStatement<'_>> {
 }
 
 
-impl NamedSyntaxNode for Script {
+pub type ScriptNode<'script> = SyntaxNode<'script, Script>;
+
+impl NamedSyntaxNode for ScriptNode<'_> {
     const NODE_NAME: &'static str = "script";
 }
 
-impl SyntaxNode<'_, Script> {
-    pub fn statements(&self) -> impl Iterator<Item = SyntaxNode<'_, ScriptStatement>> {
+impl ScriptNode<'_> {
+    pub fn statements(&self) -> impl Iterator<Item = ScriptStatementNode> {
         self.children(true).map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, Script> {
+impl Debug for ScriptNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Script{:?}", &self.statements().collect::<Vec<_>>())
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, Script> {
+impl StatementTraversal for ScriptNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         self.statements().for_each(|s| s.accept(visitor));
     }

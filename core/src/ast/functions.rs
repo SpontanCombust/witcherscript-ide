@@ -1,30 +1,32 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, NamedSyntaxNode, tokens::Identifier, attribs::*};
+use crate::{SyntaxNode, NamedSyntaxNode, tokens::IdentifierNode, attribs::*};
 use super::*;
 
 
 #[derive(Debug, Clone)]
 pub struct EventDeclaration;
 
-impl NamedSyntaxNode for EventDeclaration {
+pub type EventDeclarationNode<'script> = SyntaxNode<'script, EventDeclaration>;
+
+impl NamedSyntaxNode for EventDeclarationNode<'_> {
     const NODE_NAME: &'static str = "event_decl_stmt";
 }
 
-impl SyntaxNode<'_, EventDeclaration> {
-    pub fn name(&self) -> SyntaxNode<'_, Identifier> {
+impl EventDeclarationNode<'_> {
+    pub fn name(&self) -> IdentifierNode {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionParameterGroup>> {
+    pub fn params(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
         self.field_children("params").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> Option<SyntaxNode<'_, FunctionBlock>> {
+    pub fn definition(&self) -> Option<FunctionBlockNode> {
         self.field_child("definition").map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, EventDeclaration> {
+impl Debug for EventDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("EventDeclaration")
             .field("name", &self.name())
@@ -34,7 +36,7 @@ impl Debug for SyntaxNode<'_, EventDeclaration> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, EventDeclaration> {
+impl StatementTraversal for EventDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_event_decl(self) {
             self.params().for_each(|p| p.accept(visitor));
@@ -49,37 +51,39 @@ impl StatementTraversal for SyntaxNode<'_, EventDeclaration> {
 #[derive(Debug, Clone)]
 pub struct GlobalFunctionDeclaration;
 
-impl NamedSyntaxNode for GlobalFunctionDeclaration {
+pub type GlobalFunctionDeclarationNode<'script> = SyntaxNode<'script, GlobalFunctionDeclaration>;
+
+impl NamedSyntaxNode for GlobalFunctionDeclarationNode<'_> {
     const NODE_NAME: &'static str = "global_func_decl_stmt";
 }
 
-impl SyntaxNode<'_, GlobalFunctionDeclaration> {
-    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, GlobalFunctionSpecifier>> {
+impl GlobalFunctionDeclarationNode<'_> {
+    pub fn specifiers(&self) -> impl Iterator<Item = GlobalFunctionSpecifierNode> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn flavour(&self) -> Option<SyntaxNode<'_, GlobalFunctionFlavour>> {
+    pub fn flavour(&self) -> Option<GlobalFunctionFlavourNode> {
         self.field_child("flavour").map(|n| n.into())
     }
 
-    pub fn name(&self) -> SyntaxNode<'_, Identifier> {
+    pub fn name(&self) -> IdentifierNode {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionParameterGroup>> {
+    pub fn params(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
         self.field_children("params").map(|n| n.into())
     }
 
-    pub fn return_type(&self) -> Option<SyntaxNode<'_, TypeAnnotation>> {
+    pub fn return_type(&self) -> Option<TypeAnnotationNode> {
         self.field_child("return_type").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> Option<SyntaxNode<'_, FunctionBlock>> {
+    pub fn definition(&self) -> Option<FunctionBlockNode> {
         self.field_child("definition").map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, GlobalFunctionDeclaration> {
+impl Debug for GlobalFunctionDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("GlobalFunctionDeclaration")
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
@@ -92,7 +96,7 @@ impl Debug for SyntaxNode<'_, GlobalFunctionDeclaration> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, GlobalFunctionDeclaration> {
+impl StatementTraversal for GlobalFunctionDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_global_func_decl(self) {
             self.params().for_each(|p| p.accept(visitor));
@@ -107,37 +111,39 @@ impl StatementTraversal for SyntaxNode<'_, GlobalFunctionDeclaration> {
 #[derive(Debug, Clone)]
 pub struct MemberFunctionDeclaration;
 
-impl NamedSyntaxNode for MemberFunctionDeclaration {
+pub type MemberFunctionDeclarationNode<'script> = SyntaxNode<'script, MemberFunctionDeclaration>;
+
+impl NamedSyntaxNode for MemberFunctionDeclarationNode<'_> {
     const NODE_NAME: &'static str = "member_func_decl_stmt";
 }
 
-impl SyntaxNode<'_, MemberFunctionDeclaration> {
-    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, MemberFunctionSpecifier>> {
+impl MemberFunctionDeclarationNode<'_> {
+    pub fn specifiers(&self) -> impl Iterator<Item = MemberFunctionSpecifierNode> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn flavour(&self) -> Option<SyntaxNode<'_, MemberFunctionFlavour>> {
+    pub fn flavour(&self) -> Option<MemberFunctionFlavourNode> {
         self.field_child("flavour").map(|n| n.into())
     }
 
-    pub fn name(&self) -> SyntaxNode<'_, Identifier> {
+    pub fn name(&self) -> IdentifierNode {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionParameterGroup>> {
+    pub fn params(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
         self.field_children("params").map(|n| n.into())
     }
 
-    pub fn return_type(&self) -> Option<SyntaxNode<'_, TypeAnnotation>> {
+    pub fn return_type(&self) -> Option<TypeAnnotationNode> {
         self.field_child("return_type").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> Option<SyntaxNode<'_, FunctionBlock>> {
+    pub fn definition(&self) -> Option<FunctionBlockNode> {
         self.field_child("definition").map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, MemberFunctionDeclaration> {
+impl Debug for MemberFunctionDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MemberFunctionDeclaration")
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
@@ -150,7 +156,7 @@ impl Debug for SyntaxNode<'_, MemberFunctionDeclaration> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, MemberFunctionDeclaration> {
+impl StatementTraversal for MemberFunctionDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_member_func_decl(self) {
             self.params().for_each(|p| p.accept(visitor));
@@ -166,25 +172,27 @@ impl StatementTraversal for SyntaxNode<'_, MemberFunctionDeclaration> {
 #[derive(Debug, Clone)]
 pub struct FunctionParameterGroup;
 
-impl NamedSyntaxNode for FunctionParameterGroup {
+pub type FunctionParameterGroupNode<'script> = SyntaxNode<'script, FunctionParameterGroup>;
+
+impl NamedSyntaxNode for FunctionParameterGroupNode<'_> {
     const NODE_NAME: &'static str = "func_param_group";
 }
 
-impl SyntaxNode<'_, FunctionParameterGroup> {
-    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionParameterSpecifier>> {
+impl FunctionParameterGroupNode<'_> {
+    pub fn specifiers(&self) -> impl Iterator<Item = FunctionParameterSpecifierNode> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn names(&self) -> impl Iterator<Item = SyntaxNode<'_, Identifier>> {
+    pub fn names(&self) -> impl Iterator<Item = IdentifierNode> {
         self.field_children("names").map(|n| n.into())
     }
 
-    pub fn param_type(&self) -> SyntaxNode<'_, TypeAnnotation> {
+    pub fn param_type(&self) -> TypeAnnotationNode {
         self.field_child("param_type").unwrap().into()
     }
 }
 
-impl Debug for SyntaxNode<'_, FunctionParameterGroup> {
+impl Debug for FunctionParameterGroupNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("FunctionParameterGroup")
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
@@ -194,7 +202,7 @@ impl Debug for SyntaxNode<'_, FunctionParameterGroup> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, FunctionParameterGroup> {
+impl StatementTraversal for FunctionParameterGroupNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_func_param_group(self);
     }
@@ -204,49 +212,51 @@ impl StatementTraversal for SyntaxNode<'_, FunctionParameterGroup> {
 
 #[derive(Debug, Clone)]
 pub enum FunctionStatement<'script> {
-    Var(SyntaxNode<'script, VarDeclaration>),
-    Expr(SyntaxNode<'script, ExpressionStatement>),
-    For(SyntaxNode<'script, ForLoop>),
-    While(SyntaxNode<'script, WhileLoop>),
-    DoWhile(SyntaxNode<'script, DoWhileLoop>),
-    If(SyntaxNode<'script, IfConditional>),
-    Switch(SyntaxNode<'script, SwitchConditional>),
-    Break(SyntaxNode<'script, BreakStatement>),
-    Continue(SyntaxNode<'script, ContinueStatement>),
-    Return(SyntaxNode<'script, ReturnStatement>),
-    Delete(SyntaxNode<'script, DeleteStatement>),
-    Block(SyntaxNode<'script, FunctionBlock>),
+    Var(VarDeclarationNode<'script>),
+    Expr(ExpressionStatementNode<'script>),
+    For(ForLoopNode<'script>),
+    While(WhileLoopNode<'script>),
+    DoWhile(DoWhileLoopNode<'script>),
+    If(IfConditionalNode<'script>),
+    Switch(SwitchConditionalNode<'script>),
+    Break(BreakStatementNode<'script>),
+    Continue(ContinueStatementNode<'script>),
+    Return(ReturnStatementNode<'script>),
+    Delete(DeleteStatementNode<'script>),
+    Block(FunctionBlockNode<'script>),
     Nop,
 }
 
-impl SyntaxNode<'_, FunctionStatement<'_>> {
+pub type FunctionStatementNode<'script> = SyntaxNode<'script, FunctionStatement<'script>>;
+
+impl FunctionStatementNode<'_> {
     pub fn value(&self) -> FunctionStatement {
         match self.tree_node.kind() {
-            VarDeclaration::NODE_NAME => FunctionStatement::Var(self.clone().into()),
-            ExpressionStatement::NODE_NAME => FunctionStatement::Expr(self.clone().into()),
-            ForLoop::NODE_NAME => FunctionStatement::For(self.clone().into()),
-            WhileLoop::NODE_NAME => FunctionStatement::While(self.clone().into()),
-            DoWhileLoop::NODE_NAME => FunctionStatement::DoWhile(self.clone().into()),
-            IfConditional::NODE_NAME => FunctionStatement::If(self.clone().into()),
-            SwitchConditional::NODE_NAME => FunctionStatement::Switch(self.clone().into()),
-            BreakStatement::NODE_NAME => FunctionStatement::Break(self.clone().into()),
-            ContinueStatement::NODE_NAME => FunctionStatement::Continue(self.clone().into()),
-            ReturnStatement::NODE_NAME => FunctionStatement::Return(self.clone().into()),
-            DeleteStatement::NODE_NAME => FunctionStatement::Delete(self.clone().into()),
-            FunctionBlock::NODE_NAME => FunctionStatement::Block(self.clone().into()),
-            Nop::NODE_NAME => FunctionStatement::Nop,
+            VarDeclarationNode::NODE_NAME => FunctionStatement::Var(self.clone().into()),
+            ExpressionStatementNode::NODE_NAME => FunctionStatement::Expr(self.clone().into()),
+            ForLoopNode::NODE_NAME => FunctionStatement::For(self.clone().into()),
+            WhileLoopNode::NODE_NAME => FunctionStatement::While(self.clone().into()),
+            DoWhileLoopNode::NODE_NAME => FunctionStatement::DoWhile(self.clone().into()),
+            IfConditionalNode::NODE_NAME => FunctionStatement::If(self.clone().into()),
+            SwitchConditionalNode::NODE_NAME => FunctionStatement::Switch(self.clone().into()),
+            BreakStatementNode::NODE_NAME => FunctionStatement::Break(self.clone().into()),
+            ContinueStatementNode::NODE_NAME => FunctionStatement::Continue(self.clone().into()),
+            ReturnStatementNode::NODE_NAME => FunctionStatement::Return(self.clone().into()),
+            DeleteStatementNode::NODE_NAME => FunctionStatement::Delete(self.clone().into()),
+            FunctionBlockNode::NODE_NAME => FunctionStatement::Block(self.clone().into()),
+            NopNode::NODE_NAME => FunctionStatement::Nop,
             _ => panic!("Unknown function statement type: {}", self.tree_node.kind())
         }
     }
 }
 
-impl Debug for SyntaxNode<'_, FunctionStatement<'_>> {
+impl Debug for FunctionStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, FunctionStatement<'_>> {
+impl StatementTraversal for FunctionStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         match self.value() {
             FunctionStatement::Var(s) => s.accept(visitor),
@@ -270,23 +280,25 @@ impl StatementTraversal for SyntaxNode<'_, FunctionStatement<'_>> {
 #[derive(Debug, Clone)]
 pub struct FunctionBlock;
 
-impl NamedSyntaxNode for FunctionBlock {
+pub type FunctionBlockNode<'script> = SyntaxNode<'script, FunctionBlock>;
+
+impl NamedSyntaxNode for FunctionBlockNode<'_> {
     const NODE_NAME: &'static str = "func_block";
 }
 
-impl SyntaxNode<'_, FunctionBlock> {
-    pub fn statements(&self) -> impl Iterator<Item = SyntaxNode<'_, FunctionStatement>> {
+impl FunctionBlockNode<'_> {
+    pub fn statements(&self) -> impl Iterator<Item = FunctionStatementNode> {
         self.children(true).map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, FunctionBlock> {
+impl Debug for FunctionBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "FunctionBlock{:?}", self.statements().collect::<Vec<_>>())
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, FunctionBlock> {
+impl StatementTraversal for FunctionBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         self.statements().for_each(|s| s.accept(visitor));
     }
@@ -297,19 +309,21 @@ impl StatementTraversal for SyntaxNode<'_, FunctionBlock> {
 #[derive(Debug, Clone)]
 pub struct BreakStatement;
 
-impl NamedSyntaxNode for BreakStatement {
+pub type BreakStatementNode<'script> = SyntaxNode<'script, BreakStatement>;
+
+impl NamedSyntaxNode for BreakStatementNode<'_> {
     const NODE_NAME: &'static str = "break_stmt";
 }
 
-impl SyntaxNode<'_, BreakStatement> {}
+impl BreakStatementNode<'_> {}
 
-impl Debug for SyntaxNode<'_, BreakStatement> {
+impl Debug for BreakStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "BreakStatement")
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, BreakStatement> {
+impl StatementTraversal for BreakStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_break_stmt(self);
     }
@@ -320,19 +334,21 @@ impl StatementTraversal for SyntaxNode<'_, BreakStatement> {
 #[derive(Debug, Clone)]
 pub struct ContinueStatement;
 
-impl NamedSyntaxNode for ContinueStatement {
+pub type ContinueStatementNode<'script> = SyntaxNode<'script, ContinueStatement>;
+
+impl NamedSyntaxNode for ContinueStatementNode<'_> {
     const NODE_NAME: &'static str = "continue_stmt";
 }
 
-impl SyntaxNode<'_, ContinueStatement> {}
+impl ContinueStatementNode<'_> {}
 
-impl Debug for SyntaxNode<'_, ContinueStatement> {
+impl Debug for ContinueStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "ContinueStatement")
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, ContinueStatement> {
+impl StatementTraversal for ContinueStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_continue_stmt(self);
     }
@@ -343,17 +359,19 @@ impl StatementTraversal for SyntaxNode<'_, ContinueStatement> {
 #[derive(Debug, Clone)]
 pub struct ReturnStatement;
 
-impl NamedSyntaxNode for ReturnStatement {
+pub type ReturnStatementNode<'script> = SyntaxNode<'script, ReturnStatement>;
+
+impl NamedSyntaxNode for ReturnStatementNode<'_> {
     const NODE_NAME: &'static str = "return_stmt";
 }
 
-impl SyntaxNode<'_, ReturnStatement> {
-    pub fn value(&self) -> Option<SyntaxNode<'_, Expression>> {
+impl ReturnStatementNode<'_> {
+    pub fn value(&self) -> Option<ExpressionNode> {
         self.first_child(true).map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, ReturnStatement> {
+impl Debug for ReturnStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("ReturnStatement")
             .field(&self.value())
@@ -361,7 +379,7 @@ impl Debug for SyntaxNode<'_, ReturnStatement> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, ReturnStatement> {
+impl StatementTraversal for ReturnStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_return_stmt(self);
     }
@@ -372,17 +390,19 @@ impl StatementTraversal for SyntaxNode<'_, ReturnStatement> {
 #[derive(Debug, Clone)]
 pub struct DeleteStatement;
 
-impl NamedSyntaxNode for DeleteStatement {
+pub type DeleteStatementNode<'script> = SyntaxNode<'script, DeleteStatement>;
+
+impl NamedSyntaxNode for DeleteStatementNode<'_> {
     const NODE_NAME: &'static str = "delete_stmt";
 }
 
-impl SyntaxNode<'_, DeleteStatement> {
-    pub fn value(&self) -> SyntaxNode<'_, Expression> {
+impl DeleteStatementNode<'_> {
+    pub fn value(&self) -> ExpressionNode {
         self.first_child(true).unwrap().into()
     }
 }
 
-impl Debug for SyntaxNode<'_, DeleteStatement> {
+impl Debug for DeleteStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("DeleteStatement")
             .field(&self.value())
@@ -390,7 +410,7 @@ impl Debug for SyntaxNode<'_, DeleteStatement> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, DeleteStatement> {
+impl StatementTraversal for DeleteStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_delete_stmt(self);
     }

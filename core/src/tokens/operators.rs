@@ -1,6 +1,6 @@
 use std::fmt::Debug;
-
 use crate::SyntaxNode;
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UnaryOperator {
@@ -10,7 +10,9 @@ pub enum UnaryOperator {
     Plus
 }
 
-impl SyntaxNode<'_, UnaryOperator> {
+pub type UnaryOperatorNode<'script> = SyntaxNode<'script, UnaryOperator>;
+
+impl UnaryOperatorNode<'_> {
     pub fn value(&self) -> UnaryOperator {
         match self.tree_node.kind() {
             "unary_op_neg" => UnaryOperator::Negation,
@@ -22,7 +24,7 @@ impl SyntaxNode<'_, UnaryOperator> {
     }
 }
 
-impl Debug for SyntaxNode<'_, UnaryOperator> {
+impl Debug for UnaryOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }
@@ -49,7 +51,9 @@ pub enum BinaryOperator {
     GreaterOrEqual
 }
 
-impl SyntaxNode<'_, BinaryOperator> {
+pub type BinaryOperatorNode<'script> = SyntaxNode<'script, BinaryOperator>;
+
+impl BinaryOperatorNode<'_> {
     pub fn value(&self) -> BinaryOperator {
         match self.tree_node.kind() {
             "binary_op_or" => BinaryOperator::Or,
@@ -72,7 +76,7 @@ impl SyntaxNode<'_, BinaryOperator> {
     }
 }
 
-impl Debug for SyntaxNode<'_, BinaryOperator> {
+impl Debug for BinaryOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }
@@ -90,7 +94,9 @@ pub enum AssignmentOperator {
     Diff
 }
 
-impl SyntaxNode<'_, AssignmentOperator> {
+pub type AssignmentOperatorNode<'script> = SyntaxNode<'script, AssignmentOperator>;
+
+impl AssignmentOperatorNode<'_> {
     pub fn value(&self) -> AssignmentOperator {
         match self.tree_node.kind() {
             "assign_op_direct" => AssignmentOperator::Direct,
@@ -104,7 +110,7 @@ impl SyntaxNode<'_, AssignmentOperator> {
     }
 }
 
-impl Debug for SyntaxNode<'_, AssignmentOperator> {
+impl Debug for AssignmentOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }

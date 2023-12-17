@@ -8,11 +8,13 @@ pub enum StructSpecifier {
     Import
 }
 
-impl NamedSyntaxNode for StructSpecifier {
+pub type StructSpecifierNode<'script> = SyntaxNode<'script, StructSpecifier>;
+
+impl NamedSyntaxNode for StructSpecifierNode<'_> {
     const NODE_NAME: &'static str = "struct_specifier";
 }
 
-impl SyntaxNode<'_, StructSpecifier> {
+impl StructSpecifierNode<'_> {
     pub fn value(&self) -> StructSpecifier {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
@@ -26,7 +28,7 @@ impl SyntaxNode<'_, StructSpecifier> {
     }
 }
 
-impl Debug for SyntaxNode<'_, StructSpecifier> {
+impl Debug for StructSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }

@@ -5,7 +5,7 @@ use super::DocSpan;
 
 /// Represents a WitcherScript syntax tree node
 /// 
-/// It is a backbone of the convenience layer for AST that instead of being represented by structs with data is represented by 
+/// It is a backbone of the strong typed layer for AST that instead of being represented by structs with data is represented by 
 /// functions through which you can traverse said tree.
 /// This way parsed data is retrieved only on demand and not stored anywhere else than in tree-sitter. 
 /// 
@@ -29,19 +29,11 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
         }
     }
 
-    /// Interpret this node into a node with a different underlying type
+    /// Interpret this node into a node with a different underlying type.
     /// Gives no guarantees as to whether that target type is actually valid
     pub(crate) fn into<U>(self) -> SyntaxNode<'script, U> {
         SyntaxNode::<'_, U> {
             tree_node: self.tree_node,
-            phantom: PhantomData
-        }
-    }
-
-    /// Consume self, replace its tree-sitter node and return 'any' node
-    pub(crate) fn replace_node(self, node: Node<'script>) -> SyntaxNode<'_, ()> {
-        SyntaxNode::<'_, ()> {
-            tree_node: node,
             phantom: PhantomData
         }
     }
@@ -56,7 +48,7 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
             .collect::<Vec<_>>();
 
         name_nodes.into_iter()
-            .map(|n| self.clone().replace_node(n))
+            .map(|n| SyntaxNode::new(n))
     }
 
     /// Returns the first non-error child of this node as an 'any' node
@@ -78,7 +70,7 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
             .collect::<Vec<_>>();
 
         name_nodes.into_iter()
-            .map(|n| self.clone().replace_node(n))
+            .map(|n| SyntaxNode::new(n))
     }
 
 
@@ -91,7 +83,7 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
         self.tree_node.is_missing()
     }
 
-    //TODO error nodes
+    //TODO keyword, punctuation and error nodes, detect node type from any node
     // pub fn errors(&self) -> impl Iterator<Item = SyntaxNode<'_, Error>> {
 
     // }
@@ -121,10 +113,7 @@ impl Debug for SyntaxNode<'_, ()> {
 }
 
 
+/// Describes the name, by which a node is identified in tree-sitter's grammar
 pub trait NamedSyntaxNode {
     const NODE_NAME: &'static str;
-}
-
-impl<T> NamedSyntaxNode for SyntaxNode<'_, T> where T: NamedSyntaxNode {
-    const NODE_NAME: &'static str = T::NODE_NAME;
 }

@@ -1,25 +1,25 @@
-use crate::{SyntaxNode, tokens::{Literal, Identifier}};
+use crate::tokens::*;
 use super::*;
 
 pub trait ExpressionVisitor {
-    fn visit_nested_expr(&mut self, _: &SyntaxNode<'_, NestedExpression>) {}
-    fn visit_literal_expr(&mut self, _: &SyntaxNode<'_, Literal<'_>>) {}
-    fn visit_this_expr(&mut self, _: &SyntaxNode<'_, ThisExpression>) {}
-    fn visit_super_expr(&mut self, _: &SyntaxNode<'_, SuperExpression>) {}
-    fn visit_parent_expr(&mut self, _: &SyntaxNode<'_, ParentExpression>) {}
-    fn visit_virtual_parent_expr(&mut self, _: &SyntaxNode<'_, VirtualParentExpression>) {}
-    fn visit_identifier_expr(&mut self, _: &SyntaxNode<'_, Identifier>) {}
-    fn visit_func_call_expr(&mut self, _: &SyntaxNode<'_, FunctionCallExpression>) {}
-    fn visit_func_call_arg(&mut self, _: &Option<SyntaxNode<'_, Expression<'_>>>) {}
-    fn visit_array_expr(&mut self, _: &SyntaxNode<'_, ArrayExpression>) {}
-    fn visit_member_field_expr(&mut self, _: &SyntaxNode<'_, MemberFieldExpression>) {}
-    fn visit_method_call_expr(&mut self, _: &SyntaxNode<'_, MethodCallExpression>) {}
-    fn visit_instantiation_expr(&mut self, _: &SyntaxNode<'_, InstantiationExpression>) {}
-    fn visit_type_cast_expr(&mut self, _: &SyntaxNode<'_, TypeCastExpression>) {}
-    fn visit_unary_op_expr(&mut self, _: &SyntaxNode<'_, UnaryOperationExpression>) {}
-    fn visit_binary_op_expr(&mut self, _: &SyntaxNode<'_, BinaryOperationExpression>) {}
-    fn visit_assign_op_expr(&mut self, _: &SyntaxNode<'_, AssignmentOperationExpression>) {}
-    fn visit_ternary_cond_expr(&mut self, _: &SyntaxNode<'_, TernaryConditionalExpression>) {}
+    fn visit_nested_expr(&mut self, _: &NestedExpressionNode) {}
+    fn visit_literal_expr(&mut self, _: &LiteralNode) {}
+    fn visit_this_expr(&mut self, _: &ThisExpressionNode) {}
+    fn visit_super_expr(&mut self, _: &SuperExpressionNode) {}
+    fn visit_parent_expr(&mut self, _: &ParentExpressionNode) {}
+    fn visit_virtual_parent_expr(&mut self, _: &VirtualParentExpressionNode) {}
+    fn visit_identifier_expr(&mut self, _: &IdentifierNode) {}
+    fn visit_func_call_expr(&mut self, _: &FunctionCallExpressionNode) {}
+    fn visit_func_call_arg(&mut self, _: &Option<ExpressionNode>) {}
+    fn visit_array_expr(&mut self, _: &ArrayExpressionNode) {}
+    fn visit_member_field_expr(&mut self, _: &MemberFieldExpressionNode) {}
+    fn visit_method_call_expr(&mut self, _: &MethodCallExpressionNode) {}
+    fn visit_instantiation_expr(&mut self, _: &InstantiationExpressionNode) {}
+    fn visit_type_cast_expr(&mut self, _: &TypeCastExpressionNode) {}
+    fn visit_unary_op_expr(&mut self, _: &UnaryOperationExpressionNode) {}
+    fn visit_binary_op_expr(&mut self, _: &BinaryOperationExpressionNode) {}
+    fn visit_assign_op_expr(&mut self, _: &AssignmentOperationExpressionNode) {}
+    fn visit_ternary_cond_expr(&mut self, _: &TernaryConditionalExpressionNode) {}
 }
 
 /// Do a left-to-right tree traversal using right-recursion.
@@ -32,50 +32,50 @@ pub trait ExpressionTraversal {
 
 pub trait StatementVisitor {
     /// Should return whether to traverse into the body of the class. True by default.
-    fn visit_class_decl(&mut self, _: &SyntaxNode<'_, ClassDeclaration>) -> bool { true }
-    fn exit_class_decl(&mut self, _: &SyntaxNode<'_, ClassDeclaration>) {}
+    fn visit_class_decl(&mut self, _: &ClassDeclarationNode) -> bool { true }
+    fn exit_class_decl(&mut self, _: &ClassDeclarationNode) {}
     /// Should return whether to traverse into the body of the state. True by default.
-    fn visit_state_decl(&mut self, _: &SyntaxNode<'_, StateDeclaration>) -> bool { true }
-    fn exit_state_decl(&mut self, _: &SyntaxNode<'_, StateDeclaration>) {}
+    fn visit_state_decl(&mut self, _: &StateDeclarationNode) -> bool { true }
+    fn exit_state_decl(&mut self, _: &StateDeclarationNode) {}
     /// Should return whether to traverse into the body of the struct. True by default.
-    fn visit_struct_decl(&mut self, _: &SyntaxNode<'_, StructDeclaration>) -> bool { true }
-    fn exit_struct_decl(&mut self, _: &SyntaxNode<'_, StructDeclaration>) {}
+    fn visit_struct_decl(&mut self, _: &StructDeclarationNode) -> bool { true }
+    fn exit_struct_decl(&mut self, _: &StructDeclarationNode) {}
     /// Should return whether to traverse into the body of the enum. True by default.
-    fn visit_enum_decl(&mut self, _: &SyntaxNode<'_, EnumDeclaration>) -> bool { true }
-    fn exit_enum_decl(&mut self, _: &SyntaxNode<'_, EnumDeclaration>) {}
+    fn visit_enum_decl(&mut self, _: &EnumDeclarationNode) -> bool { true }
+    fn exit_enum_decl(&mut self, _: &EnumDeclarationNode) {}
 
-    fn visit_enum_member_decl(&mut self, _: &SyntaxNode<'_, EnumMemberDeclaration>) {}
+    fn visit_enum_member_decl(&mut self, _: &EnumMemberDeclarationNode) {}
 
-    fn visit_member_var_decl(&mut self, _: &SyntaxNode<'_, MemberVarDeclaration>) {}
-    fn visit_member_default_val(&mut self, _: &SyntaxNode<'_, MemberDefaultValue>) {}
-    fn visit_member_hint(&mut self, _: &SyntaxNode<'_, MemberHint>) {}
-    fn visit_autobind_decl(&mut self, _: &SyntaxNode<'_, AutobindDeclaration>) {}
+    fn visit_member_var_decl(&mut self, _: &MemberVarDeclarationNode) {}
+    fn visit_member_default_val(&mut self, _: &MemberDefaultValueNode) {}
+    fn visit_member_hint(&mut self, _: &MemberHintNode) {}
+    fn visit_autobind_decl(&mut self, _: &AutobindDeclarationNode) {}
     
-    fn visit_func_param_group(&mut self, _: &SyntaxNode<'_, FunctionParameterGroup>) {}
+    fn visit_func_param_group(&mut self, _: &FunctionParameterGroupNode) {}
     /// Should return whether to traverse into params and body of the function. True by default.
-    fn visit_global_func_decl(&mut self, _: &SyntaxNode<'_, GlobalFunctionDeclaration>) -> bool { true }
-    fn exit_global_func_decl(&mut self, _: &SyntaxNode<'_, GlobalFunctionDeclaration>) {}
+    fn visit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) -> bool { true }
+    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {}
     /// Should return whether to traverse into params and body of the function. True by default.
-    fn visit_member_func_decl(&mut self, _: &SyntaxNode<'_, MemberFunctionDeclaration>) -> bool { true }
-    fn exit_member_func_decl(&mut self, _: &SyntaxNode<'_, MemberFunctionDeclaration>) {}
+    fn visit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) -> bool { true }
+    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) {}
     /// Should return whether to traverse into params and body of the event. True by default.
-    fn visit_event_decl(&mut self, _: &SyntaxNode<'_, EventDeclaration>) -> bool { true }
-    fn exit_event_decl(&mut self, _: &SyntaxNode<'_, EventDeclaration>) {}
+    fn visit_event_decl(&mut self, _: &EventDeclarationNode) -> bool { true }
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode) {}
     
-    fn visit_local_var_decl_stmt(&mut self, _: &SyntaxNode<'_, VarDeclaration>) {}
-    fn visit_expr_stmt(&mut self, _: &SyntaxNode<'_, ExpressionStatement>) {}
-    fn visit_for_stmt(&mut self, _: &SyntaxNode<'_, ForLoop>) {}
-    fn visit_while_stmt(&mut self, _: &SyntaxNode<'_, WhileLoop>) {}
-    fn visit_do_while_stmt(&mut self, _: &SyntaxNode<'_, DoWhileLoop>) {}
-    fn visit_if_stmt(&mut self, _: &SyntaxNode<'_, IfConditional>) {}
-    fn visit_switch_stmt(&mut self, _: &SyntaxNode<'_, SwitchConditional>) {}
-    fn visit_switch_stmt_case(&mut self, _: &SyntaxNode<'_, SwitchConditionalCase>) {}
-    fn visit_switch_stmt_default(&mut self, _: &SyntaxNode<'_, SwitchConditionalDefault>) {}
-    fn visit_break_stmt(&mut self, _: &SyntaxNode<'_, BreakStatement>) {}
-    fn visit_continue_stmt(&mut self, _: &SyntaxNode<'_, ContinueStatement>) {}
-    fn visit_return_stmt(&mut self, _: &SyntaxNode<'_, ReturnStatement>) {}
-    fn visit_delete_stmt(&mut self, _: &SyntaxNode<'_, DeleteStatement>) {}
-    fn visit_block_stmt(&mut self, _: &SyntaxNode<'_, FunctionBlock>) {}
+    fn visit_local_var_decl_stmt(&mut self, _: &VarDeclarationNode) {}
+    fn visit_expr_stmt(&mut self, _: &ExpressionStatementNode) {}
+    fn visit_for_stmt(&mut self, _: &ForLoopNode) {}
+    fn visit_while_stmt(&mut self, _: &WhileLoopNode) {}
+    fn visit_do_while_stmt(&mut self, _: &DoWhileLoopNode) {}
+    fn visit_if_stmt(&mut self, _: &IfConditionalNode) {}
+    fn visit_switch_stmt(&mut self, _: &SwitchConditionalNode) {}
+    fn visit_switch_stmt_case(&mut self, _: &SwitchConditionalCaseNode) {}
+    fn visit_switch_stmt_default(&mut self, _: &SwitchConditionalDefaultNode) {}
+    fn visit_break_stmt(&mut self, _: &BreakStatementNode) {}
+    fn visit_continue_stmt(&mut self, _: &ContinueStatementNode) {}
+    fn visit_return_stmt(&mut self, _: &ReturnStatementNode) {}
+    fn visit_delete_stmt(&mut self, _: &DeleteStatementNode) {}
+    fn visit_block_stmt(&mut self, _: &FunctionBlockNode) {}
     fn visit_nop_stmt(&mut self) {}
 }
 

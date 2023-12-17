@@ -1,6 +1,6 @@
 use ropey::Rope;
 use uuid::Uuid;
-use witcherscript::{DocSpan, SyntaxNode, ast::TypeAnnotation};
+use witcherscript::{DocSpan, ast::TypeAnnotationNode};
 use crate::model::collections::*;
 use crate::model::symbols::{SymbolType, ArrayTypeSymbol, SymbolCategory, ERROR_SYMBOL_ID};
 use crate::jobs::inject_native_symbols::inject_array_type;
@@ -81,7 +81,7 @@ pub(super) trait SymbolCollectorCommons {
     }
 
 
-    fn get_type_from_node(&mut self, n: SyntaxNode<'_, TypeAnnotation>) -> Uuid {
+    fn get_type_from_node(&mut self, n: TypeAnnotationNode) -> Uuid {
         let mut type_id: Uuid = ERROR_SYMBOL_ID;
         if let Some(primary_type) = n.type_name().value(self.rope()) {
             let generic_arg = n.generic_arg().and_then(|g| g.value(self.rope()));

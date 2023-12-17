@@ -1,30 +1,32 @@
 use std::fmt::Debug;
-use crate::{tokens::{Identifier, LiteralString}, NamedSyntaxNode, SyntaxNode, attribs::StructSpecifier};
-use super::{MemberVarDeclaration, Expression, Nop, StatementTraversal, StatementVisitor};
+use crate::{tokens::{IdentifierNode, LiteralStringNode}, NamedSyntaxNode, SyntaxNode, attribs::StructSpecifierNode};
+use super::{StatementTraversal, StatementVisitor, ExpressionNode, MemberVarDeclarationNode, NopNode};
 
 
 #[derive(Debug, Clone)]
 pub struct StructDeclaration;
 
-impl NamedSyntaxNode for StructDeclaration {
+pub type StructDeclarationNode<'script> = SyntaxNode<'script, StructDeclaration>;
+
+impl NamedSyntaxNode for StructDeclarationNode<'_> {
     const NODE_NAME: &'static str = "struct_decl_stmt";
 }
 
-impl SyntaxNode<'_, StructDeclaration> {
-    pub fn specifiers(&self) -> impl Iterator<Item = SyntaxNode<'_, StructSpecifier>> {
+impl StructDeclarationNode<'_> {
+    pub fn specifiers(&self) -> impl Iterator<Item = StructSpecifierNode> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn name(&self) -> SyntaxNode<'_, Identifier> {
+    pub fn name(&self) -> IdentifierNode {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn definition(&self) -> SyntaxNode<'_, StructBlock> {
+    pub fn definition(&self) -> StructBlockNode {
         self.field_child("definition").unwrap().into()
     }
 }
 
-impl Debug for SyntaxNode<'_, StructDeclaration> {
+impl Debug for StructDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("StructDeclaration")
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
@@ -34,7 +36,7 @@ impl Debug for SyntaxNode<'_, StructDeclaration> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, StructDeclaration> {
+impl StatementTraversal for StructDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_struct_decl(self) {
             self.definition().statements().for_each(|s| s.accept(visitor));
@@ -48,17 +50,19 @@ impl StatementTraversal for SyntaxNode<'_, StructDeclaration> {
 #[derive(Debug, Clone)]
 pub struct StructBlock;
 
-impl NamedSyntaxNode for StructBlock {
+pub type StructBlockNode<'script> = SyntaxNode<'script, StructBlock>;
+
+impl NamedSyntaxNode for StructBlockNode<'_> {
     const NODE_NAME: &'static str = "struct_block";
 }
 
-impl SyntaxNode<'_, StructBlock> {
-    pub fn statements(&self) -> impl Iterator<Item = SyntaxNode<'_, StructStatement>> {
+impl StructBlockNode<'_> {
+    pub fn statements(&self) -> impl Iterator<Item = StructStatementNode> {
         self.children(true).map(|n| n.into())
     }
 }
 
-impl Debug for SyntaxNode<'_, StructBlock> {
+impl Debug for StructBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "StructBlock{:?}", self.statements().collect::<Vec<_>>())
     }
@@ -68,31 +72,33 @@ impl Debug for SyntaxNode<'_, StructBlock> {
 
 #[derive(Debug, Clone)]
 pub enum StructStatement<'script> {
-    Var(SyntaxNode<'script, MemberVarDeclaration>),
-    Default(SyntaxNode<'script, MemberDefaultValue>),
-    Hint(SyntaxNode<'script, MemberHint>),
+    Var(MemberVarDeclarationNode<'script>),
+    Default(MemberDefaultValueNode<'script>),
+    Hint(MemberHintNode<'script>),
     Nop
 }
 
-impl SyntaxNode<'_, StructStatement<'_>> {
+pub type StructStatementNode<'script> = SyntaxNode<'script, StructStatement<'script>>;
+
+impl StructStatementNode<'_> {
     pub fn value(&self) -> StructStatement {
         match self.tree_node.kind() {
-            MemberVarDeclaration::NODE_NAME => StructStatement::Var(self.clone().into()),
-            MemberDefaultValue::NODE_NAME => StructStatement::Default(self.clone().into()),
-            MemberHint::NODE_NAME => StructStatement::Hint(self.clone().into()),
-            Nop::NODE_NAME => StructStatement::Nop,
+            MemberVarDeclarationNode::NODE_NAME => StructStatement::Var(self.clone().into()),
+            MemberDefaultValueNode::NODE_NAME => StructStatement::Default(self.clone().into()),
+            MemberHintNode::NODE_NAME => StructStatement::Hint(self.clone().into()),
+            NopNode::NODE_NAME => StructStatement::Nop,
             _ => panic!("Unknown struct statement type: {}", self.tree_node.kind())
         }
     }
 }
 
-impl Debug for SyntaxNode<'_, StructStatement<'_>> {
+impl Debug for StructStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, StructStatement<'_>> {
+impl StatementTraversal for StructStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         match self.value() {
             StructStatement::Var(s) => s.accept(visitor),
@@ -108,21 +114,23 @@ impl StatementTraversal for SyntaxNode<'_, StructStatement<'_>> {
 #[derive(Debug, Clone)]
 pub struct MemberDefaultValue; 
 
-impl NamedSyntaxNode for MemberDefaultValue {
+pub type MemberDefaultValueNode<'script> = SyntaxNode<'script, MemberDefaultValue>;
+
+impl NamedSyntaxNode for MemberDefaultValueNode<'_> {
     const NODE_NAME: &'static str = "member_default_val_stmt";
 }
 
-impl SyntaxNode<'_, MemberDefaultValue> {
-    pub fn member(&self) -> SyntaxNode<'_, Identifier> {
+impl MemberDefaultValueNode<'_> {
+    pub fn member(&self) -> IdentifierNode {
         self.field_child("member").unwrap().into()
     }
 
-    pub fn value(&self) -> SyntaxNode<'_, Expression> {
+    pub fn value(&self) -> ExpressionNode {
         self.field_child("value").unwrap().into()
     }
 }
 
-impl Debug for SyntaxNode<'_, MemberDefaultValue> {
+impl Debug for MemberDefaultValueNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MemberDefaultValue")
             .field("member", &self.member())
@@ -131,7 +139,7 @@ impl Debug for SyntaxNode<'_, MemberDefaultValue> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, MemberDefaultValue> {
+impl StatementTraversal for MemberDefaultValueNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_member_default_val(self);
     }
@@ -142,21 +150,23 @@ impl StatementTraversal for SyntaxNode<'_, MemberDefaultValue> {
 #[derive(Debug, Clone)]
 pub struct MemberHint; 
 
-impl NamedSyntaxNode for MemberHint {
+pub type MemberHintNode<'script> = SyntaxNode<'script, MemberHint>;
+
+impl NamedSyntaxNode for MemberHintNode<'_> {
     const NODE_NAME: &'static str = "member_hint_stmt";
 }
 
-impl SyntaxNode<'_, MemberHint> {
-    pub fn member(&self) -> SyntaxNode<'_, Identifier> {
+impl MemberHintNode<'_> {
+    pub fn member(&self) -> IdentifierNode {
         self.field_child("member").unwrap().into()
     }
 
-    pub fn value(&self) -> SyntaxNode<'_, LiteralString> {
+    pub fn value(&self) -> LiteralStringNode {
         self.field_child("value").unwrap().into()
     }
 }
 
-impl Debug for SyntaxNode<'_, MemberHint> {
+impl Debug for MemberHintNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MemberHint")
             .field("member", &self.member())
@@ -165,7 +175,7 @@ impl Debug for SyntaxNode<'_, MemberHint> {
     }
 }
 
-impl StatementTraversal for SyntaxNode<'_, MemberHint> {
+impl StatementTraversal for MemberHintNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_member_hint(self);
     }

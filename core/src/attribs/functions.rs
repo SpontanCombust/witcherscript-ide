@@ -10,11 +10,13 @@ pub enum FunctionParameterSpecifier {
     Out
 }
 
-impl NamedSyntaxNode for FunctionParameterSpecifier {
+pub type FunctionParameterSpecifierNode<'script> = SyntaxNode<'script, FunctionParameterSpecifier>;
+
+impl NamedSyntaxNode for FunctionParameterSpecifierNode<'_> {
     const NODE_NAME: &'static str = "func_param_specifier";
 }
 
-impl SyntaxNode<'_, FunctionParameterSpecifier> {
+impl FunctionParameterSpecifierNode<'_> {
     pub fn value(&self) -> FunctionParameterSpecifier {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
@@ -29,7 +31,7 @@ impl SyntaxNode<'_, FunctionParameterSpecifier> {
     }
 }
 
-impl Debug for SyntaxNode<'_, FunctionParameterSpecifier> {
+impl Debug for FunctionParameterSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }
@@ -44,11 +46,13 @@ pub enum GlobalFunctionSpecifier {
     Latent,
 }
 
-impl NamedSyntaxNode for GlobalFunctionSpecifier {
+pub type GlobalFunctionSpecifierNode<'script> = SyntaxNode<'script, GlobalFunctionSpecifier>;
+
+impl NamedSyntaxNode for GlobalFunctionSpecifierNode<'_> {
     const NODE_NAME: &'static str = "global_func_specifier";
 }
 
-impl SyntaxNode<'_, GlobalFunctionSpecifier> {
+impl GlobalFunctionSpecifierNode<'_> {
     pub fn value(&self) -> GlobalFunctionSpecifier {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
@@ -63,7 +67,7 @@ impl SyntaxNode<'_, GlobalFunctionSpecifier> {
     }
 }
 
-impl Debug for SyntaxNode<'_, GlobalFunctionSpecifier> {
+impl Debug for GlobalFunctionSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }
@@ -78,11 +82,13 @@ pub enum GlobalFunctionFlavour {
     Reward,
 }
 
-impl NamedSyntaxNode for GlobalFunctionFlavour {
+pub type GlobalFunctionFlavourNode<'script> = SyntaxNode<'script, GlobalFunctionFlavour>;
+
+impl NamedSyntaxNode for GlobalFunctionFlavourNode<'_> {
     const NODE_NAME: &'static str = "global_func_flavour";
 }
 
-impl SyntaxNode<'_, GlobalFunctionFlavour> {
+impl GlobalFunctionFlavourNode<'_> {
     pub fn value(&self) -> GlobalFunctionFlavour {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
@@ -99,7 +105,7 @@ impl SyntaxNode<'_, GlobalFunctionFlavour> {
     }
 }
 
-impl Debug for SyntaxNode<'_, GlobalFunctionFlavour> {
+impl Debug for GlobalFunctionFlavourNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }
@@ -116,11 +122,13 @@ pub enum MemberFunctionSpecifier {
     Latent,
 }
 
-impl NamedSyntaxNode for MemberFunctionSpecifier {
+pub type MemberFunctionSpecifierNode<'script> = SyntaxNode<'script, MemberFunctionSpecifier>;
+
+impl NamedSyntaxNode for MemberFunctionSpecifierNode<'_> {
     const NODE_NAME: &'static str = "member_func_specifier";
 }
 
-impl SyntaxNode<'_, MemberFunctionSpecifier> {
+impl MemberFunctionSpecifierNode<'_> {
     pub fn value(&self) -> MemberFunctionSpecifier {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
@@ -139,7 +147,7 @@ impl SyntaxNode<'_, MemberFunctionSpecifier> {
     }
 }
 
-impl Debug for SyntaxNode<'_, MemberFunctionSpecifier> {
+impl Debug for MemberFunctionSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }
@@ -153,11 +161,13 @@ pub enum MemberFunctionFlavour {
     Timer
 }
 
-impl NamedSyntaxNode for MemberFunctionFlavour {
+pub type MemberFunctionFlavourNode<'script> = SyntaxNode<'script, MemberFunctionFlavour>;
+
+impl NamedSyntaxNode for MemberFunctionFlavourNode<'_> {
     const NODE_NAME: &'static str = "member_func_flavour";
 }
 
-impl SyntaxNode<'_, MemberFunctionFlavour> {
+impl MemberFunctionFlavourNode<'_> {
     pub fn value(&self) -> MemberFunctionFlavour {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
@@ -173,7 +183,7 @@ impl SyntaxNode<'_, MemberFunctionFlavour> {
     }
 }
 
-impl Debug for SyntaxNode<'_, MemberFunctionFlavour> {
+impl Debug for MemberFunctionFlavourNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }

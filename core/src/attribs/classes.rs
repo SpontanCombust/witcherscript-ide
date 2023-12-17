@@ -18,11 +18,13 @@ pub enum ClassSpecifier {
     Statemachine
 }
 
-impl NamedSyntaxNode for ClassSpecifier {
+pub type ClassSpecifierNode<'script> = SyntaxNode<'script, ClassSpecifier>;
+
+impl NamedSyntaxNode for ClassSpecifierNode<'_> {
     const NODE_NAME: &'static str = "class_specifier";
 }
 
-impl SyntaxNode<'_, ClassSpecifier> {
+impl ClassSpecifierNode<'_> {
     pub fn value(&self) -> ClassSpecifier {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
@@ -38,7 +40,7 @@ impl SyntaxNode<'_, ClassSpecifier> {
     }
 }
 
-impl Debug for SyntaxNode<'_, ClassSpecifier> {
+impl Debug for ClassSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }
@@ -51,11 +53,13 @@ pub enum AutobindSpecifier {
     Optional
 }
 
-impl NamedSyntaxNode for AutobindSpecifier {
+pub type AutobindSpecifierNode<'script> = SyntaxNode<'script, AutobindSpecifier>;
+
+impl NamedSyntaxNode for AutobindSpecifierNode<'_> {
     const NODE_NAME: &'static str = "class_autobind_specifier";
 }
 
-impl SyntaxNode<'_, AutobindSpecifier> {
+impl AutobindSpecifierNode<'_> {
     pub fn value(&self) -> AutobindSpecifier {
         let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
@@ -72,7 +76,7 @@ impl SyntaxNode<'_, AutobindSpecifier> {
     }
 }
 
-impl Debug for SyntaxNode<'_, AutobindSpecifier> {
+impl Debug for AutobindSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.value())
     }

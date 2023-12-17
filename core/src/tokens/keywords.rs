@@ -1,6 +1,6 @@
-use strum_macros::{EnumString, Display};
+use strum_macros::{EnumString, Display, AsRefStr};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, EnumString, Display)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, EnumString, Display, AsRefStr)]
 #[strum(serialize_all="snake_case")]
 pub enum Keyword {
     Abstract,

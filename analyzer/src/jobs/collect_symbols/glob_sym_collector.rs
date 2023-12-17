@@ -1,6 +1,5 @@
 use ropey::Rope;
 use uuid::Uuid;
-use witcherscript::SyntaxNode;
 use witcherscript::ast::*;
 use crate::model::collections::*;
 use crate::diagnostics::*;
@@ -42,7 +41,7 @@ impl SymbolCollectorCommons for GlobalSymbolCollector<'_> {
 }
 
 impl StatementVisitor for GlobalSymbolCollector<'_> {
-    fn visit_class_decl(&mut self, n: &SyntaxNode<'_, ClassDeclaration>) -> bool {
+    fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> bool {
         let class_name = n.name()
                         .value(&self.rope)
                         .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Class, n.span()));
@@ -56,7 +55,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
         false
     }
 
-    fn visit_state_decl(&mut self, n: &SyntaxNode<'_, StateDeclaration>) -> bool {
+    fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> bool {
         let state_name = n.name().value(&self.rope);
         let parent_name = n.parent().value(&self.rope);
         if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
@@ -71,7 +70,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
         false
     }
 
-    fn visit_struct_decl(&mut self, n: &SyntaxNode<'_, StructDeclaration>) -> bool {
+    fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
         let struct_name = n.name()
                           .value(&self.rope)
                           .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Struct, n.span()));
@@ -85,7 +84,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
         false
     }
 
-    fn visit_enum_decl(&mut self, n: &SyntaxNode<'_, EnumDeclaration>) -> bool {
+    fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> bool {
         let enum_name = n.name()
                         .value(&self.rope)
                         .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Enum, n.span()));
@@ -102,7 +101,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
 
     // enum member is WS work just like they do in C - they are global scoped constants
     // enum type doesn't create any sort of scope for them
-    fn visit_enum_member_decl(&mut self, n: &SyntaxNode<'_, EnumMemberDeclaration>) {
+    fn visit_enum_member_decl(&mut self, n: &EnumMemberDeclarationNode) {
         let member_name = n.name()
                           .value(&self.rope)
                           .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::EnumMember, n.span()));
@@ -114,14 +113,14 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
         }
     }
 
-    fn exit_enum_decl(&mut self, _: &SyntaxNode<'_, EnumDeclaration>) {
+    fn exit_enum_decl(&mut self, _: &EnumDeclarationNode) {
         if let Some(sym) = self.current_enum.take() {
             self.symtab.insert(&sym);
             self.db.insert_enum(sym);
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &SyntaxNode<'_, GlobalFunctionDeclaration>) -> bool {
+    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> bool {
         let func_name = n.name()
                         .value(&self.rope)
                         .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::GlobalFunction, n.span()));

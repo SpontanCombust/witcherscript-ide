@@ -1,6 +1,6 @@
-use witcherscript::{SyntaxNode, ast::*, DocSpan};
-
+use witcherscript::{ast::*, DocSpan};
 use crate::diagnostics::{Diagnostic, ErrorDiagnostic};
+
 
 pub struct SyntaxErrorVisitor {
     diagnostics: Vec<Diagnostic>   
@@ -17,7 +17,7 @@ impl SyntaxErrorVisitor {
 
 //TODO missing punctuation and keywords
 impl StatementVisitor for SyntaxErrorVisitor {
-    fn visit_class_decl(&mut self, n: &SyntaxNode<'_, ClassDeclaration>) -> bool {
+    fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> bool {
         if n.name().is_missing() {
             self.missing_element(n.name().span(), "class name");
         }
@@ -31,7 +31,7 @@ impl StatementVisitor for SyntaxErrorVisitor {
         true
     }
 
-    fn visit_state_decl(&mut self, n: &SyntaxNode<'_, StateDeclaration>) -> bool {
+    fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> bool {
         if n.name().is_missing() {
             self.missing_element(n.name().span(), "class name");
         }
@@ -49,7 +49,7 @@ impl StatementVisitor for SyntaxErrorVisitor {
         true
     }
 
-    fn visit_struct_decl(&mut self, n: &SyntaxNode<'_, StructDeclaration>) -> bool {
+    fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
         if n.name().is_missing() {
             self.missing_element(n.name().span(), "struct name");
         }
@@ -57,7 +57,7 @@ impl StatementVisitor for SyntaxErrorVisitor {
         true
     }
 
-    fn visit_enum_decl(&mut self, n: &SyntaxNode<'_, EnumDeclaration>) -> bool {
+    fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> bool {
         if n.name().is_missing() {
             self.missing_element(n.name().span(), "enum name");
         }
@@ -65,13 +65,13 @@ impl StatementVisitor for SyntaxErrorVisitor {
         true   
     }
 
-    fn visit_enum_member_decl(&mut self, n: &SyntaxNode<'_, EnumMemberDeclaration>) {
+    fn visit_enum_member_decl(&mut self, n: &EnumMemberDeclarationNode) {
         if n.name().is_missing() {
             self.missing_element(n.name().span(), "enum member name");
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &SyntaxNode<'_, GlobalFunctionDeclaration>) -> bool {
+    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> bool {
         if n.name().is_missing() {
             self.missing_element(n.name().span(), "funtion name");
         }
