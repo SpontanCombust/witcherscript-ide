@@ -3,13 +3,14 @@ use uuid::Uuid;
 use crate::model::symbols::*;
 
 
+/// Contains information about symbols in the workspace 
 #[derive(Debug, Clone, Default)]
-pub struct SymbolDb {
-    map: HashMap<Uuid, SymbolDbMapValue>
+pub struct SymbolTable {
+    map: HashMap<Uuid, SymbolTableValue>
 }
 
 #[derive(Debug, Clone)]
-enum SymbolDbMapValue {
+enum SymbolTableValue {
     Primitive(PrimitiveTypeSymbol),
     Enum(EnumSymbol),
     Struct(StructSymbol),
@@ -27,20 +28,20 @@ enum SymbolDbMapValue {
     LocalVar(LocalVarSymbol),
 }
 
-impl SymbolDb {
+impl SymbolTable {
     pub fn new() -> Self {
         Self::default()
     }
 
 
     pub fn insert_primitive(&mut self, sym: PrimitiveTypeSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::Primitive(sym));
+        self.map.insert(sym.id(), SymbolTableValue::Primitive(sym));
     }
 
     pub fn get_primitive(&self, id: Uuid) -> Option<&PrimitiveTypeSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::Primitive(v) => Some(v),
+                SymbolTableValue::Primitive(v) => Some(v),
                 _ => None
             }
         } else {
@@ -51,7 +52,7 @@ impl SymbolDb {
     pub fn get_primitive_mut(&mut self, id: Uuid) -> Option<&mut PrimitiveTypeSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::Primitive(v) => Some(v),
+                SymbolTableValue::Primitive(v) => Some(v),
                 _ => None
             }
         } else {
@@ -62,7 +63,7 @@ impl SymbolDb {
     pub fn remove_primitive(&mut self, id: Uuid) -> Option<PrimitiveTypeSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::Primitive(v) => Some(v),
+                SymbolTableValue::Primitive(v) => Some(v),
                 _ => {
                     // put the symbol back in the map if it was queried with wrong type
                     self.map.insert(id, sym);
@@ -76,13 +77,13 @@ impl SymbolDb {
 
 
     pub fn insert_enum(&mut self, sym: EnumSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::Enum(sym));
+        self.map.insert(sym.id(), SymbolTableValue::Enum(sym));
     }
 
     pub fn get_enum(&self, id: Uuid) -> Option<&EnumSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::Enum(v) => Some(v),
+                SymbolTableValue::Enum(v) => Some(v),
                 _ => None
             }
         } else {
@@ -93,7 +94,7 @@ impl SymbolDb {
     pub fn get_enum_mut(&mut self, id: Uuid) -> Option<&mut EnumSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::Enum(v) => Some(v),
+                SymbolTableValue::Enum(v) => Some(v),
                 _ => None
             }
         } else {
@@ -104,7 +105,7 @@ impl SymbolDb {
     pub fn remove_enum(&mut self, id: Uuid) -> Option<EnumSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::Enum(v) => Some(v),
+                SymbolTableValue::Enum(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -117,13 +118,13 @@ impl SymbolDb {
 
 
     pub fn insert_struct(&mut self, sym: StructSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::Struct(sym));
+        self.map.insert(sym.id(), SymbolTableValue::Struct(sym));
     }
 
     pub fn get_struct(&self, id: Uuid) -> Option<&StructSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::Struct(v) => Some(v),
+                SymbolTableValue::Struct(v) => Some(v),
                 _ => None
             }
         } else {
@@ -134,7 +135,7 @@ impl SymbolDb {
     pub fn get_struct_mut(&mut self, id: Uuid) -> Option<&mut StructSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::Struct(v) => Some(v),
+                SymbolTableValue::Struct(v) => Some(v),
                 _ => None
             }
         } else {
@@ -145,7 +146,7 @@ impl SymbolDb {
     pub fn remove_struct(&mut self, id: Uuid) -> Option<StructSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::Struct(v) => Some(v),
+                SymbolTableValue::Struct(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -158,13 +159,13 @@ impl SymbolDb {
 
 
     pub fn insert_class(&mut self, sym: ClassSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::Class(sym));
+        self.map.insert(sym.id(), SymbolTableValue::Class(sym));
     }
 
     pub fn get_class(&self, id: Uuid) -> Option<&ClassSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::Class(v) => Some(v),
+                SymbolTableValue::Class(v) => Some(v),
                 _ => None
             }
         } else {
@@ -175,7 +176,7 @@ impl SymbolDb {
     pub fn get_class_mut(&mut self, id: Uuid) -> Option<&mut ClassSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::Class(v) => Some(v),
+                SymbolTableValue::Class(v) => Some(v),
                 _ => None
             }
         } else {
@@ -186,7 +187,7 @@ impl SymbolDb {
     pub fn remove_class(&mut self, id: Uuid) -> Option<ClassSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::Class(v) => Some(v),
+                SymbolTableValue::Class(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -199,13 +200,13 @@ impl SymbolDb {
 
 
     pub fn insert_state(&mut self, sym: StateSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::State(sym));
+        self.map.insert(sym.id(), SymbolTableValue::State(sym));
     }
 
     pub fn get_state(&self, id: Uuid) -> Option<&StateSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::State(v) => Some(v),
+                SymbolTableValue::State(v) => Some(v),
                 _ => None
             }
         } else {
@@ -216,7 +217,7 @@ impl SymbolDb {
     pub fn get_state_mut(&mut self, id: Uuid) -> Option<&mut StateSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::State(v) => Some(v),
+                SymbolTableValue::State(v) => Some(v),
                 _ => None
             }
         } else {
@@ -227,7 +228,7 @@ impl SymbolDb {
     pub fn remove_state(&mut self, id: Uuid) -> Option<StateSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::State(v) => Some(v),
+                SymbolTableValue::State(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -240,13 +241,13 @@ impl SymbolDb {
 
 
     pub fn insert_array(&mut self, sym: ArrayTypeSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::Array(sym));
+        self.map.insert(sym.id(), SymbolTableValue::Array(sym));
     }
 
     pub fn get_array(&self, id: Uuid) -> Option<&ArrayTypeSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::Array(v) => Some(v),
+                SymbolTableValue::Array(v) => Some(v),
                 _ => None
             }
         } else {
@@ -257,7 +258,7 @@ impl SymbolDb {
     pub fn get_array_mut(&mut self, id: Uuid) -> Option<&mut ArrayTypeSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::Array(v) => Some(v),
+                SymbolTableValue::Array(v) => Some(v),
                 _ => None
             }
         } else {
@@ -268,7 +269,7 @@ impl SymbolDb {
     pub fn remove_array(&mut self, id: Uuid) -> Option<ArrayTypeSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::Array(v) => Some(v),
+                SymbolTableValue::Array(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -281,13 +282,13 @@ impl SymbolDb {
 
 
     pub fn insert_enum_member(&mut self, sym: EnumMemberSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::EnumMember(sym));
+        self.map.insert(sym.id(), SymbolTableValue::EnumMember(sym));
     }
 
     pub fn get_enum_member(&self, id: Uuid) -> Option<&EnumMemberSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::EnumMember(v) => Some(v),
+                SymbolTableValue::EnumMember(v) => Some(v),
                 _ => None
             }
         } else {
@@ -298,7 +299,7 @@ impl SymbolDb {
     pub fn get_enum_member_mut(&mut self, id: Uuid) -> Option<&mut EnumMemberSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::EnumMember(v) => Some(v),
+                SymbolTableValue::EnumMember(v) => Some(v),
                 _ => None
             }
         } else {
@@ -309,7 +310,7 @@ impl SymbolDb {
     pub fn remove_enum_member(&mut self, id: Uuid) -> Option<EnumMemberSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::EnumMember(v) => Some(v),
+                SymbolTableValue::EnumMember(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -322,13 +323,13 @@ impl SymbolDb {
 
 
     pub fn insert_global_func(&mut self, sym: GlobalFunctionSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::GlobalFunc(sym));
+        self.map.insert(sym.id(), SymbolTableValue::GlobalFunc(sym));
     }
 
     pub fn get_global_func(&self, id: Uuid) -> Option<&GlobalFunctionSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::GlobalFunc(v) => Some(v),
+                SymbolTableValue::GlobalFunc(v) => Some(v),
                 _ => None
             }
         } else {
@@ -339,7 +340,7 @@ impl SymbolDb {
     pub fn get_global_func_mut(&mut self, id: Uuid) -> Option<&mut GlobalFunctionSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::GlobalFunc(v) => Some(v),
+                SymbolTableValue::GlobalFunc(v) => Some(v),
                 _ => None
             }
         } else {
@@ -350,7 +351,7 @@ impl SymbolDb {
     pub fn remove_global_func(&mut self, id: Uuid) -> Option<GlobalFunctionSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::GlobalFunc(v) => Some(v),
+                SymbolTableValue::GlobalFunc(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -363,13 +364,13 @@ impl SymbolDb {
 
 
     pub fn insert_member_func(&mut self, sym: MemberFunctionSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::MemberFunc(sym));
+        self.map.insert(sym.id(), SymbolTableValue::MemberFunc(sym));
     }
 
     pub fn get_member_func(&self, id: Uuid) -> Option<&MemberFunctionSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::MemberFunc(v) => Some(v),
+                SymbolTableValue::MemberFunc(v) => Some(v),
                 _ => None
             }
         } else {
@@ -380,7 +381,7 @@ impl SymbolDb {
     pub fn get_member_func_mut(&mut self, id: Uuid) -> Option<&mut MemberFunctionSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::MemberFunc(v) => Some(v),
+                SymbolTableValue::MemberFunc(v) => Some(v),
                 _ => None
             }
         } else {
@@ -391,7 +392,7 @@ impl SymbolDb {
     pub fn remove_member_func(&mut self, id: Uuid) -> Option<MemberFunctionSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::MemberFunc(v) => Some(v),
+                SymbolTableValue::MemberFunc(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -404,13 +405,13 @@ impl SymbolDb {
 
 
     pub fn insert_event(&mut self, sym: EventSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::Event(sym));
+        self.map.insert(sym.id(), SymbolTableValue::Event(sym));
     }
 
     pub fn get_event(&self, id: Uuid) -> Option<&EventSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::Event(v) => Some(v),
+                SymbolTableValue::Event(v) => Some(v),
                 _ => None
             }
         } else {
@@ -421,7 +422,7 @@ impl SymbolDb {
     pub fn get_event_mut(&mut self, id: Uuid) -> Option<&mut EventSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::Event(v) => Some(v),
+                SymbolTableValue::Event(v) => Some(v),
                 _ => None
             }
         } else {
@@ -432,7 +433,7 @@ impl SymbolDb {
     pub fn remove_event(&mut self, id: Uuid) -> Option<EventSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::Event(v) => Some(v),
+                SymbolTableValue::Event(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -445,13 +446,13 @@ impl SymbolDb {
 
 
     pub fn insert_func_param(&mut self, sym: FunctionParameterSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::FuncParam(sym));
+        self.map.insert(sym.id(), SymbolTableValue::FuncParam(sym));
     }
 
     pub fn get_func_param(&self, id: Uuid) -> Option<&FunctionParameterSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::FuncParam(v) => Some(v),
+                SymbolTableValue::FuncParam(v) => Some(v),
                 _ => None
             }
         } else {
@@ -462,7 +463,7 @@ impl SymbolDb {
     pub fn get_func_param_mut(&mut self, id: Uuid) -> Option<&mut FunctionParameterSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::FuncParam(v) => Some(v),
+                SymbolTableValue::FuncParam(v) => Some(v),
                 _ => None
             }
         } else {
@@ -473,7 +474,7 @@ impl SymbolDb {
     pub fn remove_func_param(&mut self, id: Uuid) -> Option<FunctionParameterSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::FuncParam(v) => Some(v),
+                SymbolTableValue::FuncParam(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -486,13 +487,13 @@ impl SymbolDb {
 
 
     pub fn insert_global_var(&mut self, sym: GlobalVarSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::GlobalVar(sym));
+        self.map.insert(sym.id(), SymbolTableValue::GlobalVar(sym));
     }
 
     pub fn get_global_var(&self, id: Uuid) -> Option<&GlobalVarSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::GlobalVar(v) => Some(v),
+                SymbolTableValue::GlobalVar(v) => Some(v),
                 _ => None
             }
         } else {
@@ -503,7 +504,7 @@ impl SymbolDb {
     pub fn get_global_var_mut(&mut self, id: Uuid) -> Option<&mut GlobalVarSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::GlobalVar(v) => Some(v),
+                SymbolTableValue::GlobalVar(v) => Some(v),
                 _ => None
             }
         } else {
@@ -514,7 +515,7 @@ impl SymbolDb {
     pub fn remove_global_var(&mut self, id: Uuid) -> Option<GlobalVarSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::GlobalVar(v) => Some(v),
+                SymbolTableValue::GlobalVar(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -527,13 +528,13 @@ impl SymbolDb {
 
 
     pub fn insert_member_var(&mut self, sym: MemberVarSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::MemberVar(sym));
+        self.map.insert(sym.id(), SymbolTableValue::MemberVar(sym));
     }
 
     pub fn get_member_var(&self, id: Uuid) -> Option<&MemberVarSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::MemberVar(v) => Some(v),
+                SymbolTableValue::MemberVar(v) => Some(v),
                 _ => None
             }
         } else {
@@ -544,7 +545,7 @@ impl SymbolDb {
     pub fn get_member_var_mut(&mut self, id: Uuid) -> Option<&mut MemberVarSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::MemberVar(v) => Some(v),
+                SymbolTableValue::MemberVar(v) => Some(v),
                 _ => None
             }
         } else {
@@ -555,7 +556,7 @@ impl SymbolDb {
     pub fn remove_member_var(&mut self, id: Uuid) -> Option<MemberVarSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::MemberVar(v) => Some(v),
+                SymbolTableValue::MemberVar(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -568,13 +569,13 @@ impl SymbolDb {
 
 
     pub fn insert_autobind(&mut self, sym: AutobindSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::Autobind(sym));
+        self.map.insert(sym.id(), SymbolTableValue::Autobind(sym));
     }
 
     pub fn get_autobind(&self, id: Uuid) -> Option<&AutobindSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::Autobind(v) => Some(v),
+                SymbolTableValue::Autobind(v) => Some(v),
                 _ => None
             }
         } else {
@@ -585,7 +586,7 @@ impl SymbolDb {
     pub fn get_autobind_mut(&mut self, id: Uuid) -> Option<&mut AutobindSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::Autobind(v) => Some(v),
+                SymbolTableValue::Autobind(v) => Some(v),
                 _ => None
             }
         } else {
@@ -596,7 +597,7 @@ impl SymbolDb {
     pub fn remove_autobind(&mut self, id: Uuid) -> Option<AutobindSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::Autobind(v) => Some(v),
+                SymbolTableValue::Autobind(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None
@@ -609,13 +610,13 @@ impl SymbolDb {
 
 
     pub fn insert_local_var(&mut self, sym: LocalVarSymbol) {
-        self.map.insert(sym.id(), SymbolDbMapValue::LocalVar(sym));
+        self.map.insert(sym.id(), SymbolTableValue::LocalVar(sym));
     }
 
     pub fn get_local_var(&self, id: Uuid) -> Option<&LocalVarSymbol> {
         if let Some(sym) = self.map.get(&id) {
             match sym {
-                SymbolDbMapValue::LocalVar(v) => Some(v),
+                SymbolTableValue::LocalVar(v) => Some(v),
                 _ => None
             }
         } else {
@@ -626,7 +627,7 @@ impl SymbolDb {
     pub fn get_local_var_mut(&mut self, id: Uuid) -> Option<&mut LocalVarSymbol> {
         if let Some(sym) = self.map.get_mut(&id) {
             match sym {
-                SymbolDbMapValue::LocalVar(v) => Some(v),
+                SymbolTableValue::LocalVar(v) => Some(v),
                 _ => None
             }
         } else {
@@ -637,7 +638,7 @@ impl SymbolDb {
     pub fn remove_local_var(&mut self, id: Uuid) -> Option<LocalVarSymbol> {
         if let Some(sym) = self.map.remove(&id) {
             match sym {
-                SymbolDbMapValue::LocalVar(v) => Some(v),
+                SymbolTableValue::LocalVar(v) => Some(v),
                 _ => {
                     self.map.insert(id, sym);
                     None

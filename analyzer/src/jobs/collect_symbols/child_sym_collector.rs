@@ -13,7 +13,7 @@ use super::commons::SymbolCollectorCommons;
 // first two only create symbols
 // the last one uses node id for fast lookup
 struct ChildSymbolCollector<'a> {
-    db: &'a mut SymbolDb,
+    symtab: &'a mut SymbolTable,
     ctx: &'a mut SymbolContext,
     rope: Rope,
     diagnostics: Vec<Diagnostic>,
@@ -27,16 +27,16 @@ struct ChildSymbolCollector<'a> {
 }
 
 impl SymbolCollectorCommons for ChildSymbolCollector<'_> {
-    fn db(&mut self) -> &mut SymbolDb {
-        &mut self.db
+    fn symtab(&mut self) -> &mut SymbolTable {
+        &mut self.symtab
     }
 
     fn ctx(&mut self) -> &mut SymbolContext {
         &mut self.ctx
     }
 
-    fn db_and_ctx(&mut self) -> (&mut SymbolDb, &mut SymbolContext) {
-        (&mut self.db, &mut self.ctx)    
+    fn symtab_and_ctx(&mut self) -> (&mut SymbolTable, &mut SymbolContext) {
+        (&mut self.symtab, &mut self.ctx)    
     }
 
     fn diagnostics(&mut self) -> &mut Vec<Diagnostic> {
@@ -52,7 +52,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> bool {
         if let Some(class_name) = n.name().value(&self.rope) {
             if let Some(SymbolPointer { id, typ: SymbolType::Class }) = self.ctx.get(&class_name, SymbolCategory::Type) {
-                let mut sym = self.db.remove_class(*id).expect("class absent in db despite being found in context");
+                let mut sym = self.symtab.remove_class(*id).expect("class absent in symtab despite being found in context");
 
                 n.specifiers()
                 .map(|specn| (specn.value(), specn.span()))
@@ -83,7 +83,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
     fn exit_class_decl(&mut self, _: &ClassDeclarationNode) {
         if let Some(sym) = self.current_class.take() {
             self.ctx.pop_scope();
-            self.db.insert_class(sym);
+            self.symtab.insert_class(sym);
         }
     }
 
@@ -94,7 +94,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
             let state_class_name = StateSymbol::class_name(&state_name, &parent_name);
 
             if let Some(SymbolPointer { id, typ: SymbolType::State }) = self.ctx.get(&state_class_name, SymbolCategory::Type) {
-                let mut sym = self.db.remove_state(*id).expect("state absent in db despite being found in context");
+                let mut sym = self.symtab.remove_state(*id).expect("state absent in symtab despite being found in context");
 
                 n.specifiers()
                 .map(|specn| (specn.value(), specn.span()))
@@ -129,14 +129,14 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
     fn exit_state_decl(&mut self, _: &StateDeclarationNode) {
         if let Some(sym) = self.current_state.take() {
             self.ctx.pop_scope();
-            self.db.insert_state(sym);
+            self.symtab.insert_state(sym);
         }
     }
 
     fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
         if let Some(struct_name) = n.name().value(&self.rope) {
             if let Some(SymbolPointer { id, typ: SymbolType::Struct }) = self.ctx.get(&struct_name, SymbolCategory::Type) {
-                let mut sym = self.db.remove_struct(*id).expect("struct absent in db despite being found in context");
+                let mut sym = self.symtab.remove_struct(*id).expect("struct absent in symtab despite being found in context");
 
                 n.specifiers()
                 .map(|specn| (specn.value(), specn.span()))
@@ -161,7 +161,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
     fn exit_struct_decl(&mut self, _: &StructDeclarationNode) {
         if let Some(sym) = self.current_struct.take() {
             self.ctx.pop_scope();
-            self.db.insert_struct(sym);
+            self.symtab.insert_struct(sym);
         }
     }
 
@@ -227,7 +227,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 sym.data.type_id = type_id;
 
                 self.ctx.insert(&sym);
-                self.db.insert_member_var(sym);
+                self.symtab.insert_member_var(sym);
             });
         }
     }
@@ -277,14 +277,14 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
             sym.data.type_id = type_id;
 
             self.ctx.insert(&sym);
-            self.db.insert_autobind(sym);
+            self.symtab.insert_autobind(sym);
         }
     }
 
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> bool {
         if let Some(func_name) = n.name().value(&self.rope) {
             if let Some(SymbolPointer { id, typ: SymbolType::GlobalFunction }) = self.ctx.get(&func_name, SymbolCategory::Callable) {
-                let mut sym = self.db.remove_global_func(*id).expect("global function absent from db despite being found in context");
+                let mut sym = self.symtab.remove_global_func(*id).expect("global function absent from symtab despite being found in context");
 
                 n.specifiers()
                 .map(|specn| (specn.value(), specn.span()))
@@ -324,7 +324,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
     fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
         if let Some(sym) = self.current_global_func.take() {
             self.ctx.pop_scope();
-            self.db.insert_global_func(sym);
+            self.symtab.insert_global_func(sym);
         }
     }
 
@@ -382,7 +382,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
     fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) {
         if let Some(sym) = self.current_member_func.take() {
             self.ctx.pop_scope();
-            self.db.insert_member_func(sym);
+            self.symtab.insert_member_func(sym);
         }
     }
 
@@ -413,7 +413,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
     fn exit_event_decl(&mut self, _: &EventDeclarationNode) {
         if let Some(sym) = self.current_event.take() {
             self.ctx.pop_scope();
-            self.db.insert_event(sym);
+            self.symtab.insert_event(sym);
         }
     }
 
@@ -468,7 +468,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 sym.data.type_id = type_id;
 
                 self.ctx.insert(&sym);
-                self.db.insert_func_param(sym);
+                self.symtab.insert_func_param(sym);
             });
         }
     }

@@ -8,9 +8,9 @@ use crate::diagnostics::*;
 
 
 pub(super) trait SymbolCollectorCommons {
-    fn db(&mut self) -> &mut SymbolDb;
+    fn symtab(&mut self) -> &mut SymbolTable;
     fn ctx(&mut self) -> &mut SymbolContext;
-    fn db_and_ctx(&mut self) -> (&mut SymbolDb, &mut SymbolContext);
+    fn symtab_and_ctx(&mut self) -> (&mut SymbolTable, &mut SymbolContext);
     fn diagnostics(&mut self) -> &mut Vec<Diagnostic>;
     fn rope(&self) -> &Rope;
 
@@ -47,8 +47,8 @@ pub(super) trait SymbolCollectorCommons {
                 if let Some(SymbolPointer { id, .. }) = self.ctx().get(&final_typ, SymbolCategory::Type) {
                     Some(*id)
                 } else {
-                    let (db, ctx) = self.db_and_ctx();
-                    Some(inject_array_type(db, ctx, t_id, t))
+                    let (symtab, ctx) = self.symtab_and_ctx();
+                    Some(inject_array_type(symtab, ctx, t_id, t))
                 }
             } else {
                 None

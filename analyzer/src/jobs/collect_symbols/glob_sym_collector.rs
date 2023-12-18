@@ -7,9 +7,9 @@ use crate::model::symbols::*;
 use super::commons::SymbolCollectorCommons;
 
 
-//TODO be able to update existing db and ctx instead of assuming they are new
+//TODO be able to update existing symtab and ctx instead of assuming they are new
 struct GlobalSymbolCollector<'a> {
-    db: &'a mut SymbolDb,
+    symtab: &'a mut SymbolTable,
     ctx: &'a mut SymbolContext,
     script_id: Uuid,
     rope: Rope,
@@ -19,16 +19,16 @@ struct GlobalSymbolCollector<'a> {
 }
 
 impl SymbolCollectorCommons for GlobalSymbolCollector<'_> {
-    fn db(&mut self) -> &mut SymbolDb {
-        &mut self.db
+    fn symtab(&mut self) -> &mut SymbolTable {
+        &mut self.symtab
     }
 
     fn ctx(&mut self) -> &mut SymbolContext {
         &mut self.ctx
     }
 
-    fn db_and_ctx(&mut self) -> (&mut SymbolDb, &mut SymbolContext) {
-        (&mut self.db, &mut self.ctx)    
+    fn symtab_and_ctx(&mut self) -> (&mut SymbolTable, &mut SymbolContext) {
+        (&mut self.symtab, &mut self.ctx)    
     }
 
     fn diagnostics(&mut self) -> &mut Vec<Diagnostic> {
@@ -49,7 +49,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
         if let Some(class_name) = class_name {
             let sym = ClassSymbol::new_with_default(&class_name, self.script_id);
             self.ctx.insert(&sym);
-            self.db.insert_class(sym);
+            self.symtab.insert_class(sym);
         }
 
         false
@@ -63,7 +63,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
             if let Some(state_class_name) = self.check_duplicate(state_class_name, SymbolType::State, n.span()) {
                 let sym = StateSymbol::new_with_default(&state_class_name, self.script_id);
                 self.ctx.insert(&sym);
-                self.db.insert_state(sym);
+                self.symtab.insert_state(sym);
             }
         }
 
@@ -78,7 +78,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
         if let Some(struct_name) = struct_name {
             let sym = StructSymbol::new_with_default(&struct_name, self.script_id);
             self.ctx.insert(&sym);
-            self.db.insert_struct(sym);
+            self.symtab.insert_struct(sym);
         }
 
         false
@@ -109,14 +109,14 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
         if let Some(member_name) = member_name {
             let sym = self.current_enum.as_mut().unwrap().add_member(&member_name);
             self.ctx.insert(&sym);
-            self.db.insert_enum_member(sym);
+            self.symtab.insert_enum_member(sym);
         }
     }
 
     fn exit_enum_decl(&mut self, _: &EnumDeclarationNode) {
         if let Some(sym) = self.current_enum.take() {
             self.ctx.insert(&sym);
-            self.db.insert_enum(sym);
+            self.symtab.insert_enum(sym);
         }
     }
 
@@ -128,7 +128,7 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
         if let Some(func_name) = func_name {
             let sym = GlobalFunctionSymbol::new_with_default(&func_name, self.script_id);
             self.ctx.insert(&sym);
-            self.db.insert_global_func(sym);
+            self.symtab.insert_global_func(sym);
         }
 
         false
