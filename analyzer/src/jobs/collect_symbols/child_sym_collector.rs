@@ -14,7 +14,7 @@ use super::commons::SymbolCollectorCommons;
 // the last one uses node id for fast lookup
 struct ChildSymbolCollector<'a> {
     db: &'a mut SymbolDb,
-    symtab: &'a mut SymbolTable,
+    ctx: &'a mut SymbolContext,
     rope: Rope,
     diagnostics: Vec<Diagnostic>,
 
@@ -31,12 +31,12 @@ impl SymbolCollectorCommons for ChildSymbolCollector<'_> {
         &mut self.db
     }
 
-    fn symtab(&mut self) -> &mut SymbolTable {
-        &mut self.symtab
+    fn ctx(&mut self) -> &mut SymbolContext {
+        &mut self.ctx
     }
 
-    fn db_and_symtab(&mut self) -> (&mut SymbolDb, &mut SymbolTable) {
-        (&mut self.db, &mut self.symtab)    
+    fn db_and_ctx(&mut self) -> (&mut SymbolDb, &mut SymbolContext) {
+        (&mut self.db, &mut self.ctx)    
     }
 
     fn diagnostics(&mut self) -> &mut Vec<Diagnostic> {
@@ -51,8 +51,8 @@ impl SymbolCollectorCommons for ChildSymbolCollector<'_> {
 impl StatementVisitor for ChildSymbolCollector<'_> {
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> bool {
         if let Some(class_name) = n.name().value(&self.rope) {
-            if let Some(SymbolTableValue { id, typ: SymbolType::Class }) = self.symtab.get(&class_name, SymbolCategory::Type) {
-                let mut sym = self.db.remove_class(*id).expect("class absent in db despite being in symtab");
+            if let Some(SymbolPointer { id, typ: SymbolType::Class }) = self.ctx.get(&class_name, SymbolCategory::Type) {
+                let mut sym = self.db.remove_class(*id).expect("class absent in db despite being found in context");
 
                 n.specifiers()
                 .map(|specn| (specn.value(), specn.span()))
@@ -72,7 +72,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 }
 
                 self.current_class = Some(sym);
-                self.symtab.push_scope();
+                self.ctx.push_scope();
                 return true;
             }
         }
@@ -82,7 +82,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
 
     fn exit_class_decl(&mut self, _: &ClassDeclarationNode) {
         if let Some(sym) = self.current_class.take() {
-            self.symtab.pop_scope();
+            self.ctx.pop_scope();
             self.db.insert_class(sym);
         }
     }
@@ -93,8 +93,8 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
         if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
             let state_class_name = StateSymbol::class_name(&state_name, &parent_name);
 
-            if let Some(SymbolTableValue { id, typ: SymbolType::State }) = self.symtab.get(&state_class_name, SymbolCategory::Type) {
-                let mut sym = self.db.remove_state(*id).expect("state absent in db despite being in symtab");
+            if let Some(SymbolPointer { id, typ: SymbolType::State }) = self.ctx.get(&state_class_name, SymbolCategory::Type) {
+                let mut sym = self.db.remove_state(*id).expect("state absent in db despite being found in context");
 
                 n.specifiers()
                 .map(|specn| (specn.value(), specn.span()))
@@ -118,7 +118,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 }
 
                 self.current_state = Some(sym);
-                self.symtab.push_scope();
+                self.ctx.push_scope();
                 return true;
             }
         }
@@ -128,15 +128,15 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
 
     fn exit_state_decl(&mut self, _: &StateDeclarationNode) {
         if let Some(sym) = self.current_state.take() {
-            self.symtab.pop_scope();
+            self.ctx.pop_scope();
             self.db.insert_state(sym);
         }
     }
 
     fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
         if let Some(struct_name) = n.name().value(&self.rope) {
-            if let Some(SymbolTableValue { id, typ: SymbolType::Struct }) = self.symtab.get(&struct_name, SymbolCategory::Type) {
-                let mut sym = self.db.remove_struct(*id).expect("struct absent in db despite being in symtab");
+            if let Some(SymbolPointer { id, typ: SymbolType::Struct }) = self.ctx.get(&struct_name, SymbolCategory::Type) {
+                let mut sym = self.db.remove_struct(*id).expect("struct absent in db despite being found in context");
 
                 n.specifiers()
                 .map(|specn| (specn.value(), specn.span()))
@@ -150,7 +150,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 });
 
                 self.current_struct = Some(sym);
-                self.symtab.push_scope();
+                self.ctx.push_scope();
                 return true;
             }
         }
@@ -160,7 +160,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
 
     fn exit_struct_decl(&mut self, _: &StructDeclarationNode) {
         if let Some(sym) = self.current_struct.take() {
-            self.symtab.pop_scope();
+            self.ctx.pop_scope();
             self.db.insert_struct(sym);
         }
     }
@@ -226,7 +226,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 sym.data.specifiers = specifiers.clone();
                 sym.data.type_id = type_id;
 
-                self.symtab.insert(&sym);
+                self.ctx.insert(&sym);
                 self.db.insert_member_var(sym);
             });
         }
@@ -276,15 +276,15 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
             sym.data.specifiers = specifiers;
             sym.data.type_id = type_id;
 
-            self.symtab.insert(&sym);
+            self.ctx.insert(&sym);
             self.db.insert_autobind(sym);
         }
     }
 
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> bool {
         if let Some(func_name) = n.name().value(&self.rope) {
-            if let Some(SymbolTableValue { id, typ: SymbolType::GlobalFunction }) = self.symtab.get(&func_name, SymbolCategory::Callable) {
-                let mut sym = self.db.remove_global_func(*id).expect("global function absent from db despite being in symtab");
+            if let Some(SymbolPointer { id, typ: SymbolType::GlobalFunction }) = self.ctx.get(&func_name, SymbolCategory::Callable) {
+                let mut sym = self.db.remove_global_func(*id).expect("global function absent from db despite being found in context");
 
                 n.specifiers()
                 .map(|specn| (specn.value(), specn.span()))
@@ -308,12 +308,12 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 if let Some(ret_typn) = n.return_type() {
                     sym.data.return_type_id = self.get_type_from_node(ret_typn);
                 } else {
-                    sym.data.return_type_id = self.symtab.get("void", SymbolCategory::Type).unwrap().id;
+                    sym.data.return_type_id = self.ctx.get("void", SymbolCategory::Type).unwrap().id;
                 }
 
 
                 self.current_global_func = Some(sym);
-                self.symtab.push_scope();
+                self.ctx.push_scope();
                 return true;
             }
         }
@@ -323,7 +323,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
 
     fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
         if let Some(sym) = self.current_global_func.take() {
-            self.symtab.pop_scope();
+            self.ctx.pop_scope();
             self.db.insert_global_func(sym);
         }
     }
@@ -366,12 +366,12 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
             if let Some(ret_typn) = n.return_type() {
                 sym.data.return_type_id = self.get_type_from_node(ret_typn);
             } else {
-                sym.data.return_type_id = self.symtab.get("void", SymbolCategory::Type).unwrap().id;
+                sym.data.return_type_id = self.ctx.get("void", SymbolCategory::Type).unwrap().id;
             }
 
 
-            self.symtab.insert(&sym);
-            self.symtab.push_scope();
+            self.ctx.insert(&sym);
+            self.ctx.push_scope();
             self.current_member_func = Some(sym);
             return true;
         }
@@ -381,7 +381,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
 
     fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) {
         if let Some(sym) = self.current_member_func.take() {
-            self.symtab.pop_scope();
+            self.ctx.pop_scope();
             self.db.insert_member_func(sym);
         }
     }
@@ -401,8 +401,8 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 panic!("No type to create event for");
             }
 
-            self.symtab.insert(&sym);
-            self.symtab.push_scope();
+            self.ctx.insert(&sym);
+            self.ctx.push_scope();
             self.current_event = Some(sym);
             return true;
         }
@@ -412,7 +412,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
 
     fn exit_event_decl(&mut self, _: &EventDeclarationNode) {
         if let Some(sym) = self.current_event.take() {
-            self.symtab.pop_scope();
+            self.ctx.pop_scope();
             self.db.insert_event(sym);
         }
     }
@@ -467,7 +467,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 sym.data.specifiers = specifiers.clone();
                 sym.data.type_id = type_id;
 
-                self.symtab.insert(&sym);
+                self.ctx.insert(&sym);
                 self.db.insert_func_param(sym);
             });
         }

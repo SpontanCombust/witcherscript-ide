@@ -77,14 +77,14 @@ impl Hash for (dyn AsBorrowedKey + '_) {
 
 
 #[derive(Debug, Clone, Copy)]
-pub struct SymbolTableValue {
+pub struct SymbolPointer {
     /// Symbol Uuid
     pub id: Uuid,
     /// Type of the symbol
     pub typ: SymbolType,
 }
 
-impl SymbolTableValue {
+impl SymbolPointer {
     pub fn new(id: Uuid, typ: SymbolType) -> Self {
         Self {
             id, typ
@@ -93,39 +93,40 @@ impl SymbolTableValue {
 }
 
 
-type SymbolTableScope = HashMap<Key, SymbolTableValue>;
+type Scope = HashMap<Key, SymbolPointer>;
 
 
-/// A scope aware map of symbols with access to their identifiers by name and symbol category.
+/// Keeps track of all symbol identifiers that are valid and accessible in the current context.
+/// Names on each deeper scope layer can overshadow the same name from higher layers.
 #[derive(Debug, Clone)]
-pub struct SymbolTable {
-    stack: Vec<SymbolTableScope>,
+pub struct SymbolContext {
+    stack: Vec<Scope>,
 }
 
 
 #[derive(Debug, Clone, Error)]
-pub enum SymbolTableError {
+pub enum SymbolContextError {
     #[error("global var already exists for name {0:?}")]
-    GlobalVarAlreadyExists(String, SymbolTableValue),
+    GlobalVarAlreadyExists(String, SymbolPointer),
     #[error("type already exists for name {0:?}")]
-    TypeAlreadyExists(String, SymbolTableValue),
+    TypeAlreadyExists(String, SymbolPointer),
     #[error("data already exists in the same scope for name {0:?}")]
-    DataAlreadyExists(String, SymbolTableValue),
+    DataAlreadyExists(String, SymbolPointer),
     #[error("callable already exists in the same scope for name {0:?}")]
-    CallableAlreadyExists(String, SymbolTableValue),
-    #[error("type with name {0:?} doesn't exist in symbol table")]
+    CallableAlreadyExists(String, SymbolPointer),
+    #[error("type with name {0:?} not found")]
     TypeDoesntExist(String),
 }
 
-impl SymbolTable {
+impl SymbolContext {
     pub fn new() -> Self {
         Self {
-            stack: vec![SymbolTableScope::new()],
+            stack: vec![Scope::new()],
         }
     }
 
     pub fn push_scope(&mut self) {
-        self.stack.push(SymbolTableScope::new())
+        self.stack.push(Scope::new())
     }
 
     pub fn pop_scope(&mut self) {
@@ -136,7 +137,7 @@ impl SymbolTable {
 
     
     /// Get the value and relative scope it is contained in (0 means this scope, higher means parent scopes)
-    fn get_with_rel_scope(&self, name: &str, category: SymbolCategory) -> Option<(&SymbolTableValue, usize)> {
+    fn get_with_rel_scope(&self, name: &str, category: SymbolCategory) -> Option<(&SymbolPointer, usize)> {
         let k = BorrowedKey::new(name, category);
         for (i, level) in self.stack.iter().rev().enumerate() {
             let v = level.get(&k as &dyn AsBorrowedKey);
@@ -152,18 +153,18 @@ impl SymbolTable {
         self.get_with_rel_scope(name, category).is_some()
     }
 
-    pub fn get(&self, name: &str, category: SymbolCategory) -> Option<&SymbolTableValue> {
+    pub fn get(&self, name: &str, category: SymbolCategory) -> Option<&SymbolPointer> {
         self.get_with_rel_scope(name, category).map(|v| v.0)
     }
     
-    /// If a symbol with that configuration cannot be inserted, returns Err as to why that can't be done.
-    pub fn can_insert(&self, name: &str, typ: SymbolType) -> Result<(), SymbolTableError> {
-        use SymbolTableError::*;
+    /// If a symbol info with that configuration cannot be inserted, returns Err as to why that can't be done.
+    pub fn can_insert(&self, name: &str, typ: SymbolType) -> Result<(), SymbolContextError> {
+        use SymbolContextError::*;
 
         let exist_data = self.get_with_rel_scope(name, SymbolCategory::Data);
         if let Some((data_val, _)) = exist_data {
             // global var names are prohibited from being re-used in any context
-            // globals are actually already defined on the lexel level (in the WS compiler)
+            // as a sidenote, globals are actually already defined on the lexer level (in the WS compiler)
             if data_val.typ == SymbolType::GlobalVar {
                 return Err(GlobalVarAlreadyExists(name.to_string(), data_val.clone()));
             }
@@ -201,13 +202,13 @@ impl SymbolTable {
         Ok(())
     }
 
-    /// Inserts a symbol mapping into the table.
+    /// Inserts a symbol mapping into the stack.
     /// Make sure to check with `can_insert` beforehand.
     pub fn insert<S: SymbolData>(&mut self, sym: &Symbol<S>) {
         let cat = sym.typ().category();
         let kv = (
             Key::new(sym.name(), cat), 
-            SymbolTableValue::new(sym.id(), sym.typ())
+            SymbolPointer::new(sym.id(), sym.typ())
         );
 
         if cat == SymbolCategory::Type {
@@ -221,14 +222,14 @@ impl SymbolTable {
 
     /// Inserts a name alias for a symbol. Symbol must be a type.
     /// Used for primitives.
-    pub fn insert_alias<S: SymbolData>(&mut self, sym: &Symbol<S>, alias: &str) -> Result<(), SymbolTableError> {
+    pub fn insert_alias<S: SymbolData>(&mut self, sym: &Symbol<S>, alias: &str) -> Result<(), SymbolContextError> {
         if !self.contains(sym.name(), SymbolCategory::Type) {
-            return Err(SymbolTableError::TypeDoesntExist(sym.name().to_string()));
+            return Err(SymbolContextError::TypeDoesntExist(sym.name().to_string()));
         }
 
         let kv = (
             Key::new(alias, SymbolCategory::Type), 
-            SymbolTableValue::new(sym.id(), sym.typ())
+            SymbolPointer::new(sym.id(), sym.typ())
         );
 
         self.stack.first_mut().unwrap().insert(kv.0, kv.1);

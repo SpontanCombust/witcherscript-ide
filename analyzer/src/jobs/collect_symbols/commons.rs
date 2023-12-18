@@ -9,20 +9,20 @@ use crate::diagnostics::*;
 
 pub(super) trait SymbolCollectorCommons {
     fn db(&mut self) -> &mut SymbolDb;
-    fn symtab(&mut self) -> &mut SymbolTable;
-    fn db_and_symtab(&mut self) -> (&mut SymbolDb, &mut SymbolTable);
+    fn ctx(&mut self) -> &mut SymbolContext;
+    fn db_and_ctx(&mut self) -> (&mut SymbolDb, &mut SymbolContext);
     fn diagnostics(&mut self) -> &mut Vec<Diagnostic>;
     fn rope(&self) -> &Rope;
 
 
     fn check_duplicate(&mut self, sym_name: String, sym_typ: SymbolType, span: DocSpan) -> Option<String> {
-        if let Err(err) = self.symtab().can_insert(&sym_name, sym_typ) {
+        if let Err(err) = self.ctx().can_insert(&sym_name, sym_typ) {
             let precursor_type = match err {
-                SymbolTableError::GlobalVarAlreadyExists(_, v) => v.typ,
-                SymbolTableError::TypeAlreadyExists(_, v) => v.typ,
-                SymbolTableError::DataAlreadyExists(_, v) => v.typ,
-                SymbolTableError::CallableAlreadyExists(_, v) => v.typ,
-                SymbolTableError::TypeDoesntExist(_) => panic!(),
+                SymbolContextError::GlobalVarAlreadyExists(_, v) => v.typ,
+                SymbolContextError::TypeAlreadyExists(_, v) => v.typ,
+                SymbolContextError::DataAlreadyExists(_, v) => v.typ,
+                SymbolContextError::CallableAlreadyExists(_, v) => v.typ,
+                SymbolContextError::TypeDoesntExist(_) => panic!(),
             };
             
             self.diagnostics().push(Diagnostic { 
@@ -44,11 +44,11 @@ pub(super) trait SymbolCollectorCommons {
         if let Some(t) = generic_arg {
             if let Some(t_id) = self.check_type(t, None, span) {
                 let final_typ = ArrayTypeSymbol::final_type_name(t);
-                if let Some(SymbolTableValue { id, .. }) = self.symtab().get(&final_typ, SymbolCategory::Type) {
+                if let Some(SymbolPointer { id, .. }) = self.ctx().get(&final_typ, SymbolCategory::Type) {
                     Some(*id)
                 } else {
-                    let (db, symtab) = self.db_and_symtab();
-                    Some(inject_array_type(db, symtab, t_id, t))
+                    let (db, ctx) = self.db_and_ctx();
+                    Some(inject_array_type(db, ctx, t_id, t))
                 }
             } else {
                 None
@@ -68,7 +68,7 @@ pub(super) trait SymbolCollectorCommons {
         if typ == ArrayTypeSymbol::TYPE_NAME {
             self.check_array_type(generic_arg, span)
         } else {
-            if let Some(SymbolTableValue { id, .. }) = self.symtab().get(typ, SymbolCategory::Type) {
+            if let Some(SymbolPointer { id, .. }) = self.ctx().get(typ, SymbolCategory::Type) {
                 Some(*id)
             } else {
                 self.diagnostics().push(Diagnostic { 
