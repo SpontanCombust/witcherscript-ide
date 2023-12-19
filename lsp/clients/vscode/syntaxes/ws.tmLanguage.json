@@ -12,7 +12,10 @@
 			"include": "#modifiers"
 		},
 		{
-			"include": "#types"
+			"include": "#special-vars"
+		},
+		{
+			"include": "#literals"
 		},
 		{
 			"include": "#declarations"
@@ -21,19 +24,7 @@
 			"include": "#expressions"
 		},
 		{
-			"include": "#special-vars"
-		},
-		{
 			"include": "#operators"
-		},
-		{
-			"include": "#strings"
-		},
-		{
-			"include": "#names"
-		},
-		{
-			"include": "#numbers"
 		}
 	],
 	"repository": {
@@ -57,6 +48,7 @@
 					"match": "\\b(break|case|continue|delete|do|else|for|if|return|switch|while)\\b"
 				},
 				{
+					"comment": "default keyword is treated as keyword.control only in switch conditionals",
 					"match": "\\b(default)\\b\\s*:",
 					"captures": {
 						"1": {
@@ -71,6 +63,42 @@
 				{
 					"name": "constant.language.ws",
 					"match": "\\b(false|NULL|true)\\b"
+				},
+				{
+					"name": "storage.type.ws",
+					"match": "\\b(autobind|class|enum|event|function|state|struct|var)\\b"
+				}
+			]
+		},
+		"modifiers": {
+			"patterns": [
+				{
+					"name": "storage.modifier.class.ws",
+					"match": "\\b(abstract|statemachine)\\b"
+				},
+				{
+					"name": "storage.modifier.function.ws",
+					"match": "\\b(cleanup|entry|exec|final|latent|quest|reward|storyscene|timer)\\b"
+				},
+				{
+					"name": "storage.modifier.var.ws",
+					"match": "\\b(const|editable|inlined|optional|out|saved)\\b"
+				},
+				{
+					"name": "storage.modifier.access.ws",
+					"match": "\\b(private|protected|public)\\b"
+				}
+			]
+		},
+		"special-vars": {
+			"patterns": [
+				{
+					"name": "variable.language.global.ws",
+					"match": "\\b(theGame|theServer|thePlayer|theCamera|theUI|theSound|theDebug|theTimer|theInput)\\b"
+				},
+				{
+					"name": "variable.language.object.ws",
+					"match": "\\b(parent|super|this|virtual_parent)\\b"
 				}
 			]
 		},
@@ -98,27 +126,32 @@
 				}
 			]
 		},
-		"strings": {
-			"name": "string.quoted.double.ws",
-			"begin": "\"",
-			"end": "\"",
+		"literals": {
 			"patterns": [
 				{
-					"name": "constant.character.escape.ws",
-					"match": "\\\\\""
+					"comment": "String literal",
+					"name": "string.quoted.double.ws",
+					"begin": "\"",
+					"end": "\"",
+					"patterns": [
+						{
+							"name": "constant.character.escape.ws",
+							"match": "\\\\\""
+						}
+					]
+				},
+				{
+					"comment": "CName literal",
+					"name": "string.quoted.single.ws",
+					"begin": "'",
+					"end": "'"
+				},
+				{
+					"comment": "Numbers",
+					"name": "constant.numeric.ws",
+					"match": "\\b[0-9]+(\\.[0-9]*f?)?\\b"
 				}
 			]
-		},
-		"names": {
-			"name": "string.quoted.single.ws",
-			"begin": "'",
-			"end": "'"
-		},
-		"numbers": {
-			"patterns": [{
-				"name": "constant.numeric.ws",
-				"match": "\\b[0-9]+(\\.[0-9]*f?)?\\b"
-			}]
 		},
 		"declarations": {
 			"patterns": [
@@ -175,9 +208,12 @@
 					]
 				},
 				{
-					"begin": "(?<=(?:function|event))\\s+(\\w+)\\s*",
+					"begin": "(?<=(?:function|event))\\s*(/\\*[^/]*\\*/)?\\s*(\\w+)\\s*",
 					"beginCaptures": {
 						"1": {
+							"name": "comment.block.ws"
+						},
+						"2": {
 							"name": "support.function.ws"
 						}
 					},
@@ -192,7 +228,13 @@
 					},
 					"patterns": [
 						{
-							"begin": "(?!\\boptional\\b)(?!\\bout\\b)(\\b\\w+\\b)",
+							"include": "#modifiers"
+						},
+						{
+							"include": "#comments"
+						},
+						{
+							"begin": "(\\b\\w+\\b)",
 							"beginCaptures": {
 								"1": {
 									"name": "variable.parameter.ws"
@@ -216,13 +258,6 @@
 									"include": "#comments"
 								}
 							]
-						},
-						{
-							"name": "storage.modifier.var.ws",
-							"match": "\\b(optional|out)\\b"
-						},
-						{
-							"include": "#comments"
 						}
 					]
 				},
@@ -260,50 +295,49 @@
 		"expressions": {
 			"patterns": [
 				{
+					"comment": "instantiation",
 					"match": "(?<=new)\\s+(\\w+)",
 					"captures": {
 						"1": {
 							"name": "support.type.ws"
 						}
 					}
+				},
+				{
+					"comment": "function call",
+					"name": "support.function.ws",
+					"match": "\\b(?=\\w+\\s*\\()\\w+\\b"
+				},
+				{
+					"comment": "definitely, probably variables",
+					"name": "support.variable.ws",
+					"match": "\\b[a-z_]\\w*\\b"
+				},
+				{
+					"comment": "likely constants, only words that have more than one character",
+					"name": "variable.other.constant.ws",
+					"match": "\\b[A-Z0-9_]{2,}\\b"
+				},
+				{
+					"comment": "type cast, makes sure to check if it's a parenthesis after if, switch or while",
+					"match": "(?=\\(\\s*\\b\\w+\\b\\s*\\)\\s*\\(?\\s*\\w+)(?<!if\\s*)(?<!switch\\s*)(?<!while\\s*)\\(\\s*\\b(\\w+)\\b\\s*\\)",
+					"captures": {
+						"1": {
+							"name": "support.type.ws"
+						}
+					}
+				},
+				{
+					"comment": "probably enum members",
+					"name": "variable.other.enummember.ws",
+					"match": "\\b[A-Z]+_\\w+\\b"
+				},
+				{
+					"comment": "treat the rest as variables",
+					"name": "support.variable.ws",
+					"match": "\\b\\w+\\b"
 				}
 			]
-		},
-		"modifiers": {
-			"patterns": [
-				{
-					"name": "storage.modifier.class.ws",
-					"match": "\\b(abstract|statemachine)\\b"
-				},
-				{
-					"name": "storage.modifier.function.ws",
-					"match": "\\b(cleanup|entry|exec|final|latent|quest|reward|storyscene|timer)\\b"
-				},
-				{
-					"name": "storage.modifier.var.ws",
-					"match": "\\b(const|editable|inlined|optional|out|saved)\\b"
-				},
-				{
-					"name": "storage.modifier.access.ws",
-					"match": "\\b(private|protected|public)\\b"
-				}
-			]
-		},
-		"special-vars": {
-			"patterns": [
-				{
-					"name": "variable.language.global.ws",
-					"match": "\\b(theGame|theServer|thePlayer|theCamera|theUI|theSound|theDebug|theTimer|theInput)\\b"
-				},
-				{
-					"name": "variable.language.object.ws",
-					"match": "\\b(parent|super|this|virtual_parent)\\b"
-				}
-			]
-		},
-		"types": {
-			"name": "storage.type.ws",
-			"match": "\\b(autobind|class|enum|event|function|state|struct|var)\\b"
 		}
 	},
 	"scopeName": "source.ws"
