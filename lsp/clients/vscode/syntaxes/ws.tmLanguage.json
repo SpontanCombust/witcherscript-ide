@@ -267,28 +267,42 @@
 					"endCaptures": {
 						"1": {
 							"name": "support.type.ws"
-						},
-						"2": {
-							"name": "support.type.ws"
 						}
 					},
 					"patterns": [
 						{
-							"name": "variable.name.ws",
-							"match": "\\b\\w+\\b"
+							"include": "#comments"
 						},
 						{
-							"include": "#comments"
+							"comment": "constants",
+							"name": "variable.other.constant.ws",
+							"match": "\\b[A-Z0-9_]{2,}\\b"
+						},
+						{
+							"comment": "other vars",
+							"name": "variable.name.ws",
+							"match": "\\b\\w+\\b"
 						}
 					]
 				},
 				{
-					"match": "(?<=(?:hint|default)\\s+)(\\w+)",
-					"captures": {
-						"1": {
-							"name": "variable.name.ws"
+					"begin": "(?<=(?:hint|default)\\s+)",
+					"end": "=",
+					"patterns": [
+						{
+							"include": "#comments"
+						},
+						{
+							"comment": "constants",
+							"name": "variable.other.constant.ws",
+							"match": "\\b[A-Z0-9_]{2,}\\b"
+						},
+						{
+							"comment": "other vars",
+							"name": "variable.name.ws",
+							"match": "\\b\\w+\\b"
 						}
-					}
+					]
 				}
 			]
 		},
@@ -328,9 +342,9 @@
 					"match": "\\b[a-z_]\\w*\\b"
 				},
 				{
-					"comment": "likely constants, only words that have more than one character",
+					"comment": "very likely constant if it's a all upper-case field",
 					"name": "variable.other.constant.ws",
-					"match": "\\b[A-Z0-9_]{2,}\\b"
+					"match": "(?<=\\.\\s*)\\b[A-Z0-9_]{2,}\\b"
 				},
 				{
 					"comment": "type cast, makes sure to check if it's a parenthesis after if, switch or while",
