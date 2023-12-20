@@ -295,7 +295,7 @@
 						{
 							"comment": "constants",
 							"name": "variable.other.constant.ws",
-							"match": "\\b[A-Z0-9_]{2,}\\b"
+							"match": "\\b[A-Z0-9_]{3,}\\b"
 						},
 						{
 							"comment": "other vars",
@@ -344,7 +344,7 @@
 				{
 					"comment": "very likely constant if it's a all upper-case field",
 					"name": "variable.other.constant.ws",
-					"match": "(?<=\\.\\s*)\\b[A-Z0-9_]{2,}\\b"
+					"match": "\\b[A-Z0-9_]{3,}\\b"
 				},
 				{
 					"comment": "type cast, makes sure to check if it's a parenthesis after if, switch or while",
