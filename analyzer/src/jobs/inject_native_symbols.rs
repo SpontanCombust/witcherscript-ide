@@ -56,7 +56,8 @@ pub fn inject_globals(symtab: &mut SymbolTable, ctx: &mut SymbolContext) {
         ("theSound", "CScriptSoundSystem"),
         ("theDebug", "CDebugAttributesManager"),
         ("theTimer", "CTimerScriptKeyword"),
-        ("theInput", "CInputManager")
+        ("theInput", "CInputManager"),
+        ("theTelemetry", "CR4TelemetryScriptProxy")
 
     ].into_iter()
     .for_each(|(var_name, class_name)| { 

@@ -97,7 +97,7 @@
 			"patterns": [
 				{
 					"name": "variable.language.global.ws",
-					"match": "\\b(theGame|theServer|thePlayer|theCamera|theUI|theSound|theDebug|theTimer|theInput)\\b"
+					"match": "\\b(theGame|theServer|thePlayer|theCamera|theUI|theSound|theDebug|theTimer|theInput|theTelemetry)\\b"
 				},
 				{
 					"name": "variable.language.object.ws",
