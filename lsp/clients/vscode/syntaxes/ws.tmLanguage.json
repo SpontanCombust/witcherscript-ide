@@ -21,6 +21,9 @@
 			"include": "#declarations"
 		},
 		{
+			"include": "#type-arg"
+		},
+		{
 			"include": "#expressions"
 		},
 		{
@@ -217,12 +220,9 @@
 							"name": "support.function.ws"
 						}
 					},
-					"end": "\\)(\\s*:\\s*(\\w+)(\\s*<\\s*(\\w+)\\s*>\\s*)?)?",
+					"end": "\\)(?:\\s*:\\s*(\\w+))?",
 					"endCaptures": {
-						"2": {
-							"name": "support.type.ws"
-						},
-						"4": {
+						"1": {
 							"name": "support.type.ws"
 						}
 					},
@@ -234,18 +234,15 @@
 							"include": "#comments"
 						},
 						{
-							"begin": "(\\b\\w+\\b)",
+							"begin": "(?=\\w+\\s*[:,])(\\b\\w+\\b)",
 							"beginCaptures": {
 								"1": {
 									"name": "variable.parameter.ws"
 								}
 							},
-							"end": "\\s*:\\s*(\\w+)(?:\\s*<\\s*(\\w+)\\s*>\\s*)?",
+							"end": "\\s*:\\s*(\\w+)",
 							"endCaptures": {
 								"1": {
-									"name": "support.type.ws"
-								},
-								"2": {
 									"name": "support.type.ws"
 								}
 							},
@@ -258,12 +255,15 @@
 									"include": "#comments"
 								}
 							]
+						},
+						{
+							"include": "#type-arg"
 						}
 					]
 				},
 				{
 					"begin": "(?<=(?:var|autobind)\\s+)",
-					"end": "\\s*:\\s*(\\w+)(?:\\s*<\\s*(\\w+)\\s*>\\s*)?",
+					"end": "\\s*:\\s*(\\w+)",
 					"endCaptures": {
 						"1": {
 							"name": "support.type.ws"
@@ -291,6 +291,20 @@
 					}
 				}
 			]
+		},
+		"type-arg": {
+			"comment": "Any identifier inside type arg parenthesis <> is a type",
+			"begin": "(?<=:\\s*\\w+\\s*)<",
+			"patterns": [
+				{
+					"include": "#comments"
+				},
+				{
+					"name": "support.type.ws",
+					"match": "\\w+"
+				}
+			],
+			"end": ">"
 		},
 		"expressions": {
 			"patterns": [
