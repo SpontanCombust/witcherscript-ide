@@ -69,7 +69,12 @@ impl ClassBlockNode<'_> {
 
 impl Debug for ClassBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ClassBlock{:?}", self.statements().collect::<Vec<_>>())
+        let stmts = self.statements().collect::<Vec<_>>();
+        if f.alternate() {
+            write!(f, "ClassBlock{:#?}", stmts)
+        } else {
+            write!(f, "ClassBlock{:?}", stmts)
+        }
     }
 }
 
@@ -104,7 +109,11 @@ impl ClassStatementNode<'_> {
 
 impl Debug for ClassStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }
 
@@ -194,6 +203,10 @@ impl AutobindValueNode<'_> {
 
 impl Debug for AutobindValueNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 } 

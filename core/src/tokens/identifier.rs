@@ -28,7 +28,7 @@ impl IdentifierNode<'_> {
 
 impl Debug for IdentifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Identifier {:?}", self.span())
+        write!(f, "Identifier {:?}", self.span()) //TODO print range for all nodes
     }
 }
 

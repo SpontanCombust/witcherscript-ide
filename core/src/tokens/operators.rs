@@ -26,7 +26,11 @@ impl UnaryOperatorNode<'_> {
 
 impl Debug for UnaryOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }
 
@@ -78,7 +82,11 @@ impl BinaryOperatorNode<'_> {
 
 impl Debug for BinaryOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }
 
@@ -112,7 +120,11 @@ impl AssignmentOperatorNode<'_> {
 
 impl Debug for AssignmentOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }
 

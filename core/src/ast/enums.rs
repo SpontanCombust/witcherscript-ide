@@ -59,7 +59,12 @@ impl EnumBlockNode<'_> {
 
 impl Debug for EnumBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "EnumBlock{:?}", self.members().collect::<Vec<_>>())
+        let members = self.members().collect::<Vec<_>>();
+        if f.alternate() {
+            write!(f, "EnumBlock{:#?}", members)
+        } else {
+            write!(f, "EnumBlock{:?}", members)
+        }
     }
 }
 

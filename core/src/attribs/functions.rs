@@ -33,7 +33,11 @@ impl FunctionParameterSpecifierNode<'_> {
 
 impl Debug for FunctionParameterSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }
 
@@ -69,7 +73,11 @@ impl GlobalFunctionSpecifierNode<'_> {
 
 impl Debug for GlobalFunctionSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }
 
@@ -107,7 +115,11 @@ impl GlobalFunctionFlavourNode<'_> {
 
 impl Debug for GlobalFunctionFlavourNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }
 
@@ -149,7 +161,11 @@ impl MemberFunctionSpecifierNode<'_> {
 
 impl Debug for MemberFunctionSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }
 
@@ -185,6 +201,10 @@ impl MemberFunctionFlavourNode<'_> {
 
 impl Debug for MemberFunctionFlavourNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }

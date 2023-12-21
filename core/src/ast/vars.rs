@@ -16,7 +16,7 @@ impl TypeAnnotationNode<'_> {
     pub fn type_name(&self) -> IdentifierNode {
         self.field_child("type_name").unwrap().into()
     }
-
+    //TODO should be also TypeAnnotationNode
     pub fn generic_arg(&self) -> Option<IdentifierNode> {
         self.field_child("generic_arg").map(|n| n.into())
     }

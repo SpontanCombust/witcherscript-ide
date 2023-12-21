@@ -64,7 +64,12 @@ impl StructBlockNode<'_> {
 
 impl Debug for StructBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "StructBlock{:?}", self.statements().collect::<Vec<_>>())
+        let stmts = self.statements().collect::<Vec<_>>();
+        if f.alternate() {
+            write!(f, "StructBlock{:#?}", stmts)
+        } else {
+            write!(f, "StructBlock{:?}", stmts)
+        }
     }
 }
 
@@ -94,7 +99,11 @@ impl StructStatementNode<'_> {
 
 impl Debug for StructStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }
 

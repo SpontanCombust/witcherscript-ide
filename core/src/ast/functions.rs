@@ -252,7 +252,11 @@ impl FunctionStatementNode<'_> {
 
 impl Debug for FunctionStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }
 
@@ -294,7 +298,12 @@ impl FunctionBlockNode<'_> {
 
 impl Debug for FunctionBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "FunctionBlock{:?}", self.statements().collect::<Vec<_>>())
+        let stmts = self.statements().collect::<Vec<_>>();
+        if f.alternate() {
+            write!(f, "FunctionBlock{:#?}", stmts)
+        } else {
+            write!(f, "FunctionBlock{:?}", stmts)
+        }
     }
 }
 

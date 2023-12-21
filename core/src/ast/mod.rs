@@ -58,7 +58,11 @@ impl ScriptStatementNode<'_> {
 
 impl Debug for ScriptStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.value())
+        if f.alternate() {
+            write!(f, "{:#?}", self.value())
+        } else {
+            write!(f, "{:?}", self.value())
+        }
     }
 }
 
@@ -90,7 +94,12 @@ impl ScriptNode<'_> {
 
 impl Debug for ScriptNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Script{:?}", &self.statements().collect::<Vec<_>>())
+        let stmts = self.statements().collect::<Vec<_>>();
+        if f.alternate() {
+            write!(f, "Script{:#?}", stmts)
+        } else {
+            write!(f, "Script{:?}", stmts)
+        }
     }
 }
 
