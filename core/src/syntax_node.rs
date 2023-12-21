@@ -1,7 +1,7 @@
+use lsp_types::{Range, Position};
 use ropey::Rope;
 use tree_sitter::Node;
 use std::{marker::PhantomData, fmt::Debug};
-use super::DocSpan;
 
 /// Represents a WitcherScript syntax tree node
 /// 
@@ -75,8 +75,12 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
 
 
     /// Returns the span at which this node is located in the text document
-    pub fn span(&self) -> DocSpan {
-        self.tree_node.range().into()
+    pub fn span(&self) -> Range {
+        let r = self.tree_node.range();
+        Range::new(
+            Position::new(r.start_point.row as u32, r.start_point.column as u32),
+            Position::new(r.end_point.row as u32, r.end_point.column as u32)
+        )
     }
 
     pub fn is_missing(&self) -> bool {

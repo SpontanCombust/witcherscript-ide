@@ -1,10 +1,10 @@
-use witcherscript::DocSpan;
+use lsp_types::Range;
 use super::{ErrorDiagnostic, WarningDiagnostic, InfoDiagnostic};
 
 
 #[derive(Debug, Clone)]
 pub struct Diagnostic {
-    pub span: DocSpan,
+    pub span: Range,
     pub body: DiagnosticBody
 }
 

@@ -1,4 +1,5 @@
-use witcherscript::{ast::*, DocSpan};
+use lsp_types::Range;
+use witcherscript::ast::*;
 use crate::diagnostics::{Diagnostic, ErrorDiagnostic};
 
 
@@ -7,7 +8,7 @@ pub struct SyntaxErrorVisitor {
 }
 
 impl SyntaxErrorVisitor {
-    fn missing_element(&mut self, span: DocSpan, what: &str) {
+    fn missing_element(&mut self, span: Range, what: &str) {
         self.diagnostics.push(Diagnostic { 
             span, 
             body: ErrorDiagnostic::MissingElement { what: what.to_string() }.into()

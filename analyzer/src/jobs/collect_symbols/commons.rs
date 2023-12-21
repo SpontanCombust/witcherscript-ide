@@ -1,6 +1,7 @@
+use lsp_types::Range;
 use ropey::Rope;
 use uuid::Uuid;
-use witcherscript::{DocSpan, ast::TypeAnnotationNode};
+use witcherscript::ast::TypeAnnotationNode;
 use crate::model::collections::*;
 use crate::model::symbols::{SymbolType, ArrayTypeSymbol, SymbolCategory, ERROR_SYMBOL_ID};
 use crate::jobs::inject_native_symbols::inject_array_type;
@@ -15,7 +16,7 @@ pub(super) trait SymbolCollectorCommons {
     fn rope(&self) -> &Rope;
 
 
-    fn check_duplicate(&mut self, sym_name: String, sym_typ: SymbolType, span: DocSpan) -> Option<String> {
+    fn check_duplicate(&mut self, sym_name: String, sym_typ: SymbolType, span: Range) -> Option<String> {
         if let Err(err) = self.ctx().can_insert(&sym_name, sym_typ) {
             let precursor_type = match err {
                 SymbolContextError::GlobalVarAlreadyExists(_, v) => v.typ,
@@ -40,7 +41,7 @@ pub(super) trait SymbolCollectorCommons {
         }
     }
 
-    fn check_array_type(&mut self, generic_arg: Option<&str>, span: DocSpan) -> Option<Uuid> {
+    fn check_array_type(&mut self, generic_arg: Option<&str>, span: Range) -> Option<Uuid> {
         if let Some(t) = generic_arg {
             if let Some(t_id) = self.check_type(t, None, span) {
                 let final_typ = ArrayTypeSymbol::final_type_name(t);
@@ -64,7 +65,7 @@ pub(super) trait SymbolCollectorCommons {
         }
     }
 
-    fn check_type(&mut self, typ: &str, generic_arg: Option<&str>, span: DocSpan) -> Option<Uuid> {
+    fn check_type(&mut self, typ: &str, generic_arg: Option<&str>, span: Range) -> Option<Uuid> {
         if typ == ArrayTypeSymbol::TYPE_NAME {
             self.check_array_type(generic_arg, span)
         } else {
