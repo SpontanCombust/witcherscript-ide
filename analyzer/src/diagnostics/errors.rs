@@ -13,7 +13,8 @@ pub enum ErrorDiagnostic {
         // precursor_span: DocSpan, //TODO symbols storing their spans
     },
     TypeNotFound,
-    MissingGenericArg,
+    MissingTypeArg,
+    UnnecessaryTypeArg,
     RepeatedSpecifier,
     MultipleAccessModifiers
 }

@@ -2,6 +2,7 @@ use lsp_types::Range;
 use ropey::Rope;
 use uuid::Uuid;
 use witcherscript::ast::TypeAnnotationNode;
+use witcherscript::tokens::IdentifierNode;
 use crate::model::collections::*;
 use crate::model::symbols::{SymbolType, ArrayTypeSymbol, SymbolCategory, ERROR_SYMBOL_ID};
 use crate::jobs::inject_native_symbols::inject_array_type;
@@ -41,58 +42,60 @@ pub(super) trait SymbolCollectorCommons {
         }
     }
 
-    fn check_array_type(&mut self, generic_arg: Option<&str>, span: Range) -> Option<Uuid> {
-        if let Some(t) = generic_arg {
-            if let Some(t_id) = self.check_type(t, None, span) {
-                let final_typ = ArrayTypeSymbol::final_type_name(t);
-                if let Some(SymbolPointer { id, .. }) = self.ctx().get(&final_typ, SymbolCategory::Type) {
-                    Some(*id)
-                } else {
-                    let (symtab, ctx) = self.symtab_and_ctx();
-                    Some(inject_array_type(symtab, ctx, t_id, t))
-                }
-            } else {
-                None
-            }
-
-        } else {
-            self.diagnostics().push(Diagnostic { 
-                span, 
-                body: ErrorDiagnostic::MissingGenericArg.into()
-            });
-    
-            None
-        }
-    }
-
-    fn check_type(&mut self, typ: &str, generic_arg: Option<&str>, span: Range) -> Option<Uuid> {
-        if typ == ArrayTypeSymbol::TYPE_NAME {
-            self.check_array_type(generic_arg, span)
-        } else {
-            if let Some(SymbolPointer { id, .. }) = self.ctx().get(typ, SymbolCategory::Type) {
-                Some(*id)
-            } else {
+    /// Returns type id and type name, if it's invalid returns ERROR_SYMBOL_ID and empty string
+    fn check_type_from_identifier(&mut self, n: IdentifierNode) -> (Uuid, String) {
+        if let Some(type_name) = n.value(&self.rope()) {
+            if type_name.as_str() == ArrayTypeSymbol::TYPE_NAME {
                 self.diagnostics().push(Diagnostic { 
-                    span, 
-                    body: ErrorDiagnostic::TypeNotFound.into()
+                    span: Range::new(n.span().end, n.span().end), 
+                    body: ErrorDiagnostic::MissingTypeArg.into()
                 });
-                None
+            } else {
+                if let Some(SymbolPointer { id, .. }) = self.ctx().get(&type_name, SymbolCategory::Type) {
+                    return (*id, type_name.into());
+                } else {
+                    self.diagnostics().push(Diagnostic { 
+                        span: n.span(), 
+                        body: ErrorDiagnostic::TypeNotFound.into()
+                    });
+                }
             }
         }
+
+        (ERROR_SYMBOL_ID, String::new())
     }
 
+    /// Returns type id and full type name, if it's invalid returns ERROR_SYMBOL_ID and empty string
+    fn check_type_from_type_annot(&mut self, n: TypeAnnotationNode) -> (Uuid, String) {
+        if let Some(type_arg_node) = n.type_arg() {
+            if let Some(type_name) = n.type_name().value(&self.rope()) {
+                if type_name.as_str() == ArrayTypeSymbol::TYPE_NAME {
+                    let (type_arg_id, type_arg_name) = self.check_type_from_type_annot(type_arg_node);
+                    if type_arg_id != ERROR_SYMBOL_ID {
+                        let final_type_name = ArrayTypeSymbol::final_type_name(&type_arg_name);
+                        // if the type has already been created before, retrieve its ID
+                        // otherwise inject the new type into symtab and get the new ID
+                        let type_id = self.ctx().get(&final_type_name, SymbolCategory::Type).map(|p| p.id).unwrap_or_else(|| {
+                            let (symtab, ctx) = self.symtab_and_ctx();
+                            inject_array_type(symtab, ctx, type_arg_id, &type_arg_name)
+                        });
 
-    fn get_type_from_node(&mut self, n: TypeAnnotationNode) -> Uuid {
-        let mut type_id: Uuid = ERROR_SYMBOL_ID;
-        if let Some(primary_type) = n.type_name().value(self.rope()) {
-            let generic_arg = n.generic_arg().and_then(|g| g.value(self.rope()));
-            let generic_arg_ref = generic_arg.as_ref().map(|s| s.as_str());
+                        return (type_id, final_type_name);
+                    }   
+                } else {
+                    // since only array type takes type argument, all other uses of type arg are invalid
+                    self.diagnostics().push(Diagnostic { 
+                        span: n.type_arg().unwrap().span(), 
+                        body: ErrorDiagnostic::UnnecessaryTypeArg.into()
+                    });
 
-            if let Some(id) = self.check_type(&primary_type, generic_arg_ref, n.span()) {
-                type_id = id;
+                    return self.check_type_from_identifier(n.type_name());
+                }
             }
-        }
 
-        type_id
+            (ERROR_SYMBOL_ID, String::new())
+        } else {
+            self.check_type_from_identifier(n.type_name())
+        }   
     }
 }

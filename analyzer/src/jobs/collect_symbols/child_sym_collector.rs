@@ -65,11 +65,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                     }
                 });
 
-                if let Some(base_node) = n.base() {
-                    if let Some(id) = base_node.value(&self.rope).and_then(|base| self.check_type(&base, None, base_node.span())) {
-                        sym.data.base_id = Some(id);
-                    }
-                }
+                sym.data.base_id = n.base().map(|base| self.check_type_from_identifier(base).0);
 
                 self.current_class = Some(sym);
                 self.ctx.push_scope();
@@ -107,15 +103,9 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                     }
                 });
 
-                if let Some(base_node) = n.base() {
-                    if let Some(id) = base_node.value(&self.rope).and_then(|base| self.check_type(&base, None, base_node.span())) {
-                        sym.data.base_id = Some(id);
-                    }
-                }
+                sym.data.base_id = n.base().map(|base| self.check_type_from_identifier(base).0);
 
-                if let Some(id) = n.parent().value(&self.rope).and_then(|parent| self.check_type(&parent, None, n.parent().span())) {
-                    sym.data.parent_id = id;
-                }
+                sym.data.parent_id = self.check_type_from_identifier(n.parent()).0;
 
                 self.current_state = Some(sym);
                 self.ctx.push_scope();
@@ -218,8 +208,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 }
             }
 
-
-            let type_id = self.get_type_from_node(n.var_type());
+            let type_id = self.check_type_from_type_annot(n.var_type()).0;
 
 
             syms.into_iter().for_each(|mut sym| {
@@ -270,7 +259,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
             }
 
 
-            let type_id = self.get_type_from_node(n.autobind_type());
+            let type_id = self.check_type_from_type_annot(n.autobind_type()).0;
 
 
             sym.data.specifiers = specifiers;
@@ -306,7 +295,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
 
 
                 if let Some(ret_typn) = n.return_type() {
-                    sym.data.return_type_id = self.get_type_from_node(ret_typn);
+                    sym.data.return_type_id = self.check_type_from_type_annot(ret_typn).0;
                 } else {
                     sym.data.return_type_id = self.ctx.get("void", SymbolCategory::Type).unwrap().id;
                 }
@@ -364,7 +353,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
 
 
             if let Some(ret_typn) = n.return_type() {
-                sym.data.return_type_id = self.get_type_from_node(ret_typn);
+                sym.data.return_type_id = self.check_type_from_type_annot(ret_typn).0;
             } else {
                 sym.data.return_type_id = self.ctx.get("void", SymbolCategory::Type).unwrap().id;
             }
@@ -460,7 +449,7 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
             }
 
 
-            let type_id = self.get_type_from_node(n.param_type());
+            let type_id = self.check_type_from_type_annot(n.param_type()).0;
 
 
             syms.into_iter().for_each(|mut sym| {

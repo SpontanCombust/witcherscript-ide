@@ -16,9 +16,9 @@ impl TypeAnnotationNode<'_> {
     pub fn type_name(&self) -> IdentifierNode {
         self.field_child("type_name").unwrap().into()
     }
-    //TODO should be also TypeAnnotationNode
-    pub fn generic_arg(&self) -> Option<IdentifierNode> {
-        self.field_child("generic_arg").map(|n| n.into())
+
+    pub fn type_arg(&self) -> Option<TypeAnnotationNode> {
+        self.field_child("type_arg").map(|n| n.into())
     }
 }
 
@@ -26,7 +26,7 @@ impl Debug for TypeAnnotationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TypeAnnotation")
             .field("type_name", &self.type_name())
-            .field("generic_arg", &self.generic_arg())
+            .field("type_arg", &self.type_arg())
             .finish()
     }
 }
