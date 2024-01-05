@@ -1,26 +1,30 @@
 use std::collections::HashSet;
-use uuid::Uuid;
 use witcherscript::attribs::FunctionParameterSpecifier;
-use super::{SymbolType, ERROR_SYMBOL_ID, SymbolData, Symbol};
+use crate::model::symbol_path::SymbolPath;
+use super::*;
 
 
 #[derive(Debug, Clone)]
-pub struct FunctionParameterSymbolData {
+pub struct FunctionParameterSymbol {
+    path: DataSymbolPath,
     pub specifiers: HashSet<FunctionParameterSpecifier>,
-    pub type_id: Uuid
+    pub type_path: SymbolPath,
 }
 
-impl Default for FunctionParameterSymbolData {
-    fn default() -> Self {
-        Self { 
-            specifiers: HashSet::new(),
-            type_id: ERROR_SYMBOL_ID,
-        }
+impl Symbol for FunctionParameterSymbol {
+    const SYMBOL_TYPE: SymbolType = SymbolType::Parameter;
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
     }
 }
 
-impl SymbolData for FunctionParameterSymbolData {
-    const SYMBOL_TYPE: SymbolType = SymbolType::Parameter;
+impl FunctionParameterSymbol {
+    pub fn new(path: DataSymbolPath) -> Self {
+        Self {
+            path,
+            specifiers: HashSet::new(),
+            type_path: SymbolPath::empty()
+        }
+    }
 }
-
-pub type FunctionParameterSymbol = Symbol<FunctionParameterSymbolData>;

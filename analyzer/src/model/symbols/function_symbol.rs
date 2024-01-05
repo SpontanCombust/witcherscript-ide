@@ -1,97 +1,84 @@
 use std::collections::HashSet;
-use uuid::Uuid;
 use witcherscript::attribs::*;
-use super::{FunctionParameterSymbol, Symbol, SymbolType, ERROR_SYMBOL_ID, SymbolData};
+use crate::model::symbol_path::SymbolPath;
+use super::*;
 
 
 #[derive(Debug, Clone)]
-pub struct GlobalFunctionSymbolData {
+pub struct GlobalFunctionSymbol {
+    path: GlobalCallableSymbolPath,
     pub specifiers: HashSet<GlobalFunctionSpecifier>,
     pub flavour: Option<GlobalFunctionFlavour>,
-    pub param_ids: Vec<Uuid>,
-    pub return_type_id: Uuid
+    pub return_type_path: SymbolPath
 }
 
-impl Default for GlobalFunctionSymbolData {
-    fn default() -> Self {
-        Self { 
-            specifiers: HashSet::new(), 
-            flavour: None, 
-            param_ids: Vec::new(), 
-            return_type_id: ERROR_SYMBOL_ID
-        }
+impl Symbol for GlobalFunctionSymbol {
+    const SYMBOL_TYPE: SymbolType = SymbolType::GlobalFunction;
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
     }
 }
 
-impl SymbolData for GlobalFunctionSymbolData {
-    const SYMBOL_TYPE: SymbolType = SymbolType::GlobalFunction;
-}
-
-pub type GlobalFunctionSymbol = Symbol<GlobalFunctionSymbolData>;
-
 impl GlobalFunctionSymbol {
-    #[must_use]
-    pub fn add_param(&mut self, name: &str) -> FunctionParameterSymbol {
-        let s = FunctionParameterSymbol::new_with_default(name, self.id);
-        self.data.param_ids.push(s.id);
-        s
+    pub fn new(path: GlobalCallableSymbolPath) -> Self {
+        Self {
+            path,
+            specifiers: HashSet::new(),
+            flavour: None,
+            return_type_path: SymbolPath::empty()
+        }
     }
 }
 
 
 
 #[derive(Debug, Clone)]
-pub struct MemberFunctionSymbolData {
+pub struct MemberFunctionSymbol {
+    path: MemberCallableSymbolPath,
     pub specifiers: HashSet<MemberFunctionSpecifier>,
     pub flavour: Option<MemberFunctionFlavour>,
-    pub param_ids: Vec<Uuid>,
-    pub return_type_id: Uuid
+    pub return_type_path: SymbolPath
 }
 
-impl Default for MemberFunctionSymbolData {
-    fn default() -> Self {
-        Self { 
-            specifiers: HashSet::new(), 
-            flavour: None, 
-            param_ids: Vec::new(), 
-            return_type_id: ERROR_SYMBOL_ID
+impl Symbol for MemberFunctionSymbol {
+    const SYMBOL_TYPE: SymbolType = SymbolType::MemberFunction;
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
+
+impl MemberFunctionSymbol {
+    pub fn new(path: MemberCallableSymbolPath) -> Self {
+        Self {
+            path,
+            specifiers: HashSet::new(),
+            flavour: None,
+            return_type_path: SymbolPath::empty()
         }
     }
 }
 
-impl SymbolData for MemberFunctionSymbolData {
-    const SYMBOL_TYPE: SymbolType = SymbolType::MemberFunction;
+
+
+#[derive(Debug, Clone)]
+pub struct EventSymbol {
+    path: MemberCallableSymbolPath
 }
 
-pub type MemberFunctionSymbol = Symbol<MemberFunctionSymbolData>;
+impl Symbol for EventSymbol {
+    const SYMBOL_TYPE: SymbolType = SymbolType::Event;
 
-impl MemberFunctionSymbol {
-    #[must_use]
-    pub fn add_param(&mut self, name: &str) -> FunctionParameterSymbol {
-        let s = FunctionParameterSymbol::new_with_default(name, self.id);
-        self.data.param_ids.push(s.id);
-        s
+    fn path(&self) -> &SymbolPath {
+        &self.path
     }
 }
 
-
-
-#[derive(Debug, Clone, Default)]
-pub struct EventSymbolData {
-    pub param_ids: Vec<Uuid>
-}
-
-impl SymbolData for EventSymbolData {
-    const SYMBOL_TYPE: SymbolType = SymbolType::Event;
-}
-
-pub type EventSymbol = Symbol<EventSymbolData>;
-
 impl EventSymbol {
-    #[must_use]
-    pub fn add_param(&mut self, name: &str) -> FunctionParameterSymbol {
-        let s = FunctionParameterSymbol::new_with_default(name, self.id);
-        self.data.param_ids.push(s.id);
-        s
+    pub fn new(path: MemberCallableSymbolPath) -> Self {
+        Self {
+            path
+        }
     }
 }

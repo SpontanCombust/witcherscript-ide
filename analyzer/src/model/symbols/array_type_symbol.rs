@@ -1,155 +1,136 @@
-use uuid::Uuid;
-use super::{MemberFunctionSymbol, Symbol, SymbolType, NATIVE_SYMBOL_SCRIPT_ID, FunctionParameterSymbol, SymbolData};
+use crate::model::symbol_path::SymbolPath;
+use super::{MemberFunctionSymbol, Symbol, SymbolType, FunctionParameterSymbol, ArrayTypeSymbolPath, MemberCallableSymbolPath, DataSymbolPath};
 
 
-#[derive(Debug, Clone, Default)]
-pub struct ArrayTypeSymbolData {
-    data_type_id: Uuid,
-    func_ids: Vec<Uuid>
+//TODO for later: remember to remove array type symbol when type from type arg is changed 
+#[derive(Debug, Clone)]
+pub struct ArrayTypeSymbol {
+    path: ArrayTypeSymbolPath
 }
 
-impl ArrayTypeSymbolData {
-    pub fn data_type_id(&self) -> Uuid {
-        self.data_type_id
-    }
+pub type ArrayTypeSymbolChild = MemberFunctionSymbol;
 
-    pub fn func_ids(&self) -> &[Uuid] {
-        self.func_ids.as_ref()
-    }
-}
-
-impl SymbolData for ArrayTypeSymbolData {
+impl Symbol for ArrayTypeSymbol {
     const SYMBOL_TYPE: SymbolType = SymbolType::Array;
-}
 
-pub type ArrayTypeSymbol = Symbol<ArrayTypeSymbolData>;
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
 
 impl ArrayTypeSymbol {
     pub const TYPE_NAME: &str = "array";
 
-    pub fn final_type_name(data_type_name: &str) -> String {
-        format!("array<{}>", data_type_name)
+    pub fn new(path: ArrayTypeSymbolPath) -> Self {
+        Self {
+            path
+        }
     }
 
-    pub fn new_with_type(data_type_id: Uuid, data_type_name: &str, void_id: Uuid, int_id: Uuid, bool_id: Uuid) -> (Self, Vec<MemberFunctionSymbol>, Vec<FunctionParameterSymbol>) {
-        let mut arr = Self::new(
-            &Self::final_type_name(data_type_name),
-            NATIVE_SYMBOL_SCRIPT_ID, 
-            ArrayTypeSymbolData { 
-                data_type_id, 
-                func_ids: Vec::new()
-            }
-        );
-        let (funcs, params) = arr.add_functions(void_id, int_id, bool_id);
-        (arr, funcs, params)
+    pub fn data_type_path(&self) -> &SymbolPath {
+        &self.path.type_arg_path
     }
 
-    fn new_func(&mut self, name: &str) -> MemberFunctionSymbol {
-        let f = MemberFunctionSymbol::new_with_default(name, self.id);
-        self.data.func_ids.push(f.id);
-        f
-    }
-
-    fn add_functions(&mut self, void_id: Uuid, int_id: Uuid, bool_id: Uuid) -> (Vec<MemberFunctionSymbol>, Vec<FunctionParameterSymbol>) {
+    pub fn make_functions(&mut self, void_path: &SymbolPath, int_path: &SymbolPath, bool_path: &SymbolPath) -> (Vec<MemberFunctionSymbol>, Vec<FunctionParameterSymbol>) {
         let mut funcs = Vec::new();
         let mut params = Vec::new();
 
         {
-            let mut f = self.new_func("operator[]");
-            f.data.return_type_id = self.data.data_type_id;
-            let mut p = f.add_param("index");
-            p.data.type_id = int_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "operator[]"));
+            f.return_type_path = self.data_type_path().clone();
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "index"));
+            p.type_path = int_path.clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("Clear");
-            f.data.return_type_id = void_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Clear"));
+            f.return_type_path = void_path.clone();
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("Size");
-            f.data.return_type_id = int_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Size"));
+            f.return_type_path = int_path.clone();
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("PushBack");
-            f.data.return_type_id = self.data.data_type_id;
-            let mut p = f.add_param("element");
-            p.data.type_id = self.data.data_type_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "PushBack"));
+            f.return_type_path = self.data_type_path().clone();
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("Resize");
-            f.data.return_type_id = void_id;
-            let mut p = f.add_param("newSize");
-            p.data.type_id = int_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Resize"));
+            f.return_type_path = void_path.clone();
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "newSize"));
+            p.type_path = int_path.clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("Remove");
-            f.data.return_type_id = bool_id;
-            let mut p = f.add_param("element");
-            p.data.type_id = self.data.data_type_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Remove"));
+            f.return_type_path = bool_path.clone();
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("Contains");
-            f.data.return_type_id = bool_id;
-            let mut p = f.add_param("element");
-            p.data.type_id = self.data.data_type_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Contains"));
+            f.return_type_path = bool_path.clone();
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("FindFirst");
-            f.data.return_type_id = int_id;
-            let mut p = f.add_param("element");
-            p.data.type_id = self.data.data_type_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "FindFirst"));
+            f.return_type_path = int_path.clone();
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("FindLast");
-            f.data.return_type_id = int_id;
-            let mut p = f.add_param("element");
-            p.data.type_id = self.data.data_type_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "FindLast"));
+            f.return_type_path = int_path.clone();
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("Grow");
-            f.data.return_type_id = int_id;
-            let mut p = f.add_param("numElements");
-            p.data.type_id = int_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Grow"));
+            f.return_type_path = int_path.clone();
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "numElements"));
+            p.type_path = int_path.clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("Erase");
-            f.data.return_type_id = void_id;
-            let mut p = f.add_param("index");
-            p.data.type_id = int_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Erase"));
+            f.return_type_path = void_path.clone();
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "index"));
+            p.type_path = int_path.clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("Insert");
-            f.data.return_type_id = void_id;
-            let mut p = f.add_param("index");
-            p.data.type_id = int_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Insert"));
+            f.return_type_path = void_path.clone();
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "index"));
+            p.type_path = int_path.clone();
             params.push(p);
-            let mut p = f.add_param("element");
-            p.data.type_id = self.data.data_type_id;
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = self.new_func("Last");
-            f.data.return_type_id = self.data.data_type_id;
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Last"));
+            f.return_type_path = self.data_type_path().clone();
             funcs.push(f);
         }
 

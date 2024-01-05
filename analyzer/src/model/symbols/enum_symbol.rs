@@ -1,81 +1,50 @@
-use uuid::Uuid;
-use super::{Symbol, SymbolType, SymbolData};
+use std::collections::HashMap;
+use crate::model::symbol_path::SymbolPath;
+use super::*;
 
 
-#[derive(Debug, Clone, Default)]
-pub struct EnumSymbolData {
-    pub member_ids: Vec<Uuid>,
+#[derive(Debug, Clone)]
+pub struct EnumSymbol {
+    path: BasicTypeSymbolPath,
+    pub members: HashMap<SymbolPath, EnumMemberSymbol>
 }
 
-impl SymbolData for EnumSymbolData {
+impl Symbol for EnumSymbol {
     const SYMBOL_TYPE: SymbolType = SymbolType::Enum;
-}
 
-pub type EnumSymbol = Symbol<EnumSymbolData>;
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
 
 impl EnumSymbol {
-    #[must_use]
-    pub fn add_member(&mut self, name: &str /*, value: i32*/) -> EnumMemberSymbol {
-        let m = EnumMemberSymbol::new(name, self.id, EnumMemberSymbolData::new());
-        self.data.member_ids.push(m.id);
-        m
-    }
-}
-
-
-
-#[derive(Debug, Clone, Default)]
-pub struct EnumMemberSymbolData {
-    // pub value: i32
-}
-
-impl EnumMemberSymbolData {
-    pub fn new(/*value: i32*/) -> Self {
+    pub fn new(path: BasicTypeSymbolPath) -> Self {
         Self {
-            // value
+            path,
+            members: HashMap::new()
         }
     }
 }
 
-impl SymbolData for EnumMemberSymbolData {
+
+
+#[derive(Debug, Clone)]
+pub struct EnumMemberSymbol {
+    path: DataSymbolPath
+}
+
+impl Symbol for EnumMemberSymbol {
     const SYMBOL_TYPE: SymbolType = SymbolType::EnumMember;
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
 }
 
-pub type EnumMemberSymbol = Symbol<EnumMemberSymbolData>;
-
-
-/* 
-pub struct EnumSymbolBuilder {
-    sym: EnumSymbol,
-    members: Vec<EnumMemberSymbol>,
-    prev_val: i32
-}
-
-impl EnumSymbolBuilder {
-    pub fn new(script_id: Uuid, enum_name: &str) -> Self {
-        Self { 
-            sym: EnumSymbol::new_with_default(enum_name, script_id), 
-            members: Vec::new(), 
-            prev_val: -1
+impl EnumMemberSymbol {
+    pub fn new(path: DataSymbolPath) -> Self {
+        Self {
+            path
         }
     }
-
-    pub fn member(&mut self, name: &str, value: Option<i32>) -> &mut Self {
-        let member_value = if let Some(value) = value {
-            value
-        } else {
-            self.prev_val + 1
-        };
-
-        let member = self.sym.add_member(name, member_value);
-        
-        self.prev_val = member_value;
-        self.members.push(member);
-        self
-    }
-
-    pub fn finish(self) -> (EnumSymbol, Vec<EnumMemberSymbol>) {
-        (self.sym, self.members)
-    } 
 }
-*/

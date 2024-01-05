@@ -1,74 +1,57 @@
 use std::collections::HashSet;
-use uuid::Uuid;
 use witcherscript::attribs::{ClassSpecifier, AutobindSpecifier};
-use super::{MemberFunctionSymbol, EventSymbol, Symbol, SymbolType, ERROR_SYMBOL_ID, SymbolData, MemberVarSymbol};
+use crate::model::symbol_path::SymbolPath;
+use super::*;
 
 
-#[derive(Debug, Clone, Default)]
-pub struct ClassSymbolData {
+#[derive(Debug, Clone)]
+pub struct ClassSymbol {
+    path: SymbolPath,
     pub specifiers: HashSet<ClassSpecifier>,
-    pub base_id: Option<Uuid>,
-    pub member_var_ids: Vec<Uuid>,
-    pub autobind_ids: Vec<Uuid>,
-    pub member_func_ids: Vec<Uuid>,
-    pub event_ids: Vec<Uuid>,
+    pub base_path: Option<SymbolPath>
 }
 
-impl SymbolData for ClassSymbolData {
+impl Symbol for ClassSymbol {
     const SYMBOL_TYPE: SymbolType = SymbolType::Class;
-}
 
-pub type ClassSymbol = Symbol<ClassSymbolData>;
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
 
 impl ClassSymbol {
-    #[must_use]
-    pub fn add_member_var(&mut self, name: &str) -> MemberVarSymbol {
-        let s = MemberVarSymbol::new_with_default(name, self.id);
-        self.data.member_var_ids.push(s.id);
-        s
-    }
-
-    #[must_use]
-    pub fn add_autobind(&mut self, name: &str) -> AutobindSymbol {
-        let s = AutobindSymbol::new_with_default(name, self.id);
-        self.data.autobind_ids.push(s.id);
-        s
-    }
-
-    #[must_use]
-    pub fn add_member_func(&mut self, name: &str) -> MemberFunctionSymbol {
-        let s = MemberFunctionSymbol::new_with_default(name, self.id);
-        self.data.member_func_ids.push(s.id);
-        s
-    }
-
-    #[must_use]
-    pub fn add_event(&mut self, name: &str) -> EventSymbol {
-        let s = EventSymbol::new_with_default(name, self.id);
-        self.data.event_ids.push(s.id);
-        s
+    pub fn new(name: &str) -> Self {
+        Self {
+            path: SymbolPath::new(name, SymbolCategory::Type),
+            specifiers: HashSet::new(),
+            base_path: None
+        }
     }
 }
 
 
 
 #[derive(Debug, Clone)]
-pub struct AutobindSymbolData {
+pub struct AutobindSymbol {
+    path: DataSymbolPath,
     pub specifiers: HashSet<AutobindSpecifier>,
-    pub type_id: Uuid,
+    pub type_path: TypeSymbolPath,
 }
 
-impl Default for AutobindSymbolData {
-    fn default() -> Self {
-        Self { 
-            specifiers: HashSet::new(), 
-            type_id: ERROR_SYMBOL_ID 
-        }
+impl Symbol for AutobindSymbol {
+    const SYMBOL_TYPE: SymbolType = SymbolType::Autobind;
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
     }
 }
 
-impl SymbolData for AutobindSymbolData {
-    const SYMBOL_TYPE: SymbolType = SymbolType::Autobind;
+impl AutobindSymbol {
+    pub fn new(path: DataSymbolPath) -> Self {
+        Self {
+            path,
+            specifiers: HashSet::new(),
+            type_path: TypeSymbolPath::empty()
+        }
+    }
 }
-
-pub type AutobindSymbol = Symbol<AutobindSymbolData>;

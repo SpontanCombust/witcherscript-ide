@@ -1,26 +1,28 @@
 use std::collections::HashSet;
-use uuid::Uuid;
 use witcherscript::attribs::StructSpecifier;
-use super::{Symbol, SymbolType, MemberVarSymbol, SymbolData};
+use crate::model::symbol_path::SymbolPath;
+use super::*;
 
 
-#[derive(Debug, Clone, Default)]
-pub struct StructSymbolData {
-    pub specifiers: HashSet<StructSpecifier>,
-    pub member_var_ids: Vec<Uuid>,
+#[derive(Debug, Clone)]
+pub struct StructSymbol {
+    path: BasicTypeSymbolPath,
+    pub specifiers: HashSet<StructSpecifier>
 }
 
-impl SymbolData for StructSymbolData {
+impl Symbol for StructSymbol {
     const SYMBOL_TYPE: SymbolType = SymbolType::Struct;
-}
 
-pub type StructSymbol = Symbol<StructSymbolData>;
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
 
 impl StructSymbol {
-    #[must_use]
-    pub fn add_member_var(&mut self, name: &str) -> MemberVarSymbol {
-        let s = MemberVarSymbol::new_with_default(name, self.id);
-        self.data.member_var_ids.push(s.id);
-        s
+    pub fn new(path: BasicTypeSymbolPath) -> Self {
+        Self {
+            path,
+            specifiers: HashSet::new()
+        }
     }
 }
