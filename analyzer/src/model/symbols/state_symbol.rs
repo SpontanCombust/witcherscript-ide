@@ -12,7 +12,9 @@ pub struct StateSymbol {
 }
 
 impl Symbol for StateSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::State;
+    fn typ(&self) -> SymbolType {
+        SymbolType::State
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path

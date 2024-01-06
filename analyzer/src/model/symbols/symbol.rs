@@ -2,8 +2,7 @@ use crate::model::symbol_path::SymbolPath;
 
 
 pub trait Symbol {
-    const SYMBOL_TYPE: SymbolType;
-
+    fn typ(&self) -> SymbolType;
     fn path(&self) -> &SymbolPath;
 
     fn name(&self) -> &str {

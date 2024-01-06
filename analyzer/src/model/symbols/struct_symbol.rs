@@ -11,7 +11,9 @@ pub struct StructSymbol {
 }
 
 impl Symbol for StructSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::Struct;
+    fn typ(&self) -> SymbolType {
+        SymbolType::Struct
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path

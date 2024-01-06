@@ -10,7 +10,9 @@ pub struct EnumSymbol {
 }
 
 impl Symbol for EnumSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::Enum;
+    fn typ(&self) -> SymbolType {
+        SymbolType::Enum
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path
@@ -34,7 +36,9 @@ pub struct EnumMemberSymbol {
 }
 
 impl Symbol for EnumMemberSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::EnumMember;
+    fn typ(&self) -> SymbolType {
+        SymbolType::EnumMember
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path

@@ -12,7 +12,9 @@ pub struct ClassSymbol {
 }
 
 impl Symbol for ClassSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::Class;
+    fn typ(&self) -> SymbolType {
+        SymbolType::Class
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path
@@ -39,7 +41,9 @@ pub struct AutobindSymbol {
 }
 
 impl Symbol for AutobindSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::Autobind;
+    fn typ(&self) -> SymbolType {
+        SymbolType::Autobind
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path

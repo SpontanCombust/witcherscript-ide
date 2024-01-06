@@ -11,7 +11,9 @@ pub struct PrimitiveTypeSymbol {
 }
 
 impl Symbol for PrimitiveTypeSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::Type;
+    fn typ(&self) -> SymbolType {
+        SymbolType::Type
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path

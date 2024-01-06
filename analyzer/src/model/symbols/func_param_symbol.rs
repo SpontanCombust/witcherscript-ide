@@ -12,7 +12,9 @@ pub struct FunctionParameterSymbol {
 }
 
 impl Symbol for FunctionParameterSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::Parameter;
+    fn typ(&self) -> SymbolType {
+        SymbolType::Parameter
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path

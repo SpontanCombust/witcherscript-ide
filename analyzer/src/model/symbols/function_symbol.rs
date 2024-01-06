@@ -13,7 +13,9 @@ pub struct GlobalFunctionSymbol {
 }
 
 impl Symbol for GlobalFunctionSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::GlobalFunction;
+    fn typ(&self) -> SymbolType {
+        SymbolType::GlobalFunction
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path
@@ -42,7 +44,9 @@ pub struct MemberFunctionSymbol {
 }
 
 impl Symbol for MemberFunctionSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::MemberFunction;
+    fn typ(&self) -> SymbolType {
+        SymbolType::MemberFunction
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path
@@ -68,7 +72,9 @@ pub struct EventSymbol {
 }
 
 impl Symbol for EventSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::Event;
+    fn typ(&self) -> SymbolType {
+        SymbolType::Event
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path

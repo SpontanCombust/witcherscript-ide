@@ -11,7 +11,9 @@ pub struct ArrayTypeSymbol {
 pub type ArrayTypeSymbolChild = MemberFunctionSymbol;
 
 impl Symbol for ArrayTypeSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::Array;
+    fn typ(&self) -> SymbolType {
+        SymbolType::Array
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path
@@ -31,7 +33,7 @@ impl ArrayTypeSymbol {
         &self.path.type_arg_path
     }
 
-    pub fn make_functions(&mut self, void_path: &SymbolPath, int_path: &SymbolPath, bool_path: &SymbolPath) -> (Vec<MemberFunctionSymbol>, Vec<FunctionParameterSymbol>) {
+    pub fn make_functions(&self, void_path: &SymbolPath, int_path: &SymbolPath, bool_path: &SymbolPath) -> (Vec<MemberFunctionSymbol>, Vec<FunctionParameterSymbol>) {
         let mut funcs = Vec::new();
         let mut params = Vec::new();
 

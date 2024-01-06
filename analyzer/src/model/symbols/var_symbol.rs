@@ -12,7 +12,9 @@ pub struct MemberVarSymbol {
 }
 
 impl Symbol for MemberVarSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::MemberVar;
+    fn typ(&self) -> SymbolType {
+        SymbolType::MemberVar
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path
@@ -38,7 +40,9 @@ pub struct LocalVarSymbol {
 }
 
 impl Symbol for LocalVarSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::LocalVar;
+    fn typ(&self) -> SymbolType {
+        SymbolType::LocalVar
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path
@@ -63,7 +67,9 @@ pub struct GlobalVarSymbol {
 }
 
 impl Symbol for GlobalVarSymbol {
-    const SYMBOL_TYPE: SymbolType = SymbolType::GlobalVar;
+    fn typ(&self) -> SymbolType {
+        SymbolType::GlobalVar
+    }
 
     fn path(&self) -> &SymbolPath {
         &self.path
