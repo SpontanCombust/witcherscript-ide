@@ -1,34 +1,25 @@
 use ropey::Rope;
-use uuid::Uuid;
 use witcherscript::ast::*;
-use crate::model::collections::*;
 use crate::diagnostics::*;
+use crate::model::collections::symbol_table::SymbolTable;
+use crate::model::symbol_path::SymbolPath;
 use crate::model::symbols::*;
 use super::commons::SymbolCollectorCommons;
 
 
-//TODO be able to update existing symtab and ctx instead of assuming they are new
+//TODO be able to update existing symtab instead of assuming data is always new
 struct GlobalSymbolCollector<'a> {
     symtab: &'a mut SymbolTable,
-    ctx: &'a mut SymbolContext,
-    script_id: Uuid,
+    // script_id: Uuid,
     rope: Rope,
     diagnostics: Vec<Diagnostic>,
-
-    current_enum: Option<EnumSymbol>,
+    
+    current_path: SymbolPath
 }
 
 impl SymbolCollectorCommons for GlobalSymbolCollector<'_> {
     fn symtab(&mut self) -> &mut SymbolTable {
         &mut self.symtab
-    }
-
-    fn ctx(&mut self) -> &mut SymbolContext {
-        &mut self.ctx
-    }
-
-    fn symtab_and_ctx(&mut self) -> (&mut SymbolTable, &mut SymbolContext) {
-        (&mut self.symtab, &mut self.ctx)    
     }
 
     fn diagnostics(&mut self) -> &mut Vec<Diagnostic> {
@@ -42,14 +33,10 @@ impl SymbolCollectorCommons for GlobalSymbolCollector<'_> {
 
 impl StatementVisitor for GlobalSymbolCollector<'_> {
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> bool {
-        let class_name = n.name()
-                        .value(&self.rope)
-                        .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Class, n.span()));
-
-        if let Some(class_name) = class_name {
-            let sym = ClassSymbol::new_with_default(&class_name, self.script_id);
-            self.ctx.insert(&sym);
-            self.symtab.insert_class(sym);
+        if let Some(class_name) = n.name().value(&self.rope) {
+            let path = BasicTypeSymbolPath::new(&class_name);
+            let sym = ClassSymbol::new(path);
+            self.try_insert_with_duplicate_check(sym, n.name().span());
         }
 
         false
@@ -59,76 +46,53 @@ impl StatementVisitor for GlobalSymbolCollector<'_> {
         let state_name = n.name().value(&self.rope);
         let parent_name = n.parent().value(&self.rope);
         if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
-            let state_class_name = StateSymbol::class_name(&state_name, &parent_name);
-            if let Some(state_class_name) = self.check_duplicate(state_class_name, SymbolType::State, n.span()) {
-                let sym = StateSymbol::new_with_default(&state_class_name, self.script_id);
-                self.ctx.insert(&sym);
-                self.symtab.insert_state(sym);
-            }
+            let path = StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name));
+            let sym = StateSymbol::new(path);
+            self.try_insert_with_duplicate_check(sym, n.name().span());
         }
 
-        false
+        false            
     }
 
     fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
-        let struct_name = n.name()
-                          .value(&self.rope)
-                          .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Struct, n.span()));
-
-        if let Some(struct_name) = struct_name {
-            let sym = StructSymbol::new_with_default(&struct_name, self.script_id);
-            self.ctx.insert(&sym);
-            self.symtab.insert_struct(sym);
+        if let Some(struct_name) = n.name().value(&self.rope) {
+            let path = BasicTypeSymbolPath::new(&struct_name);
+            let sym = StructSymbol::new(path);
+            self.try_insert_with_duplicate_check(sym, n.name().span());
         }
 
         false
     }
 
     fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> bool {
-        let enum_name = n.name()
-                        .value(&self.rope)
-                        .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Enum, n.span()));
+        if let Some(enum_name) = n.name().value(&self.rope) {
+            let path = BasicTypeSymbolPath::new(&enum_name);
+            let sym = EnumSymbol::new(path);
 
-        if let Some(enum_name) = enum_name {
-            let sym = EnumSymbol::new_with_default(&enum_name, self.script_id);
-            self.current_enum = Some(sym);
-            // symbol added to db and ctx during exit
-            return true;
+            sym.path().clone_into(&mut self.current_path);
+            self.try_insert_with_duplicate_check(sym, n.name().span())
+        } else {
+            false
         }
-
-        false
     }
 
-    // enum member is WS work just like they do in C - they are global scoped constants
-    // enum type doesn't create any sort of scope for them
     fn visit_enum_member_decl(&mut self, n: &EnumMemberDeclarationNode) {
-        let member_name = n.name()
-                          .value(&self.rope)
-                          .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::EnumMember, n.span()));
-
-        if let Some(member_name) = member_name {
-            let sym = self.current_enum.as_mut().unwrap().add_member(&member_name);
-            self.ctx.insert(&sym);
-            self.symtab.insert_enum_member(sym);
+        if let Some(enum_member_name) = n.name().value(&self.rope) {
+            let path = DataSymbolPath::new(&self.current_path, &enum_member_name);
+            let sym = EnumMemberSymbol::new(path);
+            self.try_insert_with_duplicate_check(sym, n.name().span());
         }
     }
 
     fn exit_enum_decl(&mut self, _: &EnumDeclarationNode) {
-        if let Some(sym) = self.current_enum.take() {
-            self.ctx.insert(&sym);
-            self.symtab.insert_enum(sym);
-        }
+        self.current_path.pop();
     }
 
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> bool {
-        let func_name = n.name()
-                        .value(&self.rope)
-                        .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::GlobalFunction, n.span()));
-
-        if let Some(func_name) = func_name {
-            let sym = GlobalFunctionSymbol::new_with_default(&func_name, self.script_id);
-            self.ctx.insert(&sym);
-            self.symtab.insert_global_func(sym);
+        if let Some(func_name) = n.name().value(&self.rope) {
+            let path = GlobalCallableSymbolPath::new(&func_name);
+            let sym = GlobalFunctionSymbol::new(path);
+            self.try_insert_with_duplicate_check(sym, n.name().span());
         }
 
         false

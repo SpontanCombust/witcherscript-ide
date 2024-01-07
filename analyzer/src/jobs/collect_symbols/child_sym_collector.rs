@@ -2,41 +2,28 @@ use std::collections::HashSet;
 use ropey::Rope;
 use witcherscript::attribs::*;
 use witcherscript::ast::*;
-use crate::model::collections::*;
 use crate::diagnostics::*;
+use crate::model::collections::symbol_table::SymbolTable;
+use crate::model::symbol_path::SymbolPath;
 use crate::model::symbols::*;
 use super::commons::SymbolCollectorCommons;
 
 //TODO use this visitor to only collect symbol data
-// So have 3 visitors:
-// 1. GlobalSymbolCollector, 2. ChildSymbolCollector, 3. SymbolDataCollector
+// So have 2 visitors:
+// 1. SymbolCollector, 2. SymbolDataCollector
 // first two only create symbols
 // the last one uses node id for fast lookup
 struct ChildSymbolCollector<'a> {
     symtab: &'a mut SymbolTable,
-    ctx: &'a mut SymbolContext,
     rope: Rope,
     diagnostics: Vec<Diagnostic>,
 
-    current_class: Option<ClassSymbol>,
-    current_state: Option<StateSymbol>,
-    current_struct: Option<StructSymbol>,
-    current_member_func: Option<MemberFunctionSymbol>,
-    current_event: Option<EventSymbol>,
-    current_global_func: Option<GlobalFunctionSymbol>,
+    current_path: SymbolPath
 }
 
 impl SymbolCollectorCommons for ChildSymbolCollector<'_> {
     fn symtab(&mut self) -> &mut SymbolTable {
         &mut self.symtab
-    }
-
-    fn ctx(&mut self) -> &mut SymbolContext {
-        &mut self.ctx
-    }
-
-    fn symtab_and_ctx(&mut self) -> (&mut SymbolTable, &mut SymbolContext) {
-        (&mut self.symtab, &mut self.ctx)    
     }
 
     fn diagnostics(&mut self) -> &mut Vec<Diagnostic> {
@@ -51,155 +38,8 @@ impl SymbolCollectorCommons for ChildSymbolCollector<'_> {
 impl StatementVisitor for ChildSymbolCollector<'_> {
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> bool {
         if let Some(class_name) = n.name().value(&self.rope) {
-            if let Some(SymbolPointer { id, typ: SymbolType::Class }) = self.ctx.get(&class_name, SymbolCategory::Type) {
-                let mut sym = self.symtab.remove_class(*id).expect("class absent in symtab despite being found in context");
-
-                n.specifiers()
-                .map(|specn| (specn.value(), specn.span()))
-                .for_each(|(spec, span)| {
-                    if !sym.data.specifiers.insert(spec) {
-                        self.diagnostics.push(Diagnostic { 
-                            span, 
-                            body: ErrorDiagnostic::RepeatedSpecifier.into()
-                        });
-                    }
-                });
-
-                sym.data.base_id = n.base().map(|base| self.check_type_from_identifier(base).0);
-
-                self.current_class = Some(sym);
-                self.ctx.push_scope();
-                return true;
-            }
-        }
-
-        false
-    }
-
-    fn exit_class_decl(&mut self, _: &ClassDeclarationNode) {
-        if let Some(sym) = self.current_class.take() {
-            self.ctx.pop_scope();
-            self.symtab.insert_class(sym);
-        }
-    }
-
-    fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> bool {
-        let state_name = n.name().value(&self.rope);
-        let parent_name = n.parent().value(&self.rope);
-        if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
-            let state_class_name = StateSymbol::class_name(&state_name, &parent_name);
-
-            if let Some(SymbolPointer { id, typ: SymbolType::State }) = self.ctx.get(&state_class_name, SymbolCategory::Type) {
-                let mut sym = self.symtab.remove_state(*id).expect("state absent in symtab despite being found in context");
-
-                n.specifiers()
-                .map(|specn| (specn.value(), specn.span()))
-                .for_each(|(spec, span)| {
-                    if !sym.data.specifiers.insert(spec) {
-                        self.diagnostics.push(Diagnostic { 
-                            span, 
-                            body: ErrorDiagnostic::RepeatedSpecifier.into()
-                        });
-                    }
-                });
-
-                sym.data.base_id = n.base().map(|base| self.check_type_from_identifier(base).0);
-
-                sym.data.parent_id = self.check_type_from_identifier(n.parent()).0;
-
-                self.current_state = Some(sym);
-                self.ctx.push_scope();
-                return true;
-            }
-        }
-
-        false
-    }
-
-    fn exit_state_decl(&mut self, _: &StateDeclarationNode) {
-        if let Some(sym) = self.current_state.take() {
-            self.ctx.pop_scope();
-            self.symtab.insert_state(sym);
-        }
-    }
-
-    fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
-        if let Some(struct_name) = n.name().value(&self.rope) {
-            if let Some(SymbolPointer { id, typ: SymbolType::Struct }) = self.ctx.get(&struct_name, SymbolCategory::Type) {
-                let mut sym = self.symtab.remove_struct(*id).expect("struct absent in symtab despite being found in context");
-
-                n.specifiers()
-                .map(|specn| (specn.value(), specn.span()))
-                .for_each(|(spec, span)| {
-                    if !sym.data.specifiers.insert(spec) {
-                        self.diagnostics.push(Diagnostic { 
-                            span, 
-                            body: ErrorDiagnostic::RepeatedSpecifier.into()
-                        });
-                    }
-                });
-
-                self.current_struct = Some(sym);
-                self.ctx.push_scope();
-                return true;
-            }
-        }
-
-        false
-    }
-
-    fn exit_struct_decl(&mut self, _: &StructDeclarationNode) {
-        if let Some(sym) = self.current_struct.take() {
-            self.ctx.pop_scope();
-            self.symtab.insert_struct(sym);
-        }
-    }
-
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode) {
-        let names = n.names()
-                    .map(|identn| (identn.span(), identn))
-                    .filter_map(|(span, identn)| {
-                        if let Some(ident) = identn.value(&self.rope) {
-                            Some((span, ident))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>(); // need to collect because of later mut borrow
-
-        let mut checked_names: Vec<String> = Vec::new();
-        for (span, name) in names.into_iter() {
-            if let Some(checked_name) = self.check_duplicate(name.into(), SymbolType::MemberVar, span) {
-                checked_names.push(checked_name);
-            }
-        }
-                
-        if !checked_names.is_empty() {
-            let syms: Vec<MemberVarSymbol>;
-            if self.current_class.is_some() {
-                syms = checked_names.into_iter().map(|n| self.current_class.as_mut().unwrap().add_member_var(&n)).collect();
-            } else if self.current_state.is_some() {
-                syms = checked_names.into_iter().map(|n| self.current_state.as_mut().unwrap().add_member_var(&n)).collect();
-            } else if self.current_struct.is_some() {
-                syms = checked_names.into_iter().map(|n| self.current_struct.as_mut().unwrap().add_member_var(&n)).collect();
-            } else {
-                panic!("No type to create member var symbol for");
-            }
-
-            
             let mut specifiers = HashSet::new();
-            let mut found_access_modif_before = false;
             for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
-                if matches!(spec, MemberVarSpecifier::AccessModifier(_)) {
-                    if found_access_modif_before {
-                        self.diagnostics.push(Diagnostic { 
-                            span, 
-                            body: ErrorDiagnostic::MultipleAccessModifiers.into()
-                        })
-                    }
-                    found_access_modif_before = true;
-                }
-
                 if !specifiers.insert(spec) {
                     self.diagnostics.push(Diagnostic { 
                         span, 
@@ -208,35 +48,123 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 }
             }
 
-            let type_id = self.check_type_from_type_annot(n.var_type()).0;
+            let base_path = n.base().map(|base| self.check_type_from_identifier(base));
 
 
-            syms.into_iter().for_each(|mut sym| {
-                sym.data.specifiers = specifiers.clone();
-                sym.data.type_id = type_id;
+            let path = BasicTypeSymbolPath::new(&class_name);
+            if let Some(sym) = self.symtab.get_mut(&path).and_then(|variant| variant.as_class_mut()) {
+                sym.specifiers = specifiers;
+                sym.base_path = base_path;
 
-                self.ctx.insert(&sym);
-                self.symtab.insert_member_var(sym);
-            });
+                sym.path().clone_into(&mut self.current_path);
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn exit_class_decl(&mut self, _: &ClassDeclarationNode) {
+        // even if class' insides were not visited, this will just clear the path 
+        self.current_path.pop();
+    }
+
+    fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> bool {
+        let state_name = n.name().value(&self.rope);
+        let parent_name = n.parent().value(&self.rope);
+        if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
+            let path = StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name));
+            if let Some(sym) = self.symtab.get_mut(&path).and_then(|variant| variant.as_state_mut()) {
+                n.specifiers()
+                .map(|specn| (specn.value(), specn.span()))
+                .for_each(|(spec, span)| {
+                    if !sym.specifiers.insert(spec) {
+                        self.diagnostics.push(Diagnostic { 
+                            span, 
+                            body: ErrorDiagnostic::RepeatedSpecifier.into()
+                        });
+                    }
+                });
+    
+                sym.base_state_name = n.base().and_then(|base| base.value(&self.rope)).map(|ident| ident.into());
+        
+                sym.path().clone_into(&mut self.current_path);
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn exit_state_decl(&mut self, _: &StateDeclarationNode) {
+        self.current_path.pop();
+    }
+
+    fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
+        if let Some(struct_name) = n.name().value(&self.rope) {
+            let path = BasicTypeSymbolPath::new(&struct_name);
+            if let Some(sym) = self.symtab.get_mut(&path).and_then(|variant| variant.as_struct_mut()) {
+                n.specifiers()
+                .map(|specn| (specn.value(), specn.span()))
+                .for_each(|(spec, span)| {
+                    if !sym.specifiers.insert(spec) {
+                        self.diagnostics.push(Diagnostic { 
+                            span, 
+                            body: ErrorDiagnostic::RepeatedSpecifier.into()
+                        });
+                    }
+                });
+    
+                sym.path().clone_into(&mut self.current_path);
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn exit_struct_decl(&mut self, _: &StructDeclarationNode) {
+        self.current_path.pop();
+    }
+
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+        let mut specifiers = HashSet::new();
+        let mut found_access_modif_before = false;
+        for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+            if matches!(spec, MemberVarSpecifier::AccessModifier(_)) {
+                if found_access_modif_before {
+                    self.diagnostics.push(Diagnostic { 
+                        span, 
+                        body: ErrorDiagnostic::MultipleAccessModifiers.into()
+                    })
+                }
+                found_access_modif_before = true;
+            }
+
+            if !specifiers.insert(spec) {
+                self.diagnostics.push(Diagnostic { 
+                    span, 
+                    body: ErrorDiagnostic::RepeatedSpecifier.into()
+                });
+            }
+        }
+
+        let type_path = self.check_type_from_type_annot(n.var_type());
+
+        
+        for name_node in n.names() {
+            if let Some(var_name) = name_node.value(&self.rope) {
+                let path = DataSymbolPath::new(&self.current_path, &var_name);
+                let mut sym = MemberVarSymbol::new(path);
+                sym.specifiers = specifiers.clone();
+                sym.type_path = type_path.clone();
+                self.try_insert_with_duplicate_check(sym, name_node.span());
+            }
         }
     }
 
     fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode) {
-        let autobind_name = n.name()
-                            .value(&self.rope)
-                            .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Autobind, n.span()));
-
-        if let Some(autobind_name) = autobind_name {
-            let mut sym: AutobindSymbol;
-            if self.current_class.is_some() {
-                sym = self.current_class.as_mut().unwrap().add_autobind(&autobind_name);
-            } else if self.current_state.is_some() {
-                sym = self.current_state.as_mut().unwrap().add_autobind(&autobind_name);
-            } else {
-                panic!("No type to create autobind for");
-            }
-
-
+        if let Some(autobind_name) = n.name().value(&self.rope) {
             let mut specifiers = HashSet::new();
             let mut found_access_modif_before = false;
             for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
@@ -258,186 +186,18 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 }
             }
 
-
-            let type_id = self.check_type_from_type_annot(n.autobind_type()).0;
-
-
-            sym.data.specifiers = specifiers;
-            sym.data.type_id = type_id;
-
-            self.ctx.insert(&sym);
-            self.symtab.insert_autobind(sym);
+            let type_path = self.check_type_from_type_annot(n.autobind_type());
+            
+            let path = DataSymbolPath::new(&self.current_path, &autobind_name);
+            let mut sym = AutobindSymbol::new(path);
+            sym.specifiers = specifiers;
+            sym.type_path = type_path;
+            self.try_insert_with_duplicate_check(sym, n.name().span());
         }
     }
 
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> bool {
         if let Some(func_name) = n.name().value(&self.rope) {
-            if let Some(SymbolPointer { id, typ: SymbolType::GlobalFunction }) = self.ctx.get(&func_name, SymbolCategory::Callable) {
-                let mut sym = self.symtab.remove_global_func(*id).expect("global function absent from symtab despite being found in context");
-
-                n.specifiers()
-                .map(|specn| (specn.value(), specn.span()))
-                .for_each(|(spec, span)| {
-                    if !sym.data.specifiers.insert(spec) {
-                        self.diagnostics.push(Diagnostic { 
-                            span, 
-                            body: ErrorDiagnostic::RepeatedSpecifier.into()
-                        });
-                    }
-                });
-
-
-                if let Some(flavour) = n.flavour().map(|flavn| flavn.value()) {
-                    sym.data.flavour = Some(flavour);
-                } else {
-                    sym.data.flavour = None;
-                }
-
-
-                if let Some(ret_typn) = n.return_type() {
-                    sym.data.return_type_id = self.check_type_from_type_annot(ret_typn).0;
-                } else {
-                    sym.data.return_type_id = self.ctx.get("void", SymbolCategory::Type).unwrap().id;
-                }
-
-
-                self.current_global_func = Some(sym);
-                self.ctx.push_scope();
-                return true;
-            }
-        }
-
-        false
-    }
-
-    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
-        if let Some(sym) = self.current_global_func.take() {
-            self.ctx.pop_scope();
-            self.symtab.insert_global_func(sym);
-        }
-    }
-
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> bool {
-        let func_name = n.name()
-                        .value(&self.rope)
-                        .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::MemberFunction, n.span()));
-
-        if let Some(func_name) = func_name {
-            let mut sym: MemberFunctionSymbol;
-            if self.current_class.is_some() {
-                sym = self.current_class.as_mut().unwrap().add_member_func(&func_name);
-            } else if self.current_state.is_some() {
-                sym = self.current_state.as_mut().unwrap().add_member_func(&func_name);
-            } else {
-                panic!("No type to create member function for");
-            }
-
-
-            n.specifiers()
-            .map(|specn| (specn.value(), specn.span()))
-            .for_each(|(spec, span)| {
-                if !sym.data.specifiers.insert(spec) {
-                    self.diagnostics.push(Diagnostic { 
-                        span, 
-                        body: ErrorDiagnostic::RepeatedSpecifier.into()
-                    });
-                }
-            });
-
-
-            if let Some(flavour) = n.flavour().map(|flavn| flavn.value()) {
-                sym.data.flavour = Some(flavour);
-            } else {
-                sym.data.flavour = None;
-            }
-
-
-            if let Some(ret_typn) = n.return_type() {
-                sym.data.return_type_id = self.check_type_from_type_annot(ret_typn).0;
-            } else {
-                sym.data.return_type_id = self.ctx.get("void", SymbolCategory::Type).unwrap().id;
-            }
-
-
-            self.ctx.insert(&sym);
-            self.ctx.push_scope();
-            self.current_member_func = Some(sym);
-            return true;
-        }
-
-        false
-    }
-
-    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) {
-        if let Some(sym) = self.current_member_func.take() {
-            self.ctx.pop_scope();
-            self.symtab.insert_member_func(sym);
-        }
-    }
-
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> bool {
-        let event_name = n.name()
-                        .value(&self.rope)
-                        .and_then(|ident| self.check_duplicate(ident.into(), SymbolType::Event, n.span()));
-
-        if let Some(event_name) = event_name {
-            let sym: EventSymbol;
-            if self.current_class.is_some() {
-                sym = self.current_class.as_mut().unwrap().add_event(&event_name);
-            } else if self.current_state.is_some() {
-                sym = self.current_state.as_mut().unwrap().add_event(&event_name);
-            } else {
-                panic!("No type to create event for");
-            }
-
-            self.ctx.insert(&sym);
-            self.ctx.push_scope();
-            self.current_event = Some(sym);
-            return true;
-        }
-
-        false
-    }
-
-    fn exit_event_decl(&mut self, _: &EventDeclarationNode) {
-        if let Some(sym) = self.current_event.take() {
-            self.ctx.pop_scope();
-            self.symtab.insert_event(sym);
-        }
-    }
-
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode) {
-        let names = n.names()
-                    .map(|identn| (identn.span(), identn))
-                    .filter_map(|(span, identn)| {
-                        if let Some(ident) = identn.value(&self.rope) {
-                            Some((span, ident))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>();
-
-        let mut checked_names: Vec<String> = Vec::new();
-        for (span, name) in names.into_iter() {
-            if let Some(checked_name) = self.check_duplicate(name.into(), SymbolType::Parameter, span) {
-                checked_names.push(checked_name);
-            }
-        }
-                
-        if !checked_names.is_empty() {
-            let syms: Vec<FunctionParameterSymbol>;
-            if self.current_global_func.is_some() {
-                syms = checked_names.into_iter().map(|n| self.current_global_func.as_mut().unwrap().add_param(&n)).collect();
-            } else if self.current_member_func.is_some() {
-                syms = checked_names.into_iter().map(|n| self.current_member_func.as_mut().unwrap().add_param(&n)).collect();
-            } else if self.current_event.is_some() {
-                syms = checked_names.into_iter().map(|n| self.current_event.as_mut().unwrap().add_param(&n)).collect();
-            } else {
-                panic!("No function to create parameter for");
-            }
-
-
             let mut specifiers = HashSet::new();
             for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
                 if !specifiers.insert(spec) {
@@ -448,17 +208,115 @@ impl StatementVisitor for ChildSymbolCollector<'_> {
                 }
             }
 
+            let flavour = n.flavour().map(|flavn| flavn.value());
 
-            let type_id = self.check_type_from_type_annot(n.param_type()).0;
+            let return_type_path = if let Some(ret_typn) = n.return_type() {
+                self.check_type_from_type_annot(ret_typn)
+            } else {
+                TypeSymbolPath::Basic(BasicTypeSymbolPath::new("void"))
+            };
 
 
-            syms.into_iter().for_each(|mut sym| {
-                sym.data.specifiers = specifiers.clone();
-                sym.data.type_id = type_id;
+            let path = GlobalCallableSymbolPath::new(&func_name);
+            if let Some(sym) = self.symtab.get_mut(&path).and_then(|variant| variant.as_global_func_mut()) {
+                sym.specifiers = specifiers;
+                sym.flavour = flavour;
+                sym.return_type_path = return_type_path;
 
-                self.ctx.insert(&sym);
-                self.symtab.insert_func_param(sym);
+                sym.path().clone_into(&mut self.current_path);
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
+        self.current_path.pop();
+    }
+
+    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> bool {
+        if let Some(func_name) = n.name().value(&self.rope) {
+            let path = MemberCallableSymbolPath::new(&self.current_path, &func_name);
+            let mut sym = MemberFunctionSymbol::new(path);
+
+            n.specifiers()
+            .map(|specn| (specn.value(), specn.span()))
+            .for_each(|(spec, span)| {
+                if !sym.specifiers.insert(spec) {
+                    self.diagnostics.push(Diagnostic { 
+                        span, 
+                        body: ErrorDiagnostic::RepeatedSpecifier.into()
+                    });
+                }
             });
+
+            sym.flavour = n.flavour().map(|flavn| flavn.value());
+
+            sym.return_type_path = if let Some(ret_typn) = n.return_type() {
+                self.check_type_from_type_annot(ret_typn)
+            } else {
+                TypeSymbolPath::Basic(BasicTypeSymbolPath::new("void"))
+            };
+
+            sym.path().clone_into(&mut self.current_path);
+            if self.try_insert_with_duplicate_check(sym, n.name().span()) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) {
+        // pop only if visit managed to create the symbol
+        if self.current_path.components().last().unwrap().category == SymbolCategory::Callable {
+            self.current_path.pop();
+        }
+    }
+
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> bool {
+        if let Some(event_name) = n.name().value(&self.rope) {
+            let path = MemberCallableSymbolPath::new(&self.current_path, &event_name);
+            let sym = EventSymbol::new(path);
+
+            sym.path().clone_into(&mut self.current_path);
+            if self.try_insert_with_duplicate_check(sym, n.name().span()) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode) {
+        if self.current_path.components().last().unwrap().category == SymbolCategory::Callable {
+            self.current_path.pop();
+        }
+    }
+
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode) {
+        let mut specifiers = HashSet::new();
+        for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+            if !specifiers.insert(spec) {
+                self.diagnostics.push(Diagnostic { 
+                    span, 
+                    body: ErrorDiagnostic::RepeatedSpecifier.into()
+                });
+            }
+        }
+
+        let type_path = self.check_type_from_type_annot(n.param_type());
+
+
+        for name_node in n.names() {
+            if let Some(param_name) = name_node.value(&self.rope) {
+                let path = DataSymbolPath::new(&self.current_path, &param_name);
+                let mut sym = FunctionParameterSymbol::new(path);
+                sym.specifiers = specifiers.clone();
+                sym.type_path = type_path.clone();
+                self.try_insert_with_duplicate_check(sym, name_node.span());
+            }
         }
     }
 }
