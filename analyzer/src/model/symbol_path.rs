@@ -3,7 +3,7 @@ use super::symbols::SymbolCategory;
 
 
 /// Denotes a string that unambiguously identifies a symbol in the global namespace.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SymbolPath {
     buff: String
 }
@@ -32,6 +32,7 @@ impl SymbolPath {
     }
 
 
+    /// Adds a new component at the end of the path
     pub fn push(&mut self, name: &str, category: SymbolCategory) {
         // allow only alphanumerics and underscore
         debug_assert!(name.chars().filter(|c| !c.is_alphanumeric() && c != &'_').count() == 0);
@@ -51,6 +52,7 @@ impl SymbolPath {
         self.buff.push(tag);
     }
 
+    /// Removes the rightmost component in the path. If there is only one component left, clears the path completely.
     pub fn pop(&mut self) {
         if let Some(i) = self.buff.rfind(Self::COMPONENT_SEP) {
             self.buff.drain(i..);
@@ -59,6 +61,7 @@ impl SymbolPath {
         }
     }
 
+    /// Removes the leftmost component in the path. If there is only one component left, clears the path completely.
     pub fn pop_root(&mut self) {
         if let Some(i) = self.buff.find(Self::COMPONENT_SEP) {
             self.buff.drain(..i);

@@ -1,5 +1,2 @@
-mod symbol_table;
-pub use symbol_table::*;
-
-mod symbol_ctx;
-pub use symbol_ctx::*;
+pub mod symbol_table;
+pub mod symbol_ctx;
