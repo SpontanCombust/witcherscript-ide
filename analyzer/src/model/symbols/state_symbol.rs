@@ -8,7 +8,7 @@ use super::*;
 pub struct StateSymbol {
     path: StateSymbolPath,
     pub specifiers: HashSet<StateSpecifier>,
-    pub base_state_path: Option<SymbolPath>
+    pub base_state_name: Option<String>
 }
 
 impl Symbol for StateSymbol {
@@ -26,7 +26,7 @@ impl StateSymbol {
         Self {
             path,
             specifiers: HashSet::new(),
-            base_state_path: None
+            base_state_name: None
         }
     }
 

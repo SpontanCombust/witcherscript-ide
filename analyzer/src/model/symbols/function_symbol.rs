@@ -9,7 +9,7 @@ pub struct GlobalFunctionSymbol {
     path: GlobalCallableSymbolPath,
     pub specifiers: HashSet<GlobalFunctionSpecifier>,
     pub flavour: Option<GlobalFunctionFlavour>,
-    pub return_type_path: SymbolPath
+    pub return_type_path: TypeSymbolPath
 }
 
 impl Symbol for GlobalFunctionSymbol {
@@ -28,7 +28,7 @@ impl GlobalFunctionSymbol {
             path,
             specifiers: HashSet::new(),
             flavour: None,
-            return_type_path: SymbolPath::empty()
+            return_type_path: TypeSymbolPath::empty()
         }
     }
 }
@@ -40,7 +40,7 @@ pub struct MemberFunctionSymbol {
     path: MemberCallableSymbolPath,
     pub specifiers: HashSet<MemberFunctionSpecifier>,
     pub flavour: Option<MemberFunctionFlavour>,
-    pub return_type_path: SymbolPath
+    pub return_type_path: TypeSymbolPath
 }
 
 impl Symbol for MemberFunctionSymbol {
@@ -59,7 +59,7 @@ impl MemberFunctionSymbol {
             path,
             specifiers: HashSet::new(),
             flavour: None,
-            return_type_path: SymbolPath::empty()
+            return_type_path: TypeSymbolPath::empty()
         }
     }
 }

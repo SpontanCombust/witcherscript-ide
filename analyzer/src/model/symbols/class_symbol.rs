@@ -6,9 +6,9 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub struct ClassSymbol {
-    path: SymbolPath,
+    path: BasicTypeSymbolPath,
     pub specifiers: HashSet<ClassSpecifier>,
-    pub base_path: Option<SymbolPath>
+    pub base_path: Option<TypeSymbolPath>
 }
 
 impl Symbol for ClassSymbol {
@@ -22,9 +22,9 @@ impl Symbol for ClassSymbol {
 }
 
 impl ClassSymbol {
-    pub fn new(name: &str) -> Self {
+    pub fn new(path: BasicTypeSymbolPath) -> Self {
         Self {
-            path: SymbolPath::new(name, SymbolCategory::Type),
+            path,
             specifiers: HashSet::new(),
             base_path: None
         }

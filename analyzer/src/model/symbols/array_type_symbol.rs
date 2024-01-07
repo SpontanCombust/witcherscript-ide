@@ -1,5 +1,5 @@
 use crate::model::symbol_path::SymbolPath;
-use super::{MemberFunctionSymbol, Symbol, SymbolType, FunctionParameterSymbol, ArrayTypeSymbolPath, MemberCallableSymbolPath, DataSymbolPath};
+use super::*;
 
 
 //TODO for later: remember to remove array type symbol when type from type arg is changed 
@@ -29,11 +29,11 @@ impl ArrayTypeSymbol {
         }
     }
 
-    pub fn data_type_path(&self) -> &SymbolPath {
+    pub fn data_type_path(&self) -> &TypeSymbolPath {
         &self.path.type_arg_path
     }
 
-    pub fn make_functions(&self, void_path: &SymbolPath, int_path: &SymbolPath, bool_path: &SymbolPath) -> (Vec<MemberFunctionSymbol>, Vec<FunctionParameterSymbol>) {
+    pub fn make_functions(&self, void_path: &TypeSymbolPath, int_path: &TypeSymbolPath, bool_path: &TypeSymbolPath) -> (Vec<MemberFunctionSymbol>, Vec<FunctionParameterSymbol>) {
         let mut funcs = Vec::new();
         let mut params = Vec::new();
 

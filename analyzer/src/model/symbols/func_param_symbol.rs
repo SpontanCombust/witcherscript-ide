@@ -8,7 +8,7 @@ use super::*;
 pub struct FunctionParameterSymbol {
     path: DataSymbolPath,
     pub specifiers: HashSet<FunctionParameterSpecifier>,
-    pub type_path: SymbolPath,
+    pub type_path: TypeSymbolPath,
 }
 
 impl Symbol for FunctionParameterSymbol {
@@ -26,7 +26,7 @@ impl FunctionParameterSymbol {
         Self {
             path,
             specifiers: HashSet::new(),
-            type_path: SymbolPath::empty()
+            type_path: TypeSymbolPath::empty()
         }
     }
 }

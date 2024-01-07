@@ -36,7 +36,7 @@ impl MemberVarSymbol {
 #[derive(Debug, Clone)]
 pub struct LocalVarSymbol {
     path: DataSymbolPath,
-    pub type_path: SymbolPath,
+    pub type_path: TypeSymbolPath,
 }
 
 impl Symbol for LocalVarSymbol {
@@ -53,7 +53,7 @@ impl LocalVarSymbol {
     pub fn new(path: DataSymbolPath) -> Self {
         Self {
             path,
-            type_path: SymbolPath::empty()
+            type_path: TypeSymbolPath::empty()
         }
     }
 }
