@@ -9,7 +9,7 @@ pub struct ForLoop;
 pub type ForLoopNode<'script> = SyntaxNode<'script, ForLoop>;
 
 impl NamedSyntaxNode for ForLoopNode<'_> {
-    const NODE_NAME: &'static str = "for_stmt";
+    const NODE_KIND: &'static str = "for_stmt";
 }
 
 impl ForLoopNode<'_> {
@@ -56,7 +56,7 @@ pub struct WhileLoop;
 pub type WhileLoopNode<'script> = SyntaxNode<'script, WhileLoop>;
 
 impl NamedSyntaxNode for WhileLoopNode<'_> {
-    const NODE_NAME: &'static str = "while_stmt";
+    const NODE_KIND: &'static str = "while_stmt";
 }
 
 impl WhileLoopNode<'_> {
@@ -93,7 +93,7 @@ pub struct DoWhileLoop;
 pub type DoWhileLoopNode<'script> = SyntaxNode<'script, DoWhileLoop>;
 
 impl NamedSyntaxNode for DoWhileLoopNode<'_> {
-    const NODE_NAME: &'static str = "do_while_stmt";
+    const NODE_KIND: &'static str = "do_while_stmt";
 }
 
 impl DoWhileLoopNode<'_> {

@@ -12,7 +12,7 @@ pub enum StateSpecifier {
 pub type StateSpecifierNode<'script> = SyntaxNode<'script, StateSpecifier>;
 
 impl NamedSyntaxNode for StateSpecifierNode<'_> {
-    const NODE_NAME: &'static str = "state_specifier";
+    const NODE_KIND: &'static str = "state_specifier";
 }
 
 impl StateSpecifierNode<'_> {

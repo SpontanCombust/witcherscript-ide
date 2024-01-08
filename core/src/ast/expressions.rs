@@ -9,7 +9,7 @@ pub struct NestedExpression;
 pub type NestedExpressionNode<'script> = SyntaxNode<'script, NestedExpression>;
 
 impl NamedSyntaxNode for NestedExpressionNode<'_> {
-    const NODE_NAME: &'static str = "nested_expr";
+    const NODE_KIND: &'static str = "nested_expr";
 }
 
 impl NestedExpressionNode<'_> {
@@ -41,7 +41,7 @@ pub struct ThisExpression;
 pub type ThisExpressionNode<'script> = SyntaxNode<'script, ThisExpression>;
 
 impl NamedSyntaxNode for ThisExpressionNode<'_> {
-    const NODE_NAME: &'static str = "this_expr";
+    const NODE_KIND: &'static str = "this_expr";
 }
 
 impl ThisExpressionNode<'_> {}
@@ -66,7 +66,7 @@ pub struct SuperExpression;
 pub type SuperExpressionNode<'script> = SyntaxNode<'script, SuperExpression>;
 
 impl NamedSyntaxNode for SuperExpressionNode<'_> {
-    const NODE_NAME: &'static str = "super_expr";
+    const NODE_KIND: &'static str = "super_expr";
 }
 
 impl SuperExpressionNode<'_> {}
@@ -91,7 +91,7 @@ pub struct ParentExpression;
 pub type ParentExpressionNode<'script> = SyntaxNode<'script, ParentExpression>;
 
 impl NamedSyntaxNode for ParentExpressionNode<'_> {
-    const NODE_NAME: &'static str = "parent_expr";
+    const NODE_KIND: &'static str = "parent_expr";
 }
 
 impl ParentExpressionNode<'_> {}
@@ -116,7 +116,7 @@ pub struct VirtualParentExpression;
 pub type VirtualParentExpressionNode<'script> = SyntaxNode<'script, VirtualParentExpression>;
 
 impl NamedSyntaxNode for VirtualParentExpressionNode<'_> {
-    const NODE_NAME: &'static str = "virtual_parent_expr";
+    const NODE_KIND: &'static str = "virtual_parent_expr";
 }
 
 impl VirtualParentExpressionNode<'_> {}
@@ -142,7 +142,7 @@ pub struct FunctionCallExpression;
 pub type FunctionCallExpressionNode<'script> = SyntaxNode<'script, FunctionCallExpression>;
 
 impl NamedSyntaxNode for FunctionCallExpressionNode<'_> {
-    const NODE_NAME: &'static str = "func_call_expr";
+    const NODE_KIND: &'static str = "func_call_expr";
 }
 
 impl FunctionCallExpressionNode<'_> {
@@ -236,7 +236,7 @@ pub struct ArrayExpression;
 pub type ArrayExpressionNode<'script> = SyntaxNode<'script, ArrayExpression>;
 
 impl NamedSyntaxNode for ArrayExpressionNode<'_> {
-    const NODE_NAME: &'static str = "array_expr";
+    const NODE_KIND: &'static str = "array_expr";
 }
 
 impl ArrayExpressionNode<'_> {
@@ -274,7 +274,7 @@ pub struct MemberFieldExpression;
 pub type MemberFieldExpressionNode<'script> = SyntaxNode<'script, MemberFieldExpression>;
 
 impl NamedSyntaxNode for MemberFieldExpressionNode<'_> {
-    const NODE_NAME: &'static str = "member_field_expr";
+    const NODE_KIND: &'static str = "member_field_expr";
 }
 
 impl MemberFieldExpressionNode<'_> {
@@ -311,7 +311,7 @@ pub struct MethodCallExpression;
 pub type MethodCallExpressionNode<'script> = SyntaxNode<'script, MethodCallExpression>;
 
 impl NamedSyntaxNode for MethodCallExpressionNode<'_> {
-    const NODE_NAME: &'static str = "member_func_call_expr";
+    const NODE_KIND: &'static str = "member_func_call_expr";
 }
 
 impl MethodCallExpressionNode<'_> {
@@ -354,7 +354,7 @@ pub struct InstantiationExpression;
 pub type InstantiationExpressionNode<'script> = SyntaxNode<'script, InstantiationExpression>;
 
 impl NamedSyntaxNode for InstantiationExpressionNode<'_> {
-    const NODE_NAME: &'static str = "new_expr";
+    const NODE_KIND: &'static str = "new_expr";
 }
 
 impl InstantiationExpressionNode<'_> {
@@ -391,7 +391,7 @@ pub struct TypeCastExpression;
 pub type TypeCastExpressionNode<'script> = SyntaxNode<'script, TypeCastExpression>;
 
 impl NamedSyntaxNode for TypeCastExpressionNode<'_> {
-    const NODE_NAME: &'static str = "cast_expr";
+    const NODE_KIND: &'static str = "cast_expr";
 }
 
 impl TypeCastExpressionNode<'_> {
@@ -428,7 +428,7 @@ pub struct UnaryOperationExpression;
 pub type UnaryOperationExpressionNode<'script> = SyntaxNode<'script, UnaryOperationExpression>;
 
 impl NamedSyntaxNode for UnaryOperationExpressionNode<'_> {
-    const NODE_NAME: &'static str = "unary_op_expr";
+    const NODE_KIND: &'static str = "unary_op_expr";
 }
 
 impl UnaryOperationExpressionNode<'_> {
@@ -465,7 +465,7 @@ pub struct BinaryOperationExpression;
 pub type BinaryOperationExpressionNode<'script> = SyntaxNode<'script, BinaryOperationExpression>;
 
 impl NamedSyntaxNode for BinaryOperationExpressionNode<'_> {
-    const NODE_NAME: &'static str = "binary_op_expr";
+    const NODE_KIND: &'static str = "binary_op_expr";
 }
 
 impl BinaryOperationExpressionNode<'_> {
@@ -508,7 +508,7 @@ pub struct AssignmentOperationExpression;
 pub type AssignmentOperationExpressionNode<'script> = SyntaxNode<'script, AssignmentOperationExpression>;
 
 impl NamedSyntaxNode for AssignmentOperationExpressionNode<'_> {
-    const NODE_NAME: &'static str = "assign_op_expr";
+    const NODE_KIND: &'static str = "assign_op_expr";
 }
 
 impl AssignmentOperationExpressionNode<'_> {
@@ -551,7 +551,7 @@ pub struct TernaryConditionalExpression;
 pub type TernaryConditionalExpressionNode<'script> = SyntaxNode<'script, TernaryConditionalExpression>;
 
 impl NamedSyntaxNode for TernaryConditionalExpressionNode<'_> {
-    const NODE_NAME: &'static str = "ternary_cond_expr";
+    const NODE_KIND: &'static str = "ternary_cond_expr";
 }
 
 impl TernaryConditionalExpressionNode<'_> {
@@ -616,23 +616,23 @@ pub type ExpressionNode<'script> = SyntaxNode<'script, Expression<'script>>;
 impl ExpressionNode<'_> {
     pub fn value(&self) -> Expression {
         match self.tree_node.kind() {
-            AssignmentOperationExpressionNode::NODE_NAME => Expression::AssignmentOperation(self.clone().into()),
-            TernaryConditionalExpressionNode::NODE_NAME => Expression::TernaryConditional(self.clone().into()),
-            BinaryOperationExpressionNode::NODE_NAME => Expression::BinaryOperation(self.clone().into()),
-            InstantiationExpressionNode::NODE_NAME => Expression::Instantiation(self.clone().into()),
-            UnaryOperationExpressionNode::NODE_NAME => Expression::UnaryOperation(self.clone().into()),
-            TypeCastExpressionNode::NODE_NAME => Expression::TypeCast(self.clone().into()),
-            MethodCallExpressionNode::NODE_NAME => Expression::MethodCall(self.clone().into()),
-            MemberFieldExpressionNode::NODE_NAME => Expression::MemberField(self.clone().into()),
-            FunctionCallExpressionNode::NODE_NAME => Expression::FunctionCall(self.clone().into()),
-            ArrayExpressionNode::NODE_NAME => Expression::Array(self.clone().into()),
-            NestedExpressionNode::NODE_NAME => Expression::Nested(self.clone().into()),
-            ThisExpressionNode::NODE_NAME => Expression::This(self.clone().into()),
-            SuperExpressionNode::NODE_NAME => Expression::Super(self.clone().into()),
-            ParentExpressionNode::NODE_NAME => Expression::Parent(self.clone().into()),
-            VirtualParentExpressionNode::NODE_NAME => Expression::VirtualParent(self.clone().into()),
-            IdentifierNode::NODE_NAME => Expression::Identifier(self.clone().into()),
-            LiteralNode::NODE_NAME => Expression::Literal(self.clone().into()),
+            AssignmentOperationExpressionNode::NODE_KIND => Expression::AssignmentOperation(self.clone().into()),
+            TernaryConditionalExpressionNode::NODE_KIND => Expression::TernaryConditional(self.clone().into()),
+            BinaryOperationExpressionNode::NODE_KIND => Expression::BinaryOperation(self.clone().into()),
+            InstantiationExpressionNode::NODE_KIND => Expression::Instantiation(self.clone().into()),
+            UnaryOperationExpressionNode::NODE_KIND => Expression::UnaryOperation(self.clone().into()),
+            TypeCastExpressionNode::NODE_KIND => Expression::TypeCast(self.clone().into()),
+            MethodCallExpressionNode::NODE_KIND => Expression::MethodCall(self.clone().into()),
+            MemberFieldExpressionNode::NODE_KIND => Expression::MemberField(self.clone().into()),
+            FunctionCallExpressionNode::NODE_KIND => Expression::FunctionCall(self.clone().into()),
+            ArrayExpressionNode::NODE_KIND => Expression::Array(self.clone().into()),
+            NestedExpressionNode::NODE_KIND => Expression::Nested(self.clone().into()),
+            ThisExpressionNode::NODE_KIND => Expression::This(self.clone().into()),
+            SuperExpressionNode::NODE_KIND => Expression::Super(self.clone().into()),
+            ParentExpressionNode::NODE_KIND => Expression::Parent(self.clone().into()),
+            VirtualParentExpressionNode::NODE_KIND => Expression::VirtualParent(self.clone().into()),
+            IdentifierNode::NODE_KIND => Expression::Identifier(self.clone().into()),
+            LiteralNode::NODE_KIND => Expression::Literal(self.clone().into()),
             _ => panic!("Unknown expression type: {}", self.tree_node.kind())
         }
     }
@@ -680,7 +680,7 @@ pub struct ExpressionStatement;
 pub type ExpressionStatementNode<'script> = SyntaxNode<'script, ExpressionStatement>;
 
 impl NamedSyntaxNode for ExpressionStatementNode<'_> {
-    const NODE_NAME: &'static str = "expr_stmt";
+    const NODE_KIND: &'static str = "expr_stmt";
 }
 
 impl ExpressionStatementNode<'_> {

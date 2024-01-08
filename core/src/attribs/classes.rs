@@ -21,7 +21,7 @@ pub enum ClassSpecifier {
 pub type ClassSpecifierNode<'script> = SyntaxNode<'script, ClassSpecifier>;
 
 impl NamedSyntaxNode for ClassSpecifierNode<'_> {
-    const NODE_NAME: &'static str = "class_specifier";
+    const NODE_KIND: &'static str = "class_specifier";
 }
 
 impl ClassSpecifierNode<'_> {
@@ -60,7 +60,7 @@ pub enum AutobindSpecifier {
 pub type AutobindSpecifierNode<'script> = SyntaxNode<'script, AutobindSpecifier>;
 
 impl NamedSyntaxNode for AutobindSpecifierNode<'_> {
-    const NODE_NAME: &'static str = "class_autobind_specifier";
+    const NODE_KIND: &'static str = "class_autobind_specifier";
 }
 
 impl AutobindSpecifierNode<'_> {

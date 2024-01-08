@@ -145,5 +145,5 @@ impl Debug for SyntaxNode<'_, ()> {
 
 /// Describes the name, by which a node is identified in tree-sitter's grammar
 pub trait NamedSyntaxNode {
-    const NODE_NAME: &'static str;
+    const NODE_KIND: &'static str;
 }

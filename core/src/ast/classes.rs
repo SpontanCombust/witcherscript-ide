@@ -9,7 +9,7 @@ pub struct ClassDeclaration;
 pub type ClassDeclarationNode<'script> = SyntaxNode<'script, ClassDeclaration>;
 
 impl NamedSyntaxNode for ClassDeclarationNode<'_> {
-    const NODE_NAME: &'static str = "class_decl_stmt";
+    const NODE_KIND: &'static str = "class_decl_stmt";
 }
 
 impl ClassDeclarationNode<'_> {
@@ -58,7 +58,7 @@ pub struct ClassBlock;
 pub type ClassBlockNode<'script> = SyntaxNode<'script, ClassBlock>;
 
 impl NamedSyntaxNode for ClassBlockNode<'_> {
-    const NODE_NAME: &'static str = "class_block";
+    const NODE_KIND: &'static str = "class_block";
 }
 
 impl ClassBlockNode<'_> {
@@ -95,13 +95,13 @@ pub type ClassStatementNode<'script> = SyntaxNode<'script, ClassStatement<'scrip
 impl ClassStatementNode<'_> {
     pub fn value(&self) -> ClassStatement {
         match self.tree_node.kind() {
-            MemberVarDeclarationNode::NODE_NAME => ClassStatement::Var(self.clone().into()),
-            MemberDefaultValueNode::NODE_NAME => ClassStatement::Default(self.clone().into()),
-            MemberHintNode::NODE_NAME => ClassStatement::Hint(self.clone().into()),
-            AutobindDeclarationNode::NODE_NAME => ClassStatement::Autobind(self.clone().into()),
-            MemberFunctionDeclarationNode::NODE_NAME => ClassStatement::Method(self.clone().into()),
-            EventDeclarationNode::NODE_NAME => ClassStatement::Event(self.clone().into()),
-            NopNode::NODE_NAME => ClassStatement::Nop,
+            MemberVarDeclarationNode::NODE_KIND => ClassStatement::Var(self.clone().into()),
+            MemberDefaultValueNode::NODE_KIND => ClassStatement::Default(self.clone().into()),
+            MemberHintNode::NODE_KIND => ClassStatement::Hint(self.clone().into()),
+            AutobindDeclarationNode::NODE_KIND => ClassStatement::Autobind(self.clone().into()),
+            MemberFunctionDeclarationNode::NODE_KIND => ClassStatement::Method(self.clone().into()),
+            EventDeclarationNode::NODE_KIND => ClassStatement::Event(self.clone().into()),
+            NopNode::NODE_KIND => ClassStatement::Nop,
             _ => panic!("Unknown class statement type: {}", self.tree_node.kind())
         }
     }
@@ -139,7 +139,7 @@ pub struct AutobindDeclaration;
 pub type AutobindDeclarationNode<'script> = SyntaxNode<'script, AutobindDeclaration>;
 
 impl NamedSyntaxNode for AutobindDeclarationNode<'_> {
-    const NODE_NAME: &'static str = "class_autobind_stmt";
+    const NODE_KIND: &'static str = "class_autobind_stmt";
 }
 
 impl AutobindDeclarationNode<'_> {
@@ -191,7 +191,7 @@ impl AutobindValueNode<'_> {
     pub fn value(&self) -> AutobindValue {
         let child = self.first_child(false).unwrap();
         let s = child.tree_node.kind();
-        if s == LiteralStringNode::NODE_NAME {
+        if s == LiteralStringNode::NODE_KIND {
             return AutobindValue::Concrete(child.into());
         } else if s == Keyword::Single.as_ref() {
             return AutobindValue::Single;

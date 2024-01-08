@@ -9,7 +9,7 @@ pub struct EnumDeclaration;
 pub type EnumDeclarationNode<'script> = SyntaxNode<'script, EnumDeclaration>;
 
 impl NamedSyntaxNode for EnumDeclarationNode<'_> {
-    const NODE_NAME: &'static str = "enum_decl_stmt";
+    const NODE_KIND: &'static str = "enum_decl_stmt";
 }
 
 impl EnumDeclarationNode<'_> {
@@ -48,7 +48,7 @@ pub struct EnumBlock;
 pub type EnumBlockNode<'script> = SyntaxNode<'script, EnumBlock>;
 
 impl NamedSyntaxNode for EnumBlockNode<'_> {
-    const NODE_NAME: &'static str = "enum_block";
+    const NODE_KIND: &'static str = "enum_block";
 }
 
 impl EnumBlockNode<'_> {
@@ -76,7 +76,7 @@ pub struct EnumMemberDeclaration;
 pub type EnumMemberDeclarationNode<'script> = SyntaxNode<'script, EnumMemberDeclaration>;
 
 impl NamedSyntaxNode for EnumMemberDeclarationNode<'_> {
-    const NODE_NAME: &'static str = "enum_decl_value";
+    const NODE_KIND: &'static str = "enum_decl_value";
 }
 
 impl EnumMemberDeclarationNode<'_> {

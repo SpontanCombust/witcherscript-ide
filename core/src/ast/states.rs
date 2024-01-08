@@ -9,7 +9,7 @@ pub struct StateDeclaration;
 pub type StateDeclarationNode<'script> = SyntaxNode<'script, StateDeclaration>;
 
 impl NamedSyntaxNode for StateDeclarationNode<'_> {
-    const NODE_NAME: &'static str = "state_decl_stmt";
+    const NODE_KIND: &'static str = "state_decl_stmt";
 }
 
 impl StateDeclarationNode<'_> {

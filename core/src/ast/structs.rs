@@ -9,7 +9,7 @@ pub struct StructDeclaration;
 pub type StructDeclarationNode<'script> = SyntaxNode<'script, StructDeclaration>;
 
 impl NamedSyntaxNode for StructDeclarationNode<'_> {
-    const NODE_NAME: &'static str = "struct_decl_stmt";
+    const NODE_KIND: &'static str = "struct_decl_stmt";
 }
 
 impl StructDeclarationNode<'_> {
@@ -53,7 +53,7 @@ pub struct StructBlock;
 pub type StructBlockNode<'script> = SyntaxNode<'script, StructBlock>;
 
 impl NamedSyntaxNode for StructBlockNode<'_> {
-    const NODE_NAME: &'static str = "struct_block";
+    const NODE_KIND: &'static str = "struct_block";
 }
 
 impl StructBlockNode<'_> {
@@ -88,10 +88,10 @@ pub type StructStatementNode<'script> = SyntaxNode<'script, StructStatement<'scr
 impl StructStatementNode<'_> {
     pub fn value(&self) -> StructStatement {
         match self.tree_node.kind() {
-            MemberVarDeclarationNode::NODE_NAME => StructStatement::Var(self.clone().into()),
-            MemberDefaultValueNode::NODE_NAME => StructStatement::Default(self.clone().into()),
-            MemberHintNode::NODE_NAME => StructStatement::Hint(self.clone().into()),
-            NopNode::NODE_NAME => StructStatement::Nop,
+            MemberVarDeclarationNode::NODE_KIND => StructStatement::Var(self.clone().into()),
+            MemberDefaultValueNode::NODE_KIND => StructStatement::Default(self.clone().into()),
+            MemberHintNode::NODE_KIND => StructStatement::Hint(self.clone().into()),
+            NopNode::NODE_KIND => StructStatement::Nop,
             _ => panic!("Unknown struct statement type: {}", self.tree_node.kind())
         }
     }
@@ -126,7 +126,7 @@ pub struct MemberDefaultValue;
 pub type MemberDefaultValueNode<'script> = SyntaxNode<'script, MemberDefaultValue>;
 
 impl NamedSyntaxNode for MemberDefaultValueNode<'_> {
-    const NODE_NAME: &'static str = "member_default_val_stmt";
+    const NODE_KIND: &'static str = "member_default_val_stmt";
 }
 
 impl MemberDefaultValueNode<'_> {
@@ -162,7 +162,7 @@ pub struct MemberHint;
 pub type MemberHintNode<'script> = SyntaxNode<'script, MemberHint>;
 
 impl NamedSyntaxNode for MemberHintNode<'_> {
-    const NODE_NAME: &'static str = "member_hint_stmt";
+    const NODE_KIND: &'static str = "member_hint_stmt";
 }
 
 impl MemberHintNode<'_> {

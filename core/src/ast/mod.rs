@@ -48,12 +48,12 @@ impl ScriptStatementNode<'_> {
     pub fn value(&self) -> ScriptStatement {
         let s = self.tree_node.kind();
         match s {
-            GlobalFunctionDeclarationNode::NODE_NAME => ScriptStatement::Function(self.clone().into()),
-            ClassDeclarationNode::NODE_NAME => ScriptStatement::Class(self.clone().into()),
-            StateDeclarationNode::NODE_NAME => ScriptStatement::State(self.clone().into()),
-            StructDeclarationNode::NODE_NAME => ScriptStatement::Struct(self.clone().into()),
-            EnumDeclarationNode::NODE_NAME => ScriptStatement::Enum(self.clone().into()),
-            NopNode::NODE_NAME => ScriptStatement::Nop,
+            GlobalFunctionDeclarationNode::NODE_KIND => ScriptStatement::Function(self.clone().into()),
+            ClassDeclarationNode::NODE_KIND => ScriptStatement::Class(self.clone().into()),
+            StateDeclarationNode::NODE_KIND => ScriptStatement::State(self.clone().into()),
+            StructDeclarationNode::NODE_KIND => ScriptStatement::Struct(self.clone().into()),
+            EnumDeclarationNode::NODE_KIND => ScriptStatement::Enum(self.clone().into()),
+            NopNode::NODE_KIND => ScriptStatement::Nop,
             _ => panic!("Unknown script statement: {}", s)
         }
     }
@@ -86,7 +86,7 @@ impl StatementTraversal for ScriptStatementNode<'_> {
 pub type ScriptNode<'script> = SyntaxNode<'script, Script>;
 
 impl NamedSyntaxNode for ScriptNode<'_> {
-    const NODE_NAME: &'static str = "script";
+    const NODE_KIND: &'static str = "script";
 }
 
 impl ScriptNode<'_> {

@@ -13,7 +13,7 @@ pub enum FunctionParameterSpecifier {
 pub type FunctionParameterSpecifierNode<'script> = SyntaxNode<'script, FunctionParameterSpecifier>;
 
 impl NamedSyntaxNode for FunctionParameterSpecifierNode<'_> {
-    const NODE_NAME: &'static str = "func_param_specifier";
+    const NODE_KIND: &'static str = "func_param_specifier";
 }
 
 impl FunctionParameterSpecifierNode<'_> {
@@ -53,7 +53,7 @@ pub enum GlobalFunctionSpecifier {
 pub type GlobalFunctionSpecifierNode<'script> = SyntaxNode<'script, GlobalFunctionSpecifier>;
 
 impl NamedSyntaxNode for GlobalFunctionSpecifierNode<'_> {
-    const NODE_NAME: &'static str = "global_func_specifier";
+    const NODE_KIND: &'static str = "global_func_specifier";
 }
 
 impl GlobalFunctionSpecifierNode<'_> {
@@ -93,7 +93,7 @@ pub enum GlobalFunctionFlavour {
 pub type GlobalFunctionFlavourNode<'script> = SyntaxNode<'script, GlobalFunctionFlavour>;
 
 impl NamedSyntaxNode for GlobalFunctionFlavourNode<'_> {
-    const NODE_NAME: &'static str = "global_func_flavour";
+    const NODE_KIND: &'static str = "global_func_flavour";
 }
 
 impl GlobalFunctionFlavourNode<'_> {
@@ -137,7 +137,7 @@ pub enum MemberFunctionSpecifier {
 pub type MemberFunctionSpecifierNode<'script> = SyntaxNode<'script, MemberFunctionSpecifier>;
 
 impl NamedSyntaxNode for MemberFunctionSpecifierNode<'_> {
-    const NODE_NAME: &'static str = "member_func_specifier";
+    const NODE_KIND: &'static str = "member_func_specifier";
 }
 
 impl MemberFunctionSpecifierNode<'_> {
@@ -180,7 +180,7 @@ pub enum MemberFunctionFlavour {
 pub type MemberFunctionFlavourNode<'script> = SyntaxNode<'script, MemberFunctionFlavour>;
 
 impl NamedSyntaxNode for MemberFunctionFlavourNode<'_> {
-    const NODE_NAME: &'static str = "member_func_flavour";
+    const NODE_KIND: &'static str = "member_func_flavour";
 }
 
 impl MemberFunctionFlavourNode<'_> {

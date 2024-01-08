@@ -16,7 +16,7 @@ impl Into<String> for Identifier {
 pub type IdentifierNode<'script> = SyntaxNode<'script, Identifier>;
 
 impl NamedSyntaxNode for IdentifierNode<'_> {
-    const NODE_NAME: &'static str = "ident";
+    const NODE_KIND: &'static str = "ident";
 }
 
 impl IdentifierNode<'_> {

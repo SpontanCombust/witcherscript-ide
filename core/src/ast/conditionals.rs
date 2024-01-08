@@ -9,7 +9,7 @@ pub struct IfConditional;
 pub type IfConditionalNode<'script> = SyntaxNode<'script, IfConditional>;
 
 impl NamedSyntaxNode for IfConditionalNode<'_> {
-    const NODE_NAME: &'static str = "if_stmt";
+    const NODE_KIND: &'static str = "if_stmt";
 }
 
 impl IfConditionalNode<'_> {
@@ -52,7 +52,7 @@ pub struct SwitchConditional;
 pub type SwitchConditionalNode<'script> = SyntaxNode<'script, SwitchConditional>;
 
 impl NamedSyntaxNode for SwitchConditionalNode<'_> {
-    const NODE_NAME: &'static str = "switch_stmt";
+    const NODE_KIND: &'static str = "switch_stmt";
 }
 
 impl SwitchConditionalNode<'_> {
@@ -94,7 +94,7 @@ pub struct SwitchConditionalCase;
 pub type SwitchConditionalCaseNode<'script> = SyntaxNode<'script, SwitchConditionalCase>;
 
 impl NamedSyntaxNode for SwitchConditionalCaseNode<'_> {
-    const NODE_NAME: &'static str = "switch_case";
+    const NODE_KIND: &'static str = "switch_case";
 }
 
 impl SwitchConditionalCaseNode<'_> {
@@ -130,7 +130,7 @@ pub struct SwitchConditionalDefault;
 pub type SwitchConditionalDefaultNode<'script> = SyntaxNode<'script, SwitchConditionalDefault>;
 
 impl NamedSyntaxNode for SwitchConditionalDefaultNode<'_> {
-    const NODE_NAME: &'static str = "switch_default";
+    const NODE_KIND: &'static str = "switch_default";
 }
 
 impl SwitchConditionalDefaultNode<'_> {

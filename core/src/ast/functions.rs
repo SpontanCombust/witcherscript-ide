@@ -9,7 +9,7 @@ pub struct EventDeclaration;
 pub type EventDeclarationNode<'script> = SyntaxNode<'script, EventDeclaration>;
 
 impl NamedSyntaxNode for EventDeclarationNode<'_> {
-    const NODE_NAME: &'static str = "event_decl_stmt";
+    const NODE_KIND: &'static str = "event_decl_stmt";
 }
 
 impl EventDeclarationNode<'_> {
@@ -54,7 +54,7 @@ pub struct GlobalFunctionDeclaration;
 pub type GlobalFunctionDeclarationNode<'script> = SyntaxNode<'script, GlobalFunctionDeclaration>;
 
 impl NamedSyntaxNode for GlobalFunctionDeclarationNode<'_> {
-    const NODE_NAME: &'static str = "global_func_decl_stmt";
+    const NODE_KIND: &'static str = "global_func_decl_stmt";
 }
 
 impl GlobalFunctionDeclarationNode<'_> {
@@ -114,7 +114,7 @@ pub struct MemberFunctionDeclaration;
 pub type MemberFunctionDeclarationNode<'script> = SyntaxNode<'script, MemberFunctionDeclaration>;
 
 impl NamedSyntaxNode for MemberFunctionDeclarationNode<'_> {
-    const NODE_NAME: &'static str = "member_func_decl_stmt";
+    const NODE_KIND: &'static str = "member_func_decl_stmt";
 }
 
 impl MemberFunctionDeclarationNode<'_> {
@@ -175,7 +175,7 @@ pub struct FunctionParameterGroup;
 pub type FunctionParameterGroupNode<'script> = SyntaxNode<'script, FunctionParameterGroup>;
 
 impl NamedSyntaxNode for FunctionParameterGroupNode<'_> {
-    const NODE_NAME: &'static str = "func_param_group";
+    const NODE_KIND: &'static str = "func_param_group";
 }
 
 impl FunctionParameterGroupNode<'_> {
@@ -232,19 +232,19 @@ pub type FunctionStatementNode<'script> = SyntaxNode<'script, FunctionStatement<
 impl FunctionStatementNode<'_> {
     pub fn value(&self) -> FunctionStatement {
         match self.tree_node.kind() {
-            VarDeclarationNode::NODE_NAME => FunctionStatement::Var(self.clone().into()),
-            ExpressionStatementNode::NODE_NAME => FunctionStatement::Expr(self.clone().into()),
-            ForLoopNode::NODE_NAME => FunctionStatement::For(self.clone().into()),
-            WhileLoopNode::NODE_NAME => FunctionStatement::While(self.clone().into()),
-            DoWhileLoopNode::NODE_NAME => FunctionStatement::DoWhile(self.clone().into()),
-            IfConditionalNode::NODE_NAME => FunctionStatement::If(self.clone().into()),
-            SwitchConditionalNode::NODE_NAME => FunctionStatement::Switch(self.clone().into()),
-            BreakStatementNode::NODE_NAME => FunctionStatement::Break(self.clone().into()),
-            ContinueStatementNode::NODE_NAME => FunctionStatement::Continue(self.clone().into()),
-            ReturnStatementNode::NODE_NAME => FunctionStatement::Return(self.clone().into()),
-            DeleteStatementNode::NODE_NAME => FunctionStatement::Delete(self.clone().into()),
-            FunctionBlockNode::NODE_NAME => FunctionStatement::Block(self.clone().into()),
-            NopNode::NODE_NAME => FunctionStatement::Nop,
+            VarDeclarationNode::NODE_KIND => FunctionStatement::Var(self.clone().into()),
+            ExpressionStatementNode::NODE_KIND => FunctionStatement::Expr(self.clone().into()),
+            ForLoopNode::NODE_KIND => FunctionStatement::For(self.clone().into()),
+            WhileLoopNode::NODE_KIND => FunctionStatement::While(self.clone().into()),
+            DoWhileLoopNode::NODE_KIND => FunctionStatement::DoWhile(self.clone().into()),
+            IfConditionalNode::NODE_KIND => FunctionStatement::If(self.clone().into()),
+            SwitchConditionalNode::NODE_KIND => FunctionStatement::Switch(self.clone().into()),
+            BreakStatementNode::NODE_KIND => FunctionStatement::Break(self.clone().into()),
+            ContinueStatementNode::NODE_KIND => FunctionStatement::Continue(self.clone().into()),
+            ReturnStatementNode::NODE_KIND => FunctionStatement::Return(self.clone().into()),
+            DeleteStatementNode::NODE_KIND => FunctionStatement::Delete(self.clone().into()),
+            FunctionBlockNode::NODE_KIND => FunctionStatement::Block(self.clone().into()),
+            NopNode::NODE_KIND => FunctionStatement::Nop,
             _ => panic!("Unknown function statement type: {}", self.tree_node.kind())
         }
     }
@@ -287,7 +287,7 @@ pub struct FunctionBlock;
 pub type FunctionBlockNode<'script> = SyntaxNode<'script, FunctionBlock>;
 
 impl NamedSyntaxNode for FunctionBlockNode<'_> {
-    const NODE_NAME: &'static str = "func_block";
+    const NODE_KIND: &'static str = "func_block";
 }
 
 impl FunctionBlockNode<'_> {
@@ -321,7 +321,7 @@ pub struct BreakStatement;
 pub type BreakStatementNode<'script> = SyntaxNode<'script, BreakStatement>;
 
 impl NamedSyntaxNode for BreakStatementNode<'_> {
-    const NODE_NAME: &'static str = "break_stmt";
+    const NODE_KIND: &'static str = "break_stmt";
 }
 
 impl BreakStatementNode<'_> {}
@@ -346,7 +346,7 @@ pub struct ContinueStatement;
 pub type ContinueStatementNode<'script> = SyntaxNode<'script, ContinueStatement>;
 
 impl NamedSyntaxNode for ContinueStatementNode<'_> {
-    const NODE_NAME: &'static str = "continue_stmt";
+    const NODE_KIND: &'static str = "continue_stmt";
 }
 
 impl ContinueStatementNode<'_> {}
@@ -371,7 +371,7 @@ pub struct ReturnStatement;
 pub type ReturnStatementNode<'script> = SyntaxNode<'script, ReturnStatement>;
 
 impl NamedSyntaxNode for ReturnStatementNode<'_> {
-    const NODE_NAME: &'static str = "return_stmt";
+    const NODE_KIND: &'static str = "return_stmt";
 }
 
 impl ReturnStatementNode<'_> {
@@ -402,7 +402,7 @@ pub struct DeleteStatement;
 pub type DeleteStatementNode<'script> = SyntaxNode<'script, DeleteStatement>;
 
 impl NamedSyntaxNode for DeleteStatementNode<'_> {
-    const NODE_NAME: &'static str = "delete_stmt";
+    const NODE_KIND: &'static str = "delete_stmt";
 }
 
 impl DeleteStatementNode<'_> {

@@ -11,7 +11,7 @@ pub enum StructSpecifier {
 pub type StructSpecifierNode<'script> = SyntaxNode<'script, StructSpecifier>;
 
 impl NamedSyntaxNode for StructSpecifierNode<'_> {
-    const NODE_NAME: &'static str = "struct_specifier";
+    const NODE_KIND: &'static str = "struct_specifier";
 }
 
 impl StructSpecifierNode<'_> {

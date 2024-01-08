@@ -9,7 +9,7 @@ pub struct TypeAnnotation;
 pub type TypeAnnotationNode<'script> = SyntaxNode<'script, TypeAnnotation>;
 
 impl NamedSyntaxNode for TypeAnnotationNode<'_> {
-    const NODE_NAME: &'static str = "type_annot";
+    const NODE_KIND: &'static str = "type_annot";
 }
 
 impl TypeAnnotationNode<'_> {
@@ -38,7 +38,7 @@ pub struct VarDeclaration;
 pub type VarDeclarationNode<'script> = SyntaxNode<'script, VarDeclaration>;
 
 impl NamedSyntaxNode for VarDeclarationNode<'_> {
-    const NODE_NAME: &'static str = "var_decl_stmt";
+    const NODE_KIND: &'static str = "var_decl_stmt";
 }
 
 impl VarDeclarationNode<'_> {
@@ -78,7 +78,7 @@ pub struct MemberVarDeclaration;
 pub type MemberVarDeclarationNode<'script> = SyntaxNode<'script, MemberVarDeclaration>;
 
 impl NamedSyntaxNode for MemberVarDeclarationNode<'_> {
-    const NODE_NAME: &'static str = "member_var_decl_stmt";
+    const NODE_KIND: &'static str = "member_var_decl_stmt";
 }
 
 impl MemberVarDeclarationNode<'_> {

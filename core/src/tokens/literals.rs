@@ -26,7 +26,7 @@ pub struct LiteralInt(i32);
 pub type LiteralIntNode<'script> = SyntaxNode<'script, LiteralInt>;
 
 impl NamedSyntaxNode for LiteralIntNode<'_> {
-    const NODE_NAME: &'static str = "literal_int";
+    const NODE_KIND: &'static str = "literal_int";
 }
 
 impl LiteralIntNode<'_> {
@@ -50,7 +50,7 @@ pub struct LiteralFloat(f32);
 pub type LiteralFloatNode<'script> = SyntaxNode<'script, LiteralFloat>;
 
 impl NamedSyntaxNode for LiteralFloatNode<'_> {
-    const NODE_NAME: &'static str = "literal_float";
+    const NODE_KIND: &'static str = "literal_float";
 }
 
 impl LiteralFloatNode<'_> {
@@ -82,7 +82,7 @@ pub struct LiteralBool(bool);
 pub type LiteralBoolNode<'script> = SyntaxNode<'script, LiteralBool>;
 
 impl NamedSyntaxNode for LiteralBoolNode<'_> {
-    const NODE_NAME: &'static str = "literal_bool";
+    const NODE_KIND: &'static str = "literal_bool";
 }
 
 impl LiteralBoolNode<'_> {
@@ -106,7 +106,7 @@ pub struct LiteralString(String);
 pub type LiteralStringNode<'script> = SyntaxNode<'script, LiteralString>;
 
 impl NamedSyntaxNode for LiteralStringNode<'_> {
-    const NODE_NAME: &'static str = "literal_string";
+    const NODE_KIND: &'static str = "literal_string";
 }
 
 impl LiteralStringNode<'_> {
@@ -133,7 +133,7 @@ pub struct LiteralName(String);
 pub type LiteralNameNode<'script> = SyntaxNode<'script, LiteralName>;
 
 impl NamedSyntaxNode for LiteralNameNode<'_> {
-    const NODE_NAME: &'static str = "literal_name";
+    const NODE_KIND: &'static str = "literal_name";
 }
 
 impl LiteralNameNode<'_> {
@@ -162,7 +162,7 @@ pub struct LiteralNull;
 pub type LiteralNullNode<'script> = SyntaxNode<'script, LiteralNull>;
 
 impl NamedSyntaxNode for LiteralNullNode<'_> {
-    const NODE_NAME: &'static str = "literal_null";
+    const NODE_KIND: &'static str = "literal_null";
 }
 
 impl LiteralNullNode<'_> {}
@@ -187,19 +187,19 @@ pub enum Literal<'script> {
 pub type LiteralNode<'script> = SyntaxNode<'script, Literal<'script>>;
 
 impl NamedSyntaxNode for LiteralNode<'_> {
-    const NODE_NAME: &'static str = "literal";
+    const NODE_KIND: &'static str = "literal";
 }
 
 impl LiteralNode<'_> {
     pub fn value(&self) -> Literal<'_> {
         let child = self.first_child(true).unwrap();
         match child.tree_node.kind() {
-            LiteralIntNode::NODE_NAME => Literal::Int(child.into()),
-            LiteralFloatNode::NODE_NAME => Literal::Float(child.into()),
-            LiteralBoolNode::NODE_NAME => Literal::Bool(child.into()),
-            LiteralStringNode::NODE_NAME => Literal::String(child.into()),
-            LiteralNameNode::NODE_NAME => Literal::Name(child.into()),
-            LiteralNullNode::NODE_NAME => Literal::Null(child.into()),
+            LiteralIntNode::NODE_KIND => Literal::Int(child.into()),
+            LiteralFloatNode::NODE_KIND => Literal::Float(child.into()),
+            LiteralBoolNode::NODE_KIND => Literal::Bool(child.into()),
+            LiteralStringNode::NODE_KIND => Literal::String(child.into()),
+            LiteralNameNode::NODE_KIND => Literal::Name(child.into()),
+            LiteralNullNode::NODE_KIND => Literal::Null(child.into()),
             _ => panic!("Unknown literal type: {}", child.tree_node.kind())
         }
     }

@@ -17,7 +17,7 @@ pub enum MemberVarSpecifier {
 pub type MemberVarSpecifierNode<'script> = SyntaxNode<'script, MemberVarSpecifier>;
 
 impl NamedSyntaxNode for MemberVarSpecifierNode<'_> {
-    const NODE_NAME: &'static str = "member_var_specifier";
+    const NODE_KIND: &'static str = "member_var_specifier";
 }
 
 impl MemberVarSpecifierNode<'_> {

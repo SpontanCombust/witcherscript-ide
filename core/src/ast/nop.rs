@@ -7,7 +7,7 @@ pub struct Nop;
 pub type NopNode<'script> = SyntaxNode<'script, Nop>;
 
 impl NamedSyntaxNode for NopNode<'_> {
-    const NODE_NAME: &'static str = "nop";
+    const NODE_KIND: &'static str = "nop";
 }
 
 impl NopNode<'_> {}
