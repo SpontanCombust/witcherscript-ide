@@ -40,23 +40,34 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
         }
     }
 
-    //TODO make public
     /// Returns an iterator over non-error children of this node as 'any' nodes
-    pub(crate) fn children(&self, must_be_named: bool) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
+    pub fn children(&self) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
         let mut cursor = self.tree_node.walk();
         let name_nodes = self.tree_node
             .children(&mut cursor)
             .filter(|n| !n.is_error() && !n.is_extra())
-            .filter(|n| if must_be_named { n.is_named() } else { true })
             .collect::<Vec<_>>();
 
         name_nodes.into_iter()
             .map(|n| SyntaxNode::new(n))
     }
 
+    /// Returns an iterator over non-error named children of this node as 'any' nodes    
+    pub(crate) fn named_children(&self) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
+        self.children()
+            .filter(|n| n.tree_node.is_named())
+    }
+
     /// Returns the first non-error child of this node as an 'any' node
     pub(crate) fn first_child(&self, must_be_named: bool) -> Option<SyntaxNode<'_, ()>> {
-        self.children(must_be_named).next()
+        self.children()
+            .filter(|n| 
+                if must_be_named { 
+                    n.tree_node.is_named() 
+                } else { 
+                    true 
+                }
+            ).next()
     }
 
     /// Returns the first non-error child of this node with a given field name as an 'any' node

@@ -53,7 +53,7 @@ impl NamedSyntaxNode for EnumBlockNode<'_> {
 
 impl EnumBlockNode<'_> {
     pub fn members(&self) -> impl Iterator<Item = EnumMemberDeclarationNode> {
-        self.children(true).map(|n| n.into())
+        self.named_children().map(|n| n.into())
     }
 }
 

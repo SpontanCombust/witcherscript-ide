@@ -91,7 +91,7 @@ impl NamedSyntaxNode for ScriptNode<'_> {
 
 impl ScriptNode<'_> {
     pub fn statements(&self) -> impl Iterator<Item = ScriptStatementNode> {
-        self.children(true).map(|n| n.into())
+        self.named_children().map(|n| n.into())
     }
 }
 

@@ -292,7 +292,7 @@ impl NamedSyntaxNode for FunctionBlockNode<'_> {
 
 impl FunctionBlockNode<'_> {
     pub fn statements(&self) -> impl Iterator<Item = FunctionStatementNode> {
-        self.children(true).map(|n| n.into())
+        self.named_children().map(|n| n.into())
     }
 }
 
