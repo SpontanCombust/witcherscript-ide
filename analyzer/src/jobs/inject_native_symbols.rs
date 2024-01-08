@@ -1,6 +1,5 @@
 use crate::model::symbol_path::SymbolPath;
-use crate::model::symbol_variant::{ArrayTypeSymbolPath, TypeSymbolPath, BasicTypeSymbolPath};
-use crate::model::symbols::{PrimitiveTypeSymbol, GlobalVarSymbol, ArrayTypeSymbol, SymbolCategory};
+use crate::model::symbols::*;
 use crate::model::collections::symbol_table::SymbolTable;
 
 

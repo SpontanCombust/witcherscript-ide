@@ -3,8 +3,8 @@ use ropey::Rope;
 use witcherscript::ast::TypeAnnotationNode;
 use witcherscript::tokens::IdentifierNode;
 use crate::model::collections::symbol_table::SymbolTable;
-use crate::model::symbol_variant::{TypeSymbolPath, BasicTypeSymbolPath, ArrayTypeSymbolPath, Symbol, SymbolVariant};
-use crate::model::symbols::ArrayTypeSymbol;
+use crate::model::symbol_variant::SymbolVariant;
+use crate::model::symbols::*;
 use crate::diagnostics::*;
 
 
