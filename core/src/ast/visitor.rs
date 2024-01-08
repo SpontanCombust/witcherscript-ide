@@ -31,6 +31,9 @@ pub trait ExpressionTraversal {
 
 
 pub trait StatementVisitor {
+    /// Should return whether to traverse into the body of the script. True by default.
+    fn visit_script(&mut self, _: &ScriptNode) -> bool { true }
+
     /// Should return whether to traverse into the body of the class. True by default.
     fn visit_class_decl(&mut self, _: &ClassDeclarationNode) -> bool { true }
     fn exit_class_decl(&mut self, _: &ClassDeclarationNode) {}

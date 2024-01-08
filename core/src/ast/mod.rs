@@ -13,6 +13,8 @@ mod enums;
 mod states;
 mod nop;
 mod visitor;
+mod error;
+mod unnamed;
 
 pub use expressions::*;
 pub use functions::*;
@@ -25,7 +27,8 @@ pub use enums::*;
 pub use states::*;
 pub use nop::*;
 pub use visitor::*;
-
+pub use error::*;
+pub use unnamed::*;
 
 
 
@@ -105,6 +108,8 @@ impl Debug for ScriptNode<'_> {
 
 impl StatementTraversal for ScriptNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.statements().for_each(|s| s.accept(visitor));
+        if visitor.visit_script(self) {
+            self.statements().for_each(|s| s.accept(visitor));
+        }
     }
 }

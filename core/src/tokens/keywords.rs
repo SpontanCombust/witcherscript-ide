@@ -51,6 +51,28 @@ pub enum Keyword {
     Struct,
     Super,
     Switch,
+    // global var keywords
+    #[strum(serialize="theCamera")]
+    TheCamera,
+    #[strum(serialize="theDebug")]
+    TheDebug,
+    #[strum(serialize="theGame")]
+    TheGame,
+    #[strum(serialize="theInput")]
+    TheInput,
+    #[strum(serialize="thePlayer")]
+    ThePlayer,
+    #[strum(serialize="theServer")]
+    TheServer,
+    #[strum(serialize="theSound")]
+    TheSound,
+    #[strum(serialize="theTelemetry")]
+    TheTelemetry,
+    #[strum(serialize="theTimer")]
+    TheTimer,
+    #[strum(serialize="theUI")]
+    TheUI,
+    //
     This,
     Timer,
     True,

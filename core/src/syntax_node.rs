@@ -2,6 +2,8 @@ use lsp_types::{Range, Position};
 use ropey::Rope;
 use tree_sitter::Node;
 use std::{marker::PhantomData, fmt::Debug};
+use crate::ast::{ErrorNode, UnnamedNode};
+
 
 /// Represents a WitcherScript syntax tree node
 /// 
@@ -38,6 +40,7 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
         }
     }
 
+    //TODO make public
     /// Returns an iterator over non-error children of this node as 'any' nodes
     pub(crate) fn children(&self, must_be_named: bool) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
         let mut cursor = self.tree_node.walk();
@@ -74,6 +77,35 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
     }
 
 
+    pub fn error_children(&self) -> impl Iterator<Item = ErrorNode> {
+        let mut cursor = self.tree_node.walk();
+
+        let error_nodes = self.tree_node
+            .children(&mut cursor)
+            .filter(|n| n.is_error())
+            .collect::<Vec<_>>();
+
+        error_nodes.into_iter().map(|n| ErrorNode {
+            tree_node: n,
+            phantom: PhantomData
+        })
+    }
+
+    pub fn unnamed_children(&self) -> impl Iterator<Item = UnnamedNode> {
+        let mut cursor = self.tree_node.walk();
+
+        let unnamed_nodes = self.tree_node
+            .children(&mut cursor)
+            .filter(|n| !n.is_named() && !n.is_extra())
+            .collect::<Vec<_>>();
+
+        unnamed_nodes.into_iter().map(|n| UnnamedNode {
+            tree_node: n,
+            phantom: PhantomData
+        })
+    }
+
+
     /// Returns the span at which this node is located in the text document
     pub fn span(&self) -> Range {
         let r = self.tree_node.range();
@@ -87,12 +119,6 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
         self.tree_node.is_missing()
     }
 
-    //TODO keyword, punctuation and error nodes, detect node type from any node
-    // pub fn errors(&self) -> impl Iterator<Item = SyntaxNode<'_, Error>> {
-
-    // }
-
-
     /// Returns text that this node spans in the text document
     /// If the node is missing returns None
     pub fn text(&self, rope: &Rope) -> Option<String> {
@@ -100,8 +126,8 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
             None
         } else {
             let pos_span = self.tree_node.start_position() .. self.tree_node.end_position();
-            let byte_span = rope.line_to_char(pos_span.start.row) + pos_span.start.column .. rope.line_to_char(pos_span.end.row) + pos_span.end.column;
-            let slice = rope.slice(byte_span);
+            let char_span = rope.line_to_char(pos_span.start.row) + pos_span.start.column .. rope.line_to_char(pos_span.end.row) + pos_span.end.column;
+            let slice = rope.slice(char_span);
             Some(slice.to_string())
         }
     }
