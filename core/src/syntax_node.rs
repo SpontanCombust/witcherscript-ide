@@ -1,7 +1,7 @@
 use lsp_types::{Range, Position};
 use ropey::Rope;
 use std::{marker::PhantomData, fmt::Debug};
-use crate::{SyntaxError, tokens::UnnamedNode};
+use crate::SyntaxError;
 
 
 /// Represents a WitcherScript syntax tree node
@@ -111,17 +111,6 @@ impl<'script, T> SyntaxNode<'script, T> {
         }
 
         errors.into_iter()
-    }
-
-    pub fn unnamed_children(&self) -> impl Iterator<Item = UnnamedNode> {
-        let mut cursor = self.tree_node.walk();
-
-        let unnamed_nodes = self.tree_node
-            .children(&mut cursor)
-            .filter(|n| !n.is_named() && !n.is_extra())
-            .collect::<Vec<_>>();
-
-        unnamed_nodes.into_iter().map(|n| UnnamedNode::new(n))
     }
 
 
