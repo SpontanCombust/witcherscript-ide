@@ -56,7 +56,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassDeclarationNode<'script> {
 impl StatementTraversal for ClassDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_class_decl(self) {
-            self.definition().statements().for_each(|s| s.accept(visitor));
+            self.definition().accept(visitor);
         }
         visitor.exit_class_decl(self);
     }
@@ -99,6 +99,12 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassBlockNode<'script> {
         } else {
             Err(())
         }
+    }
+}
+
+impl StatementTraversal for ClassBlockNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        self.statements().for_each(|s| s.accept(visitor));
     }
 }
 

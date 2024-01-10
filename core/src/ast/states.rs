@@ -61,7 +61,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StateDeclarationNode<'script> {
 impl StatementTraversal for StateDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_state_decl(self) {
-            self.definition().statements().for_each(|s| s.accept(visitor));
+            self.definition().accept(visitor);
         }
         visitor.exit_state_decl(self);
     }

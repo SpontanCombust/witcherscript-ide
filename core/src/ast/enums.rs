@@ -46,7 +46,7 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumDeclarationNode<'script> {
 impl StatementTraversal for EnumDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_enum_decl(self) {
-            self.definition().members().for_each(|s| s.accept(visitor));
+            self.definition().accept(visitor);
         }
         visitor.exit_enum_decl(self);
     }
@@ -89,6 +89,12 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumBlockNode<'script> {
         } else {
             Err(())
         }
+    }
+}
+
+impl StatementTraversal for EnumBlockNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        self.members().for_each(|s| s.accept(visitor));
     }
 }
 
