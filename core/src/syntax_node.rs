@@ -1,8 +1,7 @@
 use lsp_types::{Range, Position};
 use ropey::Rope;
-use tree_sitter::Node;
 use std::{marker::PhantomData, fmt::Debug};
-use crate::ast::{ErrorNode, UnnamedNode};
+use crate::{ast::ErrorNode, tokens::UnnamedNode};
 
 
 /// Represents a WitcherScript syntax tree node
@@ -13,18 +12,16 @@ use crate::ast::{ErrorNode, UnnamedNode};
 /// 
 /// It works as an adapter for tree-sitter's nodes. Generic parameter T denotes the type of node, e.g. `Identifier`. 
 /// It can be just a marker type. What is important is to have a distinct type for a given node type in the parsed tree.
-/// 
-/// ## Arguments
-/// * T - marker for the concrete type of the node; () means it can be any node type
-#[derive(Clone, PartialEq, Eq)]
-pub struct SyntaxNode<'script, T = ()> {
-    pub(crate) tree_node: Node<'script>,
+#[derive(Clone)]
+pub struct SyntaxNode<'script, T> {
+    pub(crate) tree_node: tree_sitter::Node<'script>,
+    // TODO for later - see if storing RefCell<TreeCursor> would make any improvement in parsing speed
     pub(crate) phantom : PhantomData<T>
 }
 
-impl<'script, T> SyntaxNode<'script, T> where T: Clone {
+impl<'script, T> SyntaxNode<'script, T> {
     /// Constructs a completely new node from a tree-sitter node and a rope 
-    pub(crate) fn new(tree_node: Node<'script>) -> Self {
+    pub(crate) fn new(tree_node: tree_sitter::Node<'script>) -> Self {
         Self {
             tree_node,
             phantom: PhantomData,
@@ -34,14 +31,11 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
     /// Interpret this node into a node with a different underlying type.
     /// Gives no guarantees as to whether that target type is actually valid
     pub(crate) fn into<U>(self) -> SyntaxNode<'script, U> {
-        SyntaxNode::<'_, U> {
-            tree_node: self.tree_node,
-            phantom: PhantomData
-        }
+        SyntaxNode::new(self.tree_node)
     }
 
-    /// Returns an iterator over non-error children of this node as 'any' nodes
-    pub fn children(&self) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
+    /// Returns an iterator over non-error children of this node as AnyNodes
+    pub fn children(&self) -> impl Iterator<Item = AnyNode> {
         let mut cursor = self.tree_node.walk();
         let name_nodes = self.tree_node
             .children(&mut cursor)
@@ -49,17 +43,17 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
             .collect::<Vec<_>>();
 
         name_nodes.into_iter()
-            .map(|n| SyntaxNode::new(n))
+            .map(|n| AnyNode::new(n))
     }
 
-    /// Returns an iterator over non-error named children of this node as 'any' nodes    
-    pub(crate) fn named_children(&self) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
+    /// Returns an iterator over non-error named children of this node as AnyNodes
+    pub(crate) fn named_children(&self) -> impl Iterator<Item = AnyNode> {
         self.children()
             .filter(|n| n.tree_node.is_named())
     }
 
-    /// Returns the first non-error child of this node as an 'any' node
-    pub(crate) fn first_child(&self, must_be_named: bool) -> Option<SyntaxNode<'_, ()>> {
+    /// Returns the first non-error child of this node as an AnyNodes
+    pub(crate) fn first_child(&self, must_be_named: bool) -> Option<AnyNode> {
         self.children()
             .filter(|n| 
                 if must_be_named { 
@@ -70,13 +64,13 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
             ).next()
     }
 
-    /// Returns the first non-error child of this node with a given field name as an 'any' node
-    pub(crate) fn field_child(&self, field: &'static str) -> Option<SyntaxNode<'_, ()>> {
+    /// Returns the first non-error child of this node with a given field name as an AnyNodes
+    pub(crate) fn field_child(&self, field: &'static str) -> Option<AnyNode> {
         self.field_children(field).next()
     }
 
     /// Returns an iterator over named, non-error children of this node with a given field name
-    pub(crate) fn field_children(&self, field: &'static str) -> impl Iterator<Item = SyntaxNode<'_, ()>> {
+    pub(crate) fn field_children(&self, field: &'static str) -> impl Iterator<Item = AnyNode> {
         let mut cursor = self.tree_node.walk();
         let name_nodes = self.tree_node
             .children_by_field_name(field, &mut cursor)
@@ -84,7 +78,7 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
             .collect::<Vec<_>>();
 
         name_nodes.into_iter()
-            .map(|n| SyntaxNode::new(n))
+            .map(|n| AnyNode::new(n))
     }
 
 
@@ -96,10 +90,7 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
             .filter(|n| n.is_error())
             .collect::<Vec<_>>();
 
-        error_nodes.into_iter().map(|n| ErrorNode {
-            tree_node: n,
-            phantom: PhantomData
-        })
+        error_nodes.into_iter().map(|n| ErrorNode::new(n))
     }
 
     pub fn unnamed_children(&self) -> impl Iterator<Item = UnnamedNode> {
@@ -110,10 +101,7 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
             .filter(|n| !n.is_named() && !n.is_extra())
             .collect::<Vec<_>>();
 
-        unnamed_nodes.into_iter().map(|n| UnnamedNode {
-            tree_node: n,
-            phantom: PhantomData
-        })
+        unnamed_nodes.into_iter().map(|n| UnnamedNode::new(n))
     }
 
 
@@ -144,14 +132,28 @@ impl<'script, T> SyntaxNode<'script, T> where T: Clone {
     }
 }
 
+impl<T> PartialEq for SyntaxNode<'_, T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.tree_node == other.tree_node
+    }
+}
 
-impl Debug for SyntaxNode<'_, ()> {
+impl<T> Eq for SyntaxNode<'_, T> {}
+
+
+
+/// Default opaque node type not possessing any additional capabilities.
+pub type AnyNode<'script> = SyntaxNode<'script, ()>;
+
+
+impl Debug for AnyNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SyntaxNode")
             .field("tree_node", &self.tree_node)
             .finish()
     }
 }
+
 
 
 /// Describes the name, by which a node is identified in tree-sitter's grammar

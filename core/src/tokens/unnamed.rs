@@ -2,6 +2,7 @@ use std::str::FromStr;
 use crate::{tokens::Keyword, SyntaxNode};
 
 
+#[derive(Debug, Clone)]
 pub enum Unnamed {
     Keyword(Keyword),
     Punctuation(&'static str)
