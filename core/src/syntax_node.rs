@@ -1,7 +1,7 @@
 use lsp_types::{Range, Position};
 use ropey::Rope;
 use std::{marker::PhantomData, fmt::Debug};
-use crate::{ast::ErrorNode, tokens::UnnamedNode};
+use crate::{SyntaxError, tokens::UnnamedNode};
 
 
 /// Represents a WitcherScript syntax tree node
@@ -86,15 +86,31 @@ impl<'script, T> SyntaxNode<'script, T> {
     }
 
 
-    pub fn error_children(&self) -> impl Iterator<Item = ErrorNode> {
+    /// Whether any nodes descending from this node are errors
+    pub fn has_errors(&self) -> bool {
         let mut cursor = self.tree_node.walk();
 
-        let error_nodes = self.tree_node
-            .children(&mut cursor)
-            .filter(|n| n.is_error()) //TODO also include just missing nodes
-            .collect::<Vec<_>>();
+        let any_errors = self.tree_node
+                            .children(&mut cursor)
+                            .any(|child| child.has_error());
 
-        error_nodes.into_iter().map(|n| ErrorNode::new(n))
+        any_errors
+    }
+
+    /// Returns an iterator over ERROR or missing children nodes
+    pub fn errors(&self) -> impl Iterator<Item = SyntaxError> {
+        let mut errors = Vec::new();
+
+        let mut cursor = self.tree_node.walk();
+        for n in self.tree_node.children(&mut cursor) {
+            if n.is_error() {
+                errors.push(SyntaxError::Invalid(AnyNode::new(n)));
+            } else if n.is_missing() {
+                errors.push(SyntaxError::Missing(AnyNode::new(n)));
+            }
+        }
+
+        errors.into_iter()
     }
 
     pub fn unnamed_children(&self) -> impl Iterator<Item = UnnamedNode> {
