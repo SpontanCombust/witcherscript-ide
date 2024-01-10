@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::SyntaxNode;
+use crate::{SyntaxNode, AnyNode};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -30,6 +30,20 @@ impl Debug for UnaryOperatorNode<'_> {
             write!(f, "{:#?}", self.value())
         } else {
             write!(f, "{:?}", self.value())
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for UnaryOperatorNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        match value.tree_node.kind() {
+            "unary_op_neg"      | 
+            "unary_op_not"      |
+            "unary_op_bitnot"   |
+            "unary_op_plus" =>  Ok(value.into()),
+            _ => Err(())
         }
     }
 }
@@ -90,6 +104,31 @@ impl Debug for BinaryOperatorNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for BinaryOperatorNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        match value.tree_node.kind() {
+            "binary_op_or"      | 
+            "binary_op_and"     |
+            "binary_op_bitor"   |
+            "binary_op_bitand"  |
+            "binary_op_eq"      |
+            "binary_op_neq"     |
+            "binary_op_gt"      |
+            "binary_op_ge"      |
+            "binary_op_lt"      |
+            "binary_op_le"      |
+            "binary_op_diff"    |
+            "binary_op_sum"     |
+            "binary_op_mod"     |
+            "binary_op_div"     |
+            "binary_op_mult" => Ok(value.into()),
+            _ => Err(())
+        }
+    }
+}
+
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -124,6 +163,22 @@ impl Debug for AssignmentOperatorNode<'_> {
             write!(f, "{:#?}", self.value())
         } else {
             write!(f, "{:?}", self.value())
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for AssignmentOperatorNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        match value.tree_node.kind() {
+            "assign_op_direct"  |
+            "assign_op_sum"     |
+            "assign_op_diff"    |
+            "assign_op_mult"    |
+            "assign_op_div"     |
+            "assign_op_mod" => Ok(value.into()),
+            _ => Err(())
         }
     }
 }
@@ -228,13 +283,4 @@ impl OperatorTraits for AssignmentOperator {
     fn is_relational(&self) -> bool {
         false
     }
-}
-
-
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Operator {
-    Unary(UnaryOperator),
-    Binary(BinaryOperator),
-    Assignment(AssignmentOperator)
 }

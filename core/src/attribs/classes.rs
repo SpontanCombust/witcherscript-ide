@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use std::str::FromStr;
-use crate::{NamedSyntaxNode, SyntaxNode, tokens::Keyword};
+use crate::{NamedSyntaxNode, SyntaxNode, tokens::Keyword, AnyNode};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -50,6 +50,18 @@ impl Debug for ClassSpecifierNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for ClassSpecifierNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AutobindSpecifier {
@@ -86,6 +98,18 @@ impl Debug for AutobindSpecifierNode<'_> {
             write!(f, "{:#?}", self.value())
         } else {
             write!(f, "{:?}", self.value())
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for AutobindSpecifierNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }

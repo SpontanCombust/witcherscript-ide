@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use std::str::FromStr;
-use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode};
+use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode, AnyNode};
 use super::AccessModifier;
 
 
@@ -37,6 +37,18 @@ impl Debug for FunctionParameterSpecifierNode<'_> {
             write!(f, "{:#?}", self.value())
         } else {
             write!(f, "{:?}", self.value())
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for FunctionParameterSpecifierNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }
@@ -81,6 +93,18 @@ impl Debug for GlobalFunctionSpecifierNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionSpecifierNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GlobalFunctionFlavour {
@@ -119,6 +143,18 @@ impl Debug for GlobalFunctionFlavourNode<'_> {
             write!(f, "{:#?}", self.value())
         } else {
             write!(f, "{:?}", self.value())
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionFlavourNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }
@@ -169,6 +205,18 @@ impl Debug for MemberFunctionSpecifierNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionSpecifierNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MemberFunctionFlavour {
@@ -205,6 +253,18 @@ impl Debug for MemberFunctionFlavourNode<'_> {
             write!(f, "{:#?}", self.value())
         } else {
             write!(f, "{:?}", self.value())
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionFlavourNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }

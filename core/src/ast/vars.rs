@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::IdentifierNode, SyntaxNode, NamedSyntaxNode, attribs::MemberVarSpecifierNode};
+use crate::{tokens::IdentifierNode, SyntaxNode, NamedSyntaxNode, attribs::MemberVarSpecifierNode, AnyNode};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode};
 
 
@@ -30,6 +30,19 @@ impl Debug for TypeAnnotationNode<'_> {
             .finish()
     }
 }
+
+impl<'script> TryFrom<AnyNode<'script>> for TypeAnnotationNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 
 
 #[derive(Debug, Clone)]
@@ -62,6 +75,18 @@ impl Debug for VarDeclarationNode<'_> {
             .field("var_type", &self.var_type())
             .field("init_value", &self.init_value())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for VarDeclarationNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -102,6 +127,18 @@ impl Debug for MemberVarDeclarationNode<'_> {
             .field("names", &self.names().collect::<Vec<_>>())
             .field("var_type", &self.var_type())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for MemberVarDeclarationNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 

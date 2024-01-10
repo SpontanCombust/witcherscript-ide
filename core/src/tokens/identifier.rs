@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use ropey::Rope;
 use shrinkwraprs::Shrinkwrap;
-use crate::{NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}};
+use crate::{NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}, AnyNode};
 
 
 #[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -35,5 +35,17 @@ impl Debug for IdentifierNode<'_> {
 impl ExpressionTraversal for IdentifierNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         visitor.visit_identifier_expr(self);
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for IdentifierNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }

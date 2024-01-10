@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{NamedSyntaxNode, SyntaxNode, tokens::*, attribs::*};
+use crate::{NamedSyntaxNode, SyntaxNode, tokens::*, attribs::*, AnyNode};
 use super::*;
 
 
@@ -41,6 +41,18 @@ impl Debug for ClassDeclarationNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for ClassDeclarationNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl StatementTraversal for ClassDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_class_decl(self) {
@@ -74,6 +86,18 @@ impl Debug for ClassBlockNode<'_> {
             write!(f, "ClassBlock{:#?}", stmts)
         } else {
             write!(f, "ClassBlock{:?}", stmts)
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for ClassBlockNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }
@@ -113,6 +137,23 @@ impl Debug for ClassStatementNode<'_> {
             write!(f, "{:#?}", self.value())
         } else {
             write!(f, "{:?}", self.value())
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for ClassStatementNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        match value.tree_node.kind() {
+            MemberVarDeclarationNode::NODE_KIND         |
+            MemberDefaultValueNode::NODE_KIND           |
+            MemberHintNode::NODE_KIND                   |
+            AutobindDeclarationNode::NODE_KIND          |
+            MemberFunctionDeclarationNode::NODE_KIND    |
+            EventDeclarationNode::NODE_KIND             |
+            NopNode::NODE_KIND                          => Ok(value.into()),
+            _ => Err(())
         }
     }
 }
@@ -168,6 +209,18 @@ impl Debug for AutobindDeclarationNode<'_> {
             .field("autobind_type", &self.autobind_type())
             .field("value", &self.value())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for AutobindDeclarationNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 

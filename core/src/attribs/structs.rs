@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use std::str::FromStr;
-use crate::{NamedSyntaxNode, SyntaxNode, tokens::Keyword};
+use crate::{NamedSyntaxNode, SyntaxNode, tokens::Keyword, AnyNode};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -34,6 +34,18 @@ impl Debug for StructSpecifierNode<'_> {
             write!(f, "{:#?}", self.value())
         } else {
             write!(f, "{:?}", self.value())
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for StructSpecifierNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }

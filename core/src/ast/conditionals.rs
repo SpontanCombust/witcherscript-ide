@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{NamedSyntaxNode, SyntaxNode};
+use crate::{NamedSyntaxNode, SyntaxNode, AnyNode};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
 
 
@@ -33,6 +33,18 @@ impl Debug for IfConditionalNode<'_> {
             .field("body", &self.body())
             .field("else", &self.else_body())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for IfConditionalNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -79,6 +91,18 @@ impl Debug for SwitchConditionalNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl StatementTraversal for SwitchConditionalNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt(self);
@@ -116,6 +140,18 @@ impl Debug for SwitchConditionalCaseNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalCaseNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl StatementTraversal for SwitchConditionalCaseNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt_case(self);
@@ -144,6 +180,18 @@ impl Debug for SwitchConditionalDefaultNode<'_> {
         f.debug_struct("SwitchConditionalDefault")
             .field("body", &self.body().collect::<Vec<_>>())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalDefaultNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 

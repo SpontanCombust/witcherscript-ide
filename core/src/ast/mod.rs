@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, NamedSyntaxNode, Script};
+use crate::{SyntaxNode, NamedSyntaxNode, Script, AnyNode};
 
 
 mod expressions;
@@ -67,6 +67,22 @@ impl Debug for ScriptStatementNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for ScriptStatementNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        match value.tree_node.kind() {
+            GlobalFunctionDeclarationNode::NODE_KIND    |
+            ClassDeclarationNode::NODE_KIND             |
+            StateDeclarationNode::NODE_KIND             |
+            StructDeclarationNode::NODE_KIND            |
+            EnumDeclarationNode::NODE_KIND              |
+            NopNode::NODE_KIND                          => Ok(value.into()),
+            _ => Err(())
+        }
+    }
+}
+
 impl StatementTraversal for ScriptStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         match self.value() {
@@ -100,6 +116,18 @@ impl Debug for ScriptNode<'_> {
             write!(f, "Script{:#?}", stmts)
         } else {
             write!(f, "Script{:?}", stmts)
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for ScriptNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }

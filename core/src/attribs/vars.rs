@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use std::str::FromStr;
-use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode};
+use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode, AnyNode};
 use super::AccessModifier;
 
 
@@ -47,6 +47,18 @@ impl Debug for MemberVarSpecifierNode<'_> {
             write!(f, "{:#?}", self.value())
         } else {
             write!(f, "{:?}", self.value())
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for MemberVarSpecifierNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }

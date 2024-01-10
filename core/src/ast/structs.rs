@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::{IdentifierNode, LiteralStringNode}, NamedSyntaxNode, SyntaxNode, attribs::StructSpecifierNode};
+use crate::{tokens::{IdentifierNode, LiteralStringNode}, NamedSyntaxNode, SyntaxNode, attribs::StructSpecifierNode, AnyNode};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, MemberVarDeclarationNode, NopNode};
 
 
@@ -36,10 +36,22 @@ impl Debug for StructDeclarationNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for StructDeclarationNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl StatementTraversal for StructDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_struct_decl(self) {
-            self.definition().statements().for_each(|s| s.accept(visitor));
+            self.definition().statements().for_each(|s| s.accept(visitor)); //TODO accept in block nodes
         }
         visitor.exit_struct_decl(self);
     }
@@ -69,6 +81,18 @@ impl Debug for StructBlockNode<'_> {
             write!(f, "StructBlock{:#?}", stmts)
         } else {
             write!(f, "StructBlock{:?}", stmts)
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for StructBlockNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }
@@ -103,6 +127,20 @@ impl Debug for StructStatementNode<'_> {
             write!(f, "{:#?}", self.value())
         } else {
             write!(f, "{:?}", self.value())
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for StructStatementNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        match value.tree_node.kind() {
+            MemberVarDeclarationNode::NODE_KIND     |
+            MemberDefaultValueNode::NODE_KIND       |
+            MemberHintNode::NODE_KIND               |
+            NopNode::NODE_KIND                      => Ok(value.into()),
+            _ => Err(())
         }
     }
 }
@@ -148,6 +186,18 @@ impl Debug for MemberDefaultValueNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultValueNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl StatementTraversal for MemberDefaultValueNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_member_default_val(self);
@@ -181,6 +231,18 @@ impl Debug for MemberHintNode<'_> {
             .field("member", &self.member())
             .field("value", &self.value())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for MemberHintNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 

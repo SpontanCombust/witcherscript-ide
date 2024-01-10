@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{NamedSyntaxNode, SyntaxNode};
+use crate::{NamedSyntaxNode, SyntaxNode, AnyNode};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
 
 
@@ -41,6 +41,18 @@ impl Debug for ForLoopNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for ForLoopNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl StatementTraversal for ForLoopNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_for_stmt(self);
@@ -78,6 +90,18 @@ impl Debug for WhileLoopNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for WhileLoopNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl StatementTraversal for WhileLoopNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_while_stmt(self);
@@ -112,6 +136,18 @@ impl Debug for DoWhileLoopNode<'_> {
             .field("cond", &self.cond())
             .field("body", &self.body())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for DoWhileLoopNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 

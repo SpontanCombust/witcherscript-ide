@@ -29,9 +29,13 @@ impl<'script, T> SyntaxNode<'script, T> {
     }
 
     /// Interpret this node into a node with a different underlying type.
-    /// Gives no guarantees as to whether that target type is actually valid
+    /// Gives no guarantees as to whether that target type is actually valid, so it's not exposed by the crate
     pub(crate) fn into<U>(self) -> SyntaxNode<'script, U> {
         SyntaxNode::new(self.tree_node)
+    }
+
+    pub fn into_any(self) -> AnyNode<'script> {
+        AnyNode::new(self.tree_node)
     }
 
     /// Returns an iterator over non-error children of this node as AnyNodes
@@ -87,7 +91,7 @@ impl<'script, T> SyntaxNode<'script, T> {
 
         let error_nodes = self.tree_node
             .children(&mut cursor)
-            .filter(|n| n.is_error())
+            .filter(|n| n.is_error()) //TODO also include just missing nodes
             .collect::<Vec<_>>();
 
         error_nodes.into_iter().map(|n| ErrorNode::new(n))

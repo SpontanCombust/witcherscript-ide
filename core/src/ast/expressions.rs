@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, NamedSyntaxNode, tokens::*};
+use crate::{SyntaxNode, NamedSyntaxNode, tokens::*, AnyNode};
 use super::{StatementTraversal, ExpressionVisitor, ExpressionTraversal, StatementVisitor};
 
 
@@ -23,6 +23,18 @@ impl Debug for NestedExpressionNode<'_> {
         f.debug_tuple("NestedExpression")
             .field(&self.value())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for NestedExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -52,6 +64,18 @@ impl Debug for ThisExpressionNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for ThisExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl ExpressionTraversal for ThisExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         visitor.visit_this_expr(self);
@@ -74,6 +98,18 @@ impl SuperExpressionNode<'_> {}
 impl Debug for SuperExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "SuperExpression")
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for SuperExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -102,6 +138,18 @@ impl Debug for ParentExpressionNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for ParentExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl ExpressionTraversal for ParentExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         visitor.visit_parent_expr(self);
@@ -124,6 +172,18 @@ impl VirtualParentExpressionNode<'_> {}
 impl Debug for VirtualParentExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "VirtualParentExpression")
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for VirtualParentExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -161,6 +221,18 @@ impl Debug for FunctionCallExpressionNode<'_> {
             .field("func", &self.func())
             .field("args", &self.args().collect::<Vec<_>>())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for FunctionCallExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -258,6 +330,18 @@ impl Debug for ArrayExpressionNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for ArrayExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl ExpressionTraversal for ArrayExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         self.accessor().accept(visitor);
@@ -293,6 +377,18 @@ impl Debug for MemberFieldExpressionNode<'_> {
             .field("accessor", &self.accessor())
             .field("member", &self.member())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for MemberFieldExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -338,6 +434,18 @@ impl Debug for MethodCallExpressionNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for MethodCallExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl ExpressionTraversal for MethodCallExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         self.accessor().accept(visitor);
@@ -373,6 +481,18 @@ impl Debug for InstantiationExpressionNode<'_> {
             .field("class", &self.class())
             .field("lifetime_obj", &self.lifetime_obj())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for InstantiationExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -413,6 +533,18 @@ impl Debug for TypeCastExpressionNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for TypeCastExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl ExpressionTraversal for TypeCastExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         self.value().accept(visitor);
@@ -447,6 +579,18 @@ impl Debug for UnaryOperationExpressionNode<'_> {
             .field("op", &self.op())
             .field("right", &self.right())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for UnaryOperationExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -489,6 +633,18 @@ impl Debug for BinaryOperationExpressionNode<'_> {
             .field("left", &self.left())
             .field("right", &self.right())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for BinaryOperationExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -535,6 +691,18 @@ impl Debug for AssignmentOperationExpressionNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for AssignmentOperationExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl ExpressionTraversal for AssignmentOperationExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         self.left().accept(visitor);
@@ -575,6 +743,18 @@ impl Debug for TernaryConditionalExpressionNode<'_> {
             .field("conseq", &self.conseq())
             .field("alt", &self.alt())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for TernaryConditionalExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -648,6 +828,33 @@ impl Debug for ExpressionNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        match value.tree_node.kind() {
+            AssignmentOperationExpressionNode::NODE_KIND    |
+            TernaryConditionalExpressionNode::NODE_KIND     |
+            BinaryOperationExpressionNode::NODE_KIND        |
+            InstantiationExpressionNode::NODE_KIND          |
+            UnaryOperationExpressionNode::NODE_KIND         |
+            TypeCastExpressionNode::NODE_KIND               |
+            MethodCallExpressionNode::NODE_KIND             |
+            MemberFieldExpressionNode::NODE_KIND            |
+            FunctionCallExpressionNode::NODE_KIND           |
+            ArrayExpressionNode::NODE_KIND                  |
+            NestedExpressionNode::NODE_KIND                 |
+            ThisExpressionNode::NODE_KIND                   |
+            SuperExpressionNode::NODE_KIND                  |
+            ParentExpressionNode::NODE_KIND                 |
+            VirtualParentExpressionNode::NODE_KIND          |
+            IdentifierNode::NODE_KIND                       |
+            LiteralNode::NODE_KIND                          => Ok(value.into()),
+            _ => Err(())
+        }
+    }
+}
+
 impl ExpressionTraversal for ExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         match self.value() {
@@ -694,6 +901,18 @@ impl Debug for ExpressionStatementNode<'_> {
         f.debug_tuple("ExpressionStatement")
             .field(&self.expr())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for ExpressionStatementNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 

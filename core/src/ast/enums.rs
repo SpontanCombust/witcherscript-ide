@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::{IdentifierNode, LiteralIntNode}, NamedSyntaxNode, SyntaxNode};
+use crate::{tokens::{IdentifierNode, LiteralIntNode}, NamedSyntaxNode, SyntaxNode, AnyNode};
 use super::{StatementTraversal, StatementVisitor};
 
 
@@ -28,6 +28,18 @@ impl Debug for EnumDeclarationNode<'_> {
             .field("name", &self.name())
             .field("definition", &self.definition())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for EnumDeclarationNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -68,6 +80,17 @@ impl Debug for EnumBlockNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for EnumBlockNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
 
 
 #[derive(Debug, Clone)]
@@ -95,6 +118,18 @@ impl Debug for EnumMemberDeclarationNode<'_> {
             .field("name", &self.name())
             .field("value", &self.value())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for EnumMemberDeclarationNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 

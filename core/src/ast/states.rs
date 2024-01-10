@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::IdentifierNode, NamedSyntaxNode, SyntaxNode, attribs::StateSpecifierNode};
+use crate::{tokens::IdentifierNode, NamedSyntaxNode, SyntaxNode, attribs::StateSpecifierNode, AnyNode};
 use super::{StatementTraversal, StatementVisitor, ClassBlockNode};
 
 
@@ -43,6 +43,18 @@ impl Debug for StateDeclarationNode<'_> {
             .field("base", &self.base())
             .field("definition", &self.definition())
             .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for StateDeclarationNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 

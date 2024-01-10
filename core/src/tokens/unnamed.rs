@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use crate::{tokens::Keyword, SyntaxNode};
+use crate::{tokens::Keyword, SyntaxNode, AnyNode};
 
 
 #[derive(Debug, Clone)]
@@ -17,6 +17,20 @@ impl UnnamedNode<'_> {
             Unnamed::Keyword(kw)
         } else {
             Unnamed::Punctuation(kind)
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for UnnamedNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if !value.tree_node.is_named() 
+        && !value.tree_node.is_error()
+        && !value.tree_node.is_extra() {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }

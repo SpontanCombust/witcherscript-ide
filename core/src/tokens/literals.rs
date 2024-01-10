@@ -4,7 +4,7 @@ use std::str::ParseBoolError;
 use ropey::Rope;
 use shrinkwraprs::Shrinkwrap;
 use thiserror::Error;
-use crate::{NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}};
+use crate::{AnyNode, NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}};
 
 
 #[derive(Debug, Clone, Error)]
@@ -43,6 +43,18 @@ impl Debug for LiteralIntNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for LiteralIntNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 
 #[derive(Shrinkwrap, Debug, Clone, PartialEq)]
 pub struct LiteralFloat(f32);
@@ -75,6 +87,18 @@ impl Debug for LiteralFloatNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for LiteralFloatNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 
 #[derive(Shrinkwrap, Debug, Clone, PartialEq)]
 pub struct LiteralBool(bool);
@@ -96,6 +120,18 @@ impl LiteralBoolNode<'_> {
 impl Debug for LiteralBoolNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "LiteralBool")
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for LiteralBoolNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -123,6 +159,18 @@ impl LiteralStringNode<'_> {
 impl Debug for LiteralStringNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "LiteralString")
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for LiteralStringNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -155,6 +203,18 @@ impl Debug for LiteralNameNode<'_> {
     }
 }
 
+impl<'script> TryFrom<AnyNode<'script>> for LiteralNameNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LiteralNull;
@@ -170,6 +230,18 @@ impl LiteralNullNode<'_> {}
 impl Debug for LiteralNullNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "LiteralNull")
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for LiteralNullNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -211,6 +283,18 @@ impl Debug for LiteralNode<'_> {
             write!(f, "{:#?}", self.value())
         } else {
             write!(f, "{:?}", self.value())
+        }
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for LiteralNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }
