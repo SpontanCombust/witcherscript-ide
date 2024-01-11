@@ -122,16 +122,16 @@ pub enum ClassStatement<'script> {
 
 pub type ClassStatementNode<'script> = SyntaxNode<'script, ClassStatement<'script>>;
 
-impl ClassStatementNode<'_> {
-    pub fn value(&self) -> ClassStatement {
+impl<'script> ClassStatementNode<'script> {
+    pub fn value(self) -> ClassStatement<'script> {
         match self.tree_node.kind() {
-            MemberVarDeclarationNode::NODE_KIND => ClassStatement::Var(self.clone().into()),
-            MemberDefaultValueNode::NODE_KIND => ClassStatement::Default(self.clone().into()),
-            MemberHintNode::NODE_KIND => ClassStatement::Hint(self.clone().into()),
-            AutobindDeclarationNode::NODE_KIND => ClassStatement::Autobind(self.clone().into()),
-            MemberFunctionDeclarationNode::NODE_KIND => ClassStatement::Method(self.clone().into()),
-            EventDeclarationNode::NODE_KIND => ClassStatement::Event(self.clone().into()),
-            NopNode::NODE_KIND => ClassStatement::Nop(self.clone().into()),
+            MemberVarDeclarationNode::NODE_KIND => ClassStatement::Var(self.into()),
+            MemberDefaultValueNode::NODE_KIND => ClassStatement::Default(self.into()),
+            MemberHintNode::NODE_KIND => ClassStatement::Hint(self.into()),
+            AutobindDeclarationNode::NODE_KIND => ClassStatement::Autobind(self.into()),
+            MemberFunctionDeclarationNode::NODE_KIND => ClassStatement::Method(self.into()),
+            EventDeclarationNode::NODE_KIND => ClassStatement::Event(self.into()),
+            NopNode::NODE_KIND => ClassStatement::Nop(self.into()),
             _ => panic!("Unknown class statement type: {}", self.tree_node.kind())
         }
     }
@@ -140,9 +140,9 @@ impl ClassStatementNode<'_> {
 impl Debug for ClassStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if f.alternate() {
-            write!(f, "{:#?}", self.value())
+            write!(f, "{:#?}", self.clone().value())
         } else {
-            write!(f, "{:?}", self.value())
+            write!(f, "{:?}", self.clone().value())
         }
     }
 }
@@ -166,7 +166,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassStatementNode<'script> {
 
 impl StatementTraversal for ClassStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        match self.value() {
+        match self.clone().value() {
             ClassStatement::Var(s) => s.accept(visitor),
             ClassStatement::Default(s) => s.accept(visitor),
             ClassStatement::Hint(s) => s.accept(visitor),

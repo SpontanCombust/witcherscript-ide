@@ -115,13 +115,13 @@ pub enum StructStatement<'script> {
 
 pub type StructStatementNode<'script> = SyntaxNode<'script, StructStatement<'script>>;
 
-impl StructStatementNode<'_> {
-    pub fn value(&self) -> StructStatement {
+impl<'script> StructStatementNode<'script> {
+    pub fn value(self) -> StructStatement<'script> {
         match self.tree_node.kind() {
-            MemberVarDeclarationNode::NODE_KIND => StructStatement::Var(self.clone().into()),
-            MemberDefaultValueNode::NODE_KIND => StructStatement::Default(self.clone().into()),
-            MemberHintNode::NODE_KIND => StructStatement::Hint(self.clone().into()),
-            NopNode::NODE_KIND => StructStatement::Nop(self.clone().into()),
+            MemberVarDeclarationNode::NODE_KIND => StructStatement::Var(self.into()),
+            MemberDefaultValueNode::NODE_KIND => StructStatement::Default(self.into()),
+            MemberHintNode::NODE_KIND => StructStatement::Hint(self.into()),
+            NopNode::NODE_KIND => StructStatement::Nop(self.into()),
             _ => panic!("Unknown struct statement type: {}", self.tree_node.kind())
         }
     }
@@ -130,9 +130,9 @@ impl StructStatementNode<'_> {
 impl Debug for StructStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if f.alternate() {
-            write!(f, "{:#?}", self.value())
+            write!(f, "{:#?}", self.clone().value())
         } else {
-            write!(f, "{:?}", self.value())
+            write!(f, "{:?}", self.clone().value())
         }
     }
 }
@@ -153,7 +153,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StructStatementNode<'script> {
 
 impl StatementTraversal for StructStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        match self.value() {
+        match self.clone().value() {
             StructStatement::Var(s) => s.accept(visitor),
             StructStatement::Default(s) => s.accept(visitor),
             StructStatement::Hint(s) => s.accept(visitor),

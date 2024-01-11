@@ -277,22 +277,22 @@ pub enum FunctionStatement<'script> {
 
 pub type FunctionStatementNode<'script> = SyntaxNode<'script, FunctionStatement<'script>>;
 
-impl FunctionStatementNode<'_> {
-    pub fn value(&self) -> FunctionStatement {
+impl<'script> FunctionStatementNode<'script> {
+    pub fn value(self) -> FunctionStatement<'script> {
         match self.tree_node.kind() {
-            VarDeclarationNode::NODE_KIND => FunctionStatement::Var(self.clone().into()),
-            ExpressionStatementNode::NODE_KIND => FunctionStatement::Expr(self.clone().into()),
-            ForLoopNode::NODE_KIND => FunctionStatement::For(self.clone().into()),
-            WhileLoopNode::NODE_KIND => FunctionStatement::While(self.clone().into()),
-            DoWhileLoopNode::NODE_KIND => FunctionStatement::DoWhile(self.clone().into()),
-            IfConditionalNode::NODE_KIND => FunctionStatement::If(self.clone().into()),
-            SwitchConditionalNode::NODE_KIND => FunctionStatement::Switch(self.clone().into()),
-            BreakStatementNode::NODE_KIND => FunctionStatement::Break(self.clone().into()),
-            ContinueStatementNode::NODE_KIND => FunctionStatement::Continue(self.clone().into()),
-            ReturnStatementNode::NODE_KIND => FunctionStatement::Return(self.clone().into()),
-            DeleteStatementNode::NODE_KIND => FunctionStatement::Delete(self.clone().into()),
-            FunctionBlockNode::NODE_KIND => FunctionStatement::Block(self.clone().into()),
-            NopNode::NODE_KIND => FunctionStatement::Nop(self.clone().into()),
+            VarDeclarationNode::NODE_KIND => FunctionStatement::Var(self.into()),
+            ExpressionStatementNode::NODE_KIND => FunctionStatement::Expr(self.into()),
+            ForLoopNode::NODE_KIND => FunctionStatement::For(self.into()),
+            WhileLoopNode::NODE_KIND => FunctionStatement::While(self.into()),
+            DoWhileLoopNode::NODE_KIND => FunctionStatement::DoWhile(self.into()),
+            IfConditionalNode::NODE_KIND => FunctionStatement::If(self.into()),
+            SwitchConditionalNode::NODE_KIND => FunctionStatement::Switch(self.into()),
+            BreakStatementNode::NODE_KIND => FunctionStatement::Break(self.into()),
+            ContinueStatementNode::NODE_KIND => FunctionStatement::Continue(self.into()),
+            ReturnStatementNode::NODE_KIND => FunctionStatement::Return(self.into()),
+            DeleteStatementNode::NODE_KIND => FunctionStatement::Delete(self.into()),
+            FunctionBlockNode::NODE_KIND => FunctionStatement::Block(self.into()),
+            NopNode::NODE_KIND => FunctionStatement::Nop(self.into()),
             _ => panic!("Unknown function statement type: {}", self.tree_node.kind())
         }
     }
@@ -301,9 +301,9 @@ impl FunctionStatementNode<'_> {
 impl Debug for FunctionStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if f.alternate() {
-            write!(f, "{:#?}", self.value())
+            write!(f, "{:#?}", self.clone().value())
         } else {
-            write!(f, "{:?}", self.value())
+            write!(f, "{:?}", self.clone().value())
         }
     }
 }
@@ -333,7 +333,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionStatementNode<'script> {
 
 impl StatementTraversal for FunctionStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        match self.value() {
+        match self.clone().value() {
             FunctionStatement::Var(s) => s.accept(visitor),
             FunctionStatement::Expr(s) => s.accept(visitor),
             FunctionStatement::For(s) => s.accept(visitor),

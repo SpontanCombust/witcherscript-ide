@@ -40,16 +40,16 @@ pub enum ScriptStatement<'script> {
 
 pub type ScriptStatementNode<'script> = SyntaxNode<'script, ScriptStatement<'script>>;
 
-impl ScriptStatementNode<'_> {
-    pub fn value(&self) -> ScriptStatement {
+impl<'script> ScriptStatementNode<'script> {
+    pub fn value(self) -> ScriptStatement<'script> {
         let s = self.tree_node.kind();
         match s {
-            GlobalFunctionDeclarationNode::NODE_KIND => ScriptStatement::Function(self.clone().into()),
-            ClassDeclarationNode::NODE_KIND => ScriptStatement::Class(self.clone().into()),
-            StateDeclarationNode::NODE_KIND => ScriptStatement::State(self.clone().into()),
-            StructDeclarationNode::NODE_KIND => ScriptStatement::Struct(self.clone().into()),
-            EnumDeclarationNode::NODE_KIND => ScriptStatement::Enum(self.clone().into()),
-            NopNode::NODE_KIND => ScriptStatement::Nop(self.clone().into()),
+            GlobalFunctionDeclarationNode::NODE_KIND => ScriptStatement::Function(self.into()),
+            ClassDeclarationNode::NODE_KIND => ScriptStatement::Class(self.into()),
+            StateDeclarationNode::NODE_KIND => ScriptStatement::State(self.into()),
+            StructDeclarationNode::NODE_KIND => ScriptStatement::Struct(self.into()),
+            EnumDeclarationNode::NODE_KIND => ScriptStatement::Enum(self.into()),
+            NopNode::NODE_KIND => ScriptStatement::Nop(self.into()),
             _ => panic!("Unknown script statement: {}", s)
         }
     }
@@ -58,9 +58,9 @@ impl ScriptStatementNode<'_> {
 impl Debug for ScriptStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if f.alternate() {
-            write!(f, "{:#?}", self.value())
+            write!(f, "{:#?}", self.clone().value())
         } else {
-            write!(f, "{:?}", self.value())
+            write!(f, "{:?}", self.clone().value())
         }
     }
 }
@@ -83,7 +83,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ScriptStatementNode<'script> {
 
 impl StatementTraversal for ScriptStatementNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        match self.value() {
+        match self.clone().value() {
             ScriptStatement::Function(s) => s.accept(visitor),
             ScriptStatement::Class(s) => s.accept(visitor),
             ScriptStatement::State(s) => s.accept(visitor),

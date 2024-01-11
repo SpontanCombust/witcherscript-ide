@@ -793,26 +793,26 @@ pub enum Expression<'script> {
 
 pub type ExpressionNode<'script> = SyntaxNode<'script, Expression<'script>>;
 
-impl ExpressionNode<'_> {
-    pub fn value(&self) -> Expression {
+impl<'script> ExpressionNode<'script> {
+    pub fn value(self) -> Expression<'script> {
         match self.tree_node.kind() {
-            AssignmentOperationExpressionNode::NODE_KIND => Expression::AssignmentOperation(self.clone().into()),
-            TernaryConditionalExpressionNode::NODE_KIND => Expression::TernaryConditional(self.clone().into()),
-            BinaryOperationExpressionNode::NODE_KIND => Expression::BinaryOperation(self.clone().into()),
-            InstantiationExpressionNode::NODE_KIND => Expression::Instantiation(self.clone().into()),
-            UnaryOperationExpressionNode::NODE_KIND => Expression::UnaryOperation(self.clone().into()),
-            TypeCastExpressionNode::NODE_KIND => Expression::TypeCast(self.clone().into()),
-            MethodCallExpressionNode::NODE_KIND => Expression::MethodCall(self.clone().into()),
-            MemberFieldExpressionNode::NODE_KIND => Expression::MemberField(self.clone().into()),
-            FunctionCallExpressionNode::NODE_KIND => Expression::FunctionCall(self.clone().into()),
-            ArrayExpressionNode::NODE_KIND => Expression::Array(self.clone().into()),
-            NestedExpressionNode::NODE_KIND => Expression::Nested(self.clone().into()),
-            ThisExpressionNode::NODE_KIND => Expression::This(self.clone().into()),
-            SuperExpressionNode::NODE_KIND => Expression::Super(self.clone().into()),
-            ParentExpressionNode::NODE_KIND => Expression::Parent(self.clone().into()),
-            VirtualParentExpressionNode::NODE_KIND => Expression::VirtualParent(self.clone().into()),
-            IdentifierNode::NODE_KIND => Expression::Identifier(self.clone().into()),
-            LiteralNode::NODE_KIND => Expression::Literal(self.clone().into()),
+            AssignmentOperationExpressionNode::NODE_KIND => Expression::AssignmentOperation(self.into()),
+            TernaryConditionalExpressionNode::NODE_KIND => Expression::TernaryConditional(self.into()),
+            BinaryOperationExpressionNode::NODE_KIND => Expression::BinaryOperation(self.into()),
+            InstantiationExpressionNode::NODE_KIND => Expression::Instantiation(self.into()),
+            UnaryOperationExpressionNode::NODE_KIND => Expression::UnaryOperation(self.into()),
+            TypeCastExpressionNode::NODE_KIND => Expression::TypeCast(self.into()),
+            MethodCallExpressionNode::NODE_KIND => Expression::MethodCall(self.into()),
+            MemberFieldExpressionNode::NODE_KIND => Expression::MemberField(self.into()),
+            FunctionCallExpressionNode::NODE_KIND => Expression::FunctionCall(self.into()),
+            ArrayExpressionNode::NODE_KIND => Expression::Array(self.into()),
+            NestedExpressionNode::NODE_KIND => Expression::Nested(self.into()),
+            ThisExpressionNode::NODE_KIND => Expression::This(self.into()),
+            SuperExpressionNode::NODE_KIND => Expression::Super(self.into()),
+            ParentExpressionNode::NODE_KIND => Expression::Parent(self.into()),
+            VirtualParentExpressionNode::NODE_KIND => Expression::VirtualParent(self.into()),
+            IdentifierNode::NODE_KIND => Expression::Identifier(self.into()),
+            LiteralNode::NODE_KIND => Expression::Literal(self.into()),
             _ => panic!("Unknown expression type: {}", self.tree_node.kind())
         }
     }
@@ -821,9 +821,9 @@ impl ExpressionNode<'_> {
 impl Debug for ExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if f.alternate() {
-            write!(f, "{:#?}", self.value())
+            write!(f, "{:#?}", self.clone().value())
         } else {
-            write!(f, "{:?}", self.value())
+            write!(f, "{:?}", self.clone().value())
         }
     }
 }
@@ -857,7 +857,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
 
 impl ExpressionTraversal for ExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        match self.value() {
+        match self.clone().value() {
             Expression::Nested(n) => n.accept(visitor),
             Expression::Literal(n) => n.accept(visitor),
             Expression::This(n) => n.accept(visitor),
