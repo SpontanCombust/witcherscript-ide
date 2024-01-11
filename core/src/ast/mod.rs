@@ -35,7 +35,7 @@ pub enum ScriptStatement<'script> {
     State(StateDeclarationNode<'script>),
     Struct(StructDeclarationNode<'script>),
     Enum(EnumDeclarationNode<'script>),
-    Nop
+    Nop(NopNode<'script>)
 }
 
 pub type ScriptStatementNode<'script> = SyntaxNode<'script, ScriptStatement<'script>>;
@@ -49,7 +49,7 @@ impl ScriptStatementNode<'_> {
             StateDeclarationNode::NODE_KIND => ScriptStatement::State(self.clone().into()),
             StructDeclarationNode::NODE_KIND => ScriptStatement::Struct(self.clone().into()),
             EnumDeclarationNode::NODE_KIND => ScriptStatement::Enum(self.clone().into()),
-            NopNode::NODE_KIND => ScriptStatement::Nop,
+            NopNode::NODE_KIND => ScriptStatement::Nop(self.clone().into()),
             _ => panic!("Unknown script statement: {}", s)
         }
     }
@@ -89,7 +89,7 @@ impl StatementTraversal for ScriptStatementNode<'_> {
             ScriptStatement::State(s) => s.accept(visitor),
             ScriptStatement::Struct(s) => s.accept(visitor),
             ScriptStatement::Enum(s) => s.accept(visitor),
-            ScriptStatement::Nop => visitor.visit_nop_stmt(),
+            ScriptStatement::Nop(s) => s.accept(visitor),
         }
     }
 }

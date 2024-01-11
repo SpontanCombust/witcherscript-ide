@@ -110,7 +110,7 @@ pub enum StructStatement<'script> {
     Var(MemberVarDeclarationNode<'script>),
     Default(MemberDefaultValueNode<'script>),
     Hint(MemberHintNode<'script>),
-    Nop
+    Nop(NopNode<'script>)
 }
 
 pub type StructStatementNode<'script> = SyntaxNode<'script, StructStatement<'script>>;
@@ -121,7 +121,7 @@ impl StructStatementNode<'_> {
             MemberVarDeclarationNode::NODE_KIND => StructStatement::Var(self.clone().into()),
             MemberDefaultValueNode::NODE_KIND => StructStatement::Default(self.clone().into()),
             MemberHintNode::NODE_KIND => StructStatement::Hint(self.clone().into()),
-            NopNode::NODE_KIND => StructStatement::Nop,
+            NopNode::NODE_KIND => StructStatement::Nop(self.clone().into()),
             _ => panic!("Unknown struct statement type: {}", self.tree_node.kind())
         }
     }
@@ -157,7 +157,7 @@ impl StatementTraversal for StructStatementNode<'_> {
             StructStatement::Var(s) => s.accept(visitor),
             StructStatement::Default(s) => s.accept(visitor),
             StructStatement::Hint(s) => s.accept(visitor),
-            StructStatement::Nop => visitor.visit_nop_stmt(),
+            StructStatement::Nop(s) => s.accept(visitor),
         }
     }
 }

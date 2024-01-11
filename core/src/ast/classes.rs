@@ -117,7 +117,7 @@ pub enum ClassStatement<'script> {
     Autobind(AutobindDeclarationNode<'script>),
     Method(MemberFunctionDeclarationNode<'script>),
     Event(EventDeclarationNode<'script>),
-    Nop
+    Nop(NopNode<'script>)
 }
 
 pub type ClassStatementNode<'script> = SyntaxNode<'script, ClassStatement<'script>>;
@@ -131,7 +131,7 @@ impl ClassStatementNode<'_> {
             AutobindDeclarationNode::NODE_KIND => ClassStatement::Autobind(self.clone().into()),
             MemberFunctionDeclarationNode::NODE_KIND => ClassStatement::Method(self.clone().into()),
             EventDeclarationNode::NODE_KIND => ClassStatement::Event(self.clone().into()),
-            NopNode::NODE_KIND => ClassStatement::Nop,
+            NopNode::NODE_KIND => ClassStatement::Nop(self.clone().into()),
             _ => panic!("Unknown class statement type: {}", self.tree_node.kind())
         }
     }
@@ -173,7 +173,7 @@ impl StatementTraversal for ClassStatementNode<'_> {
             ClassStatement::Autobind(s) => s.accept(visitor),
             ClassStatement::Method(s) => s.accept(visitor),
             ClassStatement::Event(s) => s.accept(visitor),
-            ClassStatement::Nop => visitor.visit_nop_stmt(),
+            ClassStatement::Nop(s) => s.accept(visitor),
         }
     }
 }

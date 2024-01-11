@@ -1,6 +1,7 @@
 use crate::tokens::*;
 use super::*;
 
+//TODO describe how are nested expressions traversed into (e.g. in FunctionCallExpressionNode it is traversed into arguments)
 pub trait ExpressionVisitor {
     fn visit_nested_expr(&mut self, _: &NestedExpressionNode) {}
     fn visit_literal_expr(&mut self, _: &LiteralNode) {}
@@ -30,6 +31,7 @@ pub trait ExpressionTraversal {
 }
 
 
+//TODO describe how are nested statements traversed into
 pub trait StatementVisitor {
     /// Should return whether to traverse into the body of the script. True by default.
     fn visit_script(&mut self, _: &ScriptNode) -> bool { true }
@@ -67,19 +69,25 @@ pub trait StatementVisitor {
     
     fn visit_local_var_decl_stmt(&mut self, _: &VarDeclarationNode) {}
     fn visit_expr_stmt(&mut self, _: &ExpressionStatementNode) {}
-    fn visit_for_stmt(&mut self, _: &ForLoopNode) {}
-    fn visit_while_stmt(&mut self, _: &WhileLoopNode) {}
-    fn visit_do_while_stmt(&mut self, _: &DoWhileLoopNode) {}
-    fn visit_if_stmt(&mut self, _: &IfConditionalNode) {}
-    fn visit_switch_stmt(&mut self, _: &SwitchConditionalNode) {}
+    /// Should return whether to traverse into body of the loop. True by default.
+    fn visit_for_stmt(&mut self, _: &ForLoopNode) -> bool { true }
+    /// Should return whether to traverse into body of the loop. True by default.
+    fn visit_while_stmt(&mut self, _: &WhileLoopNode) -> bool { true }
+    /// Should return whether to traverse into body of the loop. True by default.
+    fn visit_do_while_stmt(&mut self, _: &DoWhileLoopNode) -> bool { true }
+    /// Should return whether to traverse into body of the conditional. True by default.
+    fn visit_if_stmt(&mut self, _: &IfConditionalNode) -> bool { true }
+    /// Should return whether to traverse into body of the conditional. True by default.
+    fn visit_switch_stmt(&mut self, _: &SwitchConditionalNode) -> bool { true }
     fn visit_switch_stmt_case(&mut self, _: &SwitchConditionalCaseNode) {}
     fn visit_switch_stmt_default(&mut self, _: &SwitchConditionalDefaultNode) {}
     fn visit_break_stmt(&mut self, _: &BreakStatementNode) {}
     fn visit_continue_stmt(&mut self, _: &ContinueStatementNode) {}
     fn visit_return_stmt(&mut self, _: &ReturnStatementNode) {}
     fn visit_delete_stmt(&mut self, _: &DeleteStatementNode) {}
-    fn visit_block_stmt(&mut self, _: &FunctionBlockNode) {}
-    fn visit_nop_stmt(&mut self) {}
+    /// Should return whether to traverse into statements of the block. True by default.
+    fn visit_block_stmt(&mut self, _: &FunctionBlockNode) -> bool { true }
+    fn visit_nop_stmt(&mut self, _: &NopNode) {}
 }
 
 /// Do a left-to-right tree traversal using left-recursion.

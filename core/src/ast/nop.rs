@@ -1,4 +1,7 @@
+use std::fmt::Debug;
 use crate::{SyntaxNode, NamedSyntaxNode, AnyNode};
+
+use super::StatementTraversal;
 
 // Empty type essentially representing an orphaned/trailing semicolon
 #[derive(Debug, Clone)]
@@ -12,6 +15,12 @@ impl NamedSyntaxNode for NopNode<'_> {
 
 impl NopNode<'_> {}
 
+impl Debug for NopNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Nop")
+    }
+}
+
 impl<'script> TryFrom<AnyNode<'script>> for NopNode<'script> {
     type Error = ();
 
@@ -21,5 +30,11 @@ impl<'script> TryFrom<AnyNode<'script>> for NopNode<'script> {
         } else {
             Err(())
         }
+    }
+}
+
+impl StatementTraversal for NopNode<'_> {
+    fn accept<V: super::StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_nop_stmt(self);
     }
 }

@@ -272,7 +272,7 @@ pub enum FunctionStatement<'script> {
     Return(ReturnStatementNode<'script>),
     Delete(DeleteStatementNode<'script>),
     Block(FunctionBlockNode<'script>),
-    Nop,
+    Nop(NopNode<'script>),
 }
 
 pub type FunctionStatementNode<'script> = SyntaxNode<'script, FunctionStatement<'script>>;
@@ -292,7 +292,7 @@ impl FunctionStatementNode<'_> {
             ReturnStatementNode::NODE_KIND => FunctionStatement::Return(self.clone().into()),
             DeleteStatementNode::NODE_KIND => FunctionStatement::Delete(self.clone().into()),
             FunctionBlockNode::NODE_KIND => FunctionStatement::Block(self.clone().into()),
-            NopNode::NODE_KIND => FunctionStatement::Nop,
+            NopNode::NODE_KIND => FunctionStatement::Nop(self.clone().into()),
             _ => panic!("Unknown function statement type: {}", self.tree_node.kind())
         }
     }
@@ -346,7 +346,7 @@ impl StatementTraversal for FunctionStatementNode<'_> {
             FunctionStatement::Return(s) => s.accept(visitor),
             FunctionStatement::Delete(s) => s.accept(visitor),
             FunctionStatement::Block(s) => s.accept(visitor),
-            FunctionStatement::Nop => visitor.visit_nop_stmt(),
+            FunctionStatement::Nop(s) => s.accept(visitor),
         }
     }
 }

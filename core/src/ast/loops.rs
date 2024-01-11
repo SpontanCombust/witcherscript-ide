@@ -55,8 +55,9 @@ impl<'script> TryFrom<AnyNode<'script>> for ForLoopNode<'script> {
 
 impl StatementTraversal for ForLoopNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_for_stmt(self);
-        self.body().accept(visitor);
+        if visitor.visit_for_stmt(self) {
+            self.body().accept(visitor);
+        }
     }
 }
 
@@ -104,8 +105,9 @@ impl<'script> TryFrom<AnyNode<'script>> for WhileLoopNode<'script> {
 
 impl StatementTraversal for WhileLoopNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_while_stmt(self);
-        self.body().accept(visitor);
+        if visitor.visit_while_stmt(self) {
+            self.body().accept(visitor);
+        }
     }
 }
 
@@ -153,7 +155,8 @@ impl<'script> TryFrom<AnyNode<'script>> for DoWhileLoopNode<'script> {
 
 impl StatementTraversal for DoWhileLoopNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_do_while_stmt(self);
-        self.body().accept(visitor);
+        if visitor.visit_do_while_stmt(self) {
+            self.body().accept(visitor);
+        }
     }
 }
