@@ -5,7 +5,7 @@ use witcherscript::ast::*;
 use crate::diagnostics::{Diagnostic, ErrorDiagnostic, SyntaxErrorDiagnostic, InfoDiagnostic};
 
 
-pub fn syntax_analisys(script: ScriptNode, diagnostics: &mut Vec<Diagnostic>) {
+pub fn syntax_analysis(script: ScriptNode, diagnostics: &mut Vec<Diagnostic>) {
     let mut visitor = SyntaxErrorVisitor {
         diagnostics
     };
