@@ -98,7 +98,7 @@ impl<'script, T> SyntaxNode<'script, T> {
     }
 
     /// Returns an iterator over ERROR or missing children nodes
-    pub fn errors(&self) -> impl Iterator<Item = SyntaxError> {
+    pub fn errors(&self) -> Vec<SyntaxError> {
         let mut errors = Vec::new();
 
         let mut cursor = self.tree_node.walk();
@@ -110,7 +110,7 @@ impl<'script, T> SyntaxNode<'script, T> {
             }
         }
 
-        errors.into_iter()
+        errors
     }
 
 

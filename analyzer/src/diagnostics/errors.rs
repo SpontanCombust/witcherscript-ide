@@ -3,9 +3,7 @@ use crate::model::symbols::SymbolType;
 
 #[derive(Debug, Clone)]
 pub enum ErrorDiagnostic {
-    MissingElement {
-        what: String
-    },
+    Syntax(SyntaxErrorDiagnostic),
     SymbolNameTaken {
         name: String,
         this_type: SymbolType,
@@ -17,4 +15,11 @@ pub enum ErrorDiagnostic {
     UnnecessaryTypeArg,
     RepeatedSpecifier,
     MultipleAccessModifiers
+}
+
+#[derive(Debug, Clone)]
+pub enum SyntaxErrorDiagnostic {
+    MissingElement(String),
+    UnexpectedElement(String),
+    Other
 }
