@@ -443,3 +443,7 @@ dependencies = [
  "uuid",
  "witcherscript",
 ]
+
+[[package]]
+name = "witcherscript-workspaces"
+version = "0.1.0"

@@ -1,0 +1,8 @@
+[package]
+name = "witcherscript-workspaces"
+description = "Utilities for managing the workspace structure and creating script source trees"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
