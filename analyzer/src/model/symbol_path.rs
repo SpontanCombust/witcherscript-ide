@@ -75,6 +75,10 @@ impl SymbolPath {
         self.buff.is_empty()
     }
 
+    pub fn starts_with(&self, p: &SymbolPath) -> bool {
+        self.buff.starts_with(&p.buff)
+    }
+
     /// Returns an iterator over individual parts of the path
     pub fn components(&self) -> impl DoubleEndedIterator<Item = SymbolPathComponent> {
         self.buff
@@ -84,40 +88,40 @@ impl SymbolPath {
     }
 
 
-    // /// Returns the path without the last component if there is any
-    // pub fn parent(&self) -> Option<Self> {
-    //     if let Some(i) = self.buff.rfind(Self::COMPONENT_SEP) {
-    //         Some(Self {
-    //             buff: self.buff[..i].to_string()
-    //         })
-    //     } else {
-    //         None
-    //     }
-    // }
+    /// Returns the path without the last component if there is any
+    pub fn parent(&self) -> Option<Self> {
+        let comp_count = self.components().count();
+        if comp_count > 1 {
+            let path = self.components()
+                .take(comp_count - 1)
+                .fold(SymbolPath::empty(), |acc, comp| acc + &comp);
 
-    // /// Returns the first component of this path if there is any 
-    // pub fn root(&self) -> Option<Self> {
-    //     if let Some(i) = self.buff.find(Self::COMPONENT_SEP) {
-    //         Some(Self {
-    //             buff: self.buff[..i].to_string()
-    //         })
-    //     } else if !self.is_empty() {
-    //         Some(self.clone())
-    //     } else {
-    //         None
-    //     }
-    // }
+            Some(path)
+        } else {
+            None
+        }
+    }
 
-    // /// Returns everything after the first path component if there is anything
-    // pub fn stem(&self) -> Option<Self> {
-    //     if let Some(i) = self.buff.find(Self::COMPONENT_SEP) {
-    //         Some(Self {
-    //             buff: self.buff[i..].to_string()
-    //         })
-    //     } else {
-    //         None
-    //     }
-    // }
+    /// Returns the first component of this path if there is any 
+    pub fn root(&self) -> Option<Self> {
+        self.components()
+            .next() // take the first element
+            .map(|comp| SymbolPath::from(comp))
+    }
+
+    /// Returns everything after the first path component if there is anything
+    pub fn stem(&self) -> Option<Self> {
+        let comp_count = self.components().count();
+        if comp_count > 1 {
+            let path = self.components()
+                .skip(1)
+                .fold(SymbolPath::empty(), |acc, comp| acc + &comp);
+
+            Some(path)
+        } else {
+            None
+        }
+    }
 }
 
 
@@ -145,10 +149,22 @@ impl Display for SymbolPath {
 impl Add<&SymbolPath> for SymbolPath {
     type Output = SymbolPath;
 
-    fn add(self, rhs: &SymbolPath) -> Self::Output {
-        Self {
-            buff: self.buff + &rhs.buff
+    fn add(mut self, rhs: &SymbolPath) -> Self::Output {
+        if !self.is_empty() {
+            self.buff.push(Self::COMPONENT_SEP);
         }
+        self.buff.push_str(&rhs.buff);
+
+        Self {
+            buff: self.buff
+        }
+    }
+}
+
+impl FromIterator<SymbolPath> for SymbolPath {
+    fn from_iter<T: IntoIterator<Item = SymbolPath>>(iter: T) -> Self {
+        iter.into_iter()
+            .fold(SymbolPath::empty(), |acc, path| acc + &path)
     }
 }
 
@@ -186,6 +202,15 @@ impl Display for SymbolPathComponent<'_> {
 impl<'a> From<SymbolPathComponent<'a>> for SymbolPath {
     fn from(value: SymbolPathComponent<'a>) -> Self {
         SymbolPath::new(value.name, value.category)
+    }
+}
+
+impl<'a> Add<&SymbolPathComponent<'a>> for SymbolPath {
+    type Output = SymbolPath;
+
+    fn add(mut self, rhs: &SymbolPathComponent<'a>) -> Self::Output {
+        self.push(rhs.name, rhs.category);
+        self
     }
 }
 
@@ -242,5 +267,36 @@ fn test() {
         assert_eq!(c.category, SymbolCategory::Data);
 
         assert!(it.next().is_none());
+    }
+    {
+        let mut p = SymbolPath::empty();
+
+        assert_eq!(p.parent(), None);
+        assert_eq!(p.root(), None);
+        assert_eq!(p.stem(), None);
+
+        p.push("CClass", SymbolCategory::Type);
+
+        assert_eq!(p.parent(), None);
+        assert_eq!(p.root(), Some(SymbolPath::new("CClass", SymbolCategory::Type)));
+        assert_eq!(p.stem(), None);
+
+        p.push("SomeFunction", SymbolCategory::Callable);
+
+        assert_eq!(p.parent(), Some(SymbolPath::new("CClass", SymbolCategory::Type)));
+        assert_eq!(p.root(), Some(SymbolPath::new("CClass", SymbolCategory::Type)));
+        assert_eq!(p.stem(), Some(SymbolPath::new("SomeFunction", SymbolCategory::Callable)));
+
+        p.push("LocalVar", SymbolCategory::Data);
+
+        assert_eq!(p.parent(), Some(SymbolPath::from_iter([
+            SymbolPath::new("CClass", SymbolCategory::Type), 
+            SymbolPath::new("SomeFunction", SymbolCategory::Callable)
+        ])));
+        assert_eq!(p.root(), Some(SymbolPath::new("CClass", SymbolCategory::Type)));
+        assert_eq!(p.stem(), Some(SymbolPath::from_iter([
+            SymbolPath::new("SomeFunction", SymbolCategory::Callable), 
+            SymbolPath::new("LocalVar", SymbolCategory::Data)
+        ])));
     }
 }
