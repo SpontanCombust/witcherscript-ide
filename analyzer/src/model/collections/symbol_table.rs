@@ -52,6 +52,12 @@ impl SymbolTable {
         self.map.remove(&path)
     }
 
+    pub fn get_children<'a, 'b>(&'a self, path: &'b SymbolPath) -> impl Iterator<Item = &'a SymbolVariant> where 'b: 'a {
+        let comp_count = path.components().count() + 1;
 
-    //TODO getting child paths
+        self.map.range(path..)
+            .take_while(|(p, _)| p.starts_with(path))
+            .filter(move |(p, _)| p.components().count() == comp_count)
+            .map(|(_, v)| v)
+    }
 }
