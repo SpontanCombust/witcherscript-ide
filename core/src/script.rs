@@ -2,7 +2,7 @@ use std::io;
 use ropey::Rope;
 use thiserror::Error;
 use tree_sitter::{Parser, Tree, LanguageError};
-use crate::{ast::ScriptNode, script_document::ScriptDocument};
+use crate::{ast::RootNode, script_document::ScriptDocument};
 
 
 #[derive(Debug, Clone)]
@@ -64,7 +64,7 @@ impl Script {
     }
 
 
-    pub fn root_node(&self) -> ScriptNode {
-        ScriptNode::new(self.current_tree.root_node())
+    pub fn root_node(&self) -> RootNode {
+        RootNode::new(self.current_tree.root_node())
     }
 }

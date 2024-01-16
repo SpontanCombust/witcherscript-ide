@@ -12,7 +12,7 @@ use crate::model::symbols::*;
 use crate::diagnostics::*;
 
 
-pub fn scan_symbols(script: ScriptNode, doc: &ScriptDocument, symtab: &mut SymbolTable, diagnostics: &mut Vec<Diagnostic>) {
+pub fn scan_symbols(script_root: RootNode, doc: &ScriptDocument, symtab: &mut SymbolTable, diagnostics: &mut Vec<Diagnostic>) {
     let mut visitor = SymbolScannerVisitor {
         symtab,
         doc,
@@ -20,7 +20,7 @@ pub fn scan_symbols(script: ScriptNode, doc: &ScriptDocument, symtab: &mut Symbo
         current_path: SymbolPath::empty()
     };
 
-    script.accept(&mut visitor);
+    script_root.accept(&mut visitor);
 }
 
 

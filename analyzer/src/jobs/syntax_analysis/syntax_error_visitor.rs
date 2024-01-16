@@ -5,12 +5,12 @@ use witcherscript::ast::*;
 use crate::diagnostics::{Diagnostic, ErrorDiagnostic, SyntaxErrorDiagnostic, InfoDiagnostic};
 
 
-pub fn syntax_analysis(script: ScriptNode, diagnostics: &mut Vec<Diagnostic>) {
+pub fn syntax_analysis(script_root: RootNode, diagnostics: &mut Vec<Diagnostic>) {
     let mut visitor = SyntaxErrorVisitor {
         diagnostics
     };
 
-    script.accept(&mut visitor);
+    script_root.accept(&mut visitor);
 }
 
 
@@ -103,7 +103,7 @@ impl SyntaxErrorVisitor<'_> {
 }
 
 impl StatementVisitor for SyntaxErrorVisitor<'_> {
-    fn visit_script(&mut self, n: &ScriptNode) -> bool {
+    fn visit_root(&mut self, n: &RootNode) -> bool {
         if n.has_errors() {
             self.check_errors(n);
             true

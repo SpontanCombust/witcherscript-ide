@@ -34,7 +34,7 @@ pub trait ExpressionTraversal {
 //TODO describe how are nested statements traversed into
 pub trait StatementVisitor {
     /// Should return whether to traverse into the body of the script. True by default.
-    fn visit_script(&mut self, _: &ScriptNode) -> bool { true }
+    fn visit_root(&mut self, _: &RootNode) -> bool { true }
 
     /// Should return whether to traverse into the body of the class. True by default.
     fn visit_class_decl(&mut self, _: &ClassDeclarationNode) -> bool { true }
