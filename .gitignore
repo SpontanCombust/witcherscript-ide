@@ -1,7 +1,7 @@
 /.vscode
 /target
 
-/lsp/clients/vscode/node_modules
-/lsp/clients/vscode/out
-/lsp/clients/vscode/server
+/editors/vscode/node_modules
+/editors/vscode/out
+/editors/vscode/server
 *.vsix
