@@ -43,10 +43,9 @@ impl ScriptDocument {
         })
     }
 
-    //TODO change naming from span to range to make it not so disorienting
-    pub fn text_at(&self, span: lsp_types::Range) -> String {
-        let start_char = self.rope.line_to_char(span.start.line as usize) + span.start.character as usize;
-        let end_char = self.rope.line_to_char(span.end.line as usize) + span.end.character as usize;
+    pub fn text_at(&self, range: lsp_types::Range) -> String {
+        let start_char = self.rope.line_to_char(range.start.line as usize) + range.start.character as usize;
+        let end_char = self.rope.line_to_char(range.end.line as usize) + range.end.character as usize;
         self.rope.slice(start_char..end_char).to_string()
     }
 

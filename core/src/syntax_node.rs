@@ -113,8 +113,8 @@ impl<'script, T> SyntaxNode<'script, T> {
     }
 
 
-    /// Returns the span at which this node is located in the text document
-    pub fn span(&self) -> Range {
+    /// Returns the range at which this node is located in the text document
+    pub fn range(&self) -> Range {
         let r = self.tree_node.range();
         Range::new(
             Position::new(r.start_point.row as u32, r.start_point.column as u32),
@@ -132,7 +132,7 @@ impl<'script, T> SyntaxNode<'script, T> {
         if self.is_missing() {
             None
         } else {
-            Some(doc.text_at(self.span()))
+            Some(doc.text_at(self.range()))
         }
     }
 }

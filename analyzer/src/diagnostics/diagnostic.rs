@@ -4,7 +4,7 @@ use super::{ErrorDiagnostic, WarningDiagnostic, InfoDiagnostic};
 
 #[derive(Debug, Clone)]
 pub struct Diagnostic {
-    pub span: Range,
+    pub range: Range,
     pub body: DiagnosticBody
 }
 

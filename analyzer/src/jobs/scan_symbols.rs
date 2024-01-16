@@ -35,12 +35,12 @@ struct SymbolScannerVisitor<'a> {
 impl SymbolScannerVisitor<'_> {
     /// Inserts the symbol into symbol table, but only if it is not a duplicate.
     /// Returns true if symbol was inserted successfully, false otherwise.
-    fn try_insert_with_duplicate_check<S>(&mut self, sym: S, span: Range) -> bool 
+    fn try_insert_with_duplicate_check<S>(&mut self, sym: S, range: Range) -> bool 
     where S: Symbol + Into<SymbolVariant> {
         let sym_typ = sym.typ();
         if let Err(err) = self.symtab.insert(sym) {
             self.diagnostics.push(Diagnostic { 
-                span, 
+                range, 
                 body: ErrorDiagnostic::SymbolNameTaken { 
                     name: err.occupied_path.components().last().unwrap().name.to_string(), 
                     this_type: sym_typ, 
@@ -59,7 +59,7 @@ impl SymbolScannerVisitor<'_> {
         if let Some(type_name) = n.value(&self.doc) {
             if type_name.as_str() == ArrayTypeSymbol::TYPE_NAME {
                 self.diagnostics.push(Diagnostic { 
-                    span: Range::new(n.span().end, n.span().end), 
+                    range: Range::new(n.range().end, n.range().end), 
                     body: ErrorDiagnostic::MissingTypeArg.into()
                 });
             } else {
@@ -84,7 +84,7 @@ impl SymbolScannerVisitor<'_> {
                 } else {
                     // since only array type takes type argument, all other uses of type arg are invalid
                     self.diagnostics.push(Diagnostic { 
-                        span: n.type_arg().unwrap().span(), 
+                        range: n.type_arg().unwrap().range(), 
                         body: ErrorDiagnostic::UnnecessaryTypeArg.into()
                     });
 
@@ -107,10 +107,10 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             let path = BasicTypeSymbolPath::new(&class_name);
             let mut sym = ClassSymbol::new(path);
 
-            for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
                     self.diagnostics.push(Diagnostic { 
-                        span, 
+                        range, 
                         body: ErrorDiagnostic::RepeatedSpecifier.into()
                     });
                 }
@@ -119,7 +119,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             sym.base_path = n.base().map(|base| self.check_type_from_identifier(base));
 
             sym.path().clone_into(&mut self.current_path);
-            if self.try_insert_with_duplicate_check(sym, n.name().span()) {
+            if self.try_insert_with_duplicate_check(sym, n.name().range()) {
                 return true;
             }
         }
@@ -140,10 +140,10 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             let path = StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name));
             let mut sym = StateSymbol::new(path);
 
-            for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
                     self.diagnostics.push(Diagnostic { 
-                        span, 
+                        range, 
                         body: ErrorDiagnostic::RepeatedSpecifier.into()
                     });
                 }
@@ -152,7 +152,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             sym.base_state_name = n.base().and_then(|base| base.value(&self.doc)).map(|ident| ident.into());
 
             sym.path().clone_into(&mut self.current_path);
-            if self.try_insert_with_duplicate_check(sym, n.name().span()) {
+            if self.try_insert_with_duplicate_check(sym, n.name().range()) {
                 return true;
             }
         }
@@ -171,17 +171,17 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             let path = BasicTypeSymbolPath::new(&struct_name);
             let mut sym = StructSymbol::new(path);
 
-            for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
                     self.diagnostics.push(Diagnostic { 
-                        span, 
+                        range, 
                         body: ErrorDiagnostic::RepeatedSpecifier.into()
                     });
                 }
             }
 
             sym.path().clone_into(&mut self.current_path);
-            if self.try_insert_with_duplicate_check(sym, n.name().span()) {
+            if self.try_insert_with_duplicate_check(sym, n.name().range()) {
                 return true;
             }
         }
@@ -201,7 +201,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             let sym = EnumSymbol::new(path);
 
             sym.path().clone_into(&mut self.current_path);
-            if self.try_insert_with_duplicate_check(sym, n.name().span()) {
+            if self.try_insert_with_duplicate_check(sym, n.name().range()) {
                 return true;
             }
         }
@@ -220,7 +220,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             let path = DataSymbolPath::new(&self.current_path, &enum_member_name);
             let sym = EnumMemberSymbol::new(path);
 
-            self.try_insert_with_duplicate_check(sym, n.name().span());
+            self.try_insert_with_duplicate_check(sym, n.name().range());
         }
     }
 
@@ -229,10 +229,10 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             let path = GlobalCallableSymbolPath::new(&func_name);
             let mut sym = GlobalFunctionSymbol::new(path);
 
-            for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
                     self.diagnostics.push(Diagnostic { 
-                        span, 
+                        range, 
                         body: ErrorDiagnostic::RepeatedSpecifier.into()
                     });
                 }
@@ -247,7 +247,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             };
 
             sym.path().clone_into(&mut self.current_path);
-            if self.try_insert_with_duplicate_check(sym, n.name().span()) {
+            if self.try_insert_with_duplicate_check(sym, n.name().range()) {
                 return true;
             }
         }
@@ -266,10 +266,10 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             let path = MemberCallableSymbolPath::new(&self.current_path, &func_name);
             let mut sym = MemberFunctionSymbol::new(path);
 
-            for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
                     self.diagnostics.push(Diagnostic { 
-                        span, 
+                        range, 
                         body: ErrorDiagnostic::RepeatedSpecifier.into()
                     });
                 }
@@ -284,7 +284,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             };
 
             sym.path().clone_into(&mut self.current_path);
-            if self.try_insert_with_duplicate_check(sym, n.name().span()) {
+            if self.try_insert_with_duplicate_check(sym, n.name().range()) {
                 return true;
             }
         }
@@ -305,7 +305,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             let sym = EventSymbol::new(path);
 
             sym.path().clone_into(&mut self.current_path);
-            if self.try_insert_with_duplicate_check(sym, n.name().span()) {
+            if self.try_insert_with_duplicate_check(sym, n.name().range()) {
                 return true;
             }
         }
@@ -321,10 +321,10 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode) {
         let mut specifiers = HashSet::new();
-        for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+        for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if !specifiers.insert(spec) {
                 self.diagnostics.push(Diagnostic { 
-                    span, 
+                    range, 
                     body: ErrorDiagnostic::RepeatedSpecifier.into()
                 });
             }
@@ -339,7 +339,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
                 let mut sym = FunctionParameterSymbol::new(path);
                 sym.specifiers = specifiers.clone();
                 sym.type_path = type_path.clone();
-                self.try_insert_with_duplicate_check(sym, name_node.span());
+                self.try_insert_with_duplicate_check(sym, name_node.range());
             }
         }
     }
@@ -347,11 +347,11 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode) {
         let mut specifiers = HashSet::new();
         let mut found_access_modif_before = false;
-        for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+        for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if matches!(spec, MemberVarSpecifier::AccessModifier(_)) {
                 if found_access_modif_before {
                     self.diagnostics.push(Diagnostic { 
-                        span, 
+                        range, 
                         body: ErrorDiagnostic::MultipleAccessModifiers.into()
                     })
                 }
@@ -360,7 +360,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
             if !specifiers.insert(spec) {
                 self.diagnostics.push(Diagnostic { 
-                    span, 
+                    range, 
                     body: ErrorDiagnostic::RepeatedSpecifier.into()
                 });
             }
@@ -375,7 +375,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
                 let mut sym = MemberVarSymbol::new(path);
                 sym.specifiers = specifiers.clone();
                 sym.type_path = type_path.clone();
-                self.try_insert_with_duplicate_check(sym, name_node.span());
+                self.try_insert_with_duplicate_check(sym, name_node.range());
             }
         }
     }
@@ -386,11 +386,11 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             let mut sym = AutobindSymbol::new(path);
 
             let mut found_access_modif_before = false;
-            for (spec, span) in n.specifiers().map(|specn| (specn.value(), specn.span())) {
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if matches!(spec, AutobindSpecifier::AccessModifier(_)) {
                     if found_access_modif_before {
                         self.diagnostics.push(Diagnostic { 
-                            span, 
+                            range, 
                             body: ErrorDiagnostic::MultipleAccessModifiers.into()
                         })
                     }
@@ -399,7 +399,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
                 if !sym.specifiers.insert(spec) {
                     self.diagnostics.push(Diagnostic { 
-                        span, 
+                        range, 
                         body: ErrorDiagnostic::RepeatedSpecifier.into()
                     });
                 }
@@ -407,7 +407,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
             sym.type_path = self.check_type_from_type_annot(n.autobind_type());
 
-            self.try_insert_with_duplicate_check(sym, n.name().span());
+            self.try_insert_with_duplicate_check(sym, n.name().range());
         }
     }
 
@@ -419,7 +419,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
                 let path = DataSymbolPath::new(&self.current_path, &var_name);
                 let mut sym = LocalVarSymbol::new(path);
                 sym.type_path = type_path.clone();
-                self.try_insert_with_duplicate_check(sym, name_node.span());
+                self.try_insert_with_duplicate_check(sym, name_node.range());
             }
         }
     }

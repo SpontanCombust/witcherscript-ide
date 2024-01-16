@@ -19,16 +19,16 @@ struct SyntaxErrorVisitor<'a> {
 }
 
 impl SyntaxErrorVisitor<'_> {
-    fn missing_element(&mut self, span: Range, expected: String) {
+    fn missing_element(&mut self, range: Range, expected: String) {
         self.diagnostics.push(Diagnostic { 
-            span, 
+            range, 
             body: ErrorDiagnostic::Syntax(SyntaxErrorDiagnostic::MissingElement(expected)).into()
         })
     }
 
     fn check_missing<T>(&mut self, n: SyntaxNode<'_, T>, expected: &str) -> bool {
         if n.is_missing() {
-            self.missing_element(n.span(), expected.to_string());
+            self.missing_element(n.range(), expected.to_string());
             false
         } else {
             true
@@ -59,7 +59,7 @@ impl SyntaxErrorVisitor<'_> {
 
     fn check_expression(&mut self, n: ExpressionNode) {
         if n.is_missing() {
-            self.missing_element(n.span(), "expression".to_string());
+            self.missing_element(n.range(), "expression".to_string());
         } else {
             if n.has_errors() {
                 n.accept(self);
@@ -80,18 +80,18 @@ impl SyntaxErrorVisitor<'_> {
                     if let Ok(missing) = UnnamedNode::try_from(missing.clone()) {
                         match missing.value() {
                             Unnamed::Keyword(kw) => {
-                                self.missing_element(missing.span(), format!("keyword {}", kw.as_ref()));
+                                self.missing_element(missing.range(), format!("keyword {}", kw.as_ref()));
                             },
                             Unnamed::Punctuation(punct) => {
-                                self.missing_element(missing.span(), punct.to_string());
+                                self.missing_element(missing.range(), punct.to_string());
                             },
                         }
                     }
                 },
                 SyntaxError::Invalid(errn) => {
                     self.diagnostics.push(Diagnostic { 
-                        span: errn.span(), 
-                        // for now just create a generic syntax error on the span to know that this thing works
+                        range: errn.range(), 
+                        // for now just create a generic syntax error on the range to know that this thing works
                         body: ErrorDiagnostic::Syntax(SyntaxErrorDiagnostic::Other).into()
                     })       
                 }
@@ -435,7 +435,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_nop_stmt(&mut self, n: &NopNode) {
         self.diagnostics.push(Diagnostic { 
-            span: n.span(), 
+            range: n.range(), 
             body: InfoDiagnostic::TrailingSemicolon.into()
         })
     }

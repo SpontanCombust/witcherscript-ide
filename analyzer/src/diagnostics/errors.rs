@@ -8,7 +8,7 @@ pub enum ErrorDiagnostic {
         name: String,
         this_type: SymbolType,
         precursor_type: SymbolType,
-        // precursor_span: DocSpan, //TODO symbols storing their spans
+        // precursor_range: Range, //TODO symbols storing their ranges
     },
     TypeNotFound,
     MissingTypeArg,
