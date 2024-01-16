@@ -437,7 +437,6 @@ name = "witcherscript-analyzer"
 version = "0.1.0"
 dependencies = [
  "lsp-types",
- "ropey",
  "shrinkwraprs",
  "thiserror",
  "uuid",

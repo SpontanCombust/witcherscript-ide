@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 use lsp_types::Range;
-use ropey::Rope;
 use witcherscript::attribs::AutobindSpecifier;
 use witcherscript::attribs::MemberVarSpecifier;
+use witcherscript::script_document::ScriptDocument;
 use witcherscript::tokens::*;
 use witcherscript::ast::*;
 use crate::model::collections::symbol_table::SymbolTable;
@@ -12,10 +12,10 @@ use crate::model::symbols::*;
 use crate::diagnostics::*;
 
 
-pub fn scan_symbols(script: ScriptNode, rope: &Rope, symtab: &mut SymbolTable, diagnostics: &mut Vec<Diagnostic>) {
+pub fn scan_symbols(script: ScriptNode, doc: &ScriptDocument, symtab: &mut SymbolTable, diagnostics: &mut Vec<Diagnostic>) {
     let mut visitor = SymbolScannerVisitor {
         symtab,
-        rope,
+        doc,
         diagnostics,
         current_path: SymbolPath::empty()
     };
@@ -26,7 +26,7 @@ pub fn scan_symbols(script: ScriptNode, rope: &Rope, symtab: &mut SymbolTable, d
 
 struct SymbolScannerVisitor<'a> {
     symtab: &'a mut SymbolTable,
-    rope: &'a Rope,
+    doc: &'a ScriptDocument,
     diagnostics: &'a mut Vec<Diagnostic>,
 
     current_path: SymbolPath
@@ -56,7 +56,7 @@ impl SymbolScannerVisitor<'_> {
 
     /// Returns type path and type name, if it's invalid returns empty path
     fn check_type_from_identifier(&mut self, n: IdentifierNode) -> TypeSymbolPath {
-        if let Some(type_name) = n.value(&self.rope) {
+        if let Some(type_name) = n.value(&self.doc) {
             if type_name.as_str() == ArrayTypeSymbol::TYPE_NAME {
                 self.diagnostics.push(Diagnostic { 
                     span: Range::new(n.span().end, n.span().end), 
@@ -74,7 +74,7 @@ impl SymbolScannerVisitor<'_> {
     /// Returns type path and type name, if it's invalid returns empty path
     fn check_type_from_type_annot(&mut self, n: TypeAnnotationNode) -> TypeSymbolPath {
         if let Some(type_arg_node) = n.type_arg() {
-            if let Some(type_name) = n.type_name().value(&self.rope) {
+            if let Some(type_name) = n.type_name().value(&self.doc) {
                 if type_name.as_str() == ArrayTypeSymbol::TYPE_NAME {
                     let type_arg_path = self.check_type_from_type_annot(type_arg_node);
                     if !type_arg_path.is_empty() {
@@ -103,7 +103,7 @@ impl SymbolScannerVisitor<'_> {
 
 impl StatementVisitor for SymbolScannerVisitor<'_> {
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> bool {
-        if let Some(class_name) = n.name().value(&self.rope) {
+        if let Some(class_name) = n.name().value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&class_name);
             let mut sym = ClassSymbol::new(path);
 
@@ -134,8 +134,8 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> bool {
-        let state_name = n.name().value(&self.rope);
-        let parent_name = n.parent().value(&self.rope);
+        let state_name = n.name().value(&self.doc);
+        let parent_name = n.parent().value(&self.doc);
         if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
             let path = StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name));
             let mut sym = StateSymbol::new(path);
@@ -149,7 +149,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
                 }
             }
 
-            sym.base_state_name = n.base().and_then(|base| base.value(&self.rope)).map(|ident| ident.into());
+            sym.base_state_name = n.base().and_then(|base| base.value(&self.doc)).map(|ident| ident.into());
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().span()) {
@@ -167,7 +167,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
-        if let Some(struct_name) = n.name().value(&self.rope) {
+        if let Some(struct_name) = n.name().value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&struct_name);
             let mut sym = StructSymbol::new(path);
 
@@ -196,7 +196,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> bool {
-        if let Some(enum_name) = n.name().value(&self.rope) {
+        if let Some(enum_name) = n.name().value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&enum_name);
             let sym = EnumSymbol::new(path);
 
@@ -216,7 +216,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_enum_member_decl(&mut self, n: &EnumMemberDeclarationNode) {
-        if let Some(enum_member_name) = n.name().value(&self.rope) {
+        if let Some(enum_member_name) = n.name().value(&self.doc) {
             let path = DataSymbolPath::new(&self.current_path, &enum_member_name);
             let sym = EnumMemberSymbol::new(path);
 
@@ -225,7 +225,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> bool {
-        if let Some(func_name) = n.name().value(&self.rope) {
+        if let Some(func_name) = n.name().value(&self.doc) {
             let path = GlobalCallableSymbolPath::new(&func_name);
             let mut sym = GlobalFunctionSymbol::new(path);
 
@@ -262,7 +262,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> bool {
-        if let Some(func_name) = n.name().value(&self.rope) {
+        if let Some(func_name) = n.name().value(&self.doc) {
             let path = MemberCallableSymbolPath::new(&self.current_path, &func_name);
             let mut sym = MemberFunctionSymbol::new(path);
 
@@ -300,7 +300,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> bool {
-        if let Some(event_name) = n.name().value(&self.rope) {
+        if let Some(event_name) = n.name().value(&self.doc) {
             let path = MemberCallableSymbolPath::new(&self.current_path, &event_name);
             let sym = EventSymbol::new(path);
 
@@ -334,7 +334,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
 
         for name_node in n.names() {
-            if let Some(param_name) = name_node.value(&self.rope) {
+            if let Some(param_name) = name_node.value(&self.doc) {
                 let path = DataSymbolPath::new(&self.current_path, &param_name);
                 let mut sym = FunctionParameterSymbol::new(path);
                 sym.specifiers = specifiers.clone();
@@ -370,7 +370,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
         
         for name_node in n.names() {
-            if let Some(var_name) = name_node.value(&self.rope) {
+            if let Some(var_name) = name_node.value(&self.doc) {
                 let path = DataSymbolPath::new(&self.current_path, &var_name);
                 let mut sym = MemberVarSymbol::new(path);
                 sym.specifiers = specifiers.clone();
@@ -381,7 +381,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode) {
-        if let Some(autobind_name) = n.name().value(&self.rope) {
+        if let Some(autobind_name) = n.name().value(&self.doc) {
             let path = DataSymbolPath::new(&self.current_path, &autobind_name);
             let mut sym = AutobindSymbol::new(path);
 
@@ -415,7 +415,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         let type_path = self.check_type_from_type_annot(n.var_type());
 
         for name_node in n.names() {
-            if let Some(var_name) = name_node.value(&self.rope) {
+            if let Some(var_name) = name_node.value(&self.doc) {
                 let path = DataSymbolPath::new(&self.current_path, &var_name);
                 let mut sym = LocalVarSymbol::new(path);
                 sym.type_path = type_path.clone();

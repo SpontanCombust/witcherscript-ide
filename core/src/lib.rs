@@ -12,3 +12,4 @@ pub use syntax_error::*;
 pub mod tokens;
 pub mod attribs;
 pub mod ast;
+pub mod script_document;

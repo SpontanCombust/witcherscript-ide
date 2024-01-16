@@ -1,7 +1,6 @@
 use lsp_types::{Range, Position};
-use ropey::Rope;
 use std::{marker::PhantomData, fmt::Debug};
-use crate::SyntaxError;
+use crate::{SyntaxError, script_document::ScriptDocument};
 
 
 /// Represents a WitcherScript syntax tree node
@@ -129,14 +128,11 @@ impl<'script, T> SyntaxNode<'script, T> {
 
     /// Returns text that this node spans in the text document
     /// If the node is missing returns None
-    pub fn text(&self, rope: &Rope) -> Option<String> {
+    pub fn text(&self, doc: &ScriptDocument) -> Option<String> {
         if self.is_missing() {
             None
         } else {
-            let pos_span = self.tree_node.start_position() .. self.tree_node.end_position();
-            let char_span = rope.line_to_char(pos_span.start.row) + pos_span.start.column .. rope.line_to_char(pos_span.end.row) + pos_span.end.column;
-            let slice = rope.slice(char_span);
-            Some(slice.to_string())
+            Some(doc.text_at(self.span()))
         }
     }
 }

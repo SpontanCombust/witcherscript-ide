@@ -1,7 +1,6 @@
 use std::fmt::Debug;
-use ropey::Rope;
 use shrinkwraprs::Shrinkwrap;
-use crate::{NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}, AnyNode};
+use crate::{NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}, AnyNode, script_document::ScriptDocument};
 
 
 #[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -21,8 +20,8 @@ impl NamedSyntaxNode for IdentifierNode<'_> {
 
 impl IdentifierNode<'_> {
     /// Returns None if the node is marked as missing
-    pub fn value(&self, rope: &Rope) -> Option<Identifier> {
-        self.text(rope).map(|s| Identifier(s))
+    pub fn value(&self, doc: &ScriptDocument) -> Option<Identifier> {
+        self.text(doc).map(|s| Identifier(s))
     }
 }
 

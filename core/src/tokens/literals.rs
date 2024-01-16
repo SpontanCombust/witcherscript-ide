@@ -1,9 +1,9 @@
 use std::num::{ParseIntError, ParseFloatError};
 use std::fmt::Debug;
 use std::str::ParseBoolError;
-use ropey::Rope;
 use shrinkwraprs::Shrinkwrap;
 use thiserror::Error;
+use crate::script_document::ScriptDocument;
 use crate::{AnyNode, NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}};
 
 
@@ -30,8 +30,8 @@ impl NamedSyntaxNode for LiteralIntNode<'_> {
 }
 
 impl LiteralIntNode<'_> {
-    pub fn value(&self, rope: &Rope) -> Result<LiteralInt, LiteralValueError> {
-        let s = self.text(rope).ok_or(LiteralValueError::NodeMissing)?;
+    pub fn value(&self, doc: &ScriptDocument) -> Result<LiteralInt, LiteralValueError> {
+        let s = self.text(doc).ok_or(LiteralValueError::NodeMissing)?;
         let i = s.parse::<i32>()?;
         Ok(LiteralInt(i))
     }
@@ -66,8 +66,8 @@ impl NamedSyntaxNode for LiteralFloatNode<'_> {
 }
 
 impl LiteralFloatNode<'_> {
-    pub fn value(&self, rope: &Rope) -> Result<LiteralFloat, LiteralValueError> {
-        let s = self.text(rope).ok_or(LiteralValueError::NodeMissing)?;
+    pub fn value(&self, doc: &ScriptDocument) -> Result<LiteralFloat, LiteralValueError> {
+        let s = self.text(doc).ok_or(LiteralValueError::NodeMissing)?;
 
         // trim the optional trailing 'f'
         let s = if s.chars().last().unwrap() == 'f' { 
@@ -110,8 +110,8 @@ impl NamedSyntaxNode for LiteralBoolNode<'_> {
 }
 
 impl LiteralBoolNode<'_> {
-    pub fn value(&self, rope: &Rope) -> Result<LiteralBool, LiteralValueError> {
-        let s = self.text(rope).ok_or(LiteralValueError::NodeMissing)?;
+    pub fn value(&self, doc: &ScriptDocument) -> Result<LiteralBool, LiteralValueError> {
+        let s = self.text(doc).ok_or(LiteralValueError::NodeMissing)?;
         let b = s.parse::<bool>()?;
         Ok(LiteralBool(b))
     }
@@ -146,8 +146,8 @@ impl NamedSyntaxNode for LiteralStringNode<'_> {
 }
 
 impl LiteralStringNode<'_> {
-    pub fn value(&self, rope: &Rope) -> Result<LiteralString, LiteralValueError> {
-        let s = self.text(rope).ok_or(LiteralValueError::NodeMissing)?;
+    pub fn value(&self, doc: &ScriptDocument) -> Result<LiteralString, LiteralValueError> {
+        let s = self.text(doc).ok_or(LiteralValueError::NodeMissing)?;
 
         let s = s[1..s.len()-1] // eliminate surrounding quotes
         .replace(r#"\""#, r#"""#); // escape internal quotes
@@ -185,8 +185,8 @@ impl NamedSyntaxNode for LiteralNameNode<'_> {
 }
 
 impl LiteralNameNode<'_> {
-    pub fn value(&self, rope: &Rope) -> Result<LiteralName, LiteralValueError> {
-        let s = self.text(rope).ok_or(LiteralValueError::NodeMissing)?;
+    pub fn value(&self, doc: &ScriptDocument) -> Result<LiteralName, LiteralValueError> {
+        let s = self.text(doc).ok_or(LiteralValueError::NodeMissing)?;
 
         let s = s[1..s.len()-1].to_string(); // eliminate surrounding quotes
         // I'm not sure if names can have escaping quotes

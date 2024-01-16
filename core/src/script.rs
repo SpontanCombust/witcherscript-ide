@@ -1,60 +1,51 @@
-use std::fs::File;
-use std::io::{self, BufReader, BufRead};
-use std::path::Path;
-use ropey::{Rope, RopeBuilder};
+use std::io;
+use ropey::Rope;
 use thiserror::Error;
 use tree_sitter::{Parser, Tree, LanguageError};
-use encoding_rs_io::DecodeReaderBytes;
-use crate::ast::ScriptNode;
+use crate::{ast::ScriptNode, script_document::ScriptDocument};
 
 
 #[derive(Debug, Clone)]
 pub struct Script {
-    parse_tree: Tree
+    current_tree: Tree,
+    prev_tree: Option<Tree>
 }
 
 #[derive(Debug, Error)]
 pub enum ScriptError {
     #[error("file failed to open")]
-    FileOpenError(#[source] io::Error),
-    #[error("failed to read the file")]
-    FileReadError(#[source] io::Error),
+    FileIOError(#[source] io::Error),
     #[error("parser failed to initialize")]
     ParserInitError(#[source] LanguageError)
 }
 
 impl Script {
-    pub fn from_str(s: &str) -> Result<(Self, Rope), ScriptError> {
-        let rope = Rope::from_str(s);
-        let script = Self::from_rope(&rope)?;
+    pub fn new(doc: &ScriptDocument) -> Result<Self, ScriptError> {
+        let parse_tree = Self::parse_rope(&doc.rope, None)?;
 
-        Ok((script, rope))
+        Ok(Self {
+            current_tree: parse_tree,
+            prev_tree: None
+        })
     }
 
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<(Self, Rope), ScriptError> {
-        use ScriptError::*;
-
-        let f = File::open(&path).map_err(FileOpenError)?;
-        let decoder = DecodeReaderBytes::new(f);
-        let mut reader = BufReader::new(decoder);
-
-        let mut builder = RopeBuilder::new();
-        let mut line = String::new();
-        while let Ok(b) = reader.read_line(&mut line) {
-            if b == 0 {
-                break;
-            }
-            builder.append(&line);
-            line.clear();
+    /// Reparses AST based on the script document.
+    /// Clear document's edit history.
+    pub fn update(&mut self, doc: &mut ScriptDocument) -> Result<(), ScriptError> {
+        for edit in &doc.edits {
+            self.current_tree.edit(edit);
         }
 
-        let rope = builder.finish();
-        let script = Self::from_rope(&rope)?;
+        let current_tree = Self::parse_rope(&doc.rope, Some(&self.current_tree))?;
+        let prev_tree = std::mem::replace(&mut self.current_tree, current_tree);
+        self.prev_tree = Some(prev_tree);
 
-        Ok((script, rope))
+        doc.edits.clear();
+
+        Ok(())
     }
 
-    fn from_rope(rope: &Rope) -> Result<Self, ScriptError> {
+    fn parse_rope(rope: &Rope, prev_tree: Option<&Tree>) -> Result<Tree, ScriptError> {
         use ScriptError::*;
 
         let mut parser = Parser::new();
@@ -67,17 +58,13 @@ impl Script {
             } else {
                 &[]
             }
-        }, None).unwrap();
+        }, prev_tree).unwrap();
 
-        let script = Self {
-            parse_tree
-        };
-
-        Ok(script)
+        Ok(parse_tree)
     }
 
 
     pub fn root_node(&self) -> ScriptNode {
-        ScriptNode::new(self.parse_tree.root_node())
+        ScriptNode::new(self.current_tree.root_node())
     }
 }
