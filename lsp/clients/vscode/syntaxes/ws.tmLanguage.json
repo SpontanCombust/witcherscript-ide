@@ -348,7 +348,7 @@
 				},
 				{
 					"comment": "type cast, makes sure to check if it's a parenthesis after if, switch or while",
-					"match": "(?=\\(\\s*\\b\\w+\\b\\s*\\)\\s*\\(?\\s*\\w+)(?<!if\\s*)(?<!switch\\s*)(?<!while\\s*)\\(\\s*\\b(\\w+)\\b\\s*\\)",
+					"match": "(?=\\(\\s*\\b\\w+\\b\\s*\\)\\s*\\(*\\s*\\w+)(?<!if\\s*)(?<!switch\\s*)(?<!while\\s*)\\(\\s*\\b(\\w+)\\b\\s*\\)",
 					"captures": {
 						"1": {
 							"name": "support.type.ws"

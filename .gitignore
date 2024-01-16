@@ -1,2 +1,7 @@
+/.vscode
 /target
-.vscode/
+
+/lsp/clients/vscode/node_modules
+/lsp/clients/vscode/out
+/lsp/clients/vscode/server
+*.vsix

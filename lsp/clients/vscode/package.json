@@ -3,9 +3,9 @@
   "displayName": "WitcherScript IDE",
   "publisher": "SpontanCombust",
   "description": "Language support for Witcher 3's scripting language WitcherScript",
-  "repository": { 
+  "repository": {
     "type": "git",
-    "url": "https://github.com/SpontanCombust/witcherscript-ide" 
+    "url": "https://github.com/SpontanCombust/witcherscript-ide"
   },
   "version": "0.1.0",
   "engines": {
@@ -14,22 +14,49 @@
   "categories": [
     "Programming Languages"
   ],
+  "main": "./out/extension",
   "contributes": {
-    "languages": [{
-      "id": "witcherscript",
-      "aliases": ["Witcher Script", "WitcherScript", "ws"],
-      "extensions": [".ws"],
-      "configuration": "./language-configuration.json",
-      "icon": {
-        "light": "./media/file-icon.svg",
-        "dark": "./media/file-icon.svg"
+    "languages": [
+      {
+        "id": "witcherscript",
+        "aliases": [
+          "Witcher Script",
+          "WitcherScript",
+          "ws"
+        ],
+        "extensions": [
+          ".ws"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./media/file-icon.svg",
+          "dark": "./media/file-icon.svg"
+        }
       }
-    }],
-    "grammars": [{
-      "language": "witcherscript",
-      "scopeName": "source.ws",
-      "path": "./syntaxes/ws.tmLanguage.json"
-    }]
+    ],
+    "grammars": [
+      {
+        "language": "witcherscript",
+        "scopeName": "source.ws",
+        "path": "./syntaxes/ws.tmLanguage.json"
+      }
+    ]
   },
-  "icon": "icon.png"
+  "icon": "icon.png",
+
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package -o witcherscript-ide.vsix",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "path": "^0.12.7",
+    "vscode-languageclient": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.1",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
 }

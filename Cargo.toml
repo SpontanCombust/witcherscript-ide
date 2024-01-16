@@ -1,5 +1,5 @@
 [workspace]
-members = ["core", "analyzer", "workspaces"]
+members = ["core", "analyzer", "workspaces", "lsp/server"]
 resolver = "2"
 
 [workspace.package]
@@ -15,4 +15,4 @@ thiserror = "1.0"
 shrinkwraprs = "0.3"
 ropey = "1.6"
 uuid = {version = "1.6", features = ["v4"]}
-lsp-types = "0.95"
+lsp-types = "0.94"
