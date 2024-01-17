@@ -1,11 +1,28 @@
+use dashmap::DashMap;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
+use witcherscript::Script;
+use witcherscript::script_document::ScriptDocument;
+
+mod providers;
 
 
 #[derive(Debug)]
-struct Backend {
+pub struct Backend {
     client: Client,
+    doc_buffers: DashMap<Url, ScriptDocument>,
+    scripts: DashMap<Url, Script> // temporary solution, use types provided from witcherscript_workspaces later
+}
+
+impl Backend {
+    fn new(client: Client) -> Self {
+        Self {
+            client,
+            doc_buffers: DashMap::new(),
+            scripts: DashMap::new() 
+        }
+    }
 }
 
 #[tower_lsp::async_trait]
@@ -17,9 +34,15 @@ impl LanguageServer for Backend {
                 version: Some(env!("CARGO_PKG_VERSION").into())
             }),
             capabilities: ServerCapabilities {
-                text_document_sync: Some(TextDocumentSyncCapability::Kind(
-                    TextDocumentSyncKind::INCREMENTAL,
-                )),
+                text_document_sync: Some(TextDocumentSyncCapability::Options(TextDocumentSyncOptions {
+                    open_close: Some(true),
+                    change: Some(TextDocumentSyncKind::INCREMENTAL),
+                    will_save: Some(false),
+                    will_save_wait_until: Some(false),
+                    save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
+                        include_text: Some(false)
+                    }))
+                })),
                 ..ServerCapabilities::default()
             }
         })
@@ -35,28 +58,21 @@ impl LanguageServer for Backend {
         Ok(())
     }
 
-    async fn did_open(&self, _: DidOpenTextDocumentParams) {
-        self.client
-            .log_message(MessageType::INFO, "file opened!")
-            .await;
+    async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        providers::document_sync::did_open(self, params).await;
     }
 
-    async fn did_change(&self, _: DidChangeTextDocumentParams) {
-        self.client
-            .log_message(MessageType::INFO, "file changed!")
-            .await;
+    async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        providers::document_sync::did_change(self, params).await;
     }
 
-    async fn did_save(&self, _: DidSaveTextDocumentParams) {
-        self.client
-            .log_message(MessageType::INFO, "file saved!")
-            .await;
-    }
+    // Not needed for now
+    // async fn did_save(&self, params: DidSaveTextDocumentParams) {
+    //     providers::document_sync::did_save(self, params).await;
+    // }
 
-    async fn did_close(&self, _: DidCloseTextDocumentParams) {
-        self.client
-            .log_message(MessageType::INFO, "file closed!")
-            .await;
+    async fn did_close(&self, params: DidCloseTextDocumentParams) {
+        providers::document_sync::did_close(self, params).await;
     }
 }
 
@@ -64,6 +80,6 @@ impl LanguageServer for Backend {
 async fn main() {
     let (stdin, stdout) = (tokio::io::stdin(), tokio::io::stdout());
 
-    let (service, socket) = LspService::new(|client| Backend { client });
+    let (service, socket) = LspService::new(|client| Backend::new(client));
     Server::new(stdin, stdout, socket).serve(service).await;
 }

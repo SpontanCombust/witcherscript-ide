@@ -9,5 +9,6 @@ authors.workspace = true
 witcherscript = { path = "../core" }
 witcherscript-analyzer = { path = "../analyzer" }
 witcherscript-workspaces = { path = "../workspaces" }
+dashmap.workspace = true
 tower-lsp = "0.20.0"
 tokio = { version = "1", features = ["full"] }

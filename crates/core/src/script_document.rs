@@ -50,7 +50,7 @@ impl ScriptDocument {
     }
 
     //TODO needs testing!
-    pub fn edit(&mut self, event: lsp_types::TextDocumentContentChangeEvent) {
+    pub fn edit(&mut self, event: &lsp_types::TextDocumentContentChangeEvent) {
         let point_offset = string_point_offset(&event.text);
 
         if let Some(range) = &event.range {
@@ -74,7 +74,9 @@ impl ScriptDocument {
                 self.rope.remove(self.rope.position_to_char(&range.start)..self.rope.position_to_char(&range.end));
             }
 
-            self.rope.insert(self.rope.position_to_char(&range.start), &event.text);
+            if !event.text.is_empty() {
+                self.rope.insert(self.rope.position_to_char(&range.start), &event.text);
+            }
         } else {
             // We will not specify any edit in the case fo a full text sync.
             // This will mean that tree-sitter will not reuse nodes,

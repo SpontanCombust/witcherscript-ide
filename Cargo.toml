@@ -16,3 +16,4 @@ shrinkwraprs = "0.3"
 ropey = "1.6"
 uuid = {version = "1.6", features = ["v4"]}
 lsp-types = "0.94"
+dashmap = "5.5"
