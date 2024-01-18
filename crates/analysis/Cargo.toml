@@ -1,5 +1,5 @@
 [package]
-name = "witcherscript-analyzer"
+name = "witcherscript-analysis"
 description = "WitcherScript semantic analysis toolset"
 version.workspace = true
 edition.workspace = true

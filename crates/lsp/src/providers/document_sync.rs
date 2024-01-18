@@ -1,7 +1,7 @@
 use std::{ops::DerefMut, borrow::Borrow};
 use tower_lsp::lsp_types as lsp;
 use witcherscript::{script_document::ScriptDocument, Script};
-use witcherscript_analyzer::{diagnostics::{Diagnostic, DiagnosticBody}, jobs::syntax_analysis};
+use witcherscript_analysis::{diagnostics::{Diagnostic, DiagnosticBody}, jobs::syntax_analysis};
 use crate::Backend;
 
 
