@@ -1199,11 +1199,11 @@ dependencies = [
  "tower-lsp",
  "witcherscript",
  "witcherscript-analyzer",
- "witcherscript-workspaces",
+ "witcherscript-project",
 ]
 
 [[package]]
-name = "witcherscript-workspaces"
+name = "witcherscript-project"
 version = "0.1.0"
 
 [[package]]

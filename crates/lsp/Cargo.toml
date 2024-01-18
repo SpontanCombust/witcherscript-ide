@@ -8,7 +8,7 @@ authors.workspace = true
 [dependencies]
 witcherscript = { path = "../core" }
 witcherscript-analyzer = { path = "../analyzer" }
-witcherscript-workspaces = { path = "../workspaces" }
+witcherscript-project = { path = "../project" }
 dashmap.workspace = true
 tower-lsp = "0.20.0"
 tokio = { version = "1", features = ["full"] }
