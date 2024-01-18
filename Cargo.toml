@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/*"]
+members = ["crates/*", "xtask"]
 resolver = "2"
 
 [workspace.package]
@@ -17,3 +17,5 @@ ropey = "1.6"
 uuid = {version = "1.6", features = ["v4"]}
 lsp-types = "0.94"
 dashmap = "5.5"
+clap = {version = "4.4", features = ["derive"]}
+anyhow = "1.0"
