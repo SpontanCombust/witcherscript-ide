@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::str::ParseBoolError;
 use shrinkwraprs::Shrinkwrap;
 use thiserror::Error;
+use crate::DebugMaybeAlternate;
 use crate::script_document::ScriptDocument;
 use crate::{AnyNode, NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}};
 
@@ -246,7 +247,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralNullNode<'script> {
 }
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Literal<'script> {
     Int(LiteralIntNode<'script>),
     Float(LiteralFloatNode<'script>),
@@ -254,6 +255,19 @@ pub enum Literal<'script> {
     String(LiteralStringNode<'script>),
     Name(LiteralNameNode<'script>),
     Null(LiteralNullNode<'script>)
+}
+
+impl Debug for Literal<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Int(n) => f.debug_maybe_alternate(n),
+            Self::Float(n) => f.debug_maybe_alternate(n),
+            Self::Bool(n) => f.debug_maybe_alternate(n),
+            Self::String(n) => f.debug_maybe_alternate(n),
+            Self::Name(n) => f.debug_maybe_alternate(n),
+            Self::Null(n) => f.debug_maybe_alternate(n),
+        }
+    }
 }
 
 pub type LiteralNode<'script> = SyntaxNode<'script, Literal<'script>>;
@@ -279,11 +293,7 @@ impl LiteralNode<'_> {
 
 impl Debug for LiteralNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.value())
-        } else {
-            write!(f, "{:?}", self.value())
-        }
+        f.debug_maybe_alternate(&self.value())
     }
 }
 

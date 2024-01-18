@@ -1,5 +1,6 @@
 use std::str::FromStr;
-use crate::{tokens::Keyword, SyntaxNode, AnyNode};
+use std::fmt::Debug;
+use crate::{tokens::Keyword, SyntaxNode, AnyNode, DebugMaybeAlternate};
 
 
 #[derive(Debug, Clone)]
@@ -18,6 +19,12 @@ impl UnnamedNode<'_> {
         } else {
             Unnamed::Punctuation(kind)
         }
+    }
+}
+
+impl Debug for UnnamedNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate(&self.value())
     }
 }
 
