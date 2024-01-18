@@ -5,15 +5,17 @@ use witcherscript_analyzer::{diagnostics::{Diagnostic, DiagnosticBody}, jobs::sy
 use crate::Backend;
 
 
-// Until the workspace crate is ready, only scripts opened in the editor will be checked
+// Until the witcherscript_project crate is ready, only scripts opened in the editor will be checked
 
 pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams) {
     if !backend.doc_buffers.contains_key(&params.text_document.uri) {
         let doc = ScriptDocument::from_str(&params.text_document.text);
         match Script::new(&doc) {
             Ok(script) => {
+                script_syntax_diagnostics(&script, backend, params.text_document.uri.clone()).await;
+
                 backend.doc_buffers.insert(params.text_document.uri.clone(), doc);
-                backend.scripts.insert(params.text_document.uri.clone(), script);
+                backend.scripts.insert(params.text_document.uri, script);
             },
             Err(err) => {
                 backend.client.log_message(lsp::MessageType::ERROR, err.to_string()).await;
@@ -42,6 +44,9 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
 // }
 
 pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParams) {
+    // clear errors for the file
+    backend.client.publish_diagnostics(params.text_document.uri.clone(), vec![], None).await;
+
     backend.doc_buffers.remove(&params.text_document.uri);
     backend.scripts.remove(&params.text_document.uri);
 }

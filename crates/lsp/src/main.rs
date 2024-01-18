@@ -12,7 +12,7 @@ mod providers;
 pub struct Backend {
     client: Client,
     doc_buffers: DashMap<Url, ScriptDocument>,
-    scripts: DashMap<Url, Script> // temporary solution, use types provided from witcherscript_workspaces later
+    scripts: DashMap<Url, Script> // temporary solution, use types provided from witcherscript_project later
 }
 
 impl Backend {
