@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::{IdentifierNode, LiteralStringNode}, NamedSyntaxNode, SyntaxNode, attribs::StructSpecifierNode, AnyNode};
+use crate::{tokens::{IdentifierNode, LiteralStringNode}, NamedSyntaxNode, SyntaxNode, attribs::StructSpecifierNode, AnyNode, DebugMaybeAlternate};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, MemberVarDeclarationNode, NopNode};
 
 
@@ -76,12 +76,7 @@ impl StructBlockNode<'_> {
 
 impl Debug for StructBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let stmts = self.statements().collect::<Vec<_>>();
-        if f.alternate() {
-            write!(f, "StructBlock{:#?}", stmts)
-        } else {
-            write!(f, "StructBlock{:?}", stmts)
-        }
+        f.debug_maybe_alternate_named("StructBlock", &self.statements().collect::<Vec<_>>())
     }
 }
 
@@ -105,12 +100,23 @@ impl StatementTraversal for StructBlockNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum StructStatement<'script> {
     Var(MemberVarDeclarationNode<'script>),
     Default(MemberDefaultValueNode<'script>),
     Hint(MemberHintNode<'script>),
     Nop(NopNode<'script>)
+}
+
+impl Debug for StructStatement<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Var(n) => f.debug_maybe_alternate(n),
+            Self::Default(n) => f.debug_maybe_alternate(n),
+            Self::Hint(n) => f.debug_maybe_alternate(n),
+            Self::Nop(n) => f.debug_maybe_alternate(n),
+        }
+    }
 }
 
 pub type StructStatementNode<'script> = SyntaxNode<'script, StructStatement<'script>>;
@@ -129,11 +135,7 @@ impl<'script> StructStatementNode<'script> {
 
 impl Debug for StructStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.clone().value())
-        } else {
-            write!(f, "{:?}", self.clone().value())
-        }
+        f.debug_maybe_alternate(&self.clone().value())
     }
 }
 
@@ -141,6 +143,10 @@ impl<'script> TryFrom<AnyNode<'script>> for StructStatementNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if !value.tree_node.is_named() {
+            return Err(());
+        }
+        
         match value.tree_node.kind() {
             MemberVarDeclarationNode::NODE_KIND     |
             MemberDefaultValueNode::NODE_KIND       |

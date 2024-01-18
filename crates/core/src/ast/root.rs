@@ -1,7 +1,9 @@
+use core::fmt::Debug;
+use crate::{DebugMaybeAlternate, SyntaxNode, AnyNode, NamedSyntaxNode};
 use super::*;
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum RootStatement<'script> {
     Function(GlobalFunctionDeclarationNode<'script>),
     Class(ClassDeclarationNode<'script>),
@@ -9,6 +11,19 @@ pub enum RootStatement<'script> {
     Struct(StructDeclarationNode<'script>),
     Enum(EnumDeclarationNode<'script>),
     Nop(NopNode<'script>)
+}
+
+impl Debug for RootStatement<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Function(n) => f.debug_maybe_alternate(n),
+            Self::Class(n) => f.debug_maybe_alternate(n),
+            Self::State(n) => f.debug_maybe_alternate(n),
+            Self::Struct(n) => f.debug_maybe_alternate(n),
+            Self::Enum(n) => f.debug_maybe_alternate(n),
+            Self::Nop(n) => f.debug_maybe_alternate(n),
+        }
+    }
 }
 
 pub type RootStatementNode<'script> = SyntaxNode<'script, RootStatement<'script>>;
@@ -30,11 +45,7 @@ impl<'script> RootStatementNode<'script> {
 
 impl Debug for RootStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.clone().value())
-        } else {
-            write!(f, "{:?}", self.clone().value())
-        }
+        f.debug_maybe_alternate(&self.clone().value())
     }
 }
 
@@ -42,6 +53,10 @@ impl<'script> TryFrom<AnyNode<'script>> for RootStatementNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if !value.tree_node.is_named() {
+            return Err(());
+        }
+        
         match value.tree_node.kind() {
             GlobalFunctionDeclarationNode::NODE_KIND    |
             ClassDeclarationNode::NODE_KIND             |
@@ -85,12 +100,7 @@ impl RootNode<'_> {
 
 impl Debug for RootNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let stmts = self.statements().collect::<Vec<_>>();
-        if f.alternate() {
-            write!(f, "Script{:#?}", stmts)
-        } else {
-            write!(f, "Script{:?}", stmts)
-        }
+        f.debug_maybe_alternate_named("Script", &self.statements().collect::<Vec<_>>())
     }
 }
 

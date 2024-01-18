@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::{IdentifierNode, LiteralIntNode}, NamedSyntaxNode, SyntaxNode, AnyNode};
+use crate::{tokens::{IdentifierNode, LiteralIntNode}, NamedSyntaxNode, SyntaxNode, AnyNode, DebugMaybeAlternate};
 use super::{StatementTraversal, StatementVisitor};
 
 
@@ -71,12 +71,7 @@ impl EnumBlockNode<'_> {
 
 impl Debug for EnumBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let members = self.members().collect::<Vec<_>>();
-        if f.alternate() {
-            write!(f, "EnumBlock{:#?}", members)
-        } else {
-            write!(f, "EnumBlock{:?}", members)
-        }
+        f.debug_maybe_alternate_named("EnumBlock", &self.members().collect::<Vec<_>>())
     }
 }
 

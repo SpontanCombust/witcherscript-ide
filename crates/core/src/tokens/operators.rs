@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, AnyNode};
+use crate::{SyntaxNode, AnyNode, DebugMaybeAlternate};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -26,11 +26,7 @@ impl UnaryOperatorNode<'_> {
 
 impl Debug for UnaryOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.value())
-        } else {
-            write!(f, "{:?}", self.value())
-        }
+        f.debug_maybe_alternate(&self.value())
     }
 }
 
@@ -38,6 +34,10 @@ impl<'script> TryFrom<AnyNode<'script>> for UnaryOperatorNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if !value.tree_node.is_named() {
+            return Err(());
+        }
+
         match value.tree_node.kind() {
             "unary_op_neg"      | 
             "unary_op_not"      |
@@ -96,11 +96,7 @@ impl BinaryOperatorNode<'_> {
 
 impl Debug for BinaryOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.value())
-        } else {
-            write!(f, "{:?}", self.value())
-        }
+        f.debug_maybe_alternate(&self.value())
     }
 }
 
@@ -108,6 +104,10 @@ impl<'script> TryFrom<AnyNode<'script>> for BinaryOperatorNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if !value.tree_node.is_named() {
+            return Err(());
+        }
+
         match value.tree_node.kind() {
             "binary_op_or"      | 
             "binary_op_and"     |
@@ -159,11 +159,7 @@ impl AssignmentOperatorNode<'_> {
 
 impl Debug for AssignmentOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.value())
-        } else {
-            write!(f, "{:?}", self.value())
-        }
+        f.debug_maybe_alternate(&self.value())
     }
 }
 
@@ -171,6 +167,10 @@ impl<'script> TryFrom<AnyNode<'script>> for AssignmentOperatorNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if !value.tree_node.is_named() {
+            return Err(());
+        }
+        
         match value.tree_node.kind() {
             "assign_op_direct"  |
             "assign_op_sum"     |

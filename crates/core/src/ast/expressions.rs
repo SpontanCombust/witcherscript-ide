@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, NamedSyntaxNode, tokens::*, AnyNode};
+use crate::{SyntaxNode, NamedSyntaxNode, tokens::*, AnyNode, DebugMaybeAlternate};
 use super::{StatementTraversal, ExpressionVisitor, ExpressionTraversal, StatementVisitor};
 
 
@@ -68,7 +68,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ThisExpressionNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
             Ok(value.into())
         } else {
             Err(())
@@ -105,7 +105,7 @@ impl<'script> TryFrom<AnyNode<'script>> for SuperExpressionNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
             Ok(value.into())
         } else {
             Err(())
@@ -142,7 +142,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ParentExpressionNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
             Ok(value.into())
         } else {
             Err(())
@@ -179,7 +179,7 @@ impl<'script> TryFrom<AnyNode<'script>> for VirtualParentExpressionNode<'script>
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
             Ok(value.into())
         } else {
             Err(())
@@ -770,7 +770,7 @@ impl ExpressionTraversal for TernaryConditionalExpressionNode<'_> {
 
 
 // Represents the anonymous $._expr node
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Expression<'script> {
     Nested(NestedExpressionNode<'script>),
     Literal(LiteralNode<'script>),
@@ -789,6 +789,30 @@ pub enum Expression<'script> {
     BinaryOperation(BinaryOperationExpressionNode<'script>),
     AssignmentOperation(AssignmentOperationExpressionNode<'script>),
     TernaryConditional(TernaryConditionalExpressionNode<'script>),
+}
+
+impl Debug for Expression<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Nested(n) => f.debug_maybe_alternate(n),
+            Self::Literal(n) => f.debug_maybe_alternate(n),
+            Self::This(n) => f.debug_maybe_alternate(n),
+            Self::Super(n) => f.debug_maybe_alternate(n),
+            Self::Parent(n) => f.debug_maybe_alternate(n),
+            Self::VirtualParent(n) => f.debug_maybe_alternate(n),
+            Self::Identifier(n) => f.debug_maybe_alternate(n),
+            Self::FunctionCall(n) => f.debug_maybe_alternate(n),
+            Self::Array(n) => f.debug_maybe_alternate(n),
+            Self::MemberField(n) => f.debug_maybe_alternate(n),
+            Self::MethodCall(n) => f.debug_maybe_alternate(n),
+            Self::Instantiation(n) => f.debug_maybe_alternate(n),
+            Self::TypeCast(n) => f.debug_maybe_alternate(n),
+            Self::UnaryOperation(n) => f.debug_maybe_alternate(n),
+            Self::BinaryOperation(n) => f.debug_maybe_alternate(n),
+            Self::AssignmentOperation(n) => f.debug_maybe_alternate(n),
+            Self::TernaryConditional(n) => f.debug_maybe_alternate(n),
+        }
+    }
 }
 
 pub type ExpressionNode<'script> = SyntaxNode<'script, Expression<'script>>;
@@ -820,11 +844,7 @@ impl<'script> ExpressionNode<'script> {
 
 impl Debug for ExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.clone().value())
-        } else {
-            write!(f, "{:?}", self.clone().value())
-        }
+        f.debug_maybe_alternate(&self.clone().value())
     }
 }
 
@@ -832,6 +852,10 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if !value.tree_node.is_named() {
+            return Err(());
+        }
+
         match value.tree_node.kind() {
             AssignmentOperationExpressionNode::NODE_KIND    |
             TernaryConditionalExpressionNode::NODE_KIND     |

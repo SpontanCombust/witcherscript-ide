@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{NamedSyntaxNode, SyntaxNode, tokens::*, attribs::*, AnyNode};
+use crate::{NamedSyntaxNode, SyntaxNode, tokens::*, attribs::*, AnyNode, DebugMaybeAlternate};
 use super::*;
 
 
@@ -81,12 +81,7 @@ impl ClassBlockNode<'_> {
 
 impl Debug for ClassBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let stmts = self.statements().collect::<Vec<_>>();
-        if f.alternate() {
-            write!(f, "ClassBlock{:#?}", stmts)
-        } else {
-            write!(f, "ClassBlock{:?}", stmts)
-        }
+        f.debug_maybe_alternate_named("ClassBlock", &self.statements().collect::<Vec<_>>())
     }
 }
 
@@ -109,7 +104,7 @@ impl StatementTraversal for ClassBlockNode<'_> {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum ClassStatement<'script> {
     Var(MemberVarDeclarationNode<'script>),
     Default(MemberDefaultValueNode<'script>),
@@ -119,6 +114,20 @@ pub enum ClassStatement<'script> {
     Event(EventDeclarationNode<'script>),
     Nop(NopNode<'script>)
 }
+
+impl Debug for ClassStatement<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Var(n) => f.debug_maybe_alternate(n),
+            Self::Default(n) => f.debug_maybe_alternate(n),
+            Self::Hint(n) => f.debug_maybe_alternate(n),
+            Self::Autobind(n) => f.debug_maybe_alternate(n),
+            Self::Method(n) => f.debug_maybe_alternate(n),
+            Self::Event(n) => f.debug_maybe_alternate(n),
+            Self::Nop(n) => f.debug_maybe_alternate(n),
+        }
+    }
+} 
 
 pub type ClassStatementNode<'script> = SyntaxNode<'script, ClassStatement<'script>>;
 
@@ -139,11 +148,7 @@ impl<'script> ClassStatementNode<'script> {
 
 impl Debug for ClassStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.clone().value())
-        } else {
-            write!(f, "{:?}", self.clone().value())
-        }
+        f.debug_maybe_alternate(&self.clone().value())
     }
 }
 
@@ -238,10 +243,19 @@ impl StatementTraversal for AutobindDeclarationNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum AutobindValue<'script> {
     Single,
     Concrete(LiteralStringNode<'script>)
+}
+
+impl Debug for AutobindValue<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Single => write!(f, "Single"),
+            Self::Concrete(n) => f.debug_tuple("Concrete").field(n).finish(),
+        }
+    }
 }
 
 pub type AutobindValueNode<'script> = SyntaxNode<'script, AutobindValue<'script>>;
@@ -262,10 +276,6 @@ impl AutobindValueNode<'_> {
 
 impl Debug for AutobindValueNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.value())
-        } else {
-            write!(f, "{:?}", self.value())
-        }
+        f.debug_maybe_alternate(&self.value())
     }
 } 

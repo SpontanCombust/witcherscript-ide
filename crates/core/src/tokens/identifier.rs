@@ -41,7 +41,7 @@ impl<'script> TryFrom<AnyNode<'script>> for IdentifierNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
             Ok(value.into())
         } else {
             Err(())

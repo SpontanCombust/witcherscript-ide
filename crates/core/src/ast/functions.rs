@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, NamedSyntaxNode, tokens::IdentifierNode, attribs::*, AnyNode};
+use crate::{SyntaxNode, NamedSyntaxNode, tokens::IdentifierNode, attribs::*, AnyNode, DebugMaybeAlternate};
 use super::*;
 
 
@@ -258,7 +258,7 @@ impl StatementTraversal for FunctionParameterGroupNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum FunctionStatement<'script> {
     Var(VarDeclarationNode<'script>),
     Expr(ExpressionStatementNode<'script>),
@@ -273,6 +273,26 @@ pub enum FunctionStatement<'script> {
     Delete(DeleteStatementNode<'script>),
     Block(FunctionBlockNode<'script>),
     Nop(NopNode<'script>),
+}
+
+impl Debug for FunctionStatement<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Var(n) => f.debug_maybe_alternate(n),
+            Self::Expr(n) => f.debug_maybe_alternate(n),
+            Self::For(n) => f.debug_maybe_alternate(n),
+            Self::While(n) => f.debug_maybe_alternate(n),
+            Self::DoWhile(n) => f.debug_maybe_alternate(n),
+            Self::If(n) => f.debug_maybe_alternate(n),
+            Self::Switch(n) => f.debug_maybe_alternate(n),
+            Self::Break(n) => f.debug_maybe_alternate(n),
+            Self::Continue(n) => f.debug_maybe_alternate(n),
+            Self::Return(n) => f.debug_maybe_alternate(n),
+            Self::Delete(n) => f.debug_maybe_alternate(n),
+            Self::Block(n) => f.debug_maybe_alternate(n),
+            Self::Nop(n) => f.debug_maybe_alternate(n),
+        }
+    }
 }
 
 pub type FunctionStatementNode<'script> = SyntaxNode<'script, FunctionStatement<'script>>;
@@ -300,11 +320,7 @@ impl<'script> FunctionStatementNode<'script> {
 
 impl Debug for FunctionStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.clone().value())
-        } else {
-            write!(f, "{:?}", self.clone().value())
-        }
+        f.debug_maybe_alternate(&self.clone().value())
     }
 }
 
@@ -312,6 +328,10 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionStatementNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if !value.tree_node.is_named() {
+            return Err(());
+        }
+
         match value.tree_node.kind() {
             VarDeclarationNode::NODE_KIND       |
             ExpressionStatementNode::NODE_KIND  |
@@ -369,12 +389,7 @@ impl FunctionBlockNode<'_> {
 
 impl Debug for FunctionBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let stmts = self.statements().collect::<Vec<_>>();
-        if f.alternate() {
-            write!(f, "FunctionBlock{:#?}", stmts)
-        } else {
-            write!(f, "FunctionBlock{:?}", stmts)
-        }
+        f.debug_maybe_alternate_named("FunctionBlock", &self.statements().collect::<Vec<_>>())
     }
 }
 

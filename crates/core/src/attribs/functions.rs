@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use std::str::FromStr;
-use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode, AnyNode};
+use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode, AnyNode, DebugMaybeAlternate};
 use super::AccessModifier;
 
 
@@ -33,11 +33,7 @@ impl FunctionParameterSpecifierNode<'_> {
 
 impl Debug for FunctionParameterSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.value())
-        } else {
-            write!(f, "{:?}", self.value())
-        }
+        f.debug_maybe_alternate(&self.value())
     }
 }
 
@@ -45,7 +41,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionParameterSpecifierNode<'scri
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
             Ok(value.into())
         } else {
             Err(())
@@ -85,11 +81,7 @@ impl GlobalFunctionSpecifierNode<'_> {
 
 impl Debug for GlobalFunctionSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.value())
-        } else {
-            write!(f, "{:?}", self.value())
-        }
+        f.debug_maybe_alternate(&self.value())
     }
 }
 
@@ -97,7 +89,7 @@ impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionSpecifierNode<'script>
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
             Ok(value.into())
         } else {
             Err(())
@@ -139,11 +131,7 @@ impl GlobalFunctionFlavourNode<'_> {
 
 impl Debug for GlobalFunctionFlavourNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.value())
-        } else {
-            write!(f, "{:?}", self.value())
-        }
+        f.debug_maybe_alternate(&self.value())
     }
 }
 
@@ -151,7 +139,7 @@ impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionFlavourNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
             Ok(value.into())
         } else {
             Err(())
@@ -197,11 +185,7 @@ impl MemberFunctionSpecifierNode<'_> {
 
 impl Debug for MemberFunctionSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.value())
-        } else {
-            write!(f, "{:?}", self.value())
-        }
+        f.debug_maybe_alternate(&self.value())
     }
 }
 
@@ -209,7 +193,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionSpecifierNode<'script>
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
             Ok(value.into())
         } else {
             Err(())
@@ -249,11 +233,7 @@ impl MemberFunctionFlavourNode<'_> {
 
 impl Debug for MemberFunctionFlavourNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.alternate() {
-            write!(f, "{:#?}", self.value())
-        } else {
-            write!(f, "{:?}", self.value())
-        }
+        f.debug_maybe_alternate(&self.value())
     }
 }
 
@@ -261,7 +241,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionFlavourNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
             Ok(value.into())
         } else {
             Err(())

@@ -13,3 +13,29 @@ pub mod tokens;
 pub mod attribs;
 pub mod ast;
 pub mod script_document;
+
+
+
+/// Purely utility trait to not repeat code when implementing Debug trait for printing regular debug string or pretty debug string
+trait DebugMaybeAlternate {
+    fn debug_maybe_alternate(&mut self, value: &dyn core::fmt::Debug) -> core::fmt::Result;
+    fn debug_maybe_alternate_named(&mut self, name: &str, value: &dyn core::fmt::Debug) -> core::fmt::Result;
+}
+
+impl DebugMaybeAlternate for core::fmt::Formatter<'_> {
+    fn debug_maybe_alternate(&mut self, value: &dyn core::fmt::Debug) -> core::fmt::Result {
+        if self.alternate() {
+            write!(self, "{value:#?}")
+        } else {
+            write!(self, "{value:?}")
+        }
+    }
+
+    fn debug_maybe_alternate_named(&mut self, name: &str, value: &dyn core::fmt::Debug) -> core::fmt::Result {
+        if self.alternate() {
+            write!(self, "{name} {value:#?}")
+        } else {
+            write!(self, "{name} {value:?}")
+        }
+    }
+}
