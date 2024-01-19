@@ -42,7 +42,7 @@ impl SyntaxErrorVisitor<'_> {
     }
 
     fn check_type_annot(&mut self, n: &TypeAnnotationNode) {
-        self.check_missing(&n.type_name(), "type identifier");
+        self.check_missing(&n.type_name(), "type");
 
         if let Some(type_argn) = n.type_arg() {
             self.check_type_annot(&type_argn);
@@ -62,12 +62,23 @@ impl SyntaxErrorVisitor<'_> {
     }
 
     fn check_expression(&mut self, n: &ExpressionNode) {
-        if n.is_missing() {
-            self.missing_element(n.range(), "expression".to_string());
-        } else {
+        if self.check_missing(n, "expression") {
             if n.has_errors() {
                 n.accept(self);
             }
+        }
+    }
+
+    /// Returns true if the statement is present and contains no errors, false otherwise
+    fn check_function_stmt(&mut self, n: &FunctionStatementNode) -> bool {
+        if self.check_missing(n, "statement") {
+            if n.has_errors() {
+                return false;
+            }
+
+            true
+        } else {
+            false
         }
     }
 
@@ -80,9 +91,11 @@ impl SyntaxErrorVisitor<'_> {
                     return false;
                 }
             }
-        }
 
-        true
+            true
+        } else {
+            false
+        }
     }
 
     fn check_errors<T>(&mut self, n: &SyntaxNode<'_, T>) -> bool {
@@ -371,10 +384,10 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             n.init().map(|n| self.check_expression(&n));
             n.cond().map(|n| self.check_expression(&n));
             n.iter().map(|n| self.check_expression(&n));
+
+            self.check_errors(n);
     
-            if n.body().has_errors() {
-                return true;
-            }
+            return !self.check_function_stmt(&n.body());
         }
 
         false
@@ -386,9 +399,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     
             self.check_errors(n);
     
-            if n.body().has_errors() {
-                return true;
-            }
+            return !self.check_function_stmt(&n.body());
         }
 
         false
@@ -400,8 +411,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     
             self.check_errors(n);
     
-    
-            return n.body().has_errors();
+            return !self.check_function_stmt(&n.body());
         }
 
         false
@@ -414,8 +424,8 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             self.check_errors(n);
             
     
-            return n.body().has_errors() 
-                || n.else_body().map(|n| n.has_errors()).unwrap_or(false)
+            return !self.check_function_stmt(&n.body())
+                || n.else_body().map(|n| !self.check_function_stmt(&n)).unwrap_or(false)
         }
 
         false
