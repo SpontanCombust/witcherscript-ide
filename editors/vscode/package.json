@@ -14,7 +14,10 @@
   "categories": [
     "Programming Languages"
   ],
-  "main": "./out/extension",
+  "activationEvents": [
+    
+  ],
+  "main": "./out/main",
   "contributes": {
     "languages": [
       {
@@ -45,10 +48,11 @@
   "icon": "icon.png",
 
   "scripts": {
-    "vscode:prepublish": "npm run compile",
     "package": "vsce package -o witcherscript-ide.vsix",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "vscode:prepublish": "npm run build-base -- --minify",
+    "build": "npm run build-base -- --sourcemap",
+    "watch": "npm run build-base -- --sourcemap --watch",
+    "build-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node"
   },
   "dependencies": {
     "path": "^0.12.7",
@@ -56,7 +60,9 @@
   },
   "devDependencies": {
     "@types/vscode": "^1.75.1",
+    "@vscode/vsce": "^2.19.0",
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "esbuild": "^0.18.12"
   }
 }

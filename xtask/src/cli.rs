@@ -14,5 +14,7 @@ pub enum Commands {
     /// Copy debug build of the LSP server to the VSCode client
     CopyLsp,
     /// Copy release build of the LSP server to the VSCode client
-    CopyLspRelease
+    CopyLspRelease,
+    /// Build and package VSCode extension into a .vsix file
+    Package
 }
