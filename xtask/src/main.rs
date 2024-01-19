@@ -11,6 +11,7 @@ fn main() -> anyhow::Result<()> {
     match cli.command {
         cli::Commands::CopyLsp => commands::copy_lsp(),
         cli::Commands::CopyLspRelease => commands::copy_lsp_release(),
-        cli::Commands::Package => commands::package()
+        cli::Commands::Package => commands::package(),
+        cli::Commands::Install => commands::install()
     }
 }
