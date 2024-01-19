@@ -247,6 +247,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralNullNode<'script> {
 }
 
 
+// Represents the unnamed $._literal node
 #[derive(Clone, PartialEq)]
 pub enum Literal<'script> {
     Int(LiteralIntNode<'script>),
@@ -272,28 +273,23 @@ impl Debug for Literal<'_> {
 
 pub type LiteralNode<'script> = SyntaxNode<'script, Literal<'script>>;
 
-impl NamedSyntaxNode for LiteralNode<'_> {
-    const NODE_KIND: &'static str = "literal";
-}
-
-impl LiteralNode<'_> {
-    pub fn value(&self) -> Literal<'_> {
-        let child = self.first_child(true).unwrap();
-        match child.tree_node.kind() {
-            LiteralIntNode::NODE_KIND => Literal::Int(child.into()),
-            LiteralFloatNode::NODE_KIND => Literal::Float(child.into()),
-            LiteralBoolNode::NODE_KIND => Literal::Bool(child.into()),
-            LiteralStringNode::NODE_KIND => Literal::String(child.into()),
-            LiteralNameNode::NODE_KIND => Literal::Name(child.into()),
-            LiteralNullNode::NODE_KIND => Literal::Null(child.into()),
-            _ => panic!("Unknown literal type: {}", child.tree_node.kind())
+impl<'script> LiteralNode<'script> {
+    pub fn value(self) -> Literal<'script> {
+        match self.tree_node.kind() {
+            LiteralIntNode::NODE_KIND => Literal::Int(self.into()),
+            LiteralFloatNode::NODE_KIND => Literal::Float(self.into()),
+            LiteralBoolNode::NODE_KIND => Literal::Bool(self.into()),
+            LiteralStringNode::NODE_KIND => Literal::String(self.into()),
+            LiteralNameNode::NODE_KIND => Literal::Name(self.into()),
+            LiteralNullNode::NODE_KIND => Literal::Null(self.into()),
+            _ => panic!("Unknown literal type: {}", self.tree_node.kind())
         }
     }
 }
 
 impl Debug for LiteralNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        f.debug_maybe_alternate(&self.clone().value())
     }
 }
 
@@ -301,10 +297,18 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
+        if !value.tree_node.is_named() {
+            return Err(());
+        }
+
+        match value.tree_node.kind() {
+            LiteralIntNode::NODE_KIND       |
+            LiteralFloatNode::NODE_KIND     |
+            LiteralBoolNode::NODE_KIND      |
+            LiteralStringNode::NODE_KIND    |
+            LiteralNameNode::NODE_KIND      |
+            LiteralNullNode::NODE_KIND      => Ok(value.into()),
+            _ => Err(())
         }
     }
 }

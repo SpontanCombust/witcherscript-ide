@@ -26,6 +26,7 @@ impl SyntaxErrorVisitor<'_> {
         })
     }
 
+    /// Returns true if the node is present, false otherwise
     fn check_missing<T>(&mut self, n: SyntaxNode<'_, T>, expected: &str) -> bool {
         if n.is_missing() {
             self.missing_element(n.range(), expected.to_string());
@@ -35,6 +36,7 @@ impl SyntaxErrorVisitor<'_> {
         }
     }
 
+    /// Returns true if the identifier is present, false otherwise
     fn check_identifier(&mut self, n: IdentifierNode) -> bool {
         self.check_missing(n, "identifier")
     }
@@ -49,11 +51,13 @@ impl SyntaxErrorVisitor<'_> {
         self.check_errors(&n);
     }
 
+    /// Returns true if the literal is present, false otherwise
     fn check_literal_int(&mut self, n: LiteralIntNode) -> bool {
         self.check_missing(n, "integer number")
     }
 
-    fn check_literal_string(&mut self, n: LiteralStringNode) -> bool{
+    /// Returns true if the literal is present, false otherwise
+    fn check_literal_string(&mut self, n: LiteralStringNode) -> bool {
         self.check_missing(n, "string")
     }
 
@@ -65,6 +69,20 @@ impl SyntaxErrorVisitor<'_> {
                 n.accept(self);
             }
         }
+    }
+
+    /// Returns whether the definition contains no errors
+    fn check_function_def(&mut self, n: FunctionDefinitionNode) -> bool {
+        if self.check_missing(n.clone(), "{ or ;") {
+            if let FunctionDefinition::Some(block) = n.value() {
+                if block.has_errors() {
+                    self.check_errors(&block);
+                    return false;
+                }
+            }
+        }
+
+        true
     }
 
     fn check_errors<T>(&mut self, n: &SyntaxNode<'_, T>) -> bool {
@@ -246,16 +264,15 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             n.return_type().map(|n| self.check_type_annot(n));
     
             self.check_errors(n);
-    
-            if let Some(def) = n.definition() {
-                if def.has_errors() {
-                    self.check_errors(&def);
-                    return true;
-                }
+        
+            if !self.check_function_def(n.definition()) {
+                return true;
             }
         }
-
-        false
+        
+        //FIXME check for errors in params - maybe grammar should have a named node for the entirety of params? Apply this thinking to other repeating rules.
+        // false
+        true
     }
 
     fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> bool {
@@ -268,15 +285,14 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     
             self.check_errors(n);
     
-            if let Some(def) = n.definition() {
-                if def.has_errors() {
-                    self.check_errors(&def);
-                    return true;
-                }
+            if !self.check_function_def(n.definition()) {
+                return true;
             }
         }
-
-        false
+        
+        //FIXME check for errors in params
+        // false
+        true
     }
 
     fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> bool {
@@ -284,16 +300,15 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             self.check_identifier(n.name());
     
             self.check_errors(n);
-    
-            if let Some(def) = n.definition() {
-                if def.has_errors() {
-                    self.check_errors(&def);
-                    return true;
-                }
+
+            if !self.check_function_def(n.definition()) {
+                return true;
             }
         }
-
-        false
+        
+        //FIXME check for errors in params
+        // false
+        true
     }
 
     fn visit_block_stmt(&mut self, n: &FunctionBlockNode) -> bool {
@@ -431,13 +446,6 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         if n.has_errors() {
             self.check_errors(n);
         }
-    }
-
-    fn visit_nop_stmt(&mut self, n: &NopNode) {
-        self.diagnostics.push(Diagnostic { 
-            range: n.range(), 
-            body: InfoDiagnostic::TrailingSemicolon.into()
-        })
     }
 }
 

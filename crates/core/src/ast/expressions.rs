@@ -769,7 +769,7 @@ impl ExpressionTraversal for TernaryConditionalExpressionNode<'_> {
 
 
 
-// Represents the anonymous $._expr node
+// Represents the unnamed $._expr node
 #[derive(Clone)]
 pub enum Expression<'script> {
     Nested(NestedExpressionNode<'script>),
@@ -836,7 +836,12 @@ impl<'script> ExpressionNode<'script> {
             ParentExpressionNode::NODE_KIND => Expression::Parent(self.into()),
             VirtualParentExpressionNode::NODE_KIND => Expression::VirtualParent(self.into()),
             IdentifierNode::NODE_KIND => Expression::Identifier(self.into()),
-            LiteralNode::NODE_KIND => Expression::Literal(self.into()),
+            LiteralIntNode::NODE_KIND       |
+            LiteralFloatNode::NODE_KIND     |
+            LiteralBoolNode::NODE_KIND      |
+            LiteralStringNode::NODE_KIND    |
+            LiteralNameNode::NODE_KIND      |
+            LiteralNullNode::NODE_KIND      => Expression::Literal(self.into()),
             _ => panic!("Unknown expression type: {}", self.tree_node.kind())
         }
     }
@@ -873,7 +878,12 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
             ParentExpressionNode::NODE_KIND                 |
             VirtualParentExpressionNode::NODE_KIND          |
             IdentifierNode::NODE_KIND                       |
-            LiteralNode::NODE_KIND                          => Ok(value.into()),
+            LiteralIntNode::NODE_KIND                       |
+            LiteralFloatNode::NODE_KIND                     |
+            LiteralBoolNode::NODE_KIND                      |
+            LiteralStringNode::NODE_KIND                    |
+            LiteralNameNode::NODE_KIND                      |
+            LiteralNullNode::NODE_KIND                       => Ok(value.into()),
             _ => Err(())
         }
     }

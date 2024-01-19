@@ -21,8 +21,8 @@ impl EventDeclarationNode<'_> {
         self.field_children("params").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> Option<FunctionBlockNode> {
-        self.field_child("definition").map(|n| n.into())
+    pub fn definition(&self) -> FunctionDefinitionNode {
+        self.field_child("definition").unwrap().into()
     }
 }
 
@@ -52,7 +52,7 @@ impl StatementTraversal for EventDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_event_decl(self) {
             self.params().for_each(|p| p.accept(visitor));
-            self.definition().map(|s| s.accept(visitor));
+            self.definition().accept(visitor);
         }
         visitor.exit_event_decl(self);
     }
@@ -90,8 +90,8 @@ impl GlobalFunctionDeclarationNode<'_> {
         self.field_child("return_type").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> Option<FunctionBlockNode> {
-        self.field_child("definition").map(|n| n.into())
+    pub fn definition(&self) -> FunctionDefinitionNode {
+        self.field_child("definition").unwrap().into()
     }
 }
 
@@ -124,7 +124,7 @@ impl StatementTraversal for GlobalFunctionDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_global_func_decl(self) {
             self.params().for_each(|p| p.accept(visitor));
-            self.definition().map(|s| s.accept(visitor));
+            self.definition().accept(visitor);
         }
         visitor.exit_global_func_decl(self);
     }
@@ -162,8 +162,8 @@ impl MemberFunctionDeclarationNode<'_> {
         self.field_child("return_type").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> Option<FunctionBlockNode> {
-        self.field_child("definition").map(|n| n.into())
+    pub fn definition(&self) -> FunctionDefinitionNode {
+        self.field_child("definition").unwrap().into()
     }
 }
 
@@ -196,12 +196,70 @@ impl StatementTraversal for MemberFunctionDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_member_func_decl(self) {
             self.params().for_each(|p| p.accept(visitor));
-            self.definition().map(|s| s.accept(visitor));
+            self.definition().accept(visitor);
         }
         visitor.exit_member_func_decl(self);
     }
 }
 
+
+
+#[derive(Clone)]
+pub enum FunctionDefinition<'script> {
+    Some(FunctionBlockNode<'script>),
+    None(NopNode<'script>)
+}
+
+impl Debug for FunctionDefinition<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Some(n) => f.debug_tuple("Some").field(n).finish(),
+            Self::None(_) => f.debug_tuple("None").finish(),
+        }
+    }
+}
+
+pub type FunctionDefinitionNode<'script> = SyntaxNode<'script, FunctionDefinition<'script>>;
+
+impl<'script> FunctionDefinitionNode<'script> {
+    pub fn value(self) -> FunctionDefinition<'script> {
+        match self.tree_node.kind() {
+            FunctionBlockNode::NODE_KIND => FunctionDefinition::Some(self.into()),
+            NopNode::NODE_KIND => FunctionDefinition::None(self.into()),
+            _ => panic!("Unknown function definition node: {}", self.tree_node.kind())
+        }
+    }
+}
+
+impl Debug for FunctionDefinitionNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate(&self.clone().value())
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for FunctionDefinitionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if !value.tree_node.is_named() {
+            return Err(());
+        }
+
+        match value.tree_node.kind() {
+            FunctionBlockNode::NODE_KIND    |
+            NopNode::NODE_KIND              => Ok(value.into()),
+            _ => Err(())
+        }
+    }
+}
+
+impl StatementTraversal for FunctionDefinitionNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        if let FunctionDefinition::Some(block) = self.clone().value() {
+            block.accept(visitor);
+        }
+    }
+}
 
 
 
@@ -407,6 +465,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionBlockNode<'script> {
 
 impl StatementTraversal for FunctionBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_block_stmt(self);
         self.statements().for_each(|s| s.accept(visitor));
     }
 }
