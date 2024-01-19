@@ -1,28 +1,27 @@
 # WitcherScript
 
-VSCode client for WitcherScript IDE.
+VSCode client for WitcherScript language server.
 
 
 ## Features
+- syntax highlighting
+- syntactical analysis
 
-### Syntax Highlighting
-
-
-## Requirements
-
-TODO
-
-## Extension Settings
-
-TODO
 
 ## Known Issues
+This extension is meant to replace [vscode-witcherscript](https://marketplace.visualstudio.com/items?itemName=nicollasricas.vscode-witcherscript).
+It is necessary to uninstall that extension first if you have it installed.
 
-TODO
+<!--
+## Requirements
+None at the moment.
+
+## Extension Settings
+None at the moment.
 
 
 ## Release Notes
 
-TODO
+-->
 
 ---
