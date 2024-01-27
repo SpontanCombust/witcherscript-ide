@@ -12,6 +12,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -24,11 +29,11 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-        target: x86_64-pc-windows-msvc
+        target: ${{ matrix.target }}
         override: true
 
     - name: Build with Cargo
-      run: cargo build --release --target=x86_64-pc-windows-msvc
+      run: cargo build --release --target=${{ matrix.target }}
 
     - name: Pack the client
       run: cargo xtask package .
