@@ -1,0 +1,38 @@
+name: draft-release
+
+on:
+  push:
+    tags: '*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup npm
+      uses: actions/setup-node@v4
+    - name: Setup rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: x86_64-pc-windows-msvc
+        override: true
+
+    - name: Build with Cargo
+      run: cargo build --release --target=x86_64-pc-windows-msvc
+
+    - name: Pack the client
+      run: cargo xtask package .
+      
+    - name: Create draft release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "*.vsix"
+        draft: true
+        generateReleaseNotes: true
