@@ -19,8 +19,12 @@ pub fn install() -> anyhow::Result<()> {
         format!("{LSP_SRC}.exe")
     };
 
+    // make sure DST exists
+    sh.create_dir(LSP_DST)?;
+
     sh.copy_file(lsp_src, LSP_DST)?;
     println!("Copied LSP into {}", LSP_DST);
+
 
     sh.change_dir(EXT_DIR);
 

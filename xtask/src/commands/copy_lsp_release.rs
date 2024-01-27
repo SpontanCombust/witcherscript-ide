@@ -16,6 +16,9 @@ pub fn copy_lsp_release() -> anyhow::Result<()> {
         format!("{SRC}.exe")
     };
 
+    // make sure DST exists
+    sh.create_dir(DST)?;
+
     sh.copy_file(src, DST)?;
     println!("Copied release LSP into {}", DST);
 
