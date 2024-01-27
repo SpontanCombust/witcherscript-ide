@@ -2,7 +2,7 @@ use anyhow::{Context, bail};
 use xshell::{Shell, cmd};
 
 
-const LSP_SRC: &str = "./target/release/witcherscript-lsp.exe"; 
+const LSP_SRC: &str = "./target/release/witcherscript-lsp"; 
 const LSP_DST: &str = "./editors/vscode/server/bin";
 const EXT_DIR: &str = "./editors/vscode";
 const VSIX_NAME: &str = "witcherscript-ide.vsix";
@@ -13,7 +13,13 @@ pub fn install() -> anyhow::Result<()> {
     println!("Building LSP release...");
     cmd!(sh, "cargo build --package witcherscript-lsp --release").run()?;
     
-    sh.copy_file(LSP_SRC, LSP_DST)?;
+    let lsp_src = if cfg!(unix) {
+        LSP_SRC.to_string()
+    } else {
+        format!("{LSP_SRC}.exe")
+    };
+
+    sh.copy_file(lsp_src, LSP_DST)?;
     println!("Copied LSP into {}", LSP_DST);
 
     sh.change_dir(EXT_DIR);
