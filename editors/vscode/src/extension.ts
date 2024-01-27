@@ -12,8 +12,9 @@ import {
 let client: LanguageClient;
 
 export function activate(context: vscode.ExtensionContext) {
+	const ext = process.platform === "win32" ? ".exe" : "";
 	const serverPath = context.asAbsolutePath(
-		path.join('server', 'bin', 'witcherscript-lsp.exe')
+		path.join('server', 'bin', `witcherscript-lsp${ext}`)
 	);
 
 	// If the extension is launched in debug mode then the debug server options are used
