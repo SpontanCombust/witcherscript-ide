@@ -26,16 +26,16 @@ pub fn install() -> anyhow::Result<()> {
 
     if cfg!(unix) {
         cmd!(sh, "npm --version").run().with_context(|| "npm is required")?;
-        cmd!(sh, "vsce --version").run().with_context(|| "vsce is required:  npm install -g vsce")?;
         cmd!(sh, "code --version").run().with_context(|| "Visual Studio Code is required")?;
     
+        cmd!(sh, "npm ci").run()?;
         cmd!(sh, "npm run package").run()?;
 
     } else {
         cmd!(sh, "cmd.exe /c npm --version").run().with_context(|| "npm is required")?;
-        cmd!(sh, "cmd.exe /c vsce --version").run().with_context(|| "vsce is required:  npm install -g vsce")?;
         cmd!(sh, "cmd.exe /c code --version").run().with_context(|| "Visual Studio Code is required")?;
     
+        cmd!(sh, "cmd.exe /c npm ci").run()?;
         cmd!(sh, "cmd.exe /c npm run package").run()?;
     }
 
