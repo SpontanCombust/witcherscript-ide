@@ -1,0 +1,48 @@
+name: draft-release
+
+on:
+  push:
+    tags: '*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup npm
+      uses: actions/setup-node@v4
+    - name: Setup rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: ${{ matrix.target }}
+        override: true
+
+    - name: Build xtask
+      run: cargo build --package xtask --target ${{ matrix.target }} --release
+    - name: Prepare and pack the client
+      run: |
+        cargo xtask prep-lsp --target ${{ matrix.target }} --release
+        cargo xtask package --out-dir . --out-name "witcherscript-ide-${{ github.ref_name }}-${{ matrix.target }}"
+      
+    - name: Create draft release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "*.vsix"
+        draft: true
+        allowUpdates: true
+        generateReleaseNotes: true

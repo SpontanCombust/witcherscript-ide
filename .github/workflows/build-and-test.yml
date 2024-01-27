@@ -20,9 +20,6 @@ jobs:
       with:
         toolchain: stable
     - name: Build with Cargo
-      uses: actions-rs/cargo@v1
-      with:
-        command: build
-        args: --release
+      run: cargo build --release --workspace
     - name: Run tests
       run: cargo test --verbose

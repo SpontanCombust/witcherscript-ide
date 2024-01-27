@@ -1,9 +1,7 @@
-mod copy_lsp;
-mod copy_lsp_release;
+mod prep_lsp;
 mod package;
 mod install;
 
-pub use copy_lsp::copy_lsp;
-pub use copy_lsp_release::copy_lsp_release;
+pub use prep_lsp::prep_lsp;
 pub use package::package;
 pub use install::install;
