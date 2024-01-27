@@ -50,6 +50,10 @@ pub fn install() -> anyhow::Result<()> {
     if !installed_extensions.contains("witcherscript-ide") {
         bail!("Could not install the Visual Studio Code extension.");
     }
+
+    // Remove the vsix file
+    // If you want to keep it use xtask package instead
+    sh.remove_path(VSIX_NAME)?;
     
     Ok(())
 }

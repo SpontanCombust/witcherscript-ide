@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use anyhow::Context;
 use xshell::{Shell, cmd};
 
@@ -7,8 +8,15 @@ const LSP_DST: &str = "./editors/vscode/server/bin";
 const EXT_DIR: &str = "./editors/vscode";
 const VSIX_NAME: &str = "witcherscript-ide.vsix";
 
-pub fn package() -> anyhow::Result<()> {
+pub fn package(output_dir: Option<String>) -> anyhow::Result<()> {
     let sh = Shell::new()?;
+
+    // normalize the output path so it stays valid when we change cwd
+    let output_dir = if let Some(output_dir) = output_dir {
+        Some(PathBuf::from(&output_dir).canonicalize()?)
+    } else {
+        None
+    };
 
     println!("Building LSP release...");
     cmd!(sh, "cargo build --package witcherscript-lsp --release").run()?;
@@ -38,8 +46,17 @@ pub fn package() -> anyhow::Result<()> {
     }
 
     let version = env!("CARGO_PKG_VERSION");
-    sh.copy_file(VSIX_NAME, format!("witcherscript-ide-{version}.vsix"))?;
+    let vsix_file = format!("witcherscript-ide-{version}.vsix");
+    let vsix_dst = if let Some(output_dir) = output_dir {
+        output_dir.join(vsix_file)
+    } else {
+        PathBuf::from(&vsix_file).canonicalize()?
+    };
 
+    sh.copy_file(VSIX_NAME, vsix_dst.as_os_str())?;
+    println!("Copied vsix package into {}", vsix_dst.display());
+
+    // remove the original vsix file
     sh.remove_path(VSIX_NAME)?;
 
     Ok(())
