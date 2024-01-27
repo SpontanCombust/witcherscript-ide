@@ -33,7 +33,7 @@ jobs:
         override: true
 
     - name: Build with Cargo
-      run: cargo build --release --target=${{ matrix.target }}
+      run: cargo build --release --workspace --target=${{ matrix.target }}
 
     - name: Pack the client
       run: cargo xtask package .
@@ -43,4 +43,5 @@ jobs:
       with:
         artifacts: "*.vsix"
         draft: true
+        allowUpdates: true
         generateReleaseNotes: true
