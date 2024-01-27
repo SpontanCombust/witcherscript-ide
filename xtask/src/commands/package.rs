@@ -8,11 +8,11 @@ const LSP_DST: &str = "./editors/vscode/server/bin";
 const EXT_DIR: &str = "./editors/vscode";
 const VSIX_NAME: &str = "witcherscript-ide.vsix";
 
-pub fn package(output_dir: Option<String>) -> anyhow::Result<()> {
+pub fn package(out_dir: Option<String>) -> anyhow::Result<()> {
     let sh = Shell::new()?;
 
     // normalize the output path so it stays valid when we change cwd
-    let output_dir = if let Some(output_dir) = output_dir {
+    let output_dir = if let Some(output_dir) = out_dir {
         Some(PathBuf::from(&output_dir).canonicalize()?)
     } else {
         None

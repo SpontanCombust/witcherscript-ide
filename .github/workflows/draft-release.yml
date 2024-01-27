@@ -32,11 +32,8 @@ jobs:
         target: ${{ matrix.target }}
         override: true
 
-    - name: Build with Cargo
-      run: cargo build --release --workspace --target=${{ matrix.target }}
-
     - name: Pack the client
-      run: cargo xtask package .
+      run: cargo xtask package --out-dir .
       
     - name: Create draft release
       uses: ncipollo/release-action@v1

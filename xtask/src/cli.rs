@@ -17,7 +17,9 @@ pub enum Commands {
     CopyLspRelease,
     /// Build and package VSCode extension into a .vsix file
     Package {
-        output_dir: Option<String>
+        /// Output directory for the .vsix file; default is the current working directory
+        #[arg(long)]
+        out_dir: Option<String>
     },
     /// Build, package and install the VSCode extension
     Install
