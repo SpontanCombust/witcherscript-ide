@@ -11,10 +11,15 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Copy debug build of the LSP server to the VSCode client
-    CopyLsp,
-    /// Copy release build of the LSP server to the VSCode client
-    CopyLspRelease,
+    // Build and copy LSP server into VSCode's extension directory
+    PrepLsp {
+        /// Should LSP be built with optimised release profile
+        #[arg(long)]
+        release: bool,
+        /// Compilation target triple
+        #[arg(long)]
+        target: Option<String>
+    },
     /// Build and package VSCode extension into a .vsix file
     Package {
         /// Output directory for the .vsix file; default is the current working directory
