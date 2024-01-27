@@ -24,7 +24,10 @@ pub enum Commands {
     Package {
         /// Output directory for the .vsix file; default is the current working directory
         #[arg(long)]
-        out_dir: Option<String>
+        out_dir: Option<String>,
+        /// Name of the output file without the extension
+        #[arg(long)]
+        out_name: Option<String>
     },
     /// Build, package and install the VSCode extension
     Install

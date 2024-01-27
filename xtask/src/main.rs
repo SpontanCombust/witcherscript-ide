@@ -10,7 +10,7 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command {
         cli::Commands::PrepLsp { release, target } => commands::prep_lsp(release, target),
-        cli::Commands::Package { out_dir } => commands::package(out_dir),
+        cli::Commands::Package { out_dir, out_name } => commands::package(out_dir, out_name),
         cli::Commands::Install => commands::install()
     }
 }
