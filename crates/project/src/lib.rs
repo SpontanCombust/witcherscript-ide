@@ -1,1 +1,1 @@
-//TODO implement witcherscript-project
+pub mod manifest;
