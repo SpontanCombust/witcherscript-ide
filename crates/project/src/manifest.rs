@@ -13,9 +13,13 @@ pub struct Manifest {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Content {
+    /// Name of this project, for example SharedUtils
     pub name: String,
+    /// Version of this project, has to abide to semantic versioning
     pub version: Version,
+    /// List of this project authors (optional)
     pub authors: Option<Vec<String>>,
+    /// Version(s) of the game this project is compatible with 
     pub game_version: String, // CDPR's versioning system doesn't comply with semver, so string will have to do for now
 }
 
@@ -28,12 +32,14 @@ pub enum ManifestError {
     Io(#[from] io::Error),
     #[error("TOML file parsing error")]
     Toml {
-        range: Option<lsp_types::Range>,
+        range: lsp_types::Range,
         msg: String
     }
 }
 
 impl Manifest {
+    pub const FILE_NAME: &str = "witcherscript.toml";
+
     pub fn from_str(s: &str) -> Result<Self, ManifestError> {
         let rope = Rope::from_str(s);
         match toml::from_str(s) {
@@ -55,7 +61,18 @@ impl Manifest {
                             character: end_char as u32 
                         }
                     }
-                });
+                }).unwrap_or(
+                    lsp_types::Range {
+                        start: lsp_types::Position { 
+                            line: 0, 
+                            character: 0
+                        }, 
+                        end: lsp_types::Position { 
+                            line: u32::MAX, 
+                            character: u32::MAX
+                        }
+                    }
+                );
                 
                 Err(ManifestError::Toml { 
                     range, 
