@@ -1272,6 +1272,8 @@ name = "witcherscript-lsp"
 version = "0.1.0"
 dependencies = [
  "dashmap",
+ "serde_json",
+ "thiserror",
  "tokio",
  "tower-lsp",
  "witcherscript",
