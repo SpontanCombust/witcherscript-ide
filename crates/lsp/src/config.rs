@@ -1,14 +1,13 @@
 use std::path::PathBuf;
 use thiserror::Error;
-use tower_lsp::jsonrpc;
-use tower_lsp::Client;
+use tower_lsp::{Client, jsonrpc};
 use tower_lsp::lsp_types as lsp;
 
 
 #[derive(Debug, Clone)]
 pub struct Config {
     pub game_directory: PathBuf,
-    pub project_search_directories: Vec<PathBuf>
+    pub project_repositories: Vec<PathBuf>
 }
 
 #[derive(Debug, Error)]
@@ -22,7 +21,7 @@ pub enum ConfigError {
 impl Config {
     const CONFIG_ITEM_SECTIONS: [&str; 2] = [
         "witcherscript-ide.gameDirectory",
-        "witcherscript-ide.projectSearchDirectories"
+        "witcherscript-ide.projectRepositories"
     ];
 
     pub async fn fetch(client: &Client) -> Result<Self, ConfigError> {
@@ -35,7 +34,7 @@ impl Config {
 
         Ok(Self {
             game_directory: serde_json::from_value(values[0].clone())?,
-            project_search_directories: serde_json::from_value(values[1].clone())?
+            project_repositories: serde_json::from_value(values[1].clone())?
         })
     }
 }
