@@ -23,7 +23,18 @@ pub struct Content {
     pub game_version: String, // CDPR's versioning system doesn't comply with semver, so string will have to do for now
 }
 
-pub type Dependencies = HashMap<String, PathBuf>; // for now just use a path as a value
+pub type Dependencies = HashMap<String, DependencyValue>;
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(untagged)]
+pub enum DependencyValue {
+    /// Get the dependency from one of project repositories by name
+    FromRepo(bool),
+    /// Get the dependency from a specific location
+    FromPath {
+        path: PathBuf
+    }
+}
 
 
 #[derive(Debug, Error)]
@@ -111,8 +122,8 @@ mod test {
         game_version = "4.04"
     
         [dependencies]
-        content0 = "../Witcher 3/content/content0"
-        shared_utils = "../Witcher 3/Mods/modSharedUtils"
+        content0 = { path = "../Witcher 3/content/content0" }
+        shared_utils = true
         "#;
     
         let manifest = Manifest::from_str(s).unwrap();
@@ -123,8 +134,8 @@ mod test {
         assert_eq!(manifest.content.game_version, String::from("4.04"));
     
         assert_eq!(manifest.dependencies, HashMap::from_iter([
-            ("content0".into(), "../Witcher 3/content/content0".into()),
-            ("shared_utils".into(), "../Witcher 3/Mods/modSharedUtils".into()),
+            ("content0".into(), DependencyValue::FromPath { path: "../Witcher 3/content/content0".into() }),
+            ("shared_utils".into(), DependencyValue::FromRepo(true)),
         ]));
     }
 }
