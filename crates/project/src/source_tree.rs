@@ -19,7 +19,7 @@ impl SourceTree {
     }
 
 
-    pub fn build<P: AsRef<Path>>(&mut self) -> Result<(), std::io::Error> {
+    pub fn build(&mut self) -> Result<(), std::io::Error> {
         self.tree.clear();   
 
         if self.script_root.is_dir() {

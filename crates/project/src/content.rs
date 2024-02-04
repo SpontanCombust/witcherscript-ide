@@ -6,30 +6,19 @@ use crate::source_tree::SourceTree;
 #[derive(Debug, Clone)]
 pub struct Content {
     path: PathBuf,
-    source_tree: SourceTree
+    source_tree: SourceTree,
+    manifest: Option<Manifest>
 }
 
 impl Content {
-    pub fn new<P: AsRef<Path>>(path: P) -> Self {
+    pub fn new<P>(path: P) -> Self 
+    where P: AsRef<Path> {
         let absolute = path.as_ref().canonicalize().unwrap();
         Self {
             source_tree: SourceTree::new(absolute.join("content").join("scripts")),
             path: absolute,
+            manifest: None
         }
-    }
-
-    pub fn maybe_content_dir(path: &Path) -> bool {
-        let manifest_path = path.join(Manifest::FILE_NAME);
-        if manifest_path.exists() {
-            return true;
-        }
-    
-        let scripts_path = path.join("content").join("scripts");
-        if scripts_path.is_dir() {
-            return true;
-        }
-    
-        false
     }
 
 
@@ -46,25 +35,36 @@ impl Content {
     /// Manifest-less projects are supported purely out of user convenience, 
     /// so they don't have to manually create manifests for vanilla scripts or installed mods.
     pub fn has_manifest(&self) -> bool {
-        let manifest_path = self.path.join(Manifest::FILE_NAME);
-        manifest_path.exists()
+        self.manifest.is_some()
     }
 
-    pub fn manifest(&self) -> Option<Result<Manifest, ManifestError>> {
-        let manifest_path = self.path.join(Manifest::FILE_NAME);
-
-        if manifest_path.exists() {
-            Some(Manifest::from_file(manifest_path))
-        } else {
-            None
-        }
+    pub fn manifest(&self) -> Option<&Manifest> {
+        self.manifest.as_ref()
     }
 
     pub fn source_tree(&self) -> &SourceTree {
         &self.source_tree
     }
 
-    pub fn source_tree_mut(&mut self) -> &mut SourceTree {
-        &mut self.source_tree
+
+    pub fn build_source_tree(&mut self) -> Result<(), std::io::Error> {
+        self.source_tree.build()
+    }
+
+    pub fn scan_manifest(&mut self) -> Option<Result<(), ManifestError>> {
+        let manifest_path = self.path.join(Manifest::FILE_NAME);
+        if manifest_path.exists() {
+            Some(match Manifest::from_file(manifest_path) {
+                Ok(manifest) => {
+                    self.manifest = Some(manifest);
+                    Ok(())
+                },
+                Err(err) => {
+                    Err(err)
+                }
+            })
+        } else {
+            None
+        }
     }
 }
