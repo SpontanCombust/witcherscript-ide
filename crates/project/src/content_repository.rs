@@ -1,4 +1,4 @@
-use std::{path::{Path, PathBuf}, rc::Rc};
+use std::{path::{Path, PathBuf}, sync::Arc};
 use thiserror::Error;
 use crate::{ContentDirectory, Manifest};
 
@@ -19,7 +19,7 @@ pub struct ContentRepositories {
 #[error("Failed to scan repository directory {}", .repo_path.display())]
 pub struct ContentRepositoryScanError {
     pub repo_path: PathBuf,
-    pub source: Rc<std::io::Error> // Rc is needed as the error itself is not clonable
+    pub source: Arc<std::io::Error> // Rc is needed as the error itself is not clonable
 }
 
 impl ContentRepositories {
@@ -61,7 +61,7 @@ impl ContentRepositories {
                             Err(err) => {
                                 self.errors.push(ContentRepositoryScanError {
                                     repo_path: repo.to_owned(),
-                                    source: Rc::new(err)
+                                    source: Arc::new(err)
                                 });
                             }
                         }
@@ -70,7 +70,7 @@ impl ContentRepositories {
                 Err(err) => {
                     self.errors.push(ContentRepositoryScanError {
                         repo_path: repo.to_owned(),
-                        source: Rc::new(err)
+                        source: Arc::new(err)
                     });
                 }
             }
