@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::File, io::{self, Read}, path::{Path, PathBuf}};
+use std::{collections::HashMap, fs::File, io::{self, Read}, path::{Path, PathBuf}, rc::Rc};
 use ropey::Rope;
 use semver::Version;
 use serde::Deserialize;
@@ -37,10 +37,10 @@ pub enum DependencyValue {
 }
 
 
-#[derive(Debug, Error)]
+#[derive(Debug, Clone, Error)]
 pub enum ManifestError {
     #[error("File access error")]
-    Io(#[from] io::Error),
+    Io(#[from] Rc<io::Error>),
     #[error("TOML file parsing error")]
     Toml {
         range: lsp_types::Range,
@@ -95,11 +95,11 @@ impl Manifest {
 
     pub fn from_file<P>(path: P) -> Result<Self, ManifestError> 
     where P: AsRef<Path> {
-        let mut f = File::open(&path)?;
+        let mut f = File::open(&path).map_err(|err| Rc::new(err))?;
 
         let mut buff = String::new();
         // manifests are usually comparatively small, so reading it all at once shouldn't be that big of a deal
-        f.read_to_string(&mut buff)?;
+        f.read_to_string(&mut buff).map_err(|err| Rc::new(err))?;
 
         Self::from_str(&buff)
     }
