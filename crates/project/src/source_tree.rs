@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
-use thiserror::Error;
+use std::sync::Arc;
+use crate::FileError;
 
 
 #[derive(Debug, Clone)]
@@ -9,14 +9,7 @@ pub struct SourceTree {
     script_root: PathBuf,
     tree: BTreeSet<PathBuf>,
     /// Errors encountered during scanning
-    errors: Vec<SourceTreeScanError>
-}
-
-#[derive(Debug, Clone, Error)]
-#[error("Failed to scan source path {}", .path.display())]
-pub struct SourceTreeScanError {
-    pub path: PathBuf,
-    pub source: Rc<std::io::Error>
+    errors: Vec<FileError>
 }
 
 impl SourceTree {
@@ -49,18 +42,18 @@ impl SourceTree {
                             }
                         },
                         Err(err) => {
-                            self.errors.push(SourceTreeScanError {
+                            self.errors.push(FileError {
                                 path: path.clone(),
-                                source: Rc::new(err)
+                                error: Arc::new(err)
                             });
                         }
                     }
                 }
             },
             Err(err) => {
-                self.errors.push(SourceTreeScanError {
+                self.errors.push(FileError {
                     path: path.clone(),
-                    source: Rc::new(err)
+                    error: Arc::new(err)
                 });
             },
         }

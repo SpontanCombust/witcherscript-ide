@@ -12,3 +12,6 @@ pub use content_repository::ContentRepositories;
 
 pub mod content_graph;
 pub use content_graph::ContentGraph;
+
+mod file_error;
+pub use file_error::*;
