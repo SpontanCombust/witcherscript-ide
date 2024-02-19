@@ -9,3 +9,6 @@ pub use content::ContentDirectory;
 
 mod content_repository;
 pub use content_repository::ContentRepositories;
+
+pub mod content_graph;
+pub use content_graph::ContentGraph;
