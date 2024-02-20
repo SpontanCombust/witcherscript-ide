@@ -1,6 +1,8 @@
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use crate::manifest::{Manifest, ManifestError};
 use crate::source_tree::SourceTree;
+use crate::FileError;
 
 
 #[derive(Debug, Clone)]
@@ -16,6 +18,46 @@ impl ContentDirectory {
             path: absolute
         }
     }
+
+    pub fn find_in<P>(path: P, manifest_required: bool, scan_recursively: bool) -> (Vec<Self>, Vec<FileError>)
+    where P: AsRef<Path> {
+        let mut contents = Vec::new();
+        let mut errors = Vec::new();
+
+        match std::fs::read_dir(path.as_ref()) {
+            Ok(iter) => {
+                for entry in iter {
+                    match entry {
+                        Ok(entry) => {
+                            let content_path_candidate = entry.path();
+                            if is_content_dir(&content_path_candidate, manifest_required) {
+                                contents.push(ContentDirectory::new(content_path_candidate));
+                            } else if content_path_candidate.is_dir() && scan_recursively {
+                                let (inner_contents, inner_errors) = Self::find_in(content_path_candidate, manifest_required, scan_recursively);
+                                contents.extend(inner_contents);
+                                errors.extend(inner_errors);
+                            }
+                        },
+                        Err(err) => {
+                            errors.push(FileError {
+                                path: path.as_ref().to_owned(),
+                                error: Arc::new(err)
+                            });
+                        }
+                    }
+                }
+            },
+            Err(err) => {
+                errors.push(FileError {
+                    path: path.as_ref().to_owned(),
+                    error: Arc::new(err)
+                });
+            }
+        }
+
+        (contents, errors)
+    }
+
 
     pub fn path(&self) -> &Path {
         &self.path
@@ -47,4 +89,26 @@ impl ContentDirectory {
         let script_root = self.path.join("content").join("scripts");
         SourceTree::new(script_root)
     }
+}
+
+
+fn is_content_dir(path: &Path, manifest_required: bool) -> bool {
+    if !path.is_dir() {
+        return false;
+    }
+
+    let manifest_path = path.join(Manifest::FILE_NAME);
+    if manifest_path.exists() {
+        return true;
+    }
+    if manifest_required {
+        return false;
+    }
+
+    let scripts_path = path.join("content").join("scripts");
+    if scripts_path.is_dir() {
+        return true;
+    }
+
+    false
 }

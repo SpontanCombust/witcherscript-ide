@@ -1,5 +1,5 @@
-use std::{path::{Path, PathBuf}, sync::Arc};
-use crate::{ContentDirectory, FileError, Manifest};
+use std::path::{Path, PathBuf};
+use crate::{ContentDirectory, FileError};
 
 
 /// Looks for content in provided "repository" directories.
@@ -40,51 +40,9 @@ impl ContentRepositories {
         self.errors.clear();
 
         for repo in &self.repository_paths {
-            match std::fs::read_dir(repo) {
-                Ok(iter) => {
-                    for entry in iter {
-                        match entry {
-                            Ok(entry) => {
-                                let path = entry.path();
-                                if path.is_dir() && is_content_dir(&path) {
-                                    self.found_content.push(ContentDirectory::new(path));
-                                }
-                            },
-                            Err(err) => {
-                                self.errors.push(FileError {
-                                    path: repo.to_owned(),
-                                    error: Arc::new(err)
-                                });
-                            }
-                        }
-                    }
-                },
-                Err(err) => {
-                    self.errors.push(FileError {
-                        path: repo.to_owned(),
-                        error: Arc::new(err)
-                    });
-                }
-            }
+            let (contents, errors) = ContentDirectory::find_in(repo, false, false);
+            self.found_content.extend(contents);
+            self.errors.extend(errors);
         }
     }
-}
-
-
-fn is_content_dir(path: &Path) -> bool {
-    if !path.is_dir() {
-        return false;
-    }
-
-    let manifest_path = path.join(Manifest::FILE_NAME);
-    if manifest_path.exists() {
-        return true;
-    }
-
-    let scripts_path = path.join("content").join("scripts");
-    if scripts_path.is_dir() {
-        return true;
-    }
-
-    false
 }
