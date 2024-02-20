@@ -5,20 +5,22 @@ use witcherscript_analysis::{diagnostics::{Diagnostic, DiagnosticBody}, jobs::sy
 use crate::Backend;
 
 
-// Until the witcherscript_project crate is ready, only scripts opened in the editor will be checked
+// Until the witcherscript_project crate is ready, only scripts visible in the editor will be stored on the server
 
 pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams) {
-    if !backend.doc_buffers.contains_key(&params.text_document.uri) {
-        let doc = ScriptDocument::from_str(&params.text_document.text);
-        match Script::new(&doc) {
-            Ok(script) => {
-                script_syntax_diagnostics(&script, backend, params.text_document.uri.clone()).await;
-
-                backend.doc_buffers.insert(params.text_document.uri.clone(), doc);
-                backend.scripts.insert(params.text_document.uri, script);
-            },
-            Err(err) => {
-                backend.client.log_message(lsp::MessageType::ERROR, err.to_string()).await;
+    if params.text_document.language_id == Backend::LANGUAGE_ID {
+        if !backend.doc_buffers.contains_key(&params.text_document.uri) {
+            let doc = ScriptDocument::from_str(&params.text_document.text);
+            match Script::new(&doc) {
+                Ok(script) => {
+                    script_syntax_diagnostics(&script, backend, params.text_document.uri.clone()).await;
+    
+                    backend.doc_buffers.insert(params.text_document.uri.clone(), doc);
+                    backend.scripts.insert(params.text_document.uri, script);
+                },
+                Err(err) => {
+                    backend.client.log_message(lsp::MessageType::ERROR, err.to_string()).await;
+                }
             }
         }
     }
@@ -65,7 +67,7 @@ async fn script_syntax_diagnostics<S: Borrow<Script>>(script: S, backend: &Backe
                 DiagnosticBody::Warning(_) => lsp::DiagnosticSeverity::WARNING,
                 DiagnosticBody::Info(_) => lsp::DiagnosticSeverity::INFORMATION,
             }),
-            source: Some("witcherscript-ide".to_string()),
+            source: Some(Backend::SERVER_NAME.to_string()),
             message: diag.body.to_string(),
             ..Default::default()
         })

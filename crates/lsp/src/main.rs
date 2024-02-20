@@ -88,11 +88,11 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: lsp::DidOpenTextDocumentParams) {
-        providers::document_sync::did_open(self, params).await;
+        providers::document_ops::did_open(self, params).await;
     }
 
     async fn did_change(&self, params: lsp::DidChangeTextDocumentParams) {
-        providers::document_sync::did_change(self, params).await;
+        providers::document_ops::did_change(self, params).await;
     }
 
     // Not needed for now
@@ -101,7 +101,7 @@ impl LanguageServer for Backend {
     // }
 
     async fn did_close(&self, params: lsp::DidCloseTextDocumentParams) {
-        providers::document_sync::did_close(self, params).await;
+        providers::document_ops::did_close(self, params).await;
     }
 
     async fn did_change_configuration(&self, _: lsp::DidChangeConfigurationParams) {
