@@ -5,6 +5,7 @@ use serde::Deserialize;
 use thiserror::Error;
 
 
+/// Deserialized WitcherScript manifest file containing project metadata.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Manifest {
     pub content: Content,

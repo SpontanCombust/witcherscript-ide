@@ -9,7 +9,7 @@ pub struct SourceTree {
     script_root: PathBuf,
     tree: BTreeSet<PathBuf>,
     /// Errors encountered during scanning
-    errors: Vec<FileError>
+    pub errors: Vec<FileError>
 }
 
 impl SourceTree {

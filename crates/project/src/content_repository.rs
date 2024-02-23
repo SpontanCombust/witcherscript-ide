@@ -1,17 +1,15 @@
 use std::path::{Path, PathBuf};
-use crate::{ContentDirectory, FileError};
+use crate::{content::ContentScanError, find_content_in_directory, Content};
 
 
-/// Looks for content in provided "repository" directories.
-/// Allows the end user to specify dependencies from outside the current workspace directory.
-/// These dependencies do not necessairly need a manifest, but they are still required to have a correct file structure.
-/// This is due to not forcing the user to create manifest for content inside game directory when it is obvious as to where this content should be looked for.
-#[derive(Debug, Clone, Default)]
+/// A collection of directories in which content directories can be found.
+/// Mainly used repositories are `Witcher 3/content` and `Witcher 3/Mods`. Custom repositories are allowed though.
+#[derive(Debug, Default)]
 pub struct ContentRepositories {
     repository_paths: Vec<PathBuf>,
-    found_content: Vec<ContentDirectory>,
+    found_content: Vec<Box<dyn Content>>,
     /// Errors encountered during scanning
-    errors: Vec<FileError>
+    pub errors: Vec<ContentScanError>
 }
 
 impl ContentRepositories {
@@ -31,7 +29,7 @@ impl ContentRepositories {
         }
     }
 
-    pub fn found_content(&self) -> &[ContentDirectory] {
+    pub fn found_content(&self) -> &[Box<dyn Content>] {
         &self.found_content
     }
 
@@ -40,7 +38,7 @@ impl ContentRepositories {
         self.errors.clear();
 
         for repo in &self.repository_paths {
-            let (contents, errors) = ContentDirectory::find_in(repo, false, false);
+            let (contents, errors) = find_content_in_directory(repo);
             self.found_content.extend(contents);
             self.errors.extend(errors);
         }

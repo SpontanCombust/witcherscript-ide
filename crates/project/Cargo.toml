@@ -12,3 +12,4 @@ toml.workspace = true
 thiserror.workspace = true
 lsp-types.workspace = true
 ropey.workspace = true
+dyn-clone.workspace = true

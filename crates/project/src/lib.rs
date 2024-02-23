@@ -4,8 +4,8 @@ pub use manifest::Manifest;
 mod source_tree;
 pub use source_tree::SourceTree;
 
-mod content;
-pub use content::ContentDirectory;
+pub mod content;
+pub use content::{Content, find_content_in_directory};
 
 mod content_repository;
 pub use content_repository::ContentRepositories;

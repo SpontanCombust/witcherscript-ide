@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
-use crate::{ContentDirectory, ContentRepositories, Manifest};
+use crate::content::ProjectDirectory;
+use crate::{Content, ContentRepositories};
 use crate::manifest::{DependencyValue, ManifestError};
 
 
@@ -28,22 +29,20 @@ pub enum ContentGraphError {
 
 
 /// Stores contents needed in the current workspace and tracks relationships between them.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ContentGraph {
     repos: ContentRepositories,
-    workspace_contents: Vec<ContentDirectory>,
+    workspace_projects: Vec<Box<ProjectDirectory>>,
 
     nodes: Vec<GraphNode>,
     edges: Vec<GraphEdge>,
 
-    errors: Vec<ContentGraphError>
+    pub errors: Vec<ContentGraphError>
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct GraphNode {
-    content_dir: ContentDirectory,
-    manifest: Option<Manifest>,
-    content_name: String,
+    content: Box<dyn Content>,
     in_workspace: bool,
     in_repository: bool,
 }
@@ -67,7 +66,7 @@ impl ContentGraph {
     pub fn new() -> Self {
         Self {
             repos: ContentRepositories::new(),
-            workspace_contents: Vec::new(),
+            workspace_projects: Vec::new(),
 
             nodes: Vec::new(),
             edges: Vec::new(),
@@ -82,8 +81,8 @@ impl ContentGraph {
     }
 
     /// Set paths to contents from the workspace that should be actively monitored
-    pub fn set_workspace_contents(&mut self, contents: Vec<ContentDirectory>) {
-        self.workspace_contents = contents;
+    pub fn set_workspace_projects(&mut self, contents: Vec<Box<ProjectDirectory>>) {
+        self.workspace_projects = contents;
     }
 
 
@@ -92,19 +91,19 @@ impl ContentGraph {
         self.edges.clear();
         self.errors.clear();
 
-        for i in 0..self.workspace_contents.len() {
-            let content = &self.workspace_contents[i];
+        for i in 0..self.workspace_projects.len() {
+            let content = &self.workspace_projects[i];
             self.create_node_for_content(content.clone(), false, true);
         }
 
         for i in 0..self.repos.found_content().len() {
             let content = &self.repos.found_content()[i];
-            self.create_node_for_content(content.clone(), true, false);
+            self.create_node_for_content(dyn_clone::clone_box(&**content), true, false);
         }
 
         // Correct nodes if repository and workspace paths overlap
         for n in &mut self.nodes {
-            if self.repos.found_content().iter().any(|repo_content| repo_content.path() == n.content_dir.path()) {
+            if self.repos.found_content().iter().any(|repo_content| repo_content.path() == n.content.path()) {
                 n.in_repository = true;
             }
         }
@@ -123,7 +122,7 @@ impl ContentGraph {
         let unneeded_content_paths: Vec<_> = self.nodes.iter()
             .enumerate()
             .filter(|(i, n)| !n.in_workspace && !self.edges.iter().any(|e| e.dependency_idx == *i))
-            .map(|(_, n)| n.content_dir.path().to_path_buf())
+            .map(|(_, n)| n.content.path().to_path_buf())
             .collect();
 
         for p in unneeded_content_paths {
@@ -132,14 +131,14 @@ impl ContentGraph {
     }
 
     /// Visits all content nodes that are dependencies to the specified content.
-    pub fn walk_dependencies(&self, content: &ContentDirectory, visitor: impl FnMut(usize)) {
+    pub fn walk_dependencies(&self, content: &impl Content, visitor: impl FnMut(usize)) {
         if let Ok(idx) = self.get_node_index_by_path(content.path(), None) {
             self.walk_by_index(idx, GraphEdgeDirection::Dependencies, visitor);
         }
     }
 
     /// Visits all content nodes that are dependants to the specified content.
-    pub fn walk_dependants(&self, content: &ContentDirectory, visitor: impl FnMut(usize)) {
+    pub fn walk_dependants(&self, content: &impl Content, visitor: impl FnMut(usize)) {
         if let Ok(idx) = self.get_node_index_by_path(content.path(), None) {
             self.walk_by_index(idx, GraphEdgeDirection::Dependants, visitor);
         }
@@ -148,36 +147,15 @@ impl ContentGraph {
 
 
     /// Returns index of the node if it was inserted successfully
-    fn create_node_for_content(&mut self, content: ContentDirectory, in_repository: bool, in_workspace: bool) {
-        if content.exists() {
+    fn create_node_for_content(&mut self, content: Box<dyn Content>, in_repository: bool, in_workspace: bool) {
+        if content.path().exists() {
             if self.get_node_index_by_path(content.path(), None).is_ok() {
                 // node has already been made for this content
                 return;
             }
 
-            let manifest = if let Some(manifest_res) = content.manifest() {
-                match manifest_res {
-                    Ok(manifest) => Some(manifest),
-                    Err(err) => {
-                        self.errors.push(ContentGraphError::ManifestError(err));
-                        None
-                    }
-                }
-            } else {
-                None
-            };
-
-            let name = if let Some(manifest) = &manifest {
-                &manifest.content.name
-            } else {
-                content.path().file_name().unwrap().to_str().unwrap()
-            }.to_string();
-
             self.insert_node(GraphNode { 
-                manifest: manifest,
-                content_name: name,
-                content_dir: content, 
-
+                content,
                 in_workspace, 
                 in_repository,
             });
@@ -196,19 +174,12 @@ impl ContentGraph {
 
         visited.insert(node_idx);
 
-        let mut dependencies = Vec::new();
-        if let Some(manifest) = &self.nodes[node_idx].manifest {
-            for (dep_name, dep_val) in &manifest.dependencies {
-                dependencies.push((dep_name.to_owned(), dep_val.to_owned()));
-            }
-        }
-
-        if !dependencies.is_empty() {
+        if let Some(dependencies) = self.nodes[node_idx].content.dependencies().cloned() {
             for (dep_name, dep_val) in dependencies {
                 match dep_val {
                     DependencyValue::FromRepo(active) => {
                         if active {
-                            match self.get_node_index_by_name(&dep_name, Some(self.nodes[node_idx].content_dir.path())) {
+                            match self.get_node_index_by_name(&dep_name, Some(self.nodes[node_idx].content.path())) {
                                 Ok(dep_idx) => {
                                     self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
                                     self.build_dependency_connections(dep_idx, visited);
@@ -220,9 +191,9 @@ impl ContentGraph {
                         }
                     },
                     DependencyValue::FromPath { path } => {
-                        match self.nodes[node_idx].content_dir.path().join(&path).canonicalize() {
+                        match self.nodes[node_idx].content.path().join(&path).canonicalize() {
                             Ok(path) => {
-                                match self.get_node_index_by_path(&path, Some(self.nodes[node_idx].content_dir.path())) {
+                                match self.get_node_index_by_path(&path, Some(self.nodes[node_idx].content.path())) {
                                     Ok(dep_idx) => {
                                         self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
                                         self.build_dependency_connections(dep_idx, visited);
@@ -235,7 +206,7 @@ impl ContentGraph {
                             Err(_) => {
                                 self.errors.push(ContentGraphError::ContentPathNotFound { 
                                     path, 
-                                    origin: Some(self.nodes[node_idx].content_dir.path().to_path_buf())
+                                    origin: Some(self.nodes[node_idx].content.path().to_path_buf())
                                 })
                             }
                         }
@@ -286,7 +257,7 @@ impl ContentGraph {
 
     fn get_node_index_by_path(&self, path: &Path, dependant: Option<&Path>) -> Result<usize, ContentGraphError> {
         for (i, n) in self.nodes.iter().enumerate() {
-            if n.content_dir.path() == path {
+            if n.content.path() == path {
                 return Ok(i)
             }
         }
@@ -300,7 +271,7 @@ impl ContentGraph {
     fn get_node_index_by_name(&self, name: &str, dependant: Option<&Path>) -> Result<usize, ContentGraphError> {
         let mut candidates = Vec::new();
         for (i, n) in self.nodes.iter().enumerate() {
-            if n.content_name == name {
+            if n.content.content_name() == name {
                 candidates.push(i);
             }
         }
