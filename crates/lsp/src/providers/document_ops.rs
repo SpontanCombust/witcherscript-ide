@@ -8,15 +8,21 @@ use crate::Backend;
 // Until the witcherscript_project crate is ready, only scripts visible in the editor will be stored on the server
 
 pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams) {
+    if params.text_document.uri.scheme() != "file" {
+        backend.client.log_message(lsp::MessageType::ERROR, format!("{} works only on localhost", Backend::SERVER_NAME)).await;
+        return;
+    }
+
     if params.text_document.language_id == Backend::LANGUAGE_ID {
-        if !backend.doc_buffers.contains_key(&params.text_document.uri) {
+        let doc_path = params.text_document.uri.to_file_path().unwrap();
+        if !backend.doc_buffers.contains_key(&doc_path) {
             let doc = ScriptDocument::from_str(&params.text_document.text);
             match Script::new(&doc) {
                 Ok(script) => {
                     script_syntax_diagnostics(&script, backend, params.text_document.uri.clone()).await;
     
-                    backend.doc_buffers.insert(params.text_document.uri.clone(), doc);
-                    backend.scripts.insert(params.text_document.uri, script);
+                    backend.doc_buffers.insert(doc_path.clone(), doc);
+                    backend.scripts.insert(doc_path, script);
                 },
                 Err(err) => {
                     backend.client.log_message(lsp::MessageType::ERROR, err.to_string()).await;
@@ -27,12 +33,18 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
 }
 
 pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentParams) {
-    if let Some(mut doc) = backend.doc_buffers.get_mut(&params.text_document.uri) {
+    if params.text_document.uri.scheme() != "file" {
+        backend.client.log_message(lsp::MessageType::ERROR, format!("{} works only on localhost", Backend::SERVER_NAME)).await;
+        return;
+    }
+
+    let doc_path = params.text_document.uri.to_file_path().unwrap();
+    if let Some(mut doc) = backend.doc_buffers.get_mut(&doc_path) {
         for edit in params.content_changes {
             doc.deref_mut().edit(&edit);
         }
 
-        let mut script = backend.scripts.get_mut(&params.text_document.uri).unwrap();
+        let mut script = backend.scripts.get_mut(&doc_path).unwrap();
         if let Err(err) = script.update(&mut doc) {
             backend.client.log_message(lsp::MessageType::ERROR, err.to_string()).await;
         }
@@ -46,11 +58,17 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
 // }
 
 pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParams) {
+    if params.text_document.uri.scheme() != "file" {
+        backend.client.log_message(lsp::MessageType::ERROR, format!("{} works only on localhost", Backend::SERVER_NAME)).await;
+        return;
+    }
+
     // clear errors for the file
     backend.client.publish_diagnostics(params.text_document.uri.clone(), vec![], None).await;
 
-    backend.doc_buffers.remove(&params.text_document.uri);
-    backend.scripts.remove(&params.text_document.uri);
+    let doc_path = params.text_document.uri.to_file_path().unwrap();
+    backend.doc_buffers.remove(&doc_path);
+    backend.scripts.remove(&doc_path);
 }
 
 

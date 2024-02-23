@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use dashmap::DashMap;
 use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result;
@@ -16,8 +17,9 @@ mod config;
 pub struct Backend {
     client: Client,
     config: RwLock<Option<Config>>,
-    doc_buffers: DashMap<lsp::Url, ScriptDocument>,
-    scripts: DashMap<lsp::Url, Script>
+
+    doc_buffers: DashMap<PathBuf, ScriptDocument>,
+    scripts: DashMap<PathBuf, Script>
 }
 
 impl Backend {
