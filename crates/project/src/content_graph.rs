@@ -10,21 +10,21 @@ use crate::manifest::{DependencyValue, ManifestError};
 pub enum ContentGraphError {
     #[error(transparent)]
     ManifestError(#[from] ManifestError),
-    #[error("Content could not be found in this path")]
+    #[error("content could not be found in this path")]
     ContentPathNotFound {
         path: PathBuf,
         origin: Option<PathBuf>
     },
-    #[error("Content could not be found with this name")]
+    #[error("content could not be found with this name")]
     ContentNameNotFound {
         name: String,
         origin: Option<PathBuf>
     },
-    #[error("There are multiple matching contents for this content name")]
+    #[error("there are multiple matching contents for this content name")]
     MultipleMatchingContents {
         name: String,
         origin: Option<PathBuf>
-    },
+    }
 }
 
 
@@ -108,12 +108,20 @@ impl ContentGraph {
             }
         }
 
-        // Now visit each of workspace content nodes to check for their dependencies.
-        let mut visited = HashSet::new();
-        for i in 0..self.nodes.len() {
-            if self.nodes[i].in_workspace {
-                self.build_dependency_connections(i, &mut visited);
-            }
+        // Proceed with dependency building only if content0 is available
+        match self.get_node_index_by_name("content0", None) {
+            Ok(content0_idx) => {
+                // Now visit each of workspace content nodes to check for their dependencies.
+                let mut visited = HashSet::new();
+                for i in 0..self.nodes.len() {
+                    if self.nodes[i].in_workspace {
+                        self.build_dependency_connections(i, content0_idx, &mut visited);
+                    }
+                }
+            },
+            Err(err) => {
+                self.errors.push(err);
+            },
         }
 
         // At the start all contents found in repos were given a node.
@@ -167,7 +175,7 @@ impl ContentGraph {
         }
     }
 
-    fn build_dependency_connections(&mut self, node_idx: usize, visited: &mut HashSet<usize>) {
+    fn build_dependency_connections(&mut self, node_idx: usize, content0_idx: usize, visited: &mut HashSet<usize>) {
         if visited.contains(&node_idx) {
             return;
         }
@@ -182,7 +190,7 @@ impl ContentGraph {
                             match self.get_node_index_by_name(&dep_name, Some(self.nodes[node_idx].content.path())) {
                                 Ok(dep_idx) => {
                                     self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                                    self.build_dependency_connections(dep_idx, visited);
+                                    self.build_dependency_connections(dep_idx, content0_idx, visited);
                                 },
                                 Err(err) => {
                                     self.errors.push(err);
@@ -196,7 +204,7 @@ impl ContentGraph {
                                 match self.get_node_index_by_path(&path, Some(self.nodes[node_idx].content.path())) {
                                     Ok(dep_idx) => {
                                         self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                                        self.build_dependency_connections(dep_idx, visited);
+                                        self.build_dependency_connections(dep_idx, content0_idx, visited);
                                     },
                                     Err(err) => {
                                         self.errors.push(err);
@@ -213,6 +221,10 @@ impl ContentGraph {
                     },
                 }
             }
+        }
+
+        if self.nodes[node_idx].content.content_name() != "content0" {
+            self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: content0_idx });
         }
     }
 
