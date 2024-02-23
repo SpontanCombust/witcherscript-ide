@@ -3,7 +3,7 @@ use thiserror::Error;
 
 
 #[derive(Debug, Clone, Error)]
-#[error("Error for file or directory {}: {}", .path.display(), .error)]
+#[error("error for file or directory {}: {}", .path.display(), .error)]
 pub struct FileError {
     pub path: PathBuf,
     #[source]

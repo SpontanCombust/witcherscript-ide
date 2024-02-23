@@ -40,7 +40,7 @@ pub enum DependencyValue {
 
 #[derive(Debug, Clone, Error)]
 pub enum ManifestError {
-    #[error("File access error")]
+    #[error("file access error")]
     Io(#[from] Arc<io::Error>),
     #[error("TOML file parsing error")]
     Toml {

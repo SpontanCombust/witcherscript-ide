@@ -130,7 +130,7 @@ pub enum ContentScanError {
     FileError(FileError),
     #[error(transparent)]
     ManifestError(ManifestError),
-    #[error("This is not content directory")]
+    #[error("this is not content directory")]
     NotContent
 }
 
