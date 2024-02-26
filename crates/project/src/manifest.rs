@@ -39,7 +39,7 @@ pub enum DependencyValue {
 
 
 #[derive(Debug, Clone, Error)]
-pub enum ManifestError {
+pub enum ManifestParseError {
     #[error("file access error")]
     Io(#[from] Arc<io::Error>),
     #[error("TOML file parsing error")]
@@ -52,7 +52,7 @@ pub enum ManifestError {
 impl Manifest {
     pub const FILE_NAME: &str = "witcherscript.toml";
 
-    pub fn from_str(s: &str) -> Result<Self, ManifestError> {
+    pub fn from_str(s: &str) -> Result<Self, ManifestParseError> {
         let rope = Rope::from_str(s);
         match toml::from_str(s) {
             Ok(toml) => Ok(toml),
@@ -86,7 +86,7 @@ impl Manifest {
                     }
                 );
                 
-                Err(ManifestError::Toml { 
+                Err(ManifestParseError::Toml { 
                     range, 
                     msg: err.message().to_string() 
                 })
@@ -94,7 +94,7 @@ impl Manifest {
         }
     }
 
-    pub fn from_file<P>(path: P) -> Result<Self, ManifestError> 
+    pub fn from_file<P>(path: P) -> Result<Self, ManifestParseError> 
     where P: AsRef<Path> {
         let mut f = File::open(&path).map_err(|err| Arc::new(err))?;
 

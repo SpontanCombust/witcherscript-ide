@@ -1,8 +1,8 @@
+use std::any::Any;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use thiserror::Error;
 
-use crate::manifest::{Dependencies, Manifest, ManifestError};
+use crate::manifest::{Dependencies, Manifest, ManifestParseError};
 use crate::source_tree::SourceTree;
 use crate::FileError;
 
@@ -13,6 +13,8 @@ pub trait Content : core::fmt::Debug + dyn_clone::DynClone + Send + Sync {
     fn content_name(&self) -> &str;
     fn source_tree(&self) -> SourceTree;
     fn dependencies(&self) -> Option<&Dependencies>;
+
+    fn as_any(self: Box<Self>) -> Box<dyn Any>;
 }
 
 
@@ -46,6 +48,10 @@ impl Content for UnpackedContentDirectory {
 
     fn dependencies(&self) -> Option<&Dependencies> {
         None
+    }
+
+    fn as_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 }
 
@@ -82,6 +88,10 @@ impl Content for PackedContentDirectory {
     fn dependencies(&self) -> Option<&Dependencies> {
         None
     }
+
+    fn as_any(self: Box<Self>) -> Box<dyn Any> {
+        self
+    }
 }
 
 
@@ -93,7 +103,7 @@ pub struct ProjectDirectory {
 }
 
 impl ProjectDirectory {
-    pub fn new(path: PathBuf) -> Result<Self, ManifestError> {
+    pub fn new(path: PathBuf) -> Result<Self, ManifestParseError> {
         let manifest_path = path.join(Manifest::FILE_NAME);
         let manifest = Manifest::from_file(manifest_path)?;
 
@@ -121,28 +131,35 @@ impl Content for ProjectDirectory {
     fn dependencies(&self) -> Option<&Dependencies> {
         Some(&self.manifest.dependencies)
     }
+
+    fn as_any(self: Box<Self>) -> Box<dyn Any> {
+        self
+    }
 }
+
+
+
 
 
 #[derive(Debug, Clone, Error)]
 pub enum ContentScanError {
     #[error(transparent)]
-    FileError(FileError),
+    Io(FileError<std::io::Error>),
     #[error(transparent)]
-    ManifestError(ManifestError),
+    ManifestParse(FileError<ManifestParseError>),
     #[error("this is not content directory")]
     NotContent
 }
 
-impl From<FileError> for ContentScanError {
-    fn from(value: FileError) -> Self {
-        Self::FileError(value)
+impl From<FileError<std::io::Error>> for ContentScanError {
+    fn from(value: FileError<std::io::Error>) -> Self {
+        Self::Io(value)
     }
 }
 
-impl From<ManifestError> for ContentScanError {
-    fn from(value: ManifestError) -> Self {
-        Self::ManifestError(value)
+impl From<FileError<ManifestParseError>> for ContentScanError {
+    fn from(value: FileError<ManifestParseError>) -> Self {
+        Self::ManifestParse(value)
     }
 }
 
@@ -170,19 +187,13 @@ pub fn find_content_in_directory(path: &Path) -> (Vec<Box<dyn Content>>, Vec<Con
                         }
                     },
                     Err(err) => {
-                        errors.push(FileError {
-                            path: path.to_path_buf(),
-                            error: Arc::new(err)
-                        }.into());
+                        errors.push(FileError::new(path, err).into());
                     }
                 }
             }
         },
         Err(err) => {
-            errors.push(FileError {
-                path: path.to_path_buf(),
-                error: Arc::new(err)
-            }.into());
+            errors.push(FileError::new(path, err).into());
         }
     }
 
@@ -190,13 +201,14 @@ pub fn find_content_in_directory(path: &Path) -> (Vec<Box<dyn Content>>, Vec<Con
 }
 
 fn test_make_content(path: &Path) -> Option<Result<Box<dyn Content>, ContentScanError>> {
-    if path.join(Manifest::FILE_NAME).exists() {
+    let manifest_path = path.join(Manifest::FILE_NAME);
+    if manifest_path.exists() {
         match ProjectDirectory::new(path.to_path_buf()) {
             Ok(proj) => {
                 Some(Ok(Box::new(proj)))
             },
             Err(err) => {
-                Some(Err(err.into()))
+                Some(Err(FileError::new(manifest_path, err).into()))
             },
         }
     } else if path.join("scripts").exists() {

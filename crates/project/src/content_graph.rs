@@ -1,15 +1,17 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
-use crate::content::ProjectDirectory;
-use crate::{Content, ContentRepositories};
-use crate::manifest::{DependencyValue, ManifestError};
+use crate::content::{make_content, ContentScanError, ProjectDirectory};
+use crate::{Content, ContentRepositories, FileError};
+use crate::manifest::{DependencyValue, ManifestParseError};
 
 
 #[derive(Debug, Clone, Error)]
 pub enum ContentGraphError {
     #[error(transparent)]
-    ManifestError(#[from] ManifestError),
+    Io(#[from] FileError<std::io::Error>),
+    #[error(transparent)]
+    ManifestParse(#[from] FileError<ManifestParseError>),
     #[error("content could not be found in this path")]
     ContentPathNotFound {
         path: PathBuf,
@@ -115,7 +117,7 @@ impl ContentGraph {
                 let mut visited = HashSet::new();
                 for i in 0..self.nodes.len() {
                     if self.nodes[i].in_workspace {
-                        self.build_dependency_connections(i, content0_idx, &mut visited);
+                        self.link_dependencies(i, content0_idx, &mut visited);
                     }
                 }
             },
@@ -175,7 +177,7 @@ impl ContentGraph {
         }
     }
 
-    fn build_dependency_connections(&mut self, node_idx: usize, content0_idx: usize, visited: &mut HashSet<usize>) {
+    fn link_dependencies(&mut self, node_idx: usize, content0_idx: usize, visited: &mut HashSet<usize>) {
         if visited.contains(&node_idx) {
             return;
         }
@@ -186,38 +188,10 @@ impl ContentGraph {
             for (dep_name, dep_val) in dependencies {
                 match dep_val {
                     DependencyValue::FromRepo(active) => {
-                        if active {
-                            match self.get_node_index_by_name(&dep_name, Some(self.nodes[node_idx].content.path())) {
-                                Ok(dep_idx) => {
-                                    self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                                    self.build_dependency_connections(dep_idx, content0_idx, visited);
-                                },
-                                Err(err) => {
-                                    self.errors.push(err);
-                                }
-                            }
-                        }
+                        self.link_dependencies_value_from_repo(node_idx, content0_idx, visited, dep_name, active);
                     },
                     DependencyValue::FromPath { path } => {
-                        match self.nodes[node_idx].content.path().join(&path).canonicalize() {
-                            Ok(path) => {
-                                match self.get_node_index_by_path(&path, Some(self.nodes[node_idx].content.path())) {
-                                    Ok(dep_idx) => {
-                                        self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                                        self.build_dependency_connections(dep_idx, content0_idx, visited);
-                                    },
-                                    Err(err) => {
-                                        self.errors.push(err);
-                                    }
-                                }
-                            },
-                            Err(_) => {
-                                self.errors.push(ContentGraphError::ContentPathNotFound { 
-                                    path, 
-                                    origin: Some(self.nodes[node_idx].content.path().to_path_buf())
-                                })
-                            }
-                        }
+                        self.link_dependencies_value_from_path(node_idx, content0_idx, visited, path);
                     },
                 }
             }
@@ -225,6 +199,84 @@ impl ContentGraph {
 
         if self.nodes[node_idx].content.content_name() != "content0" {
             self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: content0_idx });
+        }
+    }
+
+    fn link_dependencies_value_from_repo(&mut self, 
+        node_idx: usize, 
+        content0_idx: usize, 
+        visited: &mut HashSet<usize>, 
+        dependency_name: String, 
+        active: bool
+    ) {
+        if active {
+            match self.get_node_index_by_name(&dependency_name, Some(self.nodes[node_idx].content.path())) {
+                Ok(dep_idx) => {
+                    self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
+                    self.link_dependencies(dep_idx, content0_idx, visited);
+                },
+                Err(err) => {
+                    self.errors.push(err);
+                }
+            }
+        }
+    }
+
+    fn link_dependencies_value_from_path(&mut self, 
+        node_idx: usize, 
+        content0_idx: usize, 
+        visited: &mut HashSet<usize>,
+        dependency_path: PathBuf
+    ) {
+        let dependant_path = self.nodes[node_idx].content.path().to_path_buf();
+        let final_dependency_path = if dependency_path.is_absolute() {
+            dependency_path.canonicalize()
+        } else {
+            dependant_path.join(&dependency_path).canonicalize()
+        };
+
+        match final_dependency_path {
+            Ok(dep_path) => {
+                if let Ok(dep_idx) = self.get_node_index_by_path(&dep_path, None) {
+                    self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
+                    self.link_dependencies(dep_idx, content0_idx, visited);
+                } else {
+                    match make_content(&dep_path) {
+                        Ok(content) => {
+                            let dep_idx = self.insert_node(GraphNode { 
+                                content, 
+                                in_workspace: false, 
+                                in_repository: false
+                            });
+
+                            self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
+                            self.link_dependencies(dep_idx, content0_idx, visited);
+                        },
+                        Err(err) => {
+                            match err {
+                                ContentScanError::Io(err) => {
+                                    self.errors.push(ContentGraphError::Io(err));
+                                },
+                                ContentScanError::ManifestParse(err) => {
+                                    self.errors.push(ContentGraphError::ManifestParse(err));
+                                },
+                                ContentScanError::NotContent => {
+                                    self.errors.push(ContentGraphError::ContentPathNotFound { 
+                                        path: dep_path, 
+                                        origin: Some(dependant_path)
+                                    })
+                                },
+                            }
+                        },
+                    }
+                }
+            },
+            Err(_) => {
+                self.errors.push(ContentGraphError::ContentPathNotFound { 
+                    path: dependency_path, 
+                    origin: Some(dependant_path)
+                })
+            }
         }
     }
 

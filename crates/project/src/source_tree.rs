@@ -1,15 +1,15 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use crate::FileError;
 
 
 #[derive(Debug, Clone)]
 pub struct SourceTree {
+    //TODO "SourcePath" type that can give you either full or relative (to root) script pathl fields: abs_path: PathBuf, root: Rc<PathBuf>
     script_root: PathBuf,
     tree: BTreeSet<PathBuf>,
     /// Errors encountered during scanning
-    pub errors: Vec<FileError>
+    pub errors: Vec<FileError<std::io::Error>>
 }
 
 impl SourceTree {
@@ -42,19 +42,13 @@ impl SourceTree {
                             }
                         },
                         Err(err) => {
-                            self.errors.push(FileError {
-                                path: path.clone(),
-                                error: Arc::new(err)
-                            });
+                            self.errors.push(FileError::new(path.clone(), err));
                         }
                     }
                 }
             },
             Err(err) => {
-                self.errors.push(FileError {
-                    path: path.clone(),
-                    error: Arc::new(err)
-                });
+                self.errors.push(FileError::new(path, err));
             },
         }
     }
