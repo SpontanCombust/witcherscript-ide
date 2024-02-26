@@ -4,7 +4,7 @@ use tower_lsp::{Client, jsonrpc};
 use tower_lsp::lsp_types as lsp;
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Config {
     pub game_directory: PathBuf,
     pub project_repositories: Vec<PathBuf>

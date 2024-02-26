@@ -7,16 +7,23 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 use witcherscript::Script;
 use witcherscript::script_document::ScriptDocument;
+use witcherscript_project::ContentGraph;
 use crate::config::Config;
 
 mod providers;
 mod config;
+mod reporting;
+mod workspace;
 
 
 #[derive(Debug)]
 pub struct Backend {
     client: Client,
-    config: RwLock<Option<Config>>,
+    config: RwLock<Config>,
+    workspace_roots: RwLock<Vec<PathBuf>>,
+
+    content_graph: RwLock<ContentGraph>,
+    // source_trees: DashMap<PathBuf, SourceTree>,
 
     doc_buffers: DashMap<PathBuf, ScriptDocument>,
     scripts: DashMap<PathBuf, Script>
@@ -29,7 +36,12 @@ impl Backend {
     fn new(client: Client) -> Self {
         Self {
             client,
-            config: RwLock::new(None),
+            config: RwLock::new(Config::default()),
+            workspace_roots: RwLock::new(Vec::new()),
+
+            content_graph: RwLock::new(ContentGraph::new()),
+            // source_trees: DashMap::new(),
+
             doc_buffers: DashMap::new(),
             scripts: DashMap::new()
         }
@@ -39,18 +51,29 @@ impl Backend {
         match Config::fetch(&self.client).await {
             Ok(config) => {
                 let mut lock = self.config.write().await;
-                *lock = Some(config);
+                *lock = config;
             },
             Err(err) => {
+                //TODO replace with notification
                 self.client.log_message(lsp::MessageType::ERROR, format!("Client configuration fetch error: {}", err)).await;
             },
         }
     }
+
+    //TODO add convenience functions e.g. log_error
+    //TODO replace some logs with notifications
 }
 
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
-    async fn initialize(&self, _: lsp::InitializeParams) -> Result<lsp::InitializeResult> {
+    async fn initialize(&self, params: lsp::InitializeParams) -> Result<lsp::InitializeResult> {
+        if let Some(workspace_folders) = params.workspace_folders {
+            let mut workspace_roots = self.workspace_roots.write().await;
+            *workspace_roots = workspace_folders.into_iter()
+                .map(|f| f.uri.to_file_path().unwrap())
+                .collect();
+        }
+
         Ok(lsp::InitializeResult {
             server_info: Some(lsp::ServerInfo {
                 name: Backend::SERVER_NAME.into(),
@@ -66,6 +89,14 @@ impl LanguageServer for Backend {
                         include_text: Some(false)
                     }))
                 })),
+                workspace: Some(lsp::WorkspaceServerCapabilities {
+                    workspace_folders: Some(lsp::WorkspaceFoldersServerCapabilities {
+                        supported: Some(true),
+                        change_notifications: Some(lsp::OneOf::Left(true)),
+                    }),
+                    //TODO file operations notifiction config to know if content graph changed in some way
+                    file_operations: None
+                }),
                 ..lsp::ServerCapabilities::default()
             }
         })
@@ -83,6 +114,10 @@ impl LanguageServer for Backend {
         ]).await.unwrap();
 
         self.fetch_config().await;
+
+        self.scan_content_repositories().await;
+        self.scan_workspace_projects().await;
+        self.build_content_graph().await;
     }
 
     async fn shutdown(&self) -> Result<()> {
@@ -97,10 +132,9 @@ impl LanguageServer for Backend {
         providers::document_ops::did_change(self, params).await;
     }
 
-    // Not needed for now
-    // async fn did_save(&self, params: DidSaveTextDocumentParams) {
-    //     providers::document_sync::did_save(self, params).await;
-    // }
+    async fn did_save(&self, params: lsp::DidSaveTextDocumentParams) {
+        providers::document_ops::did_save(self, params).await;
+    }
 
     async fn did_close(&self, params: lsp::DidCloseTextDocumentParams) {
         providers::document_ops::did_close(self, params).await;
@@ -108,8 +142,28 @@ impl LanguageServer for Backend {
 
     async fn did_change_configuration(&self, _: lsp::DidChangeConfigurationParams) {
         self.fetch_config().await;
+        self.scan_content_repositories().await;
+        self.build_content_graph().await;
+    }
+
+    async fn did_change_workspace_folders(&self, params: lsp::DidChangeWorkspaceFoldersParams) {
+        let added: Vec<_> = params.event.added.into_iter()
+            .map(|f| f.uri.to_file_path().unwrap())
+            .collect();
+
+        let removed: Vec<_> = params.event.removed.into_iter()
+            .map(|f| f.uri.to_file_path().unwrap())
+            .collect();
+
+        let mut workspace_roots = self.workspace_roots.write().await;
+        workspace_roots.retain(|p| !removed.contains(p));
+        workspace_roots.extend(added);
+
+        self.scan_workspace_projects().await;
+        self.build_content_graph().await;
     }
 }
+
 
 #[tokio::main]
 async fn main() {

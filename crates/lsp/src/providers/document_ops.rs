@@ -1,8 +1,9 @@
 use std::{ops::DerefMut, borrow::Borrow};
 use tower_lsp::lsp_types as lsp;
 use witcherscript::{script_document::ScriptDocument, Script};
-use witcherscript_analysis::{diagnostics::{Diagnostic, DiagnosticBody}, jobs::syntax_analysis};
-use crate::Backend;
+use witcherscript_analysis::{diagnostics::Diagnostic, jobs::syntax_analysis};
+use witcherscript_project::Manifest;
+use crate::{reporting::IntoLspDiagnostic, Backend};
 
 
 // Until the witcherscript_project crate is ready, only scripts visible in the editor will be stored on the server
@@ -53,9 +54,17 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
     }
 }
 
-// pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams) {
-    
-// }
+pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams) {
+    if params.text_document.uri.scheme() != "file" {
+        backend.client.log_message(lsp::MessageType::ERROR, format!("{} works only on localhost", Backend::SERVER_NAME)).await;
+        return;
+    }
+
+    let doc_path = params.text_document.uri.to_file_path().unwrap();
+    if doc_path.file_name().unwrap() == Manifest::FILE_NAME {
+        backend.build_content_graph().await;
+    }
+}
 
 pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParams) {
     if params.text_document.uri.scheme() != "file" {
@@ -77,19 +86,6 @@ async fn script_syntax_diagnostics<S: Borrow<Script>>(script: S, backend: &Backe
 
     syntax_analysis::syntax_analysis(script.borrow().root_node(), &mut diagnostics);
 
-    let lsp_diags = diagnostics.into_iter()
-        .map(|diag| lsp::Diagnostic {
-            range: diag.range,
-            severity: Some(match diag.body {
-                DiagnosticBody::Error(_) => lsp::DiagnosticSeverity::ERROR,
-                DiagnosticBody::Warning(_) => lsp::DiagnosticSeverity::WARNING,
-                DiagnosticBody::Info(_) => lsp::DiagnosticSeverity::INFORMATION,
-            }),
-            source: Some(Backend::SERVER_NAME.to_string()),
-            message: diag.body.to_string(),
-            ..Default::default()
-        })
-        .collect();
-
+    let lsp_diags = diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic()).collect();
     backend.client.publish_diagnostics(path, lsp_diags, None).await;
 }
