@@ -1,4 +1,4 @@
-use std::{ops::DerefMut, borrow::Borrow};
+use std::{borrow::Borrow, ops::DerefMut};
 use tower_lsp::lsp_types as lsp;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_analysis::{diagnostics::Diagnostic, jobs::syntax_analysis};
@@ -10,7 +10,7 @@ use crate::{reporting::IntoLspDiagnostic, Backend};
 
 pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams) {
     if params.text_document.uri.scheme() != "file" {
-        backend.client.log_message(lsp::MessageType::ERROR, format!("{} works only on localhost", Backend::SERVER_NAME)).await;
+        backend.log_error(format!("{} works only on localhost", Backend::SERVER_NAME)).await;
         return;
     }
 
@@ -26,7 +26,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
                     backend.scripts.insert(doc_path, script);
                 },
                 Err(err) => {
-                    backend.client.log_message(lsp::MessageType::ERROR, err.to_string()).await;
+                    backend.log_error(err).await;
                 }
             }
         }
@@ -35,7 +35,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
 
 pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentParams) {
     if params.text_document.uri.scheme() != "file" {
-        backend.client.log_message(lsp::MessageType::ERROR, format!("{} works only on localhost", Backend::SERVER_NAME)).await;
+        backend.log_error(format!("{} works only on localhost", Backend::SERVER_NAME)).await;
         return;
     }
 
@@ -47,7 +47,7 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
 
         let mut script = backend.scripts.get_mut(&doc_path).unwrap();
         if let Err(err) = script.update(&mut doc) {
-            backend.client.log_message(lsp::MessageType::ERROR, err.to_string()).await;
+            backend.log_error(err).await;
         }
 
         script_syntax_diagnostics(&*script, backend, params.text_document.uri).await;
@@ -56,7 +56,7 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
 
 pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams) {
     if params.text_document.uri.scheme() != "file" {
-        backend.client.log_message(lsp::MessageType::ERROR, format!("{} works only on localhost", Backend::SERVER_NAME)).await;
+        backend.log_error(format!("{} works only on localhost", Backend::SERVER_NAME)).await;
         return;
     }
 
@@ -68,12 +68,11 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
 
 pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParams) {
     if params.text_document.uri.scheme() != "file" {
-        backend.client.log_message(lsp::MessageType::ERROR, format!("{} works only on localhost", Backend::SERVER_NAME)).await;
+        backend.log_error(format!("{} works only on localhost", Backend::SERVER_NAME)).await;
         return;
     }
 
-    // clear errors for the file
-    backend.client.publish_diagnostics(params.text_document.uri.clone(), vec![], None).await;
+    backend.clear_diagnostics(params.text_document.uri.clone()).await;
 
     let doc_path = params.text_document.uri.to_file_path().unwrap();
     backend.doc_buffers.remove(&doc_path);
@@ -81,11 +80,11 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
 }
 
 
-async fn script_syntax_diagnostics<S: Borrow<Script>>(script: S, backend: &Backend, path: lsp::Url) {
+async fn script_syntax_diagnostics<S: Borrow<Script>>(script: S, backend: &Backend, url: lsp::Url) {
     let mut diagnostics: Vec<Diagnostic> = Vec::new();
 
     syntax_analysis::syntax_analysis(script.borrow().root_node(), &mut diagnostics);
 
-    let lsp_diags = diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic()).collect();
-    backend.client.publish_diagnostics(path, lsp_diags, None).await;
+    let lsp_diags = diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic());
+    backend.publish_diagnostics(url, lsp_diags).await;
 }

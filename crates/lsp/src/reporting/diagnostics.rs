@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use tower_lsp::lsp_types::{self as lsp, Position};
 use witcherscript_analysis::diagnostics::{Diagnostic, DiagnosticBody};
 use witcherscript_project::{manifest::ManifestParseError, FileError};
@@ -56,6 +57,38 @@ impl IntoLspDiagnostic for FileError<ManifestParseError> {
             source: Some(Backend::SERVER_NAME.to_string()),
             message,
             ..Default::default()
+        }
+    }
+}
+
+
+pub trait TryIntoUrl {
+    fn try_into_url(self) -> Result<lsp::Url, ()>;
+}
+
+impl TryIntoUrl for lsp::Url {
+    fn try_into_url(self) -> Result<lsp::Url, ()> {
+        Ok(self)
+    }
+}
+
+impl TryIntoUrl for PathBuf {
+    fn try_into_url(self) -> Result<lsp::Url, ()> {
+        let path = self.canonicalize().map_err(|_| ())?;
+        lsp::Url::from_file_path(path)
+    }
+}
+
+impl Backend {
+    pub async fn publish_diagnostics<P: TryIntoUrl>(&self, path: P, diags: impl IntoIterator<Item = lsp::Diagnostic>) {
+        if let Ok(url) = path.try_into_url() {
+            self.client.publish_diagnostics(url, diags.into_iter().collect(), None).await;
+        }
+    }
+
+    pub async fn clear_diagnostics<P: TryIntoUrl>(&self, path: P) {
+        if let Ok(url) = path.try_into_url() {
+            self.client.publish_diagnostics(url, Vec::new(), None).await;
         }
     }
 }

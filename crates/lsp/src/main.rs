@@ -41,27 +41,12 @@ impl Backend {
 
             content_graph: RwLock::new(ContentGraph::new()),
             // source_trees: DashMap::new(),
+            //TODO a collection tracking errors for/in files, so error diagnostics don't dangle when these files get forgotten about
 
             doc_buffers: DashMap::new(),
             scripts: DashMap::new()
         }
     }
-
-    async fn fetch_config(&self) {
-        match Config::fetch(&self.client).await {
-            Ok(config) => {
-                let mut lock = self.config.write().await;
-                *lock = config;
-            },
-            Err(err) => {
-                //TODO replace with notification
-                self.client.log_message(lsp::MessageType::ERROR, format!("Client configuration fetch error: {}", err)).await;
-            },
-        }
-    }
-
-    //TODO add convenience functions e.g. log_error
-    //TODO replace some logs with notifications
 }
 
 #[tower_lsp::async_trait]
@@ -103,7 +88,7 @@ impl LanguageServer for Backend {
     }
 
     async fn initialized(&self, _: lsp::InitializedParams) {
-        self.client.log_message(lsp::MessageType::INFO, "Server initialized!").await;
+        self.log_info("Server initialized!").await;
 
         self.client.register_capability(vec![
             lsp::Registration { 

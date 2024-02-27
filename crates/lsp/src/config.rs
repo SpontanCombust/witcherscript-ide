@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use thiserror::Error;
 use tower_lsp::{Client, jsonrpc};
 use tower_lsp::lsp_types as lsp;
+use crate::Backend;
 
 
 #[derive(Debug, Clone, Default)]
@@ -36,5 +37,22 @@ impl Config {
             game_directory: serde_json::from_value(values[0].clone())?,
             project_repositories: serde_json::from_value(values[1].clone())?
         })
+    }
+}
+
+
+impl Backend {
+    pub async fn fetch_config(&self) {
+        self.log_info("Fetching configuration...").await;
+
+        match Config::fetch(&self.client).await {
+            Ok(config) => {
+                let mut lock = self.config.write().await;
+                *lock = config;
+            },
+            Err(err) => {
+                self.show_error_notification(format!("Client configuration fetch error: {}", err)).await;
+            },
+        }
     }
 }
