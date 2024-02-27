@@ -1,28 +1,59 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 use crate::FileError;
+
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SourceFilePath {
+    script_root: Rc<PathBuf>,
+    abs_path: PathBuf
+}
+
+impl SourceFilePath {
+    fn new(script_root: Rc<PathBuf>, abs_path: PathBuf) -> Self {
+        Self {
+            script_root,
+            abs_path
+        }
+    }
+
+    /// A full path to the file
+    pub fn absolute(&self) -> &Path {
+        &self.abs_path
+    }
+
+    /// A path to the file relative to the "scripts" directory
+    pub fn local(&self) -> &Path {
+        self.abs_path.strip_prefix(self.script_root.as_ref()).unwrap()
+    }
+
+    /// A full path to the root "scripts" directory
+    pub fn root(&self) -> &Path {
+        self.script_root.as_ref()
+    }
+}
 
 
 #[derive(Debug, Clone)]
 pub struct SourceTree {
-    //TODO "SourcePath" type that can give you either full or relative (to root) script pathl fields: abs_path: PathBuf, root: Rc<PathBuf>
-    script_root: PathBuf,
-    tree: BTreeSet<PathBuf>,
+    script_root: Rc<PathBuf>,
+    tree: BTreeSet<SourceFilePath>,
     /// Errors encountered during scanning
     pub errors: Vec<FileError<std::io::Error>>
 }
 
 impl SourceTree {
     /// `script_root` should be the `{content_name}/content/scripts` directory
-    pub fn new<P: AsRef<Path>>(script_root: P) -> Self {
+    pub(crate) fn new(script_root: PathBuf) -> Self {
         let mut tree = Self {
-            script_root: script_root.as_ref().into(),
+            script_root: Rc::new(script_root),
             tree: BTreeSet::new(),
             errors: Vec::new()
         };
 
         if tree.script_root.is_dir() {
-            tree.scan_visit_dir(tree.script_root.clone());
+            tree.scan_visit_dir(tree.script_root.to_path_buf());
         }
 
         tree
@@ -56,8 +87,7 @@ impl SourceTree {
     fn scan_visit_file(&mut self, path: PathBuf) {
         if let Some(ext) = path.extension() {
             if ext == "ws" {
-                let relative = path.strip_prefix(&self.script_root).unwrap();
-                self.tree.insert(relative.into());
+                self.tree.insert(SourceFilePath::new(self.script_root.clone(), path));
             }
         }
     }
@@ -67,15 +97,11 @@ impl SourceTree {
         &self.script_root
     }
 
-    pub fn contains<P: AsRef<Path>>(&self, path: P) -> bool {
-        self.tree.contains(path.as_ref())
-    }
-
     pub fn len(&self) -> usize {
         self.tree.len()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &Path> {
-        self.tree.iter().map(|buf| buf.as_path())
+    pub fn iter(&self) -> impl Iterator<Item = &SourceFilePath> {
+        self.tree.iter()
     }
 }
