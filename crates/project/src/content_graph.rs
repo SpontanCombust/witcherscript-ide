@@ -12,6 +12,7 @@ pub enum ContentGraphError {
     Io(#[from] FileError<std::io::Error>),
     #[error(transparent)]
     ManifestParse(#[from] FileError<ManifestParseError>),
+    //TODO introduce error ranges
     #[error("content could not be found in this path")]
     ContentPathNotFound {
         path: PathBuf,
@@ -42,6 +43,7 @@ pub struct ContentGraph {
     pub errors: Vec<ContentGraphError>
 }
 
+//TODO perhaps it would be better to have errors stored in nodes and make nodes public
 #[derive(Debug)]
 struct GraphNode {
     content: Box<dyn Content>,
@@ -185,10 +187,10 @@ impl ContentGraph {
         visited.insert(node_idx);
 
         if let Some(dependencies) = self.nodes[node_idx].content.dependencies().cloned() {
-            for (dep_name, dep_val) in dependencies {
-                match dep_val {
+            for entry in dependencies.into_iter() {
+                match entry.value.inner() {
                     DependencyValue::FromRepo(active) => {
-                        self.link_dependencies_value_from_repo(node_idx, content0_idx, visited, dep_name, active);
+                        self.link_dependencies_value_from_repo(node_idx, content0_idx, visited, &entry.name, *active);
                     },
                     DependencyValue::FromPath { path } => {
                         self.link_dependencies_value_from_path(node_idx, content0_idx, visited, path);
@@ -206,7 +208,7 @@ impl ContentGraph {
         node_idx: usize, 
         content0_idx: usize, 
         visited: &mut HashSet<usize>, 
-        dependency_name: String, 
+        dependency_name: &str, 
         active: bool
     ) {
         if active {
@@ -226,7 +228,7 @@ impl ContentGraph {
         node_idx: usize, 
         content0_idx: usize, 
         visited: &mut HashSet<usize>,
-        dependency_path: PathBuf
+        dependency_path: &Path
     ) {
         let dependant_path = self.nodes[node_idx].content.path().to_path_buf();
         let final_dependency_path = if dependency_path.is_absolute() {
@@ -273,7 +275,7 @@ impl ContentGraph {
             },
             Err(_) => {
                 self.errors.push(ContentGraphError::ContentPathNotFound { 
-                    path: dependency_path, 
+                    path: dependency_path.to_path_buf(), 
                     origin: Some(dependant_path)
                 })
             }
