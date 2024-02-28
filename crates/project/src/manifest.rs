@@ -91,7 +91,7 @@ impl Manifest {
 pub enum ManifestParseError {
     #[error("file access error")]
     Io(#[from] Arc<io::Error>),
-    #[error("TOML file parsing errors")]
+    #[error("TOML file parsing error")]
     Toml {
         range: lsp::Range,
         msg: String
@@ -239,8 +239,8 @@ impl<T> Ranged<T> {
         &self.value
     }
 
-    pub fn range(&self) -> lsp::Range {
-        self.range.clone()
+    pub fn range(&self) -> &lsp::Range {
+        &self.range
     }
 
     pub fn into_tuple(self) -> (T, lsp::Range) {

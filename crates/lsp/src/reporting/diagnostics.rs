@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use tower_lsp::lsp_types::{self as lsp, Position};
+use tower_lsp::lsp_types as lsp;
 use witcherscript_analysis::diagnostics::{Diagnostic, DiagnosticBody};
 use witcherscript_project::{manifest::ManifestParseError, FileError};
 use crate::Backend;
@@ -28,7 +28,7 @@ impl IntoLspDiagnostic for Diagnostic {
 impl IntoLspDiagnostic for FileError<std::io::Error> {
     fn into_lsp_diagnostic(self) -> lsp::Diagnostic {
         lsp::Diagnostic {
-            range: lsp::Range::new(Position::new(0, 0), Position::new(0, 1)),
+            range: lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1)),
             severity: Some(lsp::DiagnosticSeverity::ERROR),
             source: Some(Backend::SERVER_NAME.to_string()),
             message: self.error.to_string(),
@@ -42,7 +42,7 @@ impl IntoLspDiagnostic for FileError<ManifestParseError> {
         let error = self.error.as_ref();
         
         let range = match error {
-            ManifestParseError::Io(_) => lsp::Range::new(Position::new(0, 0), Position::new(0, 1)),
+            ManifestParseError::Io(_) => lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1)),
             ManifestParseError::Toml { range, msg: _ } => range.clone(),
         };
 
@@ -56,6 +56,18 @@ impl IntoLspDiagnostic for FileError<ManifestParseError> {
             severity: Some(lsp::DiagnosticSeverity::ERROR),
             source: Some(Backend::SERVER_NAME.to_string()),
             message,
+            ..Default::default()
+        }
+    }
+}
+
+impl IntoLspDiagnostic for (String, lsp::Range) {
+    fn into_lsp_diagnostic(self) -> lsp::Diagnostic {
+        lsp::Diagnostic {
+            range: self.1,
+            severity: Some(lsp::DiagnosticSeverity::ERROR),
+            source: Some(Backend::SERVER_NAME.to_string()),
+            message: self.0,
             ..Default::default()
         }
     }

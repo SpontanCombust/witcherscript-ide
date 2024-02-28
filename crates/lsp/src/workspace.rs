@@ -1,4 +1,3 @@
-use tower_lsp::lsp_types as lsp;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory, find_content_in_directory};
 use witcherscript_project::{Content, ContentRepositories};
 use witcherscript_project::content_graph::ContentGraphError;
@@ -77,8 +76,7 @@ impl Backend {
                 self.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
             },
             ContentScanError::ManifestParse(err) => {
-                let url = lsp::Url::from_file_path(&err.path.canonicalize().unwrap()).unwrap();
-                self.client.publish_diagnostics(url, vec![err.into_lsp_diagnostic()], None).await;
+                self.publish_diagnostics(err.path.clone(), [err.into_lsp_diagnostic()]).await;
             },
             ContentScanError::NotContent => {},
         }
@@ -86,18 +84,29 @@ impl Backend {
 
     async fn report_content_graph_errors(&self, errors: Vec<ContentGraphError>) {
         for err in errors {
+            let err_str = err.to_string();
             match err {
                 ContentGraphError::Io(err) => {
                     self.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
                 },
                 ContentGraphError::ManifestParse(err) => {
-                    let url = lsp::Url::from_file_path(&err.path.canonicalize().unwrap()).unwrap();
-                    self.client.publish_diagnostics(url, vec![err.into_lsp_diagnostic()], None).await;
+                    self.publish_diagnostics(err.path.clone(), [err.into_lsp_diagnostic()]).await;
                 },
-                //TODO parsing TOML in such a way that later on you know where fragments are located and can publish diagnostics 
-                ContentGraphError::ContentPathNotFound { path, origin } => todo!(),
-                ContentGraphError::ContentNameNotFound { name, origin } => todo!(),
-                ContentGraphError::MultipleMatchingContents { name, origin } => todo!(),
+                ContentGraphError::DependencyPathNotFound { content_path: _, manifest_path, manifest_range } => {
+                    self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
+                },
+                ContentGraphError::DependencyNameNotFound { content_name: _, manifest_path, manifest_range } => {
+                    self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
+                },
+                ContentGraphError::MultipleMatchingDependencies { content_name: _, manifest_path, manifest_range } => {
+                    self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
+                },
+                ContentGraphError::Content0NotFound => {
+                    self.show_error_notification(err_str).await;
+                },
+                ContentGraphError::MultipleContent0Found => {
+                    self.show_error_notification(err_str).await;
+                },
             }
         }
     }

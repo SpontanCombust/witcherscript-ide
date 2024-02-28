@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
+use lsp_types as lsp;
 use crate::content::{make_content, ContentScanError, ProjectDirectory};
 use crate::{Content, ContentRepositories, FileError};
 use crate::manifest::{DependencyValue, ManifestParseError};
@@ -12,22 +13,34 @@ pub enum ContentGraphError {
     Io(#[from] FileError<std::io::Error>),
     #[error(transparent)]
     ManifestParse(#[from] FileError<ManifestParseError>),
-    //TODO introduce error ranges
-    #[error("content could not be found in this path")]
-    ContentPathNotFound {
-        path: PathBuf,
-        origin: Option<PathBuf>
+    #[error("project dependency could not be found in this path")]
+    DependencyPathNotFound {
+        content_path: PathBuf,
+        /// Manifest from which this error originated
+        manifest_path: PathBuf,
+        // Location in the manifest where the path is present
+        manifest_range: lsp::Range
     },
-    #[error("content could not be found with this name")]
-    ContentNameNotFound {
-        name: String,
-        origin: Option<PathBuf>
+    #[error("project dependency could not be found with this name")]
+    DependencyNameNotFound {
+        content_name: String,
+        /// Manifest from which this error originated
+        manifest_path: PathBuf,
+        // Location in the manifest where the name is present
+        manifest_range: lsp::Range
     },
-    #[error("there are multiple matching contents for this content name")]
-    MultipleMatchingContents {
-        name: String,
-        origin: Option<PathBuf>
-    }
+    #[error("there are multiple matching dependencies with this name for this project")]
+    MultipleMatchingDependencies {
+        content_name: String,
+        /// Manifest from which this error originated
+        manifest_path: PathBuf,
+        // Location in the manifest where the name is present
+        manifest_range: lsp::Range
+    },
+    #[error("content0 scripts could not be found")]
+    Content0NotFound,
+    #[error("found more than one instance of content0 scripts")]
+    MultipleContent0Found
 }
 
 
@@ -113,7 +126,7 @@ impl ContentGraph {
         }
 
         // Proceed with dependency building only if content0 is available
-        match self.get_node_index_by_name("content0", None) {
+        match self.get_node_index_by_name("content0") {
             Ok(content0_idx) => {
                 // Now visit each of workspace content nodes to check for their dependencies.
                 let mut visited = HashSet::new();
@@ -123,8 +136,12 @@ impl ContentGraph {
                     }
                 }
             },
-            Err(err) => {
-                self.errors.push(err);
+            Err(content0_count) => {
+                if content0_count == 0 {
+                    self.errors.push(ContentGraphError::Content0NotFound);
+                } else {
+                    self.errors.push(ContentGraphError::MultipleContent0Found);
+                }
             },
         }
 
@@ -144,14 +161,14 @@ impl ContentGraph {
 
     /// Visits all content nodes that are dependencies to the specified content.
     pub fn walk_dependencies(&self, content: &impl Content, visitor: impl FnMut(usize)) {
-        if let Ok(idx) = self.get_node_index_by_path(content.path(), None) {
+        if let Some(idx) = self.get_node_index_by_path(content.path()) {
             self.walk_by_index(idx, GraphEdgeDirection::Dependencies, visitor);
         }
     }
 
     /// Visits all content nodes that are dependants to the specified content.
     pub fn walk_dependants(&self, content: &impl Content, visitor: impl FnMut(usize)) {
-        if let Ok(idx) = self.get_node_index_by_path(content.path(), None) {
+        if let Some(idx) = self.get_node_index_by_path(content.path()) {
             self.walk_by_index(idx, GraphEdgeDirection::Dependants, visitor);
         }
     }
@@ -160,23 +177,16 @@ impl ContentGraph {
 
     /// Returns index of the node if it was inserted successfully
     fn create_node_for_content(&mut self, content: Box<dyn Content>, in_repository: bool, in_workspace: bool) {
-        if content.path().exists() {
-            if self.get_node_index_by_path(content.path(), None).is_ok() {
-                // node has already been made for this content
-                return;
-            }
-
-            self.insert_node(GraphNode { 
-                content,
-                in_workspace, 
-                in_repository,
-            });
-        } else {
-            self.errors.push(ContentGraphError::ContentPathNotFound { 
-                path: content.path().to_path_buf(),
-                origin: None
-            });
+        if self.get_node_index_by_path(content.path()).is_some() {
+            // node has already been made for this content
+            return;
         }
+
+        self.insert_node(GraphNode { 
+            content,
+            in_workspace, 
+            in_repository,
+        });
     }
 
     fn link_dependencies(&mut self, node_idx: usize, content0_idx: usize, visited: &mut HashSet<usize>) {
@@ -190,10 +200,10 @@ impl ContentGraph {
             for entry in dependencies.into_iter() {
                 match entry.value.inner() {
                     DependencyValue::FromRepo(active) => {
-                        self.link_dependencies_value_from_repo(node_idx, content0_idx, visited, &entry.name, *active);
+                        self.link_dependencies_value_from_repo(node_idx, content0_idx, visited, &entry.name, entry.name.range(), *active);
                     },
                     DependencyValue::FromPath { path } => {
-                        self.link_dependencies_value_from_path(node_idx, content0_idx, visited, path);
+                        self.link_dependencies_value_from_path(node_idx, content0_idx, visited, path, entry.value.range());
                     },
                 }
             }
@@ -208,17 +218,30 @@ impl ContentGraph {
         node_idx: usize, 
         content0_idx: usize, 
         visited: &mut HashSet<usize>, 
-        dependency_name: &str, 
+        dependency_name: &str,
+        dependency_name_range: &lsp::Range,
         active: bool
     ) {
         if active {
-            match self.get_node_index_by_name(&dependency_name, Some(self.nodes[node_idx].content.path())) {
+            match self.get_node_index_by_name(&dependency_name) {
                 Ok(dep_idx) => {
                     self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
                     self.link_dependencies(dep_idx, content0_idx, visited);
                 },
-                Err(err) => {
-                    self.errors.push(err);
+                Err(dep_count) => {
+                    if dep_count == 0 {
+                        self.errors.push(ContentGraphError::DependencyNameNotFound { 
+                            content_name: dependency_name.to_string(), 
+                            manifest_path: self.nodes[node_idx].content.path().to_path_buf(), 
+                            manifest_range: dependency_name_range.clone()
+                        });
+                    } else {
+                        self.errors.push(ContentGraphError::MultipleMatchingDependencies { 
+                            content_name: dependency_name.to_string(), 
+                            manifest_path: self.nodes[node_idx].content.path().to_path_buf(), 
+                            manifest_range: dependency_name_range.clone()
+                        });
+                    }
                 }
             }
         }
@@ -228,7 +251,8 @@ impl ContentGraph {
         node_idx: usize, 
         content0_idx: usize, 
         visited: &mut HashSet<usize>,
-        dependency_path: &Path
+        dependency_path: &Path,
+        dependency_path_range: &lsp::Range
     ) {
         let dependant_path = self.nodes[node_idx].content.path().to_path_buf();
         let final_dependency_path = if dependency_path.is_absolute() {
@@ -239,7 +263,7 @@ impl ContentGraph {
 
         match final_dependency_path {
             Ok(dep_path) => {
-                if let Ok(dep_idx) = self.get_node_index_by_path(&dep_path, None) {
+                if let Some(dep_idx) = self.get_node_index_by_path(&dep_path) {
                     self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
                     self.link_dependencies(dep_idx, content0_idx, visited);
                 } else {
@@ -263,9 +287,10 @@ impl ContentGraph {
                                     self.errors.push(ContentGraphError::ManifestParse(err));
                                 },
                                 ContentScanError::NotContent => {
-                                    self.errors.push(ContentGraphError::ContentPathNotFound { 
-                                        path: dep_path, 
-                                        origin: Some(dependant_path)
+                                    self.errors.push(ContentGraphError::DependencyPathNotFound { 
+                                        content_path: dep_path, 
+                                        manifest_path: dependant_path.to_path_buf(),
+                                        manifest_range: dependency_path_range.clone()
                                     })
                                 },
                             }
@@ -274,13 +299,15 @@ impl ContentGraph {
                 }
             },
             Err(_) => {
-                self.errors.push(ContentGraphError::ContentPathNotFound { 
-                    path: dependency_path.to_path_buf(), 
-                    origin: Some(dependant_path)
+                self.errors.push(ContentGraphError::DependencyPathNotFound { 
+                    content_path: dependency_path.to_path_buf(), 
+                    manifest_path: dependant_path.to_path_buf(),
+                    manifest_range: dependency_path_range.clone()
                 })
             }
         }
     }
+
 
 
 
@@ -292,7 +319,7 @@ impl ContentGraph {
 
     /// Changes node indices. Be aware!
     fn remove_node_by_path(&mut self, content_path: &Path) {
-        if let Ok(target_idx) = self.get_node_index_by_path(content_path, None) {
+        if let Some(target_idx) = self.get_node_index_by_path(content_path) {
             // first remove all edges that mention this node
             self.edges.retain(|edge| edge.dependant_idx != target_idx && edge.dependency_idx != target_idx);
 
@@ -321,20 +348,20 @@ impl ContentGraph {
         }
     }
 
-    fn get_node_index_by_path(&self, path: &Path, dependant: Option<&Path>) -> Result<usize, ContentGraphError> {
+    fn get_node_index_by_path(&self, path: &Path) -> Option<usize> {
         for (i, n) in self.nodes.iter().enumerate() {
             if n.content.path() == path {
-                return Ok(i)
+                return Some(i)
             }
         }
 
-        Err(ContentGraphError::ContentPathNotFound { 
-            path: path.to_path_buf(),
-            origin: dependant.map(|p| p.to_path_buf())
-        })
+        None
     }
 
-    fn get_node_index_by_name(&self, name: &str, dependant: Option<&Path>) -> Result<usize, ContentGraphError> {
+    /// If there is just one content with the name returns Ok with the index.
+    /// Otherwise returns Err with the number of contents encountered with that name.
+    /// So if it wasn't found returns Err(0) or if more than one with than name was found returns Err(2) for example. 
+    fn get_node_index_by_name(&self, name: &str) -> Result<usize, usize> {
         let mut candidates = Vec::new();
         for (i, n) in self.nodes.iter().enumerate() {
             if n.content.content_name() == name {
@@ -342,18 +369,13 @@ impl ContentGraph {
             }
         }
 
-        if candidates.len() == 0 {
-            Err(ContentGraphError::ContentNameNotFound { 
-                name: name.to_string(),
-                origin: dependant.map(|p| p.to_path_buf())
-            })
-        } else if candidates.len() == 1 {
+        let candidates_len = candidates.len();
+        if candidates_len == 0 {
+            Err(0)
+        } else if candidates_len == 1 {
             Ok(candidates[0])
         } else {
-            Err(ContentGraphError::MultipleMatchingContents { 
-                name: name.to_string(),
-                origin: dependant.map(|p| p.to_path_buf())
-            })
+            Err(candidates_len)
         }
     }
 
