@@ -17,8 +17,12 @@ impl EventDeclarationNode<'_> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
-        self.field_children("params").map(|n| n.into())
+    pub fn params(&self) -> FunctionParametersNode {
+        self.field_child("params").unwrap().into()
+    }
+
+    pub fn return_type(&self) -> Option<TypeAnnotationNode> {
+        self.field_child("return_type").map(|n| n.into())
     }
 
     pub fn definition(&self) -> FunctionDefinitionNode {
@@ -30,7 +34,8 @@ impl Debug for EventDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("EventDeclaration")
             .field("name", &self.name())
-            .field("params", &self.params().collect::<Vec<_>>())
+            .field("params", &self.params())
+            .field("return_type", &self.return_type())
             .field("definition", &self.definition())
             .finish()
     }
@@ -51,7 +56,7 @@ impl<'script> TryFrom<AnyNode<'script>> for EventDeclarationNode<'script> {
 impl StatementTraversal for EventDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_event_decl(self) {
-            self.params().for_each(|p| p.accept(visitor));
+            self.params().accept(visitor);
             self.definition().accept(visitor);
         }
         visitor.exit_event_decl(self);
@@ -82,8 +87,8 @@ impl GlobalFunctionDeclarationNode<'_> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
-        self.field_children("params").map(|n| n.into())
+    pub fn params(&self) -> FunctionParametersNode {
+        self.field_child("params").unwrap().into()
     }
 
     pub fn return_type(&self) -> Option<TypeAnnotationNode> {
@@ -101,7 +106,7 @@ impl Debug for GlobalFunctionDeclarationNode<'_> {
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("flavour", &self.flavour())
             .field("name", &self.name())
-            .field("params", &self.params().collect::<Vec<_>>())
+            .field("params", &self.params())
             .field("return_type", &self.return_type())
             .field("definition", &self.definition())
             .finish()
@@ -123,7 +128,7 @@ impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionDeclarationNode<'scrip
 impl StatementTraversal for GlobalFunctionDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_global_func_decl(self) {
-            self.params().for_each(|p| p.accept(visitor));
+            self.params().accept(visitor);
             self.definition().accept(visitor);
         }
         visitor.exit_global_func_decl(self);
@@ -154,8 +159,8 @@ impl MemberFunctionDeclarationNode<'_> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
-        self.field_children("params").map(|n| n.into())
+    pub fn params(&self) -> FunctionParametersNode {
+        self.field_child("params").unwrap().into()
     }
 
     pub fn return_type(&self) -> Option<TypeAnnotationNode> {
@@ -173,7 +178,7 @@ impl Debug for MemberFunctionDeclarationNode<'_> {
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("flavour", &self.flavour())
             .field("name", &self.name())
-            .field("params", &self.params().collect::<Vec<_>>())
+            .field("params", &self.params())
             .field("return_type", &self.return_type())
             .field("definition", &self.definition())
             .finish()
@@ -195,7 +200,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionDeclarationNode<'scrip
 impl StatementTraversal for MemberFunctionDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_member_func_decl(self) {
-            self.params().for_each(|p| p.accept(visitor));
+            self.params().accept(visitor);
             self.definition().accept(visitor);
         }
         visitor.exit_member_func_decl(self);
@@ -258,6 +263,47 @@ impl StatementTraversal for FunctionDefinitionNode<'_> {
         if let FunctionDefinition::Some(block) = self.clone().value() {
             block.accept(visitor);
         }
+    }
+}
+
+
+
+#[derive(Debug, Clone)]
+pub struct FunctionParameters;
+
+pub type FunctionParametersNode<'script> = SyntaxNode<'script, FunctionParameters>;
+
+impl NamedSyntaxNode for FunctionParametersNode<'_> {
+    const NODE_KIND: &'static str = "func_params";
+}
+
+impl FunctionParametersNode<'_> {
+    pub fn groups(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
+        self.named_children().map(|n| n.into())
+    }
+}
+
+impl Debug for FunctionParametersNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate_named("FunctionParameters", &self.groups().collect::<Vec<_>>())
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for FunctionParametersNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl StatementTraversal for FunctionParametersNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        self.groups().for_each(|s| s.accept(visitor));
     }
 }
 

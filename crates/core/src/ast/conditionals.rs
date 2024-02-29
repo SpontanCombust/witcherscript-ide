@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{NamedSyntaxNode, SyntaxNode, AnyNode};
+use crate::{AnyNode, DebugMaybeAlternate, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
 
 
@@ -69,25 +69,20 @@ impl NamedSyntaxNode for SwitchConditionalNode<'_> {
 }
 
 impl SwitchConditionalNode<'_> {
-    pub fn matched_expr(&self) -> ExpressionNode {
-        self.field_child("matched_expr").unwrap().into()
+    pub fn cond(&self) -> ExpressionNode {
+        self.field_child("cond").unwrap().into()
     }
 
-    pub fn cases(&self) -> impl Iterator<Item = SwitchConditionalCaseNode> {
-        self.field_children("cases").map(|n| n.into())
-    }
-
-    pub fn default(&self) -> Option<SwitchConditionalDefaultNode> {
-        self.field_child("default").map(|n| n.into())
+    pub fn body(&self) -> SwitchConditionalBlockNode {
+        self.field_child("body").unwrap().into()
     }
 }
 
 impl Debug for SwitchConditionalNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SwitchConditional")
-            .field("matched_expr", &self.matched_expr())
-            .field("cases", &self.cases().collect::<Vec<_>>())
-            .field("default", &self.default())
+            .field("cond", &self.cond())
+            .field("body", &self.body())
             .finish()
     }
 }
@@ -107,42 +102,149 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalNode<'script> {
 impl StatementTraversal for SwitchConditionalNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_switch_stmt(self) {
-            self.cases().for_each(|s| s.accept(visitor));
-            self.default().map(|s| { s.accept(visitor) });
+            self.body().accept(visitor);
         }
     }
 }
 
 
+
 #[derive(Debug, Clone)]
-pub struct SwitchConditionalCase;
+pub struct SwitchConditionalBlock;
 
-pub type SwitchConditionalCaseNode<'script> = SyntaxNode<'script, SwitchConditionalCase>;
+pub type SwitchConditionalBlockNode<'script> = SyntaxNode<'script, SwitchConditionalBlock>;
 
-impl NamedSyntaxNode for SwitchConditionalCaseNode<'_> {
-    const NODE_KIND: &'static str = "switch_case";
+impl NamedSyntaxNode for SwitchConditionalBlockNode<'_> {
+    const NODE_KIND: &'static str = "switch_block";
 }
 
-impl SwitchConditionalCaseNode<'_> {
+impl SwitchConditionalBlockNode<'_> {
+    pub fn sections(&self) -> impl Iterator<Item = SwitchConditionalSectionNode> {
+        self.named_children().map(|n| n.into())
+    }
+}
+
+impl Debug for SwitchConditionalBlockNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate_named("SwitchConditionalBlock", &self.sections().collect::<Vec<_>>())
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalBlockNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl StatementTraversal for SwitchConditionalBlockNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        self.sections().for_each(|s| s.accept(visitor));
+    }
+}
+
+
+
+#[derive(Clone)]
+pub enum SwitchConditionalSection<'script> {
+    Statement(FunctionStatementNode<'script>),
+    Case(SwitchConditionalCaseLabelNode<'script>),
+    Default(SwitchConditionalDefaultLabelNode<'script>)
+}
+
+impl Debug for SwitchConditionalSection<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Statement(n) => f.debug_maybe_alternate(n),
+            Self::Case(n) => f.debug_maybe_alternate(n),
+            Self::Default(n) => f.debug_maybe_alternate(n),
+        }
+    }
+}
+
+pub type SwitchConditionalSectionNode<'script> = SyntaxNode<'script, SwitchConditionalSection<'script>>;
+
+impl<'script> SwitchConditionalSectionNode<'script> {
+    pub fn value(self) -> SwitchConditionalSection<'script> {
+        let k = self.tree_node.kind();
+        // first try if self is a label
+        if k == SwitchConditionalCaseLabelNode::NODE_KIND {
+            return SwitchConditionalSection::Case(self.into());
+        }
+        if k == SwitchConditionalDefaultLabelNode::NODE_KIND {
+            return SwitchConditionalSection::Default(self.into());
+        }
+        // if self is not label then it must be a function statement
+        if let Ok(stmt) = FunctionStatementNode::try_from(self.into_any()) {
+            return SwitchConditionalSection::Statement(stmt);
+        }
+
+        panic!("Unexpected switch conditional section node")
+    }
+}
+
+impl Debug for SwitchConditionalSectionNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate(&self.clone().value())
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalSectionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        let k = value.tree_node.kind();
+        if k == SwitchConditionalCaseLabelNode::NODE_KIND 
+        || k == SwitchConditionalDefaultLabelNode::NODE_KIND 
+        || FunctionStatementNode::try_from(value.clone()).is_ok() {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl StatementTraversal for SwitchConditionalSectionNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        match self.clone().value() {
+            SwitchConditionalSection::Statement(n) => n.accept(visitor),
+            SwitchConditionalSection::Case(n) => n.accept(visitor),
+            SwitchConditionalSection::Default(n) => n.accept(visitor),
+        }
+    }
+}
+
+
+
+#[derive(Debug, Clone)]
+pub struct SwitchConditionalCaseLabel;
+
+pub type SwitchConditionalCaseLabelNode<'script> = SyntaxNode<'script, SwitchConditionalCaseLabel>;
+
+impl NamedSyntaxNode for SwitchConditionalCaseLabelNode<'_> {
+    const NODE_KIND: &'static str = "switch_case_label";
+}
+
+impl SwitchConditionalCaseLabelNode<'_> {
     pub fn value(&self) -> ExpressionNode {
         self.field_child("value").unwrap().into()
     }
-
-    pub fn body(&self) -> impl Iterator<Item = FunctionStatementNode> {
-        self.field_children("body").map(|n| n.into())
-    }
 }
 
-impl Debug for SwitchConditionalCaseNode<'_> {
+impl Debug for SwitchConditionalCaseLabelNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SwitchConditionalCase")
+        f.debug_struct("SwitchConditionalCaseLabel")
             .field("value", &self.value())
-            .field("body", &self.body().collect::<Vec<_>>())
             .finish()
     }
 }
 
-impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalCaseNode<'script> {
+impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalCaseLabelNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
@@ -154,38 +256,29 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalCaseNode<'script> {
     }
 }
 
-impl StatementTraversal for SwitchConditionalCaseNode<'_> {
+impl StatementTraversal for SwitchConditionalCaseLabelNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt_case(self);
-        self.body().for_each(|s| s.accept(visitor));
     }
 }
 
 
 #[derive(Debug, Clone)]
-pub struct SwitchConditionalDefault;
+pub struct SwitchConditionalDefaultLabel;
 
-pub type SwitchConditionalDefaultNode<'script> = SyntaxNode<'script, SwitchConditionalDefault>;
+pub type SwitchConditionalDefaultLabelNode<'script> = SyntaxNode<'script, SwitchConditionalDefaultLabel>;
 
-impl NamedSyntaxNode for SwitchConditionalDefaultNode<'_> {
-    const NODE_KIND: &'static str = "switch_default";
+impl NamedSyntaxNode for SwitchConditionalDefaultLabelNode<'_> {
+    const NODE_KIND: &'static str = "switch_default_label";
 }
 
-impl SwitchConditionalDefaultNode<'_> {
-    pub fn body(&self) -> impl Iterator<Item = FunctionStatementNode> {
-        self.field_children("body").map(|n| n.into())
-    }
-}
-
-impl Debug for SwitchConditionalDefaultNode<'_> {
+impl Debug for SwitchConditionalDefaultLabelNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SwitchConditionalDefault")
-            .field("body", &self.body().collect::<Vec<_>>())
-            .finish()
+        write!(f, "SwitchConditionalDefaultLabel")
     }
 }
 
-impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalDefaultNode<'script> {
+impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalDefaultLabelNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
@@ -197,9 +290,8 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalDefaultNode<'script
     }
 }
 
-impl StatementTraversal for SwitchConditionalDefaultNode<'_> {
+impl StatementTraversal for SwitchConditionalDefaultLabelNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt_default(self);
-        self.body().for_each(|s| s.accept(visitor));
     }
 }

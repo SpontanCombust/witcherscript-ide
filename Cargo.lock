@@ -989,8 +989,8 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-witcherscript"
-version = "0.6.1"
-source = "git+https://github.com/SpontanCombust/tree-sitter-witcherscript.git?tag=v0.6.1#558dec145d75bb9338238c5f953020ceda433f3c"
+version = "0.7.0"
+source = "git+https://github.com/SpontanCombust/tree-sitter-witcherscript.git?tag=v0.7.0#0e9c80678408893c2e65e521f04bc282a380da17"
 dependencies = [
  "cc",
  "tree-sitter",

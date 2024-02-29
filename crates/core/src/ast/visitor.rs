@@ -57,12 +57,15 @@ pub trait StatementVisitor {
     fn visit_autobind_decl(&mut self, _: &AutobindDeclarationNode) {}
     
     fn visit_func_param_group(&mut self, _: &FunctionParameterGroupNode) {}
+    //TODO return two bools - one for params, the other for body
     /// Should return whether to traverse into params and body of the function. True by default.
     fn visit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) -> bool { true }
     fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {}
+    //TODO return two bools - one for params, the other for body
     /// Should return whether to traverse into params and body of the function. True by default.
     fn visit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) -> bool { true }
     fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) {}
+    //TODO return two bools - one for params, the other for body
     /// Should return whether to traverse into params and body of the event. True by default.
     fn visit_event_decl(&mut self, _: &EventDeclarationNode) -> bool { true }
     fn exit_event_decl(&mut self, _: &EventDeclarationNode) {}
@@ -79,8 +82,8 @@ pub trait StatementVisitor {
     fn visit_if_stmt(&mut self, _: &IfConditionalNode) -> bool { true }
     /// Should return whether to traverse into body of the conditional. True by default.
     fn visit_switch_stmt(&mut self, _: &SwitchConditionalNode) -> bool { true }
-    fn visit_switch_stmt_case(&mut self, _: &SwitchConditionalCaseNode) {}
-    fn visit_switch_stmt_default(&mut self, _: &SwitchConditionalDefaultNode) {}
+    fn visit_switch_stmt_case(&mut self, _: &SwitchConditionalCaseLabelNode) {}
+    fn visit_switch_stmt_default(&mut self, _: &SwitchConditionalDefaultLabelNode) {}
     fn visit_break_stmt(&mut self, _: &BreakStatementNode) {}
     fn visit_continue_stmt(&mut self, _: &ContinueStatementNode) {}
     fn visit_return_stmt(&mut self, _: &ReturnStatementNode) {}

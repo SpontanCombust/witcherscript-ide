@@ -98,10 +98,10 @@ impl SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn check_errors<T>(&mut self, n: &SyntaxNode<'_, T>) -> bool {
+    fn check_errors<T>(&mut self, n: &SyntaxNode<'_, T>) {
         let errors = n.errors();
         if errors.is_empty() {
-            return false;
+            return;
         }
 
         for err in n.errors() {
@@ -128,8 +128,6 @@ impl SyntaxErrorVisitor<'_> {
                 }
             }
         }
-
-        true
     }
 }
 
@@ -278,14 +276,16 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     
             self.check_errors(n);
         
-            if !self.check_function_def(&n.definition()) {
-                return true;
+            let params = n.params();
+            let errors_in_params = params.has_errors();
+            if errors_in_params {
+                self.check_errors(&params);
             }
+
+            return !self.check_function_def(&n.definition()) && errors_in_params;
         }
-        
-        //FIXME check for errors in params - maybe grammar should have a named node for the entirety of params? Apply this thinking to other repeating rules.
-        // false
-        true
+
+        false
     }
 
     fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> bool {
@@ -298,30 +298,38 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     
             self.check_errors(n);
     
-            if !self.check_function_def(&n.definition()) {
-                return true;
+            let params = n.params();
+            let errors_in_params = params.has_errors();
+            if errors_in_params {
+                self.check_errors(&params);
             }
+
+            return !self.check_function_def(&n.definition()) && errors_in_params;
         }
         
-        //FIXME check for errors in params
-        // false
-        true
+        false
     }
 
     fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> bool {
         if n.has_errors() {
             self.check_identifier(&n.name());
+
+            if let Some(ret) = n.return_type() {
+                self.check_type_annot(&ret);
+            }
     
             self.check_errors(n);
 
-            if !self.check_function_def(&n.definition()) {
-                return true;
+            let params = n.params();
+            let errors_in_params = params.has_errors();
+            if errors_in_params {
+                self.check_errors(&params);
             }
+
+            return !self.check_function_def(&n.definition()) && errors_in_params;
         }
         
-        //FIXME check for errors in params
-        // false
-        true
+        false
     }
 
     fn visit_block_stmt(&mut self, n: &FunctionBlockNode) -> bool {
@@ -433,18 +441,21 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode) -> bool {
         if n.has_errors() {
-            self.check_expression(&n.matched_expr());
+            self.check_expression(&n.cond());
     
             self.check_errors(n);
     
-    
-            return n.has_errors();
+            let body = n.body();
+            if body.has_errors() {
+                self.check_errors(&body);
+                return true;
+            }
         }
 
         false
     }
 
-    fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseNode) {
+    fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) {
         if n.has_errors() {
             self.check_expression(&n.value());
     
@@ -452,7 +463,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultNode) {
+    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode) {
         if n.has_errors() {
             self.check_errors(n);
         }
