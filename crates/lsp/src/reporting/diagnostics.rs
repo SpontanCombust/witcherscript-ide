@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use tower_lsp::lsp_types as lsp;
+use tower_lsp::{jsonrpc, lsp_types as lsp};
 use witcherscript_analysis::diagnostics::{Diagnostic, DiagnosticBody};
 use witcherscript_project::{manifest::ManifestParseError, FileError};
 use crate::Backend;
@@ -102,5 +102,9 @@ impl Backend {
         if let Ok(url) = path.try_into_url() {
             self.client.publish_diagnostics(url, Vec::new(), None).await;
         }
+    }
+
+    pub async fn clear_all_diagnostics(&self) -> jsonrpc::Result<()> {
+        self.client.workspace_diagnostic_refresh().await
     }
 }
