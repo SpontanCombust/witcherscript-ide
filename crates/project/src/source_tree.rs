@@ -1,17 +1,17 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
+use std::sync::Arc;
 use crate::FileError;
 
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SourceFilePath {
-    script_root: Rc<PathBuf>,
+    script_root: Arc<PathBuf>,
     abs_path: PathBuf
 }
 
 impl SourceFilePath {
-    fn new(script_root: Rc<PathBuf>, abs_path: PathBuf) -> Self {
+    fn new(script_root: Arc<PathBuf>, abs_path: PathBuf) -> Self {
         Self {
             script_root,
             abs_path
@@ -37,7 +37,7 @@ impl SourceFilePath {
 
 #[derive(Debug, Clone)]
 pub struct SourceTree {
-    script_root: Rc<PathBuf>,
+    script_root: Arc<PathBuf>,
     tree: BTreeSet<SourceFilePath>,
     /// Errors encountered during scanning
     pub errors: Vec<FileError<std::io::Error>>
@@ -47,7 +47,7 @@ impl SourceTree {
     /// `script_root` should be the `{content_name}/content/scripts` directory
     pub(crate) fn new(script_root: PathBuf) -> Self {
         let mut tree = Self {
-            script_root: Rc::new(script_root),
+            script_root: Arc::new(script_root),
             tree: BTreeSet::new(),
             errors: Vec::new()
         };
