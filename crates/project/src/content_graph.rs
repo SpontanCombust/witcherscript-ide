@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 use lsp_types as lsp;
-use crate::content::{make_content, ContentScanError, ProjectDirectory};
+use crate::content::{try_make_content, ContentScanError, ProjectDirectory};
 use crate::{Content, ContentRepositories, FileError};
 use crate::manifest::{DependencyValue, ManifestParseError};
 
@@ -56,9 +56,8 @@ pub struct ContentGraph {
     pub errors: Vec<ContentGraphError>
 }
 
-//TODO perhaps it would be better to have errors stored in nodes and make nodes public
 #[derive(Debug)]
-struct GraphNode {
+pub struct GraphNode {
     content: Box<dyn Content>,
     in_workspace: bool,
     in_repository: bool,
@@ -97,9 +96,17 @@ impl ContentGraph {
         self.repos = repos;
     }
 
+    pub fn get_reposity_contents(&self) -> &[Box<dyn Content>] {
+        self.repos.found_content()
+    }
+
     /// Set paths to contents from the workspace that should be actively monitored
     pub fn set_workspace_projects(&mut self, contents: Vec<Box<ProjectDirectory>>) {
         self.workspace_projects = contents;
+    }
+
+    pub fn get_workspace_projects(&self) -> &[Box<ProjectDirectory>] {
+        &self.workspace_projects
     }
 
 
@@ -107,6 +114,11 @@ impl ContentGraph {
         self.nodes.clear();
         self.edges.clear();
         self.errors.clear();
+
+        // Short-circuit if there are no projects to have the graph be built for
+        if self.workspace_projects.is_empty() {
+            return;
+        }
 
         for i in 0..self.workspace_projects.len() {
             let content = &self.workspace_projects[i];
@@ -159,17 +171,28 @@ impl ContentGraph {
         }
     }
 
+
+    pub fn get_node_by_path(&self, content_path: &Path) -> Option<&GraphNode> {
+        self.get_node_index_by_path(content_path).map(|i| &self.nodes[i])
+    }
+
     /// Visits all content nodes that are dependencies to the specified content.
-    pub fn walk_dependencies(&self, content: &impl Content, visitor: impl FnMut(usize)) {
-        if let Some(idx) = self.get_node_index_by_path(content.path()) {
-            self.walk_by_index(idx, GraphEdgeDirection::Dependencies, visitor);
+    pub fn walk_dependencies(&self, content_path: &Path, mut visitor: impl FnMut(&GraphNode)) {
+        if let Some(idx) = self.get_node_index_by_path(content_path) {
+            self.walk_by_index(idx, GraphEdgeDirection::Dependencies, |idx| {
+                let node = &self.nodes[idx];
+                visitor(node)
+            });
         }
     }
 
-    /// Visits all content nodes that are dependants to the specified content.
-    pub fn walk_dependants(&self, content: &impl Content, visitor: impl FnMut(usize)) {
-        if let Some(idx) = self.get_node_index_by_path(content.path()) {
-            self.walk_by_index(idx, GraphEdgeDirection::Dependants, visitor);
+    /// Visits all content nodes that are dependants of the specified content.
+    pub fn walk_dependants(&self, content_path: &Path, mut visitor: impl FnMut(&GraphNode)) {
+        if let Some(idx) = self.get_node_index_by_path(content_path) {
+            self.walk_by_index(idx, GraphEdgeDirection::Dependants, |idx| {
+                let node = &self.nodes[idx];
+                visitor(node)
+            });
         }
     }
 
@@ -267,7 +290,7 @@ impl ContentGraph {
                     self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
                     self.link_dependencies(dep_idx, content0_idx, visited);
                 } else {
-                    match make_content(&dep_path) {
+                    match try_make_content(&dep_path) {
                         Ok(content) => {
                             let dep_idx = self.insert_node(GraphNode { 
                                 content, 

@@ -3,7 +3,8 @@ use crate::{content::ContentScanError, find_content_in_directory, Content};
 
 
 /// A collection of directories in which content directories can be found.
-/// Mainly used repositories are `Witcher 3/content` and `Witcher 3/Mods`. Custom repositories are allowed though.
+/// Only direct directory descendants are checked for being content directories.
+/// Mainly used repositories are `Witcher 3/content` and `Witcher 3/Mods`.
 #[derive(Debug, Default)]
 pub struct ContentRepositories {
     repository_paths: Vec<PathBuf>,
@@ -38,7 +39,7 @@ impl ContentRepositories {
         self.errors.clear();
 
         for repo in &self.repository_paths {
-            let (contents, errors) = find_content_in_directory(repo);
+            let (contents, errors) = find_content_in_directory(repo, false);
             self.found_content.extend(contents);
             self.errors.extend(errors);
         }

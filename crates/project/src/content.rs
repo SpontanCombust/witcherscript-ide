@@ -163,7 +163,7 @@ impl From<FileError<ManifestParseError>> for ContentScanError {
     }
 }
 
-pub fn find_content_in_directory(path: &Path) -> (Vec<Box<dyn Content>>, Vec<ContentScanError>) {
+pub fn find_content_in_directory(path: &Path, scan_recursively: bool) -> (Vec<Box<dyn Content>>, Vec<ContentScanError>) {
     let mut contents = Vec::new();
     let mut errors = Vec::new();
 
@@ -174,15 +174,17 @@ pub fn find_content_in_directory(path: &Path) -> (Vec<Box<dyn Content>>, Vec<Con
                     Ok(entry) => {
                         let candidate = entry.path();
                         if candidate.is_dir() {
-                            if let Some(candidate_result) = test_make_content(&candidate) {
-                                match candidate_result {
-                                    Ok(content) => contents.push(content),
-                                    Err(err) => errors.push(err),
-                                }
-                            } else {
-                                let (inner_contents, inner_errors) = find_content_in_directory(&candidate);
-                                contents.extend(inner_contents);
-                                errors.extend(inner_errors);
+                            match try_make_content(&candidate) {
+                                Ok(content) => contents.push(content),
+                                Err(err) => {
+                                    if let (&ContentScanError::NotContent, true) = (&err, scan_recursively) {
+                                        let (inner_contents, inner_errors) = find_content_in_directory(&candidate, scan_recursively);
+                                        contents.extend(inner_contents);
+                                        errors.extend(inner_errors);
+                                    } else {
+                                        errors.push(err);
+                                    }
+                                },
                             }
                         }
                     },
@@ -200,29 +202,21 @@ pub fn find_content_in_directory(path: &Path) -> (Vec<Box<dyn Content>>, Vec<Con
     (contents, errors)
 }
 
-fn test_make_content(path: &Path) -> Option<Result<Box<dyn Content>, ContentScanError>> {
+pub fn try_make_content(path: &Path) -> Result<Box<dyn Content>, ContentScanError> {
     let manifest_path = path.join(Manifest::FILE_NAME);
     if manifest_path.exists() {
         match ProjectDirectory::new(path.to_path_buf()) {
             Ok(proj) => {
-                Some(Ok(Box::new(proj)))
+                Ok(Box::new(proj))
             },
             Err(err) => {
-                Some(Err(FileError::new(manifest_path, err).into()))
+                Err(FileError::new(manifest_path, err).into())
             },
         }
     } else if path.join("scripts").exists() {
-        Some(Ok(Box::new(UnpackedContentDirectory::new(path.to_path_buf()))))
+        Ok(Box::new(UnpackedContentDirectory::new(path.to_path_buf())))
     } else if path.join("content").join("scripts").exists() {
-        Some(Ok(Box::new(PackedContentDirectory::new(path.to_path_buf()))))
-    } else {
-        None
-    }
-}
-
-pub fn make_content(path: &Path) -> Result<Box<dyn Content>, ContentScanError> {
-    if let Some(content) = test_make_content(path) {
-        content
+        Ok(Box::new(PackedContentDirectory::new(path.to_path_buf())))
     } else {
         Err(ContentScanError::NotContent)
     }

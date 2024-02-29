@@ -12,7 +12,7 @@ impl Backend {
     
         let workspace_roots = self.workspace_roots.read().await;
         for root in workspace_roots.iter() {
-            let (contents, errors) = find_content_in_directory(root);
+            let (contents, errors) = find_content_in_directory(root, true);
         
             for content in contents {
                 if let Ok(proj) = content.as_any().downcast::<ProjectDirectory>() { 
@@ -40,7 +40,13 @@ impl Backend {
     
         let config = self.config.read().await;
         for repo in &config.project_repositories {
-            repos.add_repository(&repo);
+            if !repo.as_os_str().is_empty() {
+                repos.add_repository(&repo);
+            }
+        }
+        if !config.game_directory.as_os_str().is_empty() {
+            repos.add_repository(config.game_directory.join("content"));
+            repos.add_repository(config.game_directory.join("Mods"));
         }
     
         repos.scan();
