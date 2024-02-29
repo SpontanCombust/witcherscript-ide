@@ -269,7 +269,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> bool {
+    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> (bool, bool) {
         if n.has_errors() {
             self.check_identifier(&n.name());
             n.return_type().map(|n| self.check_type_annot(&n));
@@ -282,13 +282,15 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
                 self.check_errors(&params);
             }
 
-            return !self.check_function_def(&n.definition()) && errors_in_params;
+            let errors_in_def = !self.check_function_def(&n.definition());
+
+            return (errors_in_params, errors_in_def);
         }
 
-        false
+        (false, false)
     }
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> bool {
+    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> (bool ,bool) {
         if n.has_errors() {
             self.check_identifier(&n.name());
     
@@ -304,13 +306,15 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
                 self.check_errors(&params);
             }
 
-            return !self.check_function_def(&n.definition()) && errors_in_params;
+            let errors_in_def = !self.check_function_def(&n.definition());
+
+            return (errors_in_params, errors_in_def);
         }
         
-        false
+        (false, false)
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> bool {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> (bool ,bool) {
         if n.has_errors() {
             self.check_identifier(&n.name());
 
@@ -326,10 +330,12 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
                 self.check_errors(&params);
             }
 
-            return !self.check_function_def(&n.definition()) && errors_in_params;
+            let errors_in_def = !self.check_function_def(&n.definition());
+
+            return (errors_in_params, errors_in_def);
         }
         
-        false
+        (false, false)
     }
 
     fn visit_block_stmt(&mut self, n: &FunctionBlockNode) -> bool {

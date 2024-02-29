@@ -55,8 +55,11 @@ impl<'script> TryFrom<AnyNode<'script>> for EventDeclarationNode<'script> {
 
 impl StatementTraversal for EventDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_event_decl(self) {
+        let (trav_params, trav_body) = visitor.visit_event_decl(self);
+        if trav_params {
             self.params().accept(visitor);
+        }
+        if trav_body {
             self.definition().accept(visitor);
         }
         visitor.exit_event_decl(self);
@@ -127,8 +130,11 @@ impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionDeclarationNode<'scrip
 
 impl StatementTraversal for GlobalFunctionDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_global_func_decl(self) {
+        let (trav_params, trav_body) = visitor.visit_global_func_decl(self);
+        if trav_params {
             self.params().accept(visitor);
+        }
+        if trav_body {
             self.definition().accept(visitor);
         }
         visitor.exit_global_func_decl(self);
@@ -199,8 +205,11 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionDeclarationNode<'scrip
 
 impl StatementTraversal for MemberFunctionDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_member_func_decl(self) {
+        let (trav_params, trav_body) = visitor.visit_member_func_decl(self);
+        if trav_params {
             self.params().accept(visitor);
+        }
+        if trav_body {
             self.definition().accept(visitor);
         }
         visitor.exit_member_func_decl(self);

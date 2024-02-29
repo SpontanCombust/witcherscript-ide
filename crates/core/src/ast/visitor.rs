@@ -57,17 +57,14 @@ pub trait StatementVisitor {
     fn visit_autobind_decl(&mut self, _: &AutobindDeclarationNode) {}
     
     fn visit_func_param_group(&mut self, _: &FunctionParameterGroupNode) {}
-    //TODO return two bools - one for params, the other for body
-    /// Should return whether to traverse into params and body of the function. True by default.
-    fn visit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) -> bool { true }
+    /// Should return whether to traverse into parameters and definition of the function. True and true by default.
+    fn visit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) -> (bool, bool) { (true, true) }
     fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {}
-    //TODO return two bools - one for params, the other for body
-    /// Should return whether to traverse into params and body of the function. True by default.
-    fn visit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) -> bool { true }
+    /// Should return whether to traverse into parameters and definition of the function. True and true by default.
+    fn visit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) -> (bool, bool) { (true, true) }
     fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) {}
-    //TODO return two bools - one for params, the other for body
-    /// Should return whether to traverse into params and body of the event. True by default.
-    fn visit_event_decl(&mut self, _: &EventDeclarationNode) -> bool { true }
+    /// Should return whether to traverse into parameters and definition of the event. True and true by default.
+    fn visit_event_decl(&mut self, _: &EventDeclarationNode) -> (bool, bool) { (true, true) }
     fn exit_event_decl(&mut self, _: &EventDeclarationNode) {}
     
     fn visit_local_var_decl_stmt(&mut self, _: &VarDeclarationNode) {}

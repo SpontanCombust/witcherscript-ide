@@ -224,7 +224,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> bool {
+    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> (bool, bool) {
         if let Some(func_name) = n.name().value(&self.doc) {
             let path = GlobalCallableSymbolPath::new(&func_name);
             let mut sym = GlobalFunctionSymbol::new(path);
@@ -248,11 +248,11 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                return true;
+                return (true, true);
             }
         }
 
-        false
+        (false, false)
     }
 
     fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
@@ -261,7 +261,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> bool {
+    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> (bool, bool) {
         if let Some(func_name) = n.name().value(&self.doc) {
             let path = MemberCallableSymbolPath::new(&self.current_path, &func_name);
             let mut sym = MemberFunctionSymbol::new(path);
@@ -285,11 +285,11 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                return true;
+                return (true, true);
             }
         }
 
-        false
+        (false, false)
     }
 
     fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) {
@@ -299,18 +299,18 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> bool {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> (bool, bool) {
         if let Some(event_name) = n.name().value(&self.doc) {
             let path = MemberCallableSymbolPath::new(&self.current_path, &event_name);
             let sym = EventSymbol::new(path);
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                return true;
+                return (true, true);
             }
         }
 
-        false
+        (false, false)
     }
 
     fn exit_event_decl(&mut self, _: &EventDeclarationNode) {
