@@ -56,6 +56,18 @@
         }
       }
     },
+    "commands": [
+      {
+        "command": "witcherscript-ide.workspace.initProject",
+        "title": "Initialize project...",
+        "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.workspace.createProject",
+        "title": "Create a new project...",
+        "category": "WitcherScript-IDE"
+      }
+    ],
     "grammars": [
       {
         "language": "witcherscript",

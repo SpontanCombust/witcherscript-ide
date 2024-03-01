@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 use dashmap::DashMap;
+use messaging::requests::CreateProjectRequest;
 use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result;
+use tower_lsp::lsp_types::request::Request;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 use witcherscript::Script;
@@ -13,6 +15,7 @@ mod providers;
 mod config;
 mod reporting;
 mod source_management;
+mod messaging;
 
 
 #[derive(Debug)]
@@ -91,6 +94,9 @@ impl LanguageServer for Backend {
 async fn main() {
     let (stdin, stdout) = (tokio::io::stdin(), tokio::io::stdout());
 
-    let (service, socket) = LspService::new(|client| Backend::new(client));
+    let (service, socket) = LspService::build(|client| Backend::new(client))
+        .custom_method(CreateProjectRequest::METHOD, Backend::handle_create_project_request)
+        .finish();
+
     Server::new(stdin, stdout, socket).serve(service).await;
 }

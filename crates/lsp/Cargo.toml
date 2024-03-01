@@ -10,6 +10,7 @@ witcherscript = { path = "../core" }
 witcherscript-analysis = { path = "../analysis" }
 witcherscript-project = { path = "../project" }
 dashmap.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tower-lsp = "0.20.0"

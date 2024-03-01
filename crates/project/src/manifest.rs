@@ -5,7 +5,7 @@ use shrinkwraprs::Shrinkwrap;
 use thiserror::Error;
 use lsp_types as lsp;
 
-
+//TODO write docs about the manifest format
 /// WitcherScript manifest file containing project metadata.
 #[derive(Debug, Clone)]
 pub struct Manifest {

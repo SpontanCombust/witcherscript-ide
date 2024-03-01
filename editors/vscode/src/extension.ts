@@ -8,10 +8,14 @@ import {
 	TransportKind
 } from 'vscode-languageclient/node';
 
+import { registerCommands } from './commands';
 
-let client: LanguageClient;
+
+export let client: LanguageClient;
 
 export function activate(context: vscode.ExtensionContext) {
+	registerCommands(context);
+
 	const ext = process.platform === "win32" ? ".exe" : "";
 	const serverPath = context.asAbsolutePath(
 		path.join('server', 'bin', `witcherscript-lsp${ext}`)

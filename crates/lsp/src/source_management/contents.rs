@@ -25,8 +25,12 @@ impl Backend {
             }
         }
 
-        for proj in &projects {
-            self.log_info(format!("Found project {}", proj.content_name())).await;
+        if projects.is_empty() {
+            self.log_info("Found no projects in the workspace.").await;
+        } else {
+            for proj in &projects {
+                self.log_info(format!("Found project {}", proj.content_name())).await;
+            }
         }
     
         let mut lock = self.content_graph.write().await;
@@ -55,8 +59,12 @@ impl Backend {
             self.report_content_scan_error(err.clone()).await;    
         }
 
-        for content in repos.found_content() {
-            self.log_info(format!("Found script content {}", content.content_name())).await;
+        if repos.found_content().is_empty() {
+            self.log_info("Found no script contents in repositories.").await;
+        } else {
+            for content in repos.found_content() {
+                self.log_info(format!("Found script content {}", content.content_name())).await;
+            }
         }
     
         let mut graph = self.content_graph.write().await;

@@ -32,7 +32,6 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
                     supported: Some(true),
                     change_notifications: Some(lsp::OneOf::Left(true)),
                 }),
-                //TODO file operations notifiction config to know if content graph changed in some way
                 file_operations: None
             }),
             ..lsp::ServerCapabilities::default()
