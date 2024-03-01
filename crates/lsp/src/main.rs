@@ -12,7 +12,7 @@ use crate::config::Config;
 mod providers;
 mod config;
 mod reporting;
-mod workspace;
+mod source_management;
 
 
 #[derive(Debug)]
