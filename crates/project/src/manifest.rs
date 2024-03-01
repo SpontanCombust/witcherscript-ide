@@ -1,13 +1,12 @@
-use std::{borrow::Cow, fs::File, io::{self, Read}, path::{Path, PathBuf}, sync::Arc};
+use std::{fs::File, io::{self, Read}, path::{Path, PathBuf}, str::FromStr, sync::Arc};
 use ropey::Rope;
 use semver::Version;
 use shrinkwraprs::Shrinkwrap;
 use thiserror::Error;
 use lsp_types as lsp;
-use toml_span::{de_helpers::{expected, TableHelper}, Deserialize};
 
 
-/// Deserialized WitcherScript manifest file containing project metadata.
+/// WitcherScript manifest file containing project metadata.
 #[derive(Debug, Clone)]
 pub struct Manifest {
     /// Content metadata of this project
@@ -28,15 +27,18 @@ pub struct Content {
     pub game_version: String, // CDPR's versioning system doesn't comply with semver, so string will have to do for now
 }
 
+/// A list of dependency entries
 #[derive(Debug, Clone, Shrinkwrap)]
 pub struct Dependencies(Vec<DependencyEntry>);
 
+// Dependency item as a key-value pair of dependency name and dependency source specifier
 #[derive(Debug, Clone)]
 pub struct DependencyEntry {
     pub name: Ranged<String>,
     pub value: Ranged<DependencyValue>
 }
 
+/// Value of the dependency entry
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DependencyValue {
     /// Get the dependency from one of project repositories by name
@@ -62,25 +64,21 @@ impl Manifest {
 
         Self::from_str(&buff)
     }
+}
 
-    pub fn from_str(s: &str) -> Result<Self, ManifestParseError> {
+impl FromStr for Manifest {
+    type Err = ManifestParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let rope = Rope::from_str(s);
-        let raw = toml_span::parse(s)
-            .map_err(|err| toml_span::DeserError::from(err))
-            .and_then(|mut v| ManifestRaw::deserialize(&mut v));
+        let raw: Result<raw::Manifest, toml::de::Error> = toml::from_str(s);
 
         match raw {
-            Ok(raw) => {
-                Ok(Self {
-                    content: raw.content,
-                    dependencies: Dependencies::from_raw(raw.dependencies, &rope)
-                })
-            },
+            Ok(raw) => Ok(Self::from_raw(raw, &rope)),
             Err(err) => {
-                let first_error = err.errors.into_iter().next().unwrap();
                 Err(ManifestParseError::Toml {
-                    range: span_to_range(first_error.span, &rope),
-                    msg: first_error.to_string()
+                    range: span_to_range(err.span().unwrap_or_default(), &rope),
+                    msg: err.to_string()
                 })
             },
         }
@@ -99,63 +97,43 @@ pub enum ManifestParseError {
 }
 
 
-// These "raw" types are the ones with toml_span's span type
-// The proper type has range type from lsp_types
-// Can't convert between those without accessing the entire file (here in a form of rope)
-struct ManifestRaw {
-    content: Content,
-    dependencies: DependenciesRaw
-}
+impl FromRaw for Manifest {
+    type RawType = raw::Manifest;
 
-impl<'de> toml_span::Deserialize<'de> for ManifestRaw {
-    fn deserialize(value: &mut toml_span::Value<'de>) -> Result<Self, toml_span::DeserError> {
-        let mut th = TableHelper::new(value)?;
-
-        let content = th.required("content")?;
-        let dependencies = th.required("dependencies")?;
-
-        th.finalize(None)?;
-
-        Ok(Self {
-            content,
-            dependencies
-        })
+    fn from_raw(raw: Self::RawType, rope: &Rope) -> Self {
+        Self {
+            content: Content::from_raw(raw.content, rope),
+            dependencies: Dependencies::from_raw(raw.dependencies, rope)
+        }
     }
 }
 
 
-impl<'de> toml_span::Deserialize<'de> for Content {
-    fn deserialize(value: &mut toml_span::Value<'de>) -> Result<Self, toml_span::DeserError> {
-        let mut th = TableHelper::new(value)?;
+impl FromRaw for Content {
+    type RawType = raw::Content;
 
-        let name = th.required("name")?;
-        let version_str: toml_span::Spanned<String> = th.required("version")?;
-        let version = Version::parse(&version_str.value)
-            .map_err(|e| toml_span::Error::from((toml_span::ErrorKind::Custom(Cow::Owned(e.to_string())), version_str.span)))?;
-        let authors = th.optional("authors");
-        let game_version = th.required("game_version")?;
-
-        th.finalize(None)?;
-
-        Ok(Content {
-            name,
-            version,
-            authors,
-            game_version
-        })
+    fn from_raw(raw: Self::RawType, _: &Rope) -> Self {
+        Self {
+           name: raw.name,
+           version: raw.version,
+           authors: raw.authors,
+           game_version: raw.game_version 
+        }
     }
 }
 
 
-impl Dependencies {
-    fn from_raw(raw: DependenciesRaw, rope: &Rope) -> Self {
+impl FromRaw for Dependencies {
+    type RawType = raw::Dependencies;
+
+    fn from_raw(raw: Self::RawType, rope: &Rope) -> Self {
         let mut entries = Vec::new();
-        for (k, v) in raw.0 {
-            let dep_name = Ranged::new(k.value, span_to_range(k.span, rope));
-            let dep_val = Ranged::new(v.value, span_to_range(v.span, rope));
-            entries.push(DependencyEntry{
-                name: dep_name,
-                value: dep_val
+        for (k, v) in raw {
+            let dep_name = Ranged::from_raw(k, rope);
+            let dep_val = Ranged::from_raw(v, rope);
+            entries.push(DependencyEntry { 
+                name: dep_name, 
+                value: dep_val 
             });
         }
 
@@ -173,51 +151,25 @@ impl IntoIterator for Dependencies {
 }
 
 
-struct DependenciesRaw(Vec<(toml_span::Spanned<String>, toml_span::Spanned<DependencyValue>)>);
+impl FromRaw for DependencyValue {
+    type RawType = raw::DependencyValue;
 
-impl<'de> toml_span::Deserialize<'de> for DependenciesRaw {
-    fn deserialize(value: &mut toml_span::Value<'de>) -> Result<Self, toml_span::DeserError> {
-        let mut entries = Vec::new();
-
-        let inner = value.take();
-        if let toml_span::value::ValueInner::Table(tab) = inner {
-            for (k, mut v) in tab {
-                let dep_name = toml_span::Spanned::with_span(k.name.to_string(), k.span.clone());
-                let dep_val = toml_span::Spanned::deserialize(&mut v)?;
-                entries.push((dep_name, dep_val));
-            }
-    
-            Ok(DependenciesRaw(entries))
-        } else {
-            Err(expected("table", inner, value.span).into())
+    fn from_raw(raw: Self::RawType, _: &Rope) -> Self {
+        match raw {
+            raw::DependencyValue::FromRepo(b) => Self::FromRepo(b),
+            raw::DependencyValue::FromPath { path } => Self::FromPath { path },
         }
     }
 }
 
 
-impl<'de> toml_span::Deserialize<'de> for DependencyValue {
-    fn deserialize(value: &mut toml_span::Value<'de>) -> Result<Self, toml_span::DeserError> {
-        match value.take() {
-            toml_span::value::ValueInner::Boolean(b) => {
-                Ok(DependencyValue::FromRepo(b))
-            },
-            toml_span::value::ValueInner::Table(tab) => {
-                let mut th = TableHelper::from((tab, value.span));
+impl FromRaw for String {
+    type RawType = String;
 
-                let path_str: String = th.required("path")?;
-                let path = PathBuf::from(path_str);
-
-                th.finalize(None)?;
-
-                Ok(DependencyValue::FromPath { path })
-            },
-            other => {
-                Err(expected("bool or table", other, value.span).into())
-            }
-        }
+    fn from_raw(raw: Self::RawType, _: &Rope) -> Self {
+        raw
     }
 }
-
 
 
 #[derive(Debug, Clone, Shrinkwrap)]
@@ -257,8 +209,7 @@ impl<T: PartialEq> PartialEq for Ranged<T> {
 
 impl<T: Eq> Eq for Ranged<T> {}
 
-
-fn span_to_range(span: toml_span::Span, rope: &Rope) -> lsp::Range {
+fn span_to_range(span: std::ops::Range<usize>, rope: &Rope) -> lsp::Range {
     let start_line = rope.char_to_line(span.start);
     let start_char = span.start - rope.line_to_char(start_line);
     let end_line = rope.char_to_line(span.end);
@@ -274,6 +225,58 @@ fn span_to_range(span: toml_span::Span, rope: &Rope) -> lsp::Range {
             character: end_char as u32 
         }
     }
+}
+
+impl<T: FromRaw> FromRaw for Ranged<T> {
+    type RawType = toml::Spanned<T::RawType>;
+
+    fn from_raw(raw: Self::RawType, rope: &Rope) -> Self {
+        let span = span_to_range(raw.span(), rope);
+        Self::new(T::from_raw(raw.into_inner(), rope), span)
+    }
+}
+
+
+
+// These "raw" types are the ones with toml's span type
+// This is the form that can be directly passed into serde
+// The proper type has range type from lsp_types
+// Can't convert between those without knowing contents of the entire file (here in a form of rope)
+mod raw {
+    use std::{collections::BTreeMap, path::PathBuf};
+    use semver::Version;
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Manifest {
+        pub content: Content,
+        pub dependencies: Dependencies
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Content {
+        pub name: String,
+        pub version: Version,
+        pub authors: Option<Vec<String>>,
+        pub game_version: String,
+    }
+
+    pub type Dependencies = BTreeMap<toml::Spanned<String>, toml::Spanned<DependencyValue>>;
+
+    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+    #[serde(untagged)]
+    pub enum DependencyValue {
+        FromRepo(bool),
+        FromPath {
+            path: PathBuf
+        }
+    }
+}
+
+trait FromRaw {
+    type RawType;
+
+    fn from_raw(raw: Self::RawType, rope: &Rope) -> Self;
 }
 
 

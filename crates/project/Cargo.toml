@@ -7,7 +7,8 @@ authors.workspace = true
 
 [dependencies]
 semver.workspace = true
-toml-span.workspace = true
+toml.workspace = true
+serde.workspace = true
 thiserror.workspace = true
 lsp-types.workspace = true
 ropey.workspace = true
