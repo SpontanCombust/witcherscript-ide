@@ -12,15 +12,17 @@ export function registerCommands(context: vscode.ExtensionContext) {
 
 async function commandInitProject() {
     if (vscode.workspace.workspaceFolders) {
+        const projectDirectory = client.code2ProtocolConverter.asUri(vscode.workspace.workspaceFolders[0].uri);
         const params: requests.CreateProjectRequest.Parameters = {
-            directoryUri: vscode.workspace.workspaceFolders[0].uri
+            directoryUri: projectDirectory
         };
         client.sendRequest(requests.CreateProjectRequest.type, params).then(
             (value) => {
-                vscode.workspace.openTextDocument(value.manifestUri);
+                const manifestUri = vscode.Uri.parse(value.manifestUri);
+                vscode.window.showTextDocument(manifestUri);
             },
             (error) => {
-                vscode.window.showErrorMessage(error);
+                vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
             }
         )
     } else {
@@ -34,41 +36,40 @@ async function commandCreateProject() {
         canSelectFolders: true,
         canSelectMany: false,
         title: "Choose the project folder",
-    }).then(async (value) => {
+    }).then((value) => {
         if (value) {
-            const projectDirectory = value[0];
+            const projectDirectory = client.code2ProtocolConverter.asUri(value[0]);
             const params: requests.CreateProjectRequest.Parameters = {
                 directoryUri: projectDirectory
             };
 
-            //FIXME no response?
-            await client.sendRequest(requests.CreateProjectRequest.type, params).then(
+            client.sendRequest(requests.CreateProjectRequest.type, params).then(
                 async (value) => {
-                    // if the chosen directory is not a subdirectory in the workspace
                     // ask the user if they'd like to open the project
                     // this is similar to `Git: clone` command
-                    if (vscode.workspace.workspaceFolders.some(folder => projectDirectory.fsPath.startsWith(folder.uri.fsPath))) {
-                        vscode.workspace.openTextDocument(value.manifestUri);
-                    } else {
-                        enum Answer {
-                            YES_HERE = "Open in this window",
-                            YES_IN_NEW = "Open in a new window",
-                            NO = "No"
-                        }
+                    enum Answer {
+                        YES_HERE = "Open in this window",
+                        YES_IN_NEW = "Open in a new window",
+                        NO = "No"
+                    }
 
-                        const answer = await vscode.window.showInformationMessage("Would you like to open the project?",
-                            Answer.YES_HERE, Answer.YES_IN_NEW, Answer.NO);
+                    const answer = await vscode.window.showInformationMessage("Would you like to open the project?",
+                        Answer.YES_HERE, Answer.YES_IN_NEW, Answer.NO);
 
-                        if (answer && answer != Answer.NO) {
-                            const openNewWindow = answer == Answer.YES_IN_NEW;
-                            vscode.commands.executeCommand("vscode.openFolder", projectDirectory, {
-                                forceNewWindow: openNewWindow
-                            });
-                        }
+                    if (answer && answer != Answer.NO) {
+                        const projectDirectoryUri = vscode.Uri.parse(projectDirectory);
+                        const openNewWindow = answer == Answer.YES_IN_NEW;
+                        await vscode.commands.executeCommand("vscode.openFolder", projectDirectoryUri, {
+                            forceNewWindow: openNewWindow
+                        });
+
+                        //TODO use ExtensionContext.globalState to open manifest in the new window
+                        // const manifestUri = vscode.Uri.parse(value.manifestUri);
+                        // vscode.window.showTextDocument(manifestUri);
                     }
                 },
                 (error) => {
-                    vscode.window.showErrorMessage(error);
+                    vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
                 }
             )
         }

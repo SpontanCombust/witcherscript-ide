@@ -21,7 +21,7 @@ impl Backend {
                 // probably any code outside of protocol's reserve range should be ok
                 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#errorCodes
                 code: jsonrpc::ErrorCode::ServerError(-1000), 
-                message: "directory does not exist".into(), 
+                message: "Directory does not exist".into(), 
                 data: None 
             })
         }
@@ -30,7 +30,7 @@ impl Backend {
         if manifest_path.exists() {
             return Err(jsonrpc::Error { 
                 code: jsonrpc::ErrorCode::ServerError(-1001), 
-                message: "script project already exists in the chosen directory".into(), 
+                message: "Script project already exists in the chosen directory".into(), 
                 data: None
             })
         }
@@ -41,7 +41,7 @@ impl Backend {
             if let Err(err) = std::fs::create_dir(scripts_path) {
                 return Err(jsonrpc::Error { 
                     code: jsonrpc::ErrorCode::ServerError(-1002), 
-                    message: format!("file system error: {err}").into(), 
+                    message: format!("File system error: {err}").into(), 
                     data: None
                 })
             }
@@ -55,7 +55,7 @@ impl Backend {
             Err(err) => {
                 return Err(jsonrpc::Error { 
                     code: jsonrpc::ErrorCode::ServerError(-1003), 
-                    message: format!("file system error: {err}").into(), 
+                    message: format!("File system error: {err}").into(), 
                     data: None
                 })
             },
@@ -72,7 +72,7 @@ impl Backend {
         if let Err(err) = manifest_file.write_all(template.as_bytes()) {
             return Err(jsonrpc::Error { 
                 code: jsonrpc::ErrorCode::ServerError(-1004), 
-                message: format!("file system error: {err}").into(), 
+                message: format!("File system error: {err}").into(), 
                 data: None
             })
         }
@@ -89,15 +89,18 @@ fn manifest_template(project_name: &str) -> String {
     // is to instead create a new table with a dotted key. So it would require extra effort to make something
     // small look better.
     format!(
-r#"[content]
+r#"# Basic information about this project
+[content]
 name = "{project_name}"
 version = "1.0.0"
 authors = []
 game_version = "4.04"
 
+# Any dependencies that this project might need
+# The allowed formats are:
+# modTest1 = true   # get the dependency from a repository
+# modTest2 = {{ path = "../path/to/modTest2" }}     # get the dependency from a specific path
 [dependencies]
-# modTest1 = true # get the dependency from a repository
-# modTest2 = {{ path = "../path/to/modTest2" }} # get the dependency from a specific path
 "#
     )
 }
