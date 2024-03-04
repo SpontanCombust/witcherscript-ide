@@ -23,12 +23,12 @@ impl SourceFilePath {
         &self.abs_path
     }
 
-    /// A path to the file relative to the "scripts" directory
+    /// Path relative tp the root
     pub fn local(&self) -> &Path {
         self.abs_path.strip_prefix(self.script_root.as_ref()).unwrap()
     }
 
-    /// A full path to the root "scripts" directory
+    /// A full path to the "scripts" directory
     pub fn root(&self) -> &Path {
         self.script_root.as_ref()
     }
@@ -44,7 +44,6 @@ pub struct SourceTree {
 }
 
 impl SourceTree {
-    /// `script_root` should be the `{content_name}/content/scripts` directory
     pub(crate) fn new(script_root: PathBuf) -> Self {
         let mut tree = Self {
             script_root: Arc::new(script_root),
@@ -52,9 +51,7 @@ impl SourceTree {
             errors: Vec::new()
         };
 
-        if tree.script_root.is_dir() {
-            tree.scan_visit_dir(tree.script_root.to_path_buf());
-        }
+        tree.scan();
 
         tree
     }
@@ -92,7 +89,22 @@ impl SourceTree {
         }
     }
 
+    pub fn scan(&mut self) -> SourceTreeDifference {
+        let mut diff = SourceTreeDifference::default();
+        let old_tree = std::mem::replace(&mut self.tree, BTreeSet::new());
+        self.errors.clear();
 
+        if self.script_root.is_dir() {
+            self.scan_visit_dir(self.script_root.as_ref().to_owned());
+
+            diff.added.extend(self.tree.difference(&old_tree).cloned());
+            diff.removed.extend(old_tree.difference(&self.tree).cloned());
+        }
+        
+        diff
+    }
+
+    
     pub fn script_root(&self) -> &Path {
         &self.script_root
     }
@@ -103,5 +115,12 @@ impl SourceTree {
 
     pub fn iter(&self) -> impl Iterator<Item = &SourceFilePath> {
         self.tree.iter()
-    }
+    }    
+}
+
+
+#[derive(Debug, Clone, Default)]
+pub struct SourceTreeDifference {
+    pub added: Vec<SourceFilePath>,
+    pub removed: Vec<SourceFilePath>
 }
