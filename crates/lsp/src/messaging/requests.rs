@@ -3,26 +3,23 @@ use serde::Serialize;
 use tower_lsp::lsp_types as lsp;
 
 
-pub struct CreateProjectRequest;
+pub mod create_project {
+    use super::*;
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateProjectParams {
-    pub directory_uri: lsp::Url
-}
+    #[derive(Debug, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Parameters {
+        pub directory_uri: lsp::Url
+    }
+    
+    #[derive(Debug, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Response {
+        pub manifest_uri: lsp::Url,
+        pub manifest_content_name_range: lsp::Range
+    }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateProjectResponse {
-    pub manifest_uri: lsp::Url,
-    pub manifest_content_name_range: lsp::Range
-}
-
-impl lsp::request::Request for CreateProjectRequest {
-    type Params = CreateProjectParams;
-    type Result = CreateProjectResponse;
-
-    const METHOD: &'static str = "witcherscript-ide/workspace/createProject";
+    pub const METHOD: &'static str = "witcherscript-ide/workspace/createProject";
 }
 
 

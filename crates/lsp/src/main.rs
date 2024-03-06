@@ -1,15 +1,14 @@
 use std::path::PathBuf;
 use dashmap::DashMap;
-use messaging::requests::CreateProjectRequest;
 use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result;
-use tower_lsp::lsp_types::request::Request;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 use witcherscript::Script;
 use witcherscript::script_document::ScriptDocument;
 use witcherscript_project::ContentGraph;
 use crate::config::Config;
+use crate::messaging::requests;
 
 mod providers;
 mod config;
@@ -95,7 +94,7 @@ async fn main() {
     let (stdin, stdout) = (tokio::io::stdin(), tokio::io::stdout());
 
     let (service, socket) = LspService::build(|client| Backend::new(client))
-        .custom_method(CreateProjectRequest::METHOD, Backend::handle_create_project_request)
+        .custom_method(requests::create_project::METHOD, Backend::handle_create_project_request)
         .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;

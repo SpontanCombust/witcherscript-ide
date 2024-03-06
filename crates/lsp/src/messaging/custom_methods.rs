@@ -4,11 +4,11 @@ use tower_lsp::{jsonrpc, lsp_types as lsp};
 use tower_lsp::jsonrpc::Result;
 use witcherscript_project::Manifest;
 use crate::Backend;
-use super::requests::{CreateProjectParams, CreateProjectResponse};
+use super::requests::create_project;
 
 
 impl Backend {
-    pub async fn handle_create_project_request(&self, params: CreateProjectParams) -> Result<CreateProjectResponse> {
+    pub async fn handle_create_project_request(&self, params: create_project::Parameters) -> Result<create_project::Response> {
         let project_dir;
         if let Ok(path) = params.directory_uri.to_file_path() {
             project_dir = path;
@@ -78,7 +78,7 @@ impl Backend {
         }
 
         let manifest_uri = lsp::Url::from_file_path(manifest_path).unwrap();
-        Ok(CreateProjectResponse { 
+        Ok(create_project::Response { 
             manifest_uri,
             manifest_content_name_range
         })
