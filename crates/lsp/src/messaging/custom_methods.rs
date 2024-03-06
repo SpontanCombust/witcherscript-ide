@@ -4,7 +4,7 @@ use tower_lsp::{jsonrpc, lsp_types as lsp};
 use tower_lsp::jsonrpc::Result;
 use witcherscript_project::Manifest;
 use crate::Backend;
-use super::requests::create_project;
+use super::requests::{create_project, script_ast};
 
 
 impl Backend {
@@ -13,7 +13,7 @@ impl Backend {
         if let Ok(path) = params.directory_uri.to_file_path() {
             project_dir = path;
         } else {
-            return Err(jsonrpc::Error::invalid_params("directory_uri parameter is not a file path"));
+            return Err(jsonrpc::Error::invalid_params("directory_uri parameter is not a file URI"));
         }
 
         if !project_dir.exists() {
@@ -83,7 +83,23 @@ impl Backend {
             manifest_content_name_range
         })
     }
+
+    pub async fn handle_script_ast_request(&self, params: script_ast::Parameters) -> Result<script_ast::Response> {
+        let path = params.script_uri.to_file_path().map_err(|_| jsonrpc::Error::invalid_params("script_uri parameter is not a file URI"))?;
+        let script = self.scripts.get(&path).ok_or(jsonrpc::Error {
+            code: jsonrpc::ErrorCode::ServerError(-1100),
+            message: "Script file not found".into(),
+            data: None
+        })?;
+
+        let ast = format!("{:#?}", script.root_node());
+
+        Ok(script_ast::Response { 
+            ast
+        })
+    }
 }
+
 
 fn manifest_template(project_name: &str) -> (String, lsp::Range) {
     // Serialization would've been better if not for the fact that the default behaviour for inline tables

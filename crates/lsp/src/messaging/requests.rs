@@ -22,6 +22,24 @@ pub mod create_project {
     pub const METHOD: &'static str = "witcherscript-ide/workspace/createProject";
 }
 
+pub mod script_ast {
+    use super::*;
+
+    #[derive(Debug, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Parameters {
+        pub script_uri: lsp::Url
+    }
+    
+    #[derive(Debug, Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Response {
+        pub ast: String
+    }
+
+    pub const METHOD: &'static str = "witcherscript-ide/debug/scriptAst";
+}
+
 
 //TODO project name for script request
 /* 

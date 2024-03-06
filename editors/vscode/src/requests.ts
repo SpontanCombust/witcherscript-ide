@@ -5,7 +5,7 @@ import * as c2p from 'vscode-languageclient/lib/common/codeConverter';
 import * as p2c from 'vscode-languageclient/lib/common/protocolConverter';
 
 
-export namespace CreateProjectRequest {
+export namespace CreateProject {
     export interface ParametersDto {
         // Path to a directory where the project should be created
         directoryUri: string
@@ -61,6 +61,60 @@ export namespace CreateProjectRequest {
             return new Response(
                 conv.asUri(dto.manifestUri),
                 conv.asRange(dto.manifestContentNameRange)
+            )
+        }
+    }
+}
+
+
+export namespace ScriptAst {
+    export interface ParametersDto {
+        scriptUri: string
+    }
+
+    export interface ResponseDto {
+        ast: string
+    }
+
+    export const type = new RequestType<ParametersDto, ResponseDto, void>("witcherscript-ide/debug/scriptAst");
+
+
+    export class Parameters {
+        public scriptUri: vscode.Uri;
+
+        constructor(scriptUri: vscode.Uri) {
+            this.scriptUri = scriptUri;
+        }
+
+        public intoDto(conv: c2p.Converter): ParametersDto {
+            return {
+                scriptUri: conv.asUri(this.scriptUri)
+            }
+        }
+
+        public static fromDto(conv: p2c.Converter, dto: ParametersDto): Parameters {
+            return new Parameters(
+                conv.asUri(dto.scriptUri)
+            )
+        }
+    }
+
+    export class Response {
+        public ast: string
+
+        constructor(ast: string) {
+            this.ast = ast;
+        }
+
+        public intoDto(_conv: c2p.Converter): ResponseDto {
+            return {
+                ast: this.ast,
+            }
+        }
+
+        public static fromDto(_conv: p2c.Converter, dto: ResponseDto): Response {
+            return new Response(
+                dto.ast
             )
         }
     }

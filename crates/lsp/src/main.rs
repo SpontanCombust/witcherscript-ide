@@ -95,6 +95,7 @@ async fn main() {
 
     let (service, socket) = LspService::build(|client| Backend::new(client))
         .custom_method(requests::create_project::METHOD, Backend::handle_create_project_request)
+        .custom_method(requests::script_ast::METHOD, Backend::handle_script_ast_request)
         .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;

@@ -67,6 +67,12 @@
         "command": "witcherscript-ide.workspace.createProject",
         "title": "Create a new project...",
         "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.debug.showScriptAst",
+        "title": "Show script AST",
+        "category": "WitcherScript-IDE (debug)",
+        "enablement": "editorLangId == 'witcherscript'"
       }
     ],
     "grammars": [
