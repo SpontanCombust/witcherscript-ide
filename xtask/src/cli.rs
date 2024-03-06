@@ -11,7 +11,7 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    // Build and copy LSP server into VSCode's extension directory
+    /// Build and copy LSP server into VSCode's extension directory
     PrepLsp {
         /// Should LSP be built with optimised release profile
         #[arg(long)]
@@ -19,6 +19,12 @@ pub enum Commands {
         /// Compilation target triple
         #[arg(long)]
         target: Option<String>
+    },
+    /// Build VSCode client
+    PrepClient {
+        /// Whether client should be continuously watched for changes made to it and rebuilt 
+        #[arg(long)]
+        watch: bool
     },
     /// Build and package VSCode extension into a .vsix file
     Package {

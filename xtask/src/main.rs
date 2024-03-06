@@ -10,6 +10,7 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command {
         cli::Commands::PrepLsp { release, target } => commands::prep_lsp(release, target),
+        cli::Commands::PrepClient { watch } => commands::prep_client(watch),
         cli::Commands::Package { out_dir, out_name } => commands::package(out_dir, out_name),
         cli::Commands::Install => commands::install()
     }
