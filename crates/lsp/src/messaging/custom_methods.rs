@@ -67,7 +67,7 @@ impl Backend {
             .to_string()
             .replace(" ", ""); // remove spaces
 
-        let template = manifest_template(&project_name);
+        let (template, manifest_content_name_range) = manifest_template(&project_name);
 
         if let Err(err) = manifest_file.write_all(template.as_bytes()) {
             return Err(jsonrpc::Error { 
@@ -79,16 +79,17 @@ impl Backend {
 
         let manifest_uri = lsp::Url::from_file_path(manifest_path).unwrap();
         Ok(CreateProjectResponse { 
-            manifest_uri
+            manifest_uri,
+            manifest_content_name_range
         })
     }
 }
 
-fn manifest_template(project_name: &str) -> String {
+fn manifest_template(project_name: &str) -> (String, lsp::Range) {
     // Serialization would've been better if not for the fact that the default behaviour for inline tables
     // is to instead create a new table with a dotted key. So it would require extra effort to make something
     // small look better.
-    format!(
+    let text = format!(
 r#"# Basic information about this project
 [content]
 name = "{project_name}"
@@ -97,12 +98,17 @@ authors = []
 game_version = "4.04"
 
 # Any dependencies that this project might need
-# The allowed formats are:
+# The allowed formats for now are:
 # modTest1 = true   # get the dependency from a repository
 # modTest2 = {{ path = "../path/to/modTest2" }}     # get the dependency from a specific path
 [dependencies]
 "#
-    )
+    );
+
+    // if text above is changed in any way before {project_name} the range has to be updated
+    let content_name_range = lsp::Range::new(lsp::Position::new(2, 8), lsp::Position::new(2, 8 + project_name.len() as u32));
+
+    (text, content_name_range)
 }
 
 
@@ -115,7 +121,7 @@ mod test {
 
     #[test]
     fn test_manifest_template() {
-        let template = manifest_template("modFoo_Bar");
+        let (template, _) = manifest_template("modFoo_Bar");
         let manifest = Manifest::from_str(&template);
         assert!(manifest.is_ok());
     }

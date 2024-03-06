@@ -16,7 +16,8 @@
     "Programming Languages"
   ],
   "activationEvents": [
-    "workspaceContains:*/witcherscript.toml"
+    "workspaceContains:**/witcherscript.toml",
+    "workspaceContains:**/*.ws"
   ],
   "main": "./out/main",
   "contributes": {
@@ -82,12 +83,13 @@
     "package": "vsce package -o witcherscript-ide.vsix",
     "vscode:prepublish": "npm run build-base -- --minify",
     "build": "npm run build-base -- --sourcemap",
-    "watch": "npm run build-base -- --sourcemap --watch",
+    "watch": "npm run build-base -- --sourcemap --watch=forever",
     "build-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node"
   },
   "dependencies": {
     "path": "^0.12.7",
-    "vscode-languageclient": "^9.0.0"
+    "vscode-languageclient": "^9.0.0",
+    "vscode-languageserver-protocol": "^3.17.0"
   },
   "devDependencies": {
     "@types/vscode": "^1.75.1",

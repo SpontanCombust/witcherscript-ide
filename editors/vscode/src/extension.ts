@@ -1,20 +1,15 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as lsp from 'vscode-languageclient/node';
 
-import {
-	LanguageClient,
-	LanguageClientOptions,
-	ServerOptions,
-	TransportKind
-} from 'vscode-languageclient/node';
-
-import { registerCommands } from './commands';
+import * as commands from './commands';
+import * as state from './state';
 
 
-export let client: LanguageClient;
+export let client: lsp.LanguageClient;
 
 export function activate(context: vscode.ExtensionContext) {
-	registerCommands(context);
+	commands.registerCommands(context);
 
 	const ext = process.platform === "win32" ? ".exe" : "";
 	const serverPath = context.asAbsolutePath(
@@ -23,18 +18,18 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
-	const serverOptions: ServerOptions = {
+	const serverOptions: lsp.ServerOptions = {
 		run: { 
 			command: serverPath, 
-			transport: TransportKind.stdio 
+			transport: lsp.TransportKind.stdio 
 		},
 		debug: { 
 			command: serverPath, 
-			transport: TransportKind.stdio 
+			transport: lsp.TransportKind.stdio 
 		}
 	};
 
-	const clientOptions: LanguageClientOptions = {
+	const clientOptions: lsp.LanguageClientOptions = {
 		// Register the server for WitcherScript documents
 		documentSelector: [{ scheme: 'file', language: 'witcherscript' }],
 		synchronize: {
@@ -43,7 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	};
 
-	client = new LanguageClient(
+	client = new lsp.LanguageClient(
 		'witcherscript-ide',
 		'WitcherScript IDE',
 		serverOptions,
@@ -51,7 +46,27 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	// Start the client. This will also launch the server
-	client.start();
+	client.start().then(_ => {
+		const mementoDto = context.globalState.get<state.OpenManifestOnInit.MementoDto>(state.OpenManifestOnInit.KEY);
+		
+		if (mementoDto != undefined) {
+			const memento = state.OpenManifestOnInit.Memento.fromDto(mementoDto);
+			
+			// If a new project has just been created in this directory and the user agreed to open it, show them the manifest of said project
+			if (vscode.workspace.workspaceFolders.some(f => f.uri.fsPath == memento.workspaceUri.fsPath)) {
+				const params: vscode.TextDocumentShowOptions = {
+					selection: memento.selectionRange,
+					preview: false
+				};
+				vscode.window.showTextDocument(memento.manifestUri, params).then(
+					_ => {},
+					(err) => client.debug('Manifest could not be shown: ' + err)
+				);
+	
+				context.globalState.update(state.OpenManifestOnInit.KEY, undefined);
+			}
+		}
+	});
 }
 
 export function deactivate(): Thenable<void> | undefined {

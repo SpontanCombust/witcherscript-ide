@@ -6,15 +6,16 @@ use tower_lsp::lsp_types as lsp;
 pub struct CreateProjectRequest;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateProjectParams {
-    #[serde(rename = "directoryUri")]
     pub directory_uri: lsp::Url
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateProjectResponse {
-    #[serde(rename = "manifestUri")]
-    pub manifest_uri: lsp::Url
+    pub manifest_uri: lsp::Url,
+    pub manifest_content_name_range: lsp::Range
 }
 
 impl lsp::request::Request for CreateProjectRequest {
