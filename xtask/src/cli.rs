@@ -12,7 +12,7 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     /// Build and copy LSP server into VSCode's extension directory
-    PrepLsp {
+    PrepServer {
         /// Should LSP be built with optimised release profile
         #[arg(long)]
         release: bool,

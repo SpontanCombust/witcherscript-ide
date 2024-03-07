@@ -4,7 +4,7 @@ use xshell::{Shell, cmd};
 
 const LSP_DST: &str = "./editors/vscode/server/bin";
 
-pub fn prep_lsp(release: bool, target: Option<String>) -> anyhow::Result<()> {
+pub fn prep_server(release: bool, target: Option<String>) -> anyhow::Result<()> {
     let sh = Shell::new()?;
   
     let mut build = cmd!(sh, "cargo build --package witcherscript-lsp");
