@@ -131,6 +131,10 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
                 }
             )
         }
+
+        get onDidChange(): vscode.Event<vscode.Uri> {
+            return this.eventEmitter.event;
+        }
     })();
 
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(tdcp.schema, tdcp));
