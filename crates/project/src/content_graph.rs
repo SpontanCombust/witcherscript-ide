@@ -36,11 +36,7 @@ pub enum ContentGraphError {
         manifest_path: PathBuf,
         // Location in the manifest where the name is present
         manifest_range: lsp::Range
-    },
-    #[error("content0 scripts could not be found")]
-    Content0NotFound,
-    #[error("found more than one instance of content0 scripts")]
-    MultipleContent0Found
+    }
 }
 
 
@@ -137,24 +133,12 @@ impl ContentGraph {
             }
         }
 
-        // Proceed with dependency building only if content0 is available
-        match self.get_node_index_by_name("content0") {
-            Ok(content0_idx) => {
-                // Now visit each of workspace content nodes to check for their dependencies.
-                let mut visited = HashSet::new();
-                for i in 0..self.nodes.len() {
-                    if self.nodes[i].in_workspace {
-                        self.link_dependencies(i, content0_idx, &mut visited);
-                    }
-                }
-            },
-            Err(content0_count) => {
-                if content0_count == 0 {
-                    self.errors.push(ContentGraphError::Content0NotFound);
-                } else {
-                    self.errors.push(ContentGraphError::MultipleContent0Found);
-                }
-            },
+        // Now visit each of workspace content nodes to check for their dependencies.
+        let mut visited = HashSet::new();
+        for i in 0..self.nodes.len() {
+            if self.nodes[i].in_workspace {
+                self.link_dependencies(i, &mut visited);
+            }
         }
 
         // At the start all contents found in repos were given a node.
@@ -212,7 +196,7 @@ impl ContentGraph {
         });
     }
 
-    fn link_dependencies(&mut self, node_idx: usize, content0_idx: usize, visited: &mut HashSet<usize>) {
+    fn link_dependencies(&mut self, node_idx: usize, visited: &mut HashSet<usize>) {
         if visited.contains(&node_idx) {
             return;
         }
@@ -223,23 +207,18 @@ impl ContentGraph {
             for entry in dependencies.into_iter() {
                 match entry.value.inner() {
                     DependencyValue::FromRepo(active) => {
-                        self.link_dependencies_value_from_repo(node_idx, content0_idx, visited, &entry.name, entry.name.range(), *active);
+                        self.link_dependencies_value_from_repo(node_idx, visited, &entry.name, entry.name.range(), *active);
                     },
                     DependencyValue::FromPath { path } => {
-                        self.link_dependencies_value_from_path(node_idx, content0_idx, visited, path, entry.value.range());
+                        self.link_dependencies_value_from_path(node_idx, visited, path, entry.value.range());
                     },
                 }
             }
-        }
-
-        if self.nodes[node_idx].content.content_name() != "content0" {
-            self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: content0_idx });
         }
     }
 
     fn link_dependencies_value_from_repo(&mut self, 
         node_idx: usize, 
-        content0_idx: usize, 
         visited: &mut HashSet<usize>, 
         dependency_name: &str,
         dependency_name_range: &lsp::Range,
@@ -249,7 +228,7 @@ impl ContentGraph {
             match self.get_node_index_by_name(&dependency_name) {
                 Ok(dep_idx) => {
                     self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                    self.link_dependencies(dep_idx, content0_idx, visited);
+                    self.link_dependencies(dep_idx, visited);
                 },
                 Err(dep_count) => {
                     if dep_count == 0 {
@@ -272,7 +251,6 @@ impl ContentGraph {
 
     fn link_dependencies_value_from_path(&mut self, 
         node_idx: usize, 
-        content0_idx: usize, 
         visited: &mut HashSet<usize>,
         dependency_path: &Path,
         dependency_path_range: &lsp::Range
@@ -288,7 +266,7 @@ impl ContentGraph {
             Ok(dep_path) => {
                 if let Some(dep_idx) = self.get_node_index_by_path(&dep_path) {
                     self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                    self.link_dependencies(dep_idx, content0_idx, visited);
+                    self.link_dependencies(dep_idx, visited);
                 } else {
                     match try_make_content(&dep_path) {
                         Ok(content) => {
@@ -299,7 +277,7 @@ impl ContentGraph {
                             });
 
                             self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                            self.link_dependencies(dep_idx, content0_idx, visited);
+                            self.link_dependencies(dep_idx, visited);
                         },
                         Err(err) => {
                             match err {

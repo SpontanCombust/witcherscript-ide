@@ -114,13 +114,7 @@ impl Backend {
                 },
                 ContentGraphError::MultipleMatchingDependencies { content_name: _, manifest_path, manifest_range } => {
                     self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
-                },
-                ContentGraphError::Content0NotFound => {
-                    self.show_error_notification(err_str).await;
-                },
-                ContentGraphError::MultipleContent0Found => {
-                    self.show_error_notification(err_str).await;
-                },
+                }
             }
         }
     }

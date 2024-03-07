@@ -118,6 +118,7 @@ game_version = "4.04"
 # modTest1 = true   # get the dependency from a repository
 # modTest2 = {{ path = "../path/to/modTest2" }}     # get the dependency from a specific path
 [dependencies]
+content0 = true
 "#
     );
 
