@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, NamedSyntaxNode, tokens::IdentifierNode, attribs::*, AnyNode, DebugMaybeAlternate};
+use crate::{attribs::*, tokens::IdentifierNode, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -32,7 +32,7 @@ impl EventDeclarationNode<'_> {
 
 impl Debug for EventDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("EventDeclaration")
+        f.debug_struct(&format!("EventDeclaration {}", self.range().debug()))
             .field("name", &self.name())
             .field("params", &self.params())
             .field("return_type", &self.return_type())
@@ -105,7 +105,7 @@ impl GlobalFunctionDeclarationNode<'_> {
 
 impl Debug for GlobalFunctionDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("GlobalFunctionDeclaration")
+        f.debug_struct(&format!("GlobalFunctionDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("flavour", &self.flavour())
             .field("name", &self.name())
@@ -180,7 +180,7 @@ impl MemberFunctionDeclarationNode<'_> {
 
 impl Debug for MemberFunctionDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MemberFunctionDeclaration")
+        f.debug_struct(&format!("MemberFunctionDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("flavour", &self.flavour())
             .field("name", &self.name())
@@ -294,7 +294,10 @@ impl FunctionParametersNode<'_> {
 
 impl Debug for FunctionParametersNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named("FunctionParameters", &self.groups().collect::<Vec<_>>())
+        f.debug_maybe_alternate_named(
+            &format!("FunctionParameters {}", self.range().debug()), 
+            &self.groups().collect::<Vec<_>>()
+        )
     }
 }
 
@@ -343,7 +346,7 @@ impl FunctionParameterGroupNode<'_> {
 
 impl Debug for FunctionParameterGroupNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FunctionParameterGroup")
+        f.debug_struct(&format!("FunctionParameterGroup {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("names", &self.names().collect::<Vec<_>>())
             .field("param_type", &self.param_type())
@@ -502,7 +505,10 @@ impl FunctionBlockNode<'_> {
 
 impl Debug for FunctionBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named("FunctionBlock", &self.statements().collect::<Vec<_>>())
+        f.debug_maybe_alternate_named(
+            &format!("FunctionBlock {}", self.range().debug()), 
+            &self.statements().collect::<Vec<_>>()
+        )
     }
 }
 
@@ -540,7 +546,7 @@ impl BreakStatementNode<'_> {}
 
 impl Debug for BreakStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "BreakStatement")
+        write!(f, "BreakStatement {}", self.range().debug())
     }
 }
 
@@ -577,7 +583,7 @@ impl ContinueStatementNode<'_> {}
 
 impl Debug for ContinueStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ContinueStatement")
+        write!(f, "ContinueStatement {}", self.range().debug())
     }
 }
 
@@ -618,7 +624,7 @@ impl ReturnStatementNode<'_> {
 
 impl Debug for ReturnStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("ReturnStatement")
+        f.debug_tuple(&format!("ReturnStatement {}", self.range().debug()))
             .field(&self.value())
             .finish()
     }
@@ -661,7 +667,7 @@ impl DeleteStatementNode<'_> {
 
 impl Debug for DeleteStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("DeleteStatement")
+        f.debug_tuple(&format!("DeleteStatement {}", self.range().debug()))
             .field(&self.value())
             .finish()
     }

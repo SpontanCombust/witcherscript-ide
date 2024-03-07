@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::{IdentifierNode, LiteralStringNode}, NamedSyntaxNode, SyntaxNode, attribs::StructSpecifierNode, AnyNode, DebugMaybeAlternate};
+use crate::{attribs::StructSpecifierNode, tokens::{IdentifierNode, LiteralStringNode}, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, MemberVarDeclarationNode, NopNode};
 
 
@@ -28,7 +28,7 @@ impl StructDeclarationNode<'_> {
 
 impl Debug for StructDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("StructDeclaration")
+        f.debug_struct(&format!("StructDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("name", &self.name())
             .field("definition", &self.definition())
@@ -76,7 +76,10 @@ impl StructBlockNode<'_> {
 
 impl Debug for StructBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named("StructBlock", &self.statements().collect::<Vec<_>>())
+        f.debug_maybe_alternate_named(
+            &format!("StructBlock {}", self.range().debug()), 
+            &self.statements().collect::<Vec<_>>()
+        )
     }
 }
 
@@ -191,7 +194,7 @@ impl MemberDefaultValueNode<'_> {
 
 impl Debug for MemberDefaultValueNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MemberDefaultValue")
+        f.debug_struct(&format!("MemberDefaultValue {}", self.range().debug()))
             .field("member", &self.member())
             .field("value", &self.value())
             .finish()
@@ -239,7 +242,7 @@ impl MemberHintNode<'_> {
 
 impl Debug for MemberHintNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MemberHint")
+        f.debug_struct(&format!("MemberHint {}", self.range().debug()))
             .field("member", &self.member())
             .field("value", &self.value())
             .finish()

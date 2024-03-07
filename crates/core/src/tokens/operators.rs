@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, AnyNode, DebugMaybeAlternate};
+use crate::{AnyNode, DebugMaybeAlternate, DebugRange, SyntaxNode};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -26,7 +26,8 @@ impl UnaryOperatorNode<'_> {
 
 impl Debug for UnaryOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        f.debug_maybe_alternate(&self.value())?;
+        write!(f, " {}", self.range().debug())
     }
 }
 
@@ -96,7 +97,8 @@ impl BinaryOperatorNode<'_> {
 
 impl Debug for BinaryOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        f.debug_maybe_alternate(&self.value())?;
+        write!(f, " {}", self.range().debug())
     }
 }
 
@@ -159,7 +161,8 @@ impl AssignmentOperatorNode<'_> {
 
 impl Debug for AssignmentOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        f.debug_maybe_alternate(&self.value())?;
+        write!(f, " {}", self.range().debug())
     }
 }
 

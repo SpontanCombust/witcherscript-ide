@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use std::str::FromStr;
-use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode, AnyNode, DebugMaybeAlternate};
+use crate::{tokens::Keyword, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::AccessModifier;
 
 
@@ -43,7 +43,8 @@ impl MemberVarSpecifierNode<'_> {
 
 impl Debug for MemberVarSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        f.debug_maybe_alternate(&self.value())?;
+        write!(f, " {}", self.range().debug())
     }
 }
 

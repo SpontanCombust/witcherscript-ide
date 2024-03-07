@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{NamedSyntaxNode, SyntaxNode, tokens::*, attribs::*, AnyNode, DebugMaybeAlternate};
+use crate::{attribs::*, tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -32,7 +32,7 @@ impl ClassDeclarationNode<'_> {
 
 impl Debug for ClassDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ClassDeclaration")
+        f.debug_struct(&format!("ClassDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("name", &self.name())
             .field("base", &self.base())
@@ -81,7 +81,10 @@ impl ClassBlockNode<'_> {
 
 impl Debug for ClassBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named("ClassBlock", &self.statements().collect::<Vec<_>>())
+        f.debug_maybe_alternate_named(
+            &format!("ClassBlock {}", self.range().debug()), 
+            &self.statements().collect::<Vec<_>>()
+        )
     }
 }
 
@@ -214,7 +217,7 @@ impl AutobindDeclarationNode<'_> {
 
 impl Debug for AutobindDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AutobindDeclaration")
+        f.debug_struct(&format!("AutobindDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("name", &self.name())
             .field("autobind_type", &self.autobind_type())
@@ -276,6 +279,7 @@ impl AutobindValueNode<'_> {
 
 impl Debug for AutobindValueNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        f.debug_maybe_alternate(&self.value())?;
+        write!(f, " {}", self.range().debug())
     }
 } 

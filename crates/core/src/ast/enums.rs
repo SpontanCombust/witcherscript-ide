@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::{IdentifierNode, LiteralIntNode}, NamedSyntaxNode, SyntaxNode, AnyNode, DebugMaybeAlternate};
+use crate::{tokens::{IdentifierNode, LiteralIntNode}, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor};
 
 
@@ -24,7 +24,7 @@ impl EnumDeclarationNode<'_> {
 
 impl Debug for EnumDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("EnumDeclaration")
+        f.debug_struct(&format!("EnumDeclaration {}", self.range().debug()))
             .field("name", &self.name())
             .field("definition", &self.definition())
             .finish()
@@ -71,7 +71,10 @@ impl EnumBlockNode<'_> {
 
 impl Debug for EnumBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named("EnumBlock", &self.members().collect::<Vec<_>>())
+        f.debug_maybe_alternate_named(
+            &format!("EnumBlock {}", self.range().debug()), 
+            &self.members().collect::<Vec<_>>()
+        )
     }
 }
 
@@ -115,7 +118,7 @@ impl EnumMemberDeclarationNode<'_> {
 
 impl Debug for EnumMemberDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("EnumMemberDeclaration")
+        f.debug_struct(&format!("EnumMemberDeclaration {}", self.range().debug()))
             .field("name", &self.name())
             .field("value", &self.value())
             .finish()

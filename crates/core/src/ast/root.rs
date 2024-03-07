@@ -1,5 +1,5 @@
 use core::fmt::Debug;
-use crate::{DebugMaybeAlternate, SyntaxNode, AnyNode, NamedSyntaxNode};
+use crate::{AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -100,7 +100,10 @@ impl RootNode<'_> {
 
 impl Debug for RootNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named("Script", &self.statements().collect::<Vec<_>>())
+        f.debug_maybe_alternate_named(
+            &format!("Script {}", self.range().debug()), 
+            &self.statements().collect::<Vec<_>>()
+        )
     }
 }
 

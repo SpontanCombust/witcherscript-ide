@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, NamedSyntaxNode, tokens::*, AnyNode, DebugMaybeAlternate};
+use crate::{tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, ExpressionVisitor, ExpressionTraversal, StatementVisitor};
 
 
@@ -20,7 +20,7 @@ impl NestedExpressionNode<'_> {
 
 impl Debug for NestedExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("NestedExpression")
+        f.debug_tuple(&format!("NestedExpression {}", self.range().debug()))
             .field(&self.value())
             .finish()
     }
@@ -60,7 +60,7 @@ impl ThisExpressionNode<'_> {}
 
 impl Debug for ThisExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ThisExpression")
+        write!(f, "ThisExpression {}", self.range().debug())
     }
 }
 
@@ -97,7 +97,7 @@ impl SuperExpressionNode<'_> {}
 
 impl Debug for SuperExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SuperExpression")
+        write!(f, "SuperExpression {}", self.range().debug())
     }
 }
 
@@ -134,7 +134,7 @@ impl ParentExpressionNode<'_> {}
 
 impl Debug for ParentExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ParentExpression")
+        write!(f, "ParentExpression {}", self.range().debug())
     }
 }
 
@@ -171,7 +171,7 @@ impl VirtualParentExpressionNode<'_> {}
 
 impl Debug for VirtualParentExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "VirtualParentExpression")
+        write!(f, "VirtualParentExpression {}", self.range().debug())
     }
 }
 
@@ -217,7 +217,7 @@ impl FunctionCallExpressionNode<'_> {
 
 impl Debug for FunctionCallExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FunctionCallExpression")
+        f.debug_struct(&format!("FunctionCallExpression {}", self.range().debug()))
             .field("func", &self.func())
             .field("args", &self.args().collect::<Vec<_>>())
             .finish()
@@ -323,7 +323,7 @@ impl ArrayExpressionNode<'_> {
 
 impl Debug for ArrayExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ArrayExpression")
+        f.debug_struct(&format!("ArrayExpression {}", self.range().debug()))
             .field("accessor", &self.accessor())
             .field("index", &self.index())
             .finish()
@@ -373,7 +373,7 @@ impl MemberFieldExpressionNode<'_> {
 
 impl Debug for MemberFieldExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MemberFieldExpression")
+        f.debug_struct(&format!("MemberFieldExpression {}", self.range().debug()))
             .field("accessor", &self.accessor())
             .field("member", &self.member())
             .finish()
@@ -426,7 +426,7 @@ impl MethodCallExpressionNode<'_> {
 
 impl Debug for MethodCallExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FunctionCallExpression")
+        f.debug_struct(&format!("FunctionCallExpression {}", self.range().debug()))
             .field("accessor", &self.accessor())
             .field("func", &self.func())
             .field("args", &self.args().collect::<Vec<_>>())
@@ -477,7 +477,7 @@ impl InstantiationExpressionNode<'_> {
 
 impl Debug for InstantiationExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("InstantiationExpression")
+        f.debug_struct(&format!("InstantiationExpression {}", self.range().debug()))
             .field("class", &self.class())
             .field("lifetime_obj", &self.lifetime_obj())
             .finish()
@@ -526,7 +526,7 @@ impl TypeCastExpressionNode<'_> {
 
 impl Debug for TypeCastExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TypeCastExpression")
+        f.debug_struct(&format!("TypeCastExpression {}", self.range().debug()))
             .field("type", &self.target_type())
             .field("value", &self.value())
             .finish()
@@ -575,7 +575,7 @@ impl UnaryOperationExpressionNode<'_> {
 
 impl Debug for UnaryOperationExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("UnaryOperationExpression")
+        f.debug_struct(&format!("UnaryOperationExpression {}", self.range().debug()))
             .field("op", &self.op())
             .field("right", &self.right())
             .finish()
@@ -628,7 +628,7 @@ impl BinaryOperationExpressionNode<'_> {
 
 impl Debug for BinaryOperationExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("BinaryOperationExpression")
+        f.debug_struct(&format!("BinaryOperationExpression {}", self.range().debug()))
             .field("op", &self.op())
             .field("left", &self.left())
             .field("right", &self.right())
@@ -683,7 +683,7 @@ impl AssignmentOperationExpressionNode<'_> {
 
 impl Debug for AssignmentOperationExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AssignmentOperationExpression")
+        f.debug_struct(&format!("AssignmentOperationExpression {}", self.range().debug()))
             .field("op", &self.op())
             .field("left", &self.left())
             .field("right", &self.right())
@@ -738,7 +738,7 @@ impl TernaryConditionalExpressionNode<'_> {
 
 impl Debug for TernaryConditionalExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TernaryConditionalExpression")
+        f.debug_struct(&format!("TernaryConditionalExpression {}", self.range().debug()))
             .field("cond", &self.cond())
             .field("conseq", &self.conseq())
             .field("alt", &self.alt())
@@ -932,7 +932,7 @@ impl ExpressionStatementNode<'_> {
 
 impl Debug for ExpressionStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("ExpressionStatement")
+        f.debug_tuple(&format!("ExpressionStatement {}", self.range().debug()))
             .field(&self.expr())
             .finish()
     }

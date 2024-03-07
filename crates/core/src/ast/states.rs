@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::IdentifierNode, NamedSyntaxNode, SyntaxNode, attribs::StateSpecifierNode, AnyNode};
+use crate::{attribs::StateSpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor, ClassBlockNode};
 
 
@@ -36,7 +36,7 @@ impl StateDeclarationNode<'_> {
 
 impl Debug for StateDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("StateDeclaration")
+        f.debug_struct(&format!("StateDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("name", &self.name())
             .field("parent", &self.parent())

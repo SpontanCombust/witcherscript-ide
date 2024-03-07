@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::str::ParseBoolError;
 use shrinkwraprs::Shrinkwrap;
 use thiserror::Error;
-use crate::DebugMaybeAlternate;
+use crate::{DebugMaybeAlternate, DebugRange};
 use crate::script_document::ScriptDocument;
 use crate::{AnyNode, NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}};
 
@@ -40,7 +40,7 @@ impl LiteralIntNode<'_> {
 
 impl Debug for LiteralIntNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralInt")
+        write!(f, "LiteralInt {}", self.range().debug())
     }
 }
 
@@ -84,7 +84,7 @@ impl LiteralFloatNode<'_> {
 
 impl Debug for LiteralFloatNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralFloat")
+        write!(f, "LiteralFloat {}", self.range().debug())
     }
 }
 
@@ -120,7 +120,7 @@ impl LiteralBoolNode<'_> {
 
 impl Debug for LiteralBoolNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralBool")
+        write!(f, "LiteralBool {}", self.range().debug())
     }
 }
 
@@ -159,7 +159,7 @@ impl LiteralStringNode<'_> {
 
 impl Debug for LiteralStringNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralString")
+        write!(f, "LiteralString {}", self.range().debug())
     }
 }
 
@@ -200,7 +200,7 @@ impl LiteralNameNode<'_> {
 
 impl Debug for LiteralNameNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralName")
+        write!(f, "LiteralName {}", self.range().debug())
     }
 }
 
@@ -230,7 +230,7 @@ impl LiteralNullNode<'_> {}
 
 impl Debug for LiteralNullNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralNull")
+        write!(f, "LiteralNull {}", self.range().debug())
     }
 }
 

@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, NamedSyntaxNode, AnyNode};
+use crate::{AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::StatementTraversal;
 
 
@@ -17,7 +17,7 @@ impl NopNode<'_> {}
 
 impl Debug for NopNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Nop")
+        write!(f, "Nop {}", self.range().debug())
     }
 }
 

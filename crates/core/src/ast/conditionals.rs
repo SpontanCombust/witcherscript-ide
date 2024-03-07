@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{AnyNode, DebugMaybeAlternate, NamedSyntaxNode, SyntaxNode};
+use crate::{AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
 
 
@@ -28,7 +28,7 @@ impl IfConditionalNode<'_> {
 
 impl Debug for IfConditionalNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("IfConditional")
+        f.debug_struct(&format!("IfConditional {}", self.range().debug()))
             .field("cond", &self.cond())
             .field("body", &self.body())
             .field("else", &self.else_body())
@@ -80,7 +80,7 @@ impl SwitchConditionalNode<'_> {
 
 impl Debug for SwitchConditionalNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SwitchConditional")
+        f.debug_struct(&format!("SwitchConditional {}", self.range().debug()))
             .field("cond", &self.cond())
             .field("body", &self.body())
             .finish()
@@ -126,7 +126,10 @@ impl SwitchConditionalBlockNode<'_> {
 
 impl Debug for SwitchConditionalBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named("SwitchConditionalBlock", &self.sections().collect::<Vec<_>>())
+        f.debug_maybe_alternate_named(
+            &format!("SwitchConditionalBlock {}", self.range().debug()), 
+            &self.sections().collect::<Vec<_>>()
+        )
     }
 }
 
@@ -238,7 +241,7 @@ impl SwitchConditionalCaseLabelNode<'_> {
 
 impl Debug for SwitchConditionalCaseLabelNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SwitchConditionalCaseLabel")
+        f.debug_struct(&format!("SwitchConditionalCaseLabel {}", self.range().debug()))
             .field("value", &self.value())
             .finish()
     }
@@ -274,7 +277,7 @@ impl NamedSyntaxNode for SwitchConditionalDefaultLabelNode<'_> {
 
 impl Debug for SwitchConditionalDefaultLabelNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SwitchConditionalDefaultLabel")
+        write!(f, "SwitchConditionalDefaultLabel {}", self.range().debug())
     }
 }
 

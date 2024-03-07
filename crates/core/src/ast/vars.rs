@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::IdentifierNode, SyntaxNode, NamedSyntaxNode, attribs::MemberVarSpecifierNode, AnyNode};
+use crate::{attribs::MemberVarSpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode};
 
 
@@ -24,7 +24,7 @@ impl TypeAnnotationNode<'_> {
 
 impl Debug for TypeAnnotationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TypeAnnotation")
+        f.debug_struct(&format!("TypeAnnotation {}", self.range().debug()))
             .field("type_name", &self.type_name())
             .field("type_arg", &self.type_arg())
             .finish()
@@ -70,7 +70,7 @@ impl VarDeclarationNode<'_> {
 
 impl Debug for VarDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("VarDeclaration")
+        f.debug_struct(&format!("VarDeclaration {}", self.range().debug()))
             .field("names", &self.names().collect::<Vec<_>>())
             .field("var_type", &self.var_type())
             .field("init_value", &self.init_value())
@@ -122,7 +122,7 @@ impl MemberVarDeclarationNode<'_> {
 
 impl Debug for MemberVarDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MemberVarDeclaration")
+        f.debug_struct(&format!("MemberVarDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("names", &self.names().collect::<Vec<_>>())
             .field("var_type", &self.var_type())
