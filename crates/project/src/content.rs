@@ -112,6 +112,10 @@ impl ProjectDirectory {
             manifest
         })
     }
+
+    pub fn manifest_path(&self) -> PathBuf {
+        self.path.join(Manifest::FILE_NAME)
+    }
 }
 
 impl Content for ProjectDirectory {
@@ -167,24 +171,31 @@ pub fn find_content_in_directory(path: &Path, scan_recursively: bool) -> (Vec<Bo
     let mut contents = Vec::new();
     let mut errors = Vec::new();
 
-    match std::fs::read_dir(&path) {
-        Ok(iter) => {
-            for entry in iter {
-                match entry {
-                    Ok(entry) => {
-                        let candidate = entry.path();
-                        if candidate.is_dir() {
-                            match try_make_content(&candidate) {
-                                Ok(content) => contents.push(content),
-                                Err(err) => {
-                                    if let (&ContentScanError::NotContent, true) = (&err, scan_recursively) {
-                                        let (inner_contents, inner_errors) = find_content_in_directory(&candidate, scan_recursively);
-                                        contents.extend(inner_contents);
-                                        errors.extend(inner_errors);
-                                    } else {
-                                        errors.push(err);
+    if path.is_dir() {
+        _find_content_in_directory(path, scan_recursively, &mut contents, &mut errors);   
+    }
+
+    (contents, errors)
+}
+
+fn _find_content_in_directory(path: &Path, scan_recursively: bool, contents: &mut Vec<Box<dyn Content>>, errors: &mut Vec<ContentScanError>) {
+    match try_make_content(path) {
+        Ok(content) => contents.push(content),
+        Err(err) => {
+            if let (&ContentScanError::NotContent, true) = (&err, scan_recursively) {
+                match std::fs::read_dir(&path) {
+                    Ok(iter) => {
+                        for entry in iter {
+                            match entry {
+                                Ok(entry) => {
+                                    let candidate = entry.path();
+                                    if candidate.is_dir() {
+                                        _find_content_in_directory(&candidate, scan_recursively, contents, errors)
                                     }
                                 },
+                                Err(err) => {
+                                    errors.push(FileError::new(path, err).into());
+                                }
                             }
                         }
                     },
@@ -192,14 +203,11 @@ pub fn find_content_in_directory(path: &Path, scan_recursively: bool) -> (Vec<Bo
                         errors.push(FileError::new(path, err).into());
                     }
                 }
+            } else {
+                errors.push(err);
             }
         },
-        Err(err) => {
-            errors.push(FileError::new(path, err).into());
-        }
     }
-
-    (contents, errors)
 }
 
 pub fn try_make_content(path: &Path) -> Result<Box<dyn Content>, ContentScanError> {

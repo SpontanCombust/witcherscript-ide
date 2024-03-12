@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+use std::path::PathBuf;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory, find_content_in_directory};
-use witcherscript_project::{Content, ContentRepositories};
-use witcherscript_project::content_graph::ContentGraphError;
+use witcherscript_project::source_tree::SourceTreeDifference;
+use witcherscript_project::{Content, ContentRepositories, FileError};
+use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError};
 use crate::{reporting::IntoLspDiagnostic, Backend};
 
 
@@ -75,19 +78,77 @@ impl Backend {
         self.log_info("Building content graph...").await;
 
         let mut graph = self.content_graph.write().await;
-        graph.build();
+        let diff = graph.build();
     
         if !graph.errors.is_empty() {
-            self.report_content_graph_errors(graph.errors.clone()).await;
+            for err in &graph.errors {
+                self.report_content_graph_error(err.clone()).await;
+            }
+        }
+
+        self.log_info("Content graph built.").await;
+
+        drop(graph);
+
+        if !diff.is_empty() {
+            self.on_content_graph_changed(diff).await;
+        } else {
+            self.log_info("Found no changes.").await;
         }
     }
 
+    pub async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {
+        let (diff_added, diff_removed) = (diff.added, diff.removed);
+        self.on_graph_contents_removed(diff_removed).await;
+        self.on_graph_contents_added(diff_added).await;
+    }
+
+    async fn on_graph_contents_added(&self, added_content_paths: Vec<PathBuf>) {
+        let graph = self.content_graph.read().await;
+        
+        let mut source_tree_diffs = HashMap::new();
+        for added_path in added_content_paths {
+
+            let added_content = &graph.get_node_by_path(&added_path).unwrap().content;
+            let source_tree = added_content.source_tree();
+
+            if !source_tree.errors.is_empty() {
+                for err in &source_tree.errors {
+                    self.report_source_tree_scan_error(err.clone()).await;
+                }
+            }
+
+            source_tree_diffs.insert(added_path.clone(), SourceTreeDifference {
+                added: source_tree.iter().cloned().collect(),
+                removed: vec![]
+            });
+
+            self.source_trees.insert(added_path.clone(), source_tree);
+
+            self.log_info(format!("Found new content: {}", added_path.display())).await; 
+        }
+
+        drop(graph);
+
+        for (content_path, diff) in source_tree_diffs {
+            let script_count = diff.added.len();
+            self.on_source_tree_changed(&content_path, diff).await;
+            self.log_info(format!("Found in total {} scripts in {}", script_count, content_path.display())).await;
+        }
+    }
+
+    async fn on_graph_contents_removed(&self, removed_content_paths: Vec<PathBuf>) {
+        for removed_path in removed_content_paths {
+            self.source_trees.remove(&removed_path);
+            self.log_info(format!("Delisted deprecated content: {}", removed_path.display())).await;
+        }   
+    }
 
 
     async fn report_content_scan_error(&self, err: ContentScanError) {
         match err {
             ContentScanError::Io(err) => {
-                self.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
+                self.log_warning(format!("Content scanning issue for {}: {}", err.path.display(), err.error)).await;
             },
             ContentScanError::ManifestParse(err) => {
                 self.publish_diagnostics(err.path.clone(), [err.into_lsp_diagnostic()]).await;
@@ -96,26 +157,28 @@ impl Backend {
         }
     }
 
-    async fn report_content_graph_errors(&self, errors: Vec<ContentGraphError>) {
-        for err in errors {
-            let err_str = err.to_string();
-            match err {
-                ContentGraphError::Io(err) => {
-                    self.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
-                },
-                ContentGraphError::ManifestParse(err) => {
-                    self.publish_diagnostics(err.path.clone(), [err.into_lsp_diagnostic()]).await;
-                },
-                ContentGraphError::DependencyPathNotFound { content_path: _, manifest_path, manifest_range } => {
-                    self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
-                },
-                ContentGraphError::DependencyNameNotFound { content_name: _, manifest_path, manifest_range } => {
-                    self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
-                },
-                ContentGraphError::MultipleMatchingDependencies { content_name: _, manifest_path, manifest_range } => {
-                    self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
-                }
+    async fn report_content_graph_error(&self, err: ContentGraphError) {
+        let err_str = err.to_string();
+        match err {
+            ContentGraphError::Io(err) => {
+                self.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
+            },
+            ContentGraphError::ManifestParse(err) => {
+                self.publish_diagnostics(err.path.clone(), [err.into_lsp_diagnostic()]).await;
+            },
+            ContentGraphError::DependencyPathNotFound { content_path: _, manifest_path, manifest_range } => {
+                self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
+            },
+            ContentGraphError::DependencyNameNotFound { content_name: _, manifest_path, manifest_range } => {
+                self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
+            },
+            ContentGraphError::MultipleMatchingDependencies { content_name: _, manifest_path, manifest_range } => {
+                self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
             }
         }
+    }
+
+    async fn report_source_tree_scan_error(&self, err: FileError<std::io::Error>) {
+        self.log_warning(format!("Source tree scanning issue for {}: {}", err.path.display(), err.error)).await
     }
 }

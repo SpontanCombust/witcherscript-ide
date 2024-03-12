@@ -6,7 +6,7 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 use witcherscript::Script;
 use witcherscript::script_document::ScriptDocument;
-use witcherscript_project::ContentGraph;
+use witcherscript_project::{ContentGraph, SourceTree};
 use crate::config::Config;
 use crate::messaging::requests;
 
@@ -24,8 +24,11 @@ pub struct Backend {
     workspace_roots: RwLock<Vec<PathBuf>>,
 
     content_graph: RwLock<ContentGraph>,
-    // source_trees: DashMap<PathBuf, SourceTree>,
+    
+    // key is path to content directory
+    source_trees: DashMap<PathBuf, SourceTree>,
 
+    // key is path to the file
     doc_buffers: DashMap<PathBuf, ScriptDocument>,
     scripts: DashMap<PathBuf, Script>
 }
@@ -41,7 +44,8 @@ impl Backend {
             workspace_roots: RwLock::new(Vec::new()),
 
             content_graph: RwLock::new(ContentGraph::new()),
-            // source_trees: DashMap::new(),
+            
+            source_trees: DashMap::new(),
 
             doc_buffers: DashMap::new(),
             scripts: DashMap::new()

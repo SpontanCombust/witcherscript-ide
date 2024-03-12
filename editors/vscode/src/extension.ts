@@ -31,10 +31,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const clientOptions: lsp.LanguageClientOptions = {
 		// Register the server for WitcherScript documents
-		documentSelector: [{ scheme: 'file', language: 'witcherscript' }],
+		documentSelector: [
+			{ scheme: 'file', language: 'witcherscript' },
+			{ scheme: 'file', pattern: '**/witcherscript.toml' }
+		],
 		synchronize: {
 			// Notify the server about file changes to *.ws files contained in the workspace
-			fileEvents: vscode.workspace.createFileSystemWatcher('**/.ws')
+			fileEvents: [
+				vscode.workspace.createFileSystemWatcher('**/.ws'),
+				vscode.workspace.createFileSystemWatcher('**/witcherscript.toml')
+			]
 		}
 	};
 

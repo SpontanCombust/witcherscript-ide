@@ -1,4 +1,6 @@
+use std::borrow::Borrow;
 use std::collections::BTreeSet;
+use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use crate::FileError;
@@ -31,6 +33,18 @@ impl SourceFilePath {
     /// A full path to the "scripts" directory
     pub fn root(&self) -> &Path {
         self.script_root.as_ref()
+    }
+}
+
+impl Borrow<Path> for SourceFilePath {
+    fn borrow(&self) -> &Path {
+        &self.abs_path
+    }
+}
+
+impl Display for SourceFilePath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.abs_path.display())
     }
 }
 
@@ -113,6 +127,11 @@ impl SourceTree {
         self.tree.len()
     }
 
+    /// The path should be absoulte
+    pub fn contains(&self, path: &Path) -> bool {
+        self.tree.contains(path)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &SourceFilePath> {
         self.tree.iter()
     }    
@@ -123,4 +142,10 @@ impl SourceTree {
 pub struct SourceTreeDifference {
     pub added: Vec<SourceFilePath>,
     pub removed: Vec<SourceFilePath>
+}
+
+impl SourceTreeDifference {
+    pub fn is_empty(&self) -> bool {
+        self.added.is_empty() && self.removed.is_empty()
+    }
 }

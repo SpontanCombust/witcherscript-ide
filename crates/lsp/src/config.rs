@@ -5,7 +5,7 @@ use tower_lsp::lsp_types as lsp;
 use crate::Backend;
 
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Config {
     pub game_directory: PathBuf,
     pub project_repositories: Vec<PathBuf>
@@ -42,16 +42,20 @@ impl Config {
 
 
 impl Backend {
-    pub async fn fetch_config(&self) {
+    // Returns whether the fetched config differs from the last state
+    pub async fn fetch_config(&self) -> bool {
         self.log_info("Fetching configuration...").await;
 
         match Config::fetch(&self.client).await {
-            Ok(config) => {
-                let mut lock = self.config.write().await;
-                *lock = config;
+            Ok(new_config) => {
+                let mut old_config = self.config.write().await;
+                let config_changed = *old_config != new_config;
+                *old_config = new_config;
+                config_changed
             },
             Err(err) => {
                 self.show_error_notification(format!("Client configuration fetch error: {}", err)).await;
+                false
             },
         }
     }

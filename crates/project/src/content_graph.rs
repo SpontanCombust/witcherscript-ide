@@ -54,9 +54,9 @@ pub struct ContentGraph {
 
 #[derive(Debug)]
 pub struct GraphNode {
-    content: Box<dyn Content>,
-    in_workspace: bool,
-    in_repository: bool,
+    pub content: Box<dyn Content>,
+    pub in_workspace: bool,
+    pub in_repository: bool,
 }
 
 /// Edge direction is:
@@ -106,53 +106,64 @@ impl ContentGraph {
     }
 
 
-    pub fn build(&mut self) {
+    pub fn build(&mut self) -> ContentGraphDifference {
+        let prev_content_paths: HashSet<_> = self.nodes.iter()
+            .map(|n| n.content.path().to_owned())
+            .collect();
+
         self.nodes.clear();
         self.edges.clear();
         self.errors.clear();
 
-        // Short-circuit if there are no projects to have the graph be built for
-        if self.workspace_projects.is_empty() {
-            return;
-        }
-
-        for i in 0..self.workspace_projects.len() {
-            let content = &self.workspace_projects[i];
-            self.create_node_for_content(content.clone(), false, true);
-        }
-
-        for i in 0..self.repos.found_content().len() {
-            let content = &self.repos.found_content()[i];
-            self.create_node_for_content(dyn_clone::clone_box(&**content), true, false);
-        }
-
-        // Correct nodes if repository and workspace paths overlap
-        for n in &mut self.nodes {
-            if self.repos.found_content().iter().any(|repo_content| repo_content.path() == n.content.path()) {
-                n.in_repository = true;
+        if !self.workspace_projects.is_empty() {     
+            for i in 0..self.workspace_projects.len() {
+                let content = &self.workspace_projects[i];
+                self.create_node_for_content(content.clone(), false, true);
+            }
+    
+            for i in 0..self.repos.found_content().len() {
+                let content = &self.repos.found_content()[i];
+                self.create_node_for_content(dyn_clone::clone_box(&**content), true, false);
+            }
+    
+            // Correct nodes if repository and workspace paths overlap
+            for n in &mut self.nodes {
+                if self.repos.found_content().iter().any(|repo_content| repo_content.path() == n.content.path()) {
+                    n.in_repository = true;
+                }
+            }
+    
+            // Now visit each of workspace content nodes to check for their dependencies.
+            let mut visited = HashSet::new();
+            for i in 0..self.nodes.len() {
+                if self.nodes[i].in_workspace {
+                    self.link_dependencies(i, &mut visited);
+                }
+            }
+    
+            // At the start all contents found in repos were given a node.
+            // Now we're going to remove nodes that are not needed anymore (the ones not used by workspace's projects).
+            // Since we've built dependencies only for workspace contents, the contents that do not have any dependants are technically unnecessary.
+            let unneeded_content_paths: Vec<_> = self.nodes.iter()
+                .enumerate()
+                .filter(|(i, n)| !n.in_workspace && !self.edges.iter().any(|e| e.dependency_idx == *i))
+                .map(|(_, n)| n.content.path().to_path_buf())
+                .collect();
+    
+            for p in unneeded_content_paths {
+                self.remove_node_by_path(&p);
             }
         }
 
-        // Now visit each of workspace content nodes to check for their dependencies.
-        let mut visited = HashSet::new();
-        for i in 0..self.nodes.len() {
-            if self.nodes[i].in_workspace {
-                self.link_dependencies(i, &mut visited);
-            }
-        }
-
-        // At the start all contents found in repos were given a node.
-        // Now we're going to remove nodes that are not needed anymore (the ones not used by workspace's projects).
-        // Since we've built dependencies only for workspace contents, the contents that do not have any dependants are technically unnecessary.
-        let unneeded_content_paths: Vec<_> = self.nodes.iter()
-            .enumerate()
-            .filter(|(i, n)| !n.in_workspace && !self.edges.iter().any(|e| e.dependency_idx == *i))
-            .map(|(_, n)| n.content.path().to_path_buf())
+        let new_content_paths: HashSet<_> = self.nodes.iter()
+            .map(|n| n.content.path().to_owned())
             .collect();
 
-        for p in unneeded_content_paths {
-            self.remove_node_by_path(&p);
-        }
+        let mut diff = ContentGraphDifference::default();
+        diff.added.extend(new_content_paths.difference(&prev_content_paths).cloned());
+        diff.removed.extend(prev_content_paths.difference(&new_content_paths).cloned());
+
+        diff
     }
 
 
@@ -417,5 +428,18 @@ impl ContentGraph {
                 self._walk_by_index(target_idx, direction, visitor, visited);
             }
         }
+    }
+}
+
+
+#[derive(Debug, Clone, Default)]
+pub struct ContentGraphDifference {
+    pub added: Vec<PathBuf>,
+    pub removed: Vec<PathBuf>
+}
+
+impl ContentGraphDifference {
+    pub fn is_empty(&self) -> bool {
+        self.added.is_empty() && self.removed.is_empty()
     }
 }
