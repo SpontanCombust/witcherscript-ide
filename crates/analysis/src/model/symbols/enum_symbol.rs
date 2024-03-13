@@ -6,7 +6,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct EnumSymbol {
     path: BasicTypeSymbolPath,
-    pub members: HashMap<SymbolPath, EnumMemberSymbol>
+    pub variants: HashMap<SymbolPath, EnumVariantSymbol>
 }
 
 impl Symbol for EnumSymbol {
@@ -23,7 +23,7 @@ impl EnumSymbol {
     pub fn new(path: BasicTypeSymbolPath) -> Self {
         Self {
             path,
-            members: HashMap::new()
+            variants: HashMap::new()
         }
     }
 }
@@ -31,11 +31,11 @@ impl EnumSymbol {
 
 
 #[derive(Debug, Clone)]
-pub struct EnumMemberSymbol {
+pub struct EnumVariantSymbol {
     path: DataSymbolPath
 }
 
-impl Symbol for EnumMemberSymbol {
+impl Symbol for EnumVariantSymbol {
     fn typ(&self) -> SymbolType {
         SymbolType::EnumMember
     }
@@ -45,7 +45,7 @@ impl Symbol for EnumMemberSymbol {
     }
 }
 
-impl EnumMemberSymbol {
+impl EnumVariantSymbol {
     pub fn new(path: DataSymbolPath) -> Self {
         Self {
             path

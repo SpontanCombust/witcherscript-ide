@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::{IdentifierNode, LiteralIntNode}, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{tokens::{IdentifierNode, LiteralHexNode, LiteralIntNode}, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor};
 
 
@@ -64,7 +64,7 @@ impl NamedSyntaxNode for EnumBlockNode<'_> {
 }
 
 impl EnumBlockNode<'_> {
-    pub fn members(&self) -> impl Iterator<Item = EnumMemberDeclarationNode> {
+    pub fn variants(&self) -> impl Iterator<Item = EnumVariantDeclarationNode> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -73,7 +73,7 @@ impl Debug for EnumBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_maybe_alternate_named(
             &format!("EnumBlock {}", self.range().debug()), 
-            &self.members().collect::<Vec<_>>()
+            &self.variants().collect::<Vec<_>>()
         )
     }
 }
@@ -92,40 +92,47 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumBlockNode<'script> {
 
 impl StatementTraversal for EnumBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.members().for_each(|s| s.accept(visitor));
+        self.variants().for_each(|s| s.accept(visitor));
     }
 }
 
 
 #[derive(Debug, Clone)]
-pub struct EnumMemberDeclaration;
+pub struct EnumVariantDeclaration;
 
-pub type EnumMemberDeclarationNode<'script> = SyntaxNode<'script, EnumMemberDeclaration>;
+pub type EnumVariantDeclarationNode<'script> = SyntaxNode<'script, EnumVariantDeclaration>;
 
-impl NamedSyntaxNode for EnumMemberDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "enum_decl_value";
+impl NamedSyntaxNode for EnumVariantDeclarationNode<'_> {
+    const NODE_KIND: &'static str = "enum_decl_variant";
 }
 
-impl EnumMemberDeclarationNode<'_> {
+impl EnumVariantDeclarationNode<'_> {
     pub fn name(&self) -> IdentifierNode {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn value(&self) -> Option<LiteralIntNode> {
-        self.field_child("value").map(|n| n.into())
+    pub fn value(&self) -> Option<EnumVariantValue> {
+        self.field_child("value").map(|n| {
+            let kind = n.tree_node.kind();
+            match kind {
+                LiteralIntNode::NODE_KIND => EnumVariantValue::Int(n.into()),
+                LiteralHexNode::NODE_KIND => EnumVariantValue::Hex(n.into()),
+                _ => panic!("Unknown enum variant value kind: {}", kind)
+            }
+        })
     }
 }
 
-impl Debug for EnumMemberDeclarationNode<'_> {
+impl Debug for EnumVariantDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("EnumMemberDeclaration {}", self.range().debug()))
+        f.debug_struct(&format!("EnumVariantDeclaration {}", self.range().debug()))
             .field("name", &self.name())
             .field("value", &self.value())
             .finish()
     }
 }
 
-impl<'script> TryFrom<AnyNode<'script>> for EnumMemberDeclarationNode<'script> {
+impl<'script> TryFrom<AnyNode<'script>> for EnumVariantDeclarationNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
@@ -137,8 +144,24 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumMemberDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for EnumMemberDeclarationNode<'_> {
+impl StatementTraversal for EnumVariantDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_enum_member_decl(self);
+        visitor.visit_enum_variant_decl(self);
+    }
+}
+
+
+#[derive(Clone)]
+pub enum EnumVariantValue<'script> {
+    Int(LiteralIntNode<'script>),
+    Hex(LiteralHexNode<'script>)
+}
+
+impl Debug for EnumVariantValue<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Int(n) => f.debug_maybe_alternate(n),
+            Self::Hex(n) => f.debug_maybe_alternate(n)
+        }
     }
 }

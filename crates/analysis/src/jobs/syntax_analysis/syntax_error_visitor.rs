@@ -51,16 +51,6 @@ impl SyntaxErrorVisitor<'_> {
         self.check_errors(&n);
     }
 
-    /// Returns true if the literal is present, false otherwise
-    fn check_literal_int(&mut self, n: &LiteralIntNode) -> bool {
-        self.check_missing(n, "integer number")
-    }
-
-    /// Returns true if the literal is present, false otherwise
-    fn check_literal_string(&mut self, n: &LiteralStringNode) -> bool {
-        self.check_missing(n, "string")
-    }
-
     fn check_expression(&mut self, n: &ExpressionNode) {
         if self.check_missing(n, "expression") {
             if n.has_errors() {
@@ -216,11 +206,14 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         false
     }
 
-    fn visit_enum_member_decl(&mut self, n: &EnumMemberDeclarationNode) {
+    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
         if n.has_errors() {
             self.check_identifier(&n.name());
     
-            n.value().map(|n| self.check_literal_int(&n));
+            n.value().map(|v| match v {
+                EnumVariantValue::Int(n) => self.check_missing(&n, "variant integer value"),
+                EnumVariantValue::Hex(n) => self.check_missing(&n, "variant integer value"),
+            });
         }
     }
 
@@ -245,7 +238,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     fn visit_member_hint(&mut self, n: &MemberHintNode) {
         if n.has_errors() {
             self.check_identifier(&n.member());
-            self.check_literal_string(&n.value());
+            self.check_missing(&n.value(), "hint string");
     
             self.check_errors(n);
         }
@@ -505,14 +498,14 @@ impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
     }
 
     fn visit_func_call_expr(&mut self, n: &FunctionCallExpressionNode) {
-        self.check_identifier(&n.func());
+        self.check_missing(&n.func(), "function");
 
         self.check_errors(n);
     }
 
-    fn visit_instantiation_expr(&mut self, n: &InstantiationExpressionNode) {
+    fn visit_new_expr(&mut self, n: &NewExpressionNode) {
         self.check_identifier(&n.class());
-        self.check_expression(&n.lifetime_obj());
+        n.lifetime_obj().map(|n| self.check_expression(&n));
 
         self.check_errors(n);
     }
@@ -520,13 +513,6 @@ impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
     fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode) {
         self.check_expression(&n.accessor());
         self.check_identifier(&n.member());
-
-        self.check_errors(n);
-    }
-
-    fn visit_method_call_expr(&mut self, n: &MethodCallExpressionNode) {
-        self.check_expression(&n.accessor());
-        self.check_identifier(&n.func());
 
         self.check_errors(n);
     }

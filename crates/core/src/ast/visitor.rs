@@ -14,8 +14,7 @@ pub trait ExpressionVisitor {
     fn visit_func_call_arg(&mut self, _: &Option<ExpressionNode>) {}
     fn visit_array_expr(&mut self, _: &ArrayExpressionNode) {}
     fn visit_member_field_expr(&mut self, _: &MemberFieldExpressionNode) {}
-    fn visit_method_call_expr(&mut self, _: &MethodCallExpressionNode) {}
-    fn visit_instantiation_expr(&mut self, _: &InstantiationExpressionNode) {}
+    fn visit_new_expr(&mut self, _: &NewExpressionNode) {}
     fn visit_type_cast_expr(&mut self, _: &TypeCastExpressionNode) {}
     fn visit_unary_op_expr(&mut self, _: &UnaryOperationExpressionNode) {}
     fn visit_binary_op_expr(&mut self, _: &BinaryOperationExpressionNode) {}
@@ -49,10 +48,11 @@ pub trait StatementVisitor {
     fn visit_enum_decl(&mut self, _: &EnumDeclarationNode) -> bool { true }
     fn exit_enum_decl(&mut self, _: &EnumDeclarationNode) {}
 
-    fn visit_enum_member_decl(&mut self, _: &EnumMemberDeclarationNode) {}
+    fn visit_enum_variant_decl(&mut self, _: &EnumVariantDeclarationNode) {}
 
     fn visit_member_var_decl(&mut self, _: &MemberVarDeclarationNode) {}
     fn visit_member_default_val(&mut self, _: &MemberDefaultValueNode) {}
+    fn visit_member_defaults_block_assignment(&mut self, _: &MemberDefaultsBlockAssignmentNode) {}
     fn visit_member_hint(&mut self, _: &MemberHintNode) {}
     fn visit_autobind_decl(&mut self, _: &AutobindDeclarationNode) {}
     

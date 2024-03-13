@@ -61,7 +61,7 @@
 				},
 				{
 					"name": "keyword.other.ws",
-					"match": "\\b(default|extends|import|hint|in|new|single)\\b"
+					"match": "\\b(default|defaults|extends|import|hint|in|new|single)\\b"
 				},
 				{
 					"name": "constant.language.ws",

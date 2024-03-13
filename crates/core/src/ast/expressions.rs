@@ -206,7 +206,7 @@ impl NamedSyntaxNode for FunctionCallExpressionNode<'_> {
 }
 
 impl FunctionCallExpressionNode<'_> {
-    pub fn func(&self) -> IdentifierNode {
+    pub fn func(&self) -> ExpressionNode {
         self.field_child("func").unwrap().into()
     }
 
@@ -238,6 +238,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionCallExpressionNode<'script> 
 
 impl ExpressionTraversal for FunctionCallExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.func().accept(visitor);
         self.args().for_each(|arg| arg.accept(visitor));
         visitor.visit_func_call_expr(self);
     }
@@ -402,89 +403,34 @@ impl ExpressionTraversal for MemberFieldExpressionNode<'_> {
 
 
 #[derive(Debug, Clone)]
-pub struct MethodCallExpression;
+pub struct NewExpression;
 
-pub type MethodCallExpressionNode<'script> = SyntaxNode<'script, MethodCallExpression>;
+pub type NewExpressionNode<'script> = SyntaxNode<'script, NewExpression>;
 
-impl NamedSyntaxNode for MethodCallExpressionNode<'_> {
-    const NODE_KIND: &'static str = "member_func_call_expr";
-}
-
-impl MethodCallExpressionNode<'_> {
-    pub fn accessor(&self) -> ExpressionNode {
-        self.field_child("accessor").unwrap().into()
-    }
-
-    pub fn func(&self) -> IdentifierNode {
-        self.field_child("func").unwrap().into()
-    }
-
-    pub fn args(&self) -> impl Iterator<Item = FuncCallArg> {
-        func_args(self)
-    }
-}
-
-impl Debug for MethodCallExpressionNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("FunctionCallExpression {}", self.range().debug()))
-            .field("accessor", &self.accessor())
-            .field("func", &self.func())
-            .field("args", &self.args().collect::<Vec<_>>())
-            .finish()
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for MethodCallExpressionNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
-    }
-}
-
-impl ExpressionTraversal for MethodCallExpressionNode<'_> {
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.accessor().accept(visitor);
-        self.args().for_each(|arg| arg.accept(visitor));
-        visitor.visit_method_call_expr(self);
-    }
-}
-
-
-
-#[derive(Debug, Clone)]
-pub struct InstantiationExpression;
-
-pub type InstantiationExpressionNode<'script> = SyntaxNode<'script, InstantiationExpression>;
-
-impl NamedSyntaxNode for InstantiationExpressionNode<'_> {
+impl NamedSyntaxNode for NewExpressionNode<'_> {
     const NODE_KIND: &'static str = "new_expr";
 }
 
-impl InstantiationExpressionNode<'_> {
+impl NewExpressionNode<'_> {
     pub fn class(&self) -> IdentifierNode {
         self.field_child("class").unwrap().into()
     }
 
-    pub fn lifetime_obj(&self) -> ExpressionNode {
-        self.field_child("lifetime_obj").unwrap().into()
+    pub fn lifetime_obj(&self) -> Option<ExpressionNode> {
+        self.field_child("lifetime_obj").map(|n| n.into())
     }
 }
 
-impl Debug for InstantiationExpressionNode<'_> {
+impl Debug for NewExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("InstantiationExpression {}", self.range().debug()))
+        f.debug_struct(&format!("NewExpression {}", self.range().debug()))
             .field("class", &self.class())
             .field("lifetime_obj", &self.lifetime_obj())
             .finish()
     }
 }
 
-impl<'script> TryFrom<AnyNode<'script>> for InstantiationExpressionNode<'script> {
+impl<'script> TryFrom<AnyNode<'script>> for NewExpressionNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
@@ -496,10 +442,10 @@ impl<'script> TryFrom<AnyNode<'script>> for InstantiationExpressionNode<'script>
     }
 }
 
-impl ExpressionTraversal for InstantiationExpressionNode<'_> {
+impl ExpressionTraversal for NewExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         self.lifetime_obj().accept(visitor);
-        visitor.visit_instantiation_expr(self);
+        visitor.visit_new_expr(self);
     }
 }
 
@@ -782,8 +728,7 @@ pub enum Expression<'script> {
     FunctionCall(FunctionCallExpressionNode<'script>),
     Array(ArrayExpressionNode<'script>),
     MemberField(MemberFieldExpressionNode<'script>),
-    MethodCall(MethodCallExpressionNode<'script>),
-    Instantiation(InstantiationExpressionNode<'script>),
+    New(NewExpressionNode<'script>),
     TypeCast(TypeCastExpressionNode<'script>),
     UnaryOperation(UnaryOperationExpressionNode<'script>),
     BinaryOperation(BinaryOperationExpressionNode<'script>),
@@ -804,8 +749,7 @@ impl Debug for Expression<'_> {
             Self::FunctionCall(n) => f.debug_maybe_alternate(n),
             Self::Array(n) => f.debug_maybe_alternate(n),
             Self::MemberField(n) => f.debug_maybe_alternate(n),
-            Self::MethodCall(n) => f.debug_maybe_alternate(n),
-            Self::Instantiation(n) => f.debug_maybe_alternate(n),
+            Self::New(n) => f.debug_maybe_alternate(n),
             Self::TypeCast(n) => f.debug_maybe_alternate(n),
             Self::UnaryOperation(n) => f.debug_maybe_alternate(n),
             Self::BinaryOperation(n) => f.debug_maybe_alternate(n),
@@ -823,10 +767,9 @@ impl<'script> ExpressionNode<'script> {
             AssignmentOperationExpressionNode::NODE_KIND => Expression::AssignmentOperation(self.into()),
             TernaryConditionalExpressionNode::NODE_KIND => Expression::TernaryConditional(self.into()),
             BinaryOperationExpressionNode::NODE_KIND => Expression::BinaryOperation(self.into()),
-            InstantiationExpressionNode::NODE_KIND => Expression::Instantiation(self.into()),
+            NewExpressionNode::NODE_KIND => Expression::New(self.into()),
             UnaryOperationExpressionNode::NODE_KIND => Expression::UnaryOperation(self.into()),
             TypeCastExpressionNode::NODE_KIND => Expression::TypeCast(self.into()),
-            MethodCallExpressionNode::NODE_KIND => Expression::MethodCall(self.into()),
             MemberFieldExpressionNode::NODE_KIND => Expression::MemberField(self.into()),
             FunctionCallExpressionNode::NODE_KIND => Expression::FunctionCall(self.into()),
             ArrayExpressionNode::NODE_KIND => Expression::Array(self.into()),
@@ -837,6 +780,7 @@ impl<'script> ExpressionNode<'script> {
             VirtualParentExpressionNode::NODE_KIND => Expression::VirtualParent(self.into()),
             IdentifierNode::NODE_KIND => Expression::Identifier(self.into()),
             LiteralIntNode::NODE_KIND       |
+            LiteralHexNode::NODE_KIND       |
             LiteralFloatNode::NODE_KIND     |
             LiteralBoolNode::NODE_KIND      |
             LiteralStringNode::NODE_KIND    |
@@ -865,10 +809,9 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
             AssignmentOperationExpressionNode::NODE_KIND    |
             TernaryConditionalExpressionNode::NODE_KIND     |
             BinaryOperationExpressionNode::NODE_KIND        |
-            InstantiationExpressionNode::NODE_KIND          |
+            NewExpressionNode::NODE_KIND          |
             UnaryOperationExpressionNode::NODE_KIND         |
             TypeCastExpressionNode::NODE_KIND               |
-            MethodCallExpressionNode::NODE_KIND             |
             MemberFieldExpressionNode::NODE_KIND            |
             FunctionCallExpressionNode::NODE_KIND           |
             ArrayExpressionNode::NODE_KIND                  |
@@ -879,6 +822,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
             VirtualParentExpressionNode::NODE_KIND          |
             IdentifierNode::NODE_KIND                       |
             LiteralIntNode::NODE_KIND                       |
+            LiteralHexNode::NODE_KIND                       |
             LiteralFloatNode::NODE_KIND                     |
             LiteralBoolNode::NODE_KIND                      |
             LiteralStringNode::NODE_KIND                    |
@@ -902,8 +846,7 @@ impl ExpressionTraversal for ExpressionNode<'_> {
             Expression::FunctionCall(n) => n.accept(visitor),
             Expression::Array(n) => n.accept(visitor),
             Expression::MemberField(n) => n.accept(visitor),
-            Expression::MethodCall(n) => n.accept(visitor),
-            Expression::Instantiation(n) => n.accept(visitor),
+            Expression::New(n) => n.accept(visitor),
             Expression::TypeCast(n) => n.accept(visitor),
             Expression::UnaryOperation(n) => n.accept(visitor),
             Expression::BinaryOperation(n) => n.accept(visitor),

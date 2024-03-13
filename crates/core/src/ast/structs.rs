@@ -107,6 +107,7 @@ impl StatementTraversal for StructBlockNode<'_> {
 pub enum StructStatement<'script> {
     Var(MemberVarDeclarationNode<'script>),
     Default(MemberDefaultValueNode<'script>),
+    DefaultsBlock(MemberDefaultsBlockNode<'script>),
     Hint(MemberHintNode<'script>),
     Nop(NopNode<'script>)
 }
@@ -116,6 +117,7 @@ impl Debug for StructStatement<'_> {
         match self {
             Self::Var(n) => f.debug_maybe_alternate(n),
             Self::Default(n) => f.debug_maybe_alternate(n),
+            Self::DefaultsBlock(n) => f.debug_maybe_alternate(n),
             Self::Hint(n) => f.debug_maybe_alternate(n),
             Self::Nop(n) => f.debug_maybe_alternate(n),
         }
@@ -129,6 +131,7 @@ impl<'script> StructStatementNode<'script> {
         match self.tree_node.kind() {
             MemberVarDeclarationNode::NODE_KIND => StructStatement::Var(self.into()),
             MemberDefaultValueNode::NODE_KIND => StructStatement::Default(self.into()),
+            MemberDefaultsBlockNode::NODE_KIND => StructStatement::DefaultsBlock(self.into()),
             MemberHintNode::NODE_KIND => StructStatement::Hint(self.into()),
             NopNode::NODE_KIND => StructStatement::Nop(self.into()),
             _ => panic!("Unknown struct statement type: {}", self.tree_node.kind())
@@ -153,6 +156,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StructStatementNode<'script> {
         match value.tree_node.kind() {
             MemberVarDeclarationNode::NODE_KIND     |
             MemberDefaultValueNode::NODE_KIND       |
+            MemberDefaultsBlockNode::NODE_KIND      |
             MemberHintNode::NODE_KIND               |
             NopNode::NODE_KIND                      => Ok(value.into()),
             _ => Err(())
@@ -165,9 +169,101 @@ impl StatementTraversal for StructStatementNode<'_> {
         match self.clone().value() {
             StructStatement::Var(s) => s.accept(visitor),
             StructStatement::Default(s) => s.accept(visitor),
+            StructStatement::DefaultsBlock(s) => s.accept(visitor),
             StructStatement::Hint(s) => s.accept(visitor),
             StructStatement::Nop(s) => s.accept(visitor),
         }
+    }
+}
+
+
+
+#[derive(Debug, Clone)]
+pub struct MemberDefaultsBlock;
+
+pub type MemberDefaultsBlockNode<'script> = SyntaxNode<'script, MemberDefaultsBlock>;
+
+impl NamedSyntaxNode for MemberDefaultsBlockNode<'_> {
+    const NODE_KIND: &'static str = "member_defaults_block_stmt";
+}
+
+impl MemberDefaultsBlockNode<'_> {
+    pub fn assignments(&self) -> impl Iterator<Item = MemberDefaultsBlockAssignmentNode> {
+        self.named_children().map(|n| n.into())
+    }
+}
+
+impl Debug for MemberDefaultsBlockNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate_named(
+            &format!("MemberDefaultsBlock {}", self.range().debug()), 
+            &self.assignments().collect::<Vec<_>>()
+        )
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl StatementTraversal for MemberDefaultsBlockNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        self.assignments().for_each(|n| n.accept(visitor))
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct MemberDefaultsBlockAssignment;
+
+pub type MemberDefaultsBlockAssignmentNode<'script> = SyntaxNode<'script, MemberDefaultsBlockAssignment>;
+
+impl NamedSyntaxNode for MemberDefaultsBlockAssignmentNode<'_> {
+    const NODE_KIND: &'static str = "member_defaults_block_assign";
+}
+
+impl MemberDefaultsBlockAssignmentNode<'_> {
+    pub fn member(&self) -> IdentifierNode {
+        self.field_child("member").unwrap().into()
+    }
+
+    pub fn value(&self) -> ExpressionNode {
+        self.field_child("value").unwrap().into()
+    }
+}
+
+impl Debug for MemberDefaultsBlockAssignmentNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct(&format!("MemberDefaultsBlockAssignment {}", self.range().debug()))
+            .field("member", &self.member())
+            .field("value", &self.value())
+            .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockAssignmentNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl StatementTraversal for MemberDefaultsBlockAssignmentNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        visitor.visit_member_defaults_block_assignment(self);
     }
 }
 

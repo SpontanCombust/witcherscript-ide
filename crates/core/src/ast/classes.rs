@@ -111,6 +111,7 @@ impl StatementTraversal for ClassBlockNode<'_> {
 pub enum ClassStatement<'script> {
     Var(MemberVarDeclarationNode<'script>),
     Default(MemberDefaultValueNode<'script>),
+    DefaultsBlock(MemberDefaultsBlockNode<'script>),
     Hint(MemberHintNode<'script>),
     Autobind(AutobindDeclarationNode<'script>),
     Method(MemberFunctionDeclarationNode<'script>),
@@ -123,6 +124,7 @@ impl Debug for ClassStatement<'_> {
         match self {
             Self::Var(n) => f.debug_maybe_alternate(n),
             Self::Default(n) => f.debug_maybe_alternate(n),
+            Self::DefaultsBlock(n) => f.debug_maybe_alternate(n),
             Self::Hint(n) => f.debug_maybe_alternate(n),
             Self::Autobind(n) => f.debug_maybe_alternate(n),
             Self::Method(n) => f.debug_maybe_alternate(n),
@@ -139,6 +141,7 @@ impl<'script> ClassStatementNode<'script> {
         match self.tree_node.kind() {
             MemberVarDeclarationNode::NODE_KIND => ClassStatement::Var(self.into()),
             MemberDefaultValueNode::NODE_KIND => ClassStatement::Default(self.into()),
+            MemberDefaultsBlockNode::NODE_KIND => ClassStatement::DefaultsBlock(self.into()),
             MemberHintNode::NODE_KIND => ClassStatement::Hint(self.into()),
             AutobindDeclarationNode::NODE_KIND => ClassStatement::Autobind(self.into()),
             MemberFunctionDeclarationNode::NODE_KIND => ClassStatement::Method(self.into()),
@@ -162,6 +165,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassStatementNode<'script> {
         match value.tree_node.kind() {
             MemberVarDeclarationNode::NODE_KIND         |
             MemberDefaultValueNode::NODE_KIND           |
+            MemberDefaultsBlockNode::NODE_KIND          |
             MemberHintNode::NODE_KIND                   |
             AutobindDeclarationNode::NODE_KIND          |
             MemberFunctionDeclarationNode::NODE_KIND    |
@@ -177,6 +181,7 @@ impl StatementTraversal for ClassStatementNode<'_> {
         match self.clone().value() {
             ClassStatement::Var(s) => s.accept(visitor),
             ClassStatement::Default(s) => s.accept(visitor),
+            ClassStatement::DefaultsBlock(s) => s.accept(visitor),
             ClassStatement::Hint(s) => s.accept(visitor),
             ClassStatement::Autobind(s) => s.accept(visitor),
             ClassStatement::Method(s) => s.accept(visitor),
@@ -210,8 +215,16 @@ impl AutobindDeclarationNode<'_> {
         self.field_child("autobind_type").unwrap().into()
     }
 
-    pub fn value(&self) -> AutobindValueNode {
-        self.field_child("value").unwrap().into()
+    pub fn value(&self) -> AutobindValue {
+        let n = self.field_child("value").unwrap();
+        let kind = n.tree_node.kind();
+        if kind == Keyword::Single.as_ref() {
+            AutobindValue::Single(n.into())
+        } else if kind == LiteralStringNode::NODE_KIND {
+            AutobindValue::Concrete(n.into())
+        } else {
+            panic!("Unknown autobind value kind: {}", kind)
+        }
     }
 }
 
@@ -245,41 +258,17 @@ impl StatementTraversal for AutobindDeclarationNode<'_> {
 }
 
 
-
 #[derive(Clone)]
 pub enum AutobindValue<'script> {
-    Single,
+    Single(UnnamedNode<'script>),
     Concrete(LiteralStringNode<'script>)
 }
 
 impl Debug for AutobindValue<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Single => write!(f, "Single"),
-            Self::Concrete(n) => f.debug_tuple("Concrete").field(n).finish(),
+            Self::Single(n) => write!(f, "Single {}", n.range().debug()),
+            Self::Concrete(n) => f.debug_maybe_alternate(n)
         }
     }
 }
-
-pub type AutobindValueNode<'script> = SyntaxNode<'script, AutobindValue<'script>>;
-
-impl AutobindValueNode<'_> {
-    pub fn value(&self) -> AutobindValue {
-        let child = self.first_child(false).unwrap();
-        let s = child.tree_node.kind();
-        if s == LiteralStringNode::NODE_KIND {
-            return AutobindValue::Concrete(child.into());
-        } else if s == Keyword::Single.as_ref() {
-            return AutobindValue::Single;
-        } else {
-            panic!("Unknown autobind value type: {}", s);
-        }
-    }
-} 
-
-impl Debug for AutobindValueNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())?;
-        write!(f, " {}", self.range().debug())
-    }
-} 

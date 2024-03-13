@@ -215,10 +215,10 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_enum_member_decl(&mut self, n: &EnumMemberDeclarationNode) {
-        if let Some(enum_member_name) = n.name().value(&self.doc) {
-            let path = DataSymbolPath::new(&self.current_path, &enum_member_name);
-            let sym = EnumMemberSymbol::new(path);
+    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
+        if let Some(enum_variant_name) = n.name().value(&self.doc) {
+            let path = DataSymbolPath::new(&self.current_path, &enum_variant_name);
+            let sym = EnumVariantSymbol::new(path);
 
             self.try_insert_with_duplicate_check(sym, n.name().range());
         }
