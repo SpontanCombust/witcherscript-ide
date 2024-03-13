@@ -103,7 +103,7 @@ function commandCreateProject(context: vscode.ExtensionContext): Cmd {
         })
     }
 }
-
+//TODO in the release description disclose that ranges won't be accurate when the document is indented using tabs instead of spaces
 function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
     const astSuffix = " - AST";
 
@@ -140,20 +140,40 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(tdcp.schema, tdcp));
 
     return async () => {
-        if (!vscode.window.activeTextEditor) {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor) {
             return;
         }
 
-        const scriptPath = vscode.window.activeTextEditor.document.uri.fsPath;
+        const scriptPath = activeEditor.document.uri.fsPath;
+        const scriptLine = activeEditor.selection.active.line + 1;
         const uri = vscode.Uri.file(scriptPath + astSuffix).with({ scheme: tdcp.schema });
+        
+        const doc = await vscode.workspace.openTextDocument(uri);
         const options: vscode.TextDocumentShowOptions = {
             viewColumn: vscode.ViewColumn.Two,
             preview: false,
             preserveFocus: true
         };
 
-        const doc = await vscode.workspace.openTextDocument(uri);
         tdcp.eventEmitter.fire(uri);
-        return vscode.window.showTextDocument(doc, options);
+        
+        vscode.window.showTextDocument(doc, options).then(editor => {
+            const astText = editor.document.getText();
+            // Searching for corresponding node in AST text.
+            // A naive approach leveraging the format of returned AST text.
+            // Nodes represented there together with their names have a range at which they appear.
+            // E.g. Identifier [10, 1] - [10, 5]
+            // with [line1, column1] - [line2, column2] being the range in question.
+            // So here I just search for such a range that hopefully appears in the AST.
+            client.debug('Active line: ' + scriptLine);
+            const match = astText.search(new RegExp("\\[" + scriptLine));
+            if (match != -1) {
+                const targetPos = editor.document.positionAt(match);
+                client.debug('Found AST range: ' + JSON.stringify(targetPos));
+                // Scroll the cursor in AST's editor to searched position
+                editor.revealRange(new vscode.Range(targetPos, targetPos), vscode.TextEditorRevealType.AtTop);
+            }
+        })
     };
 }
