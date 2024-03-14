@@ -199,7 +199,7 @@ pub struct AutobindDeclaration;
 pub type AutobindDeclarationNode<'script> = SyntaxNode<'script, AutobindDeclaration>;
 
 impl NamedSyntaxNode for AutobindDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "class_autobind_stmt";
+    const NODE_KIND: &'static str = "autobind_stmt";
 }
 
 impl AutobindDeclarationNode<'_> {
@@ -218,12 +218,10 @@ impl AutobindDeclarationNode<'_> {
     pub fn value(&self) -> AutobindValue {
         let n = self.field_child("value").unwrap();
         let kind = n.tree_node.kind();
-        if kind == Keyword::Single.as_ref() {
-            AutobindValue::Single(n.into())
-        } else if kind == LiteralStringNode::NODE_KIND {
-            AutobindValue::Concrete(n.into())
-        } else {
-            panic!("Unknown autobind value kind: {}", kind)
+        match kind {
+            AutobindValueSingleNode::NODE_KIND => AutobindValue::Single(n.into()),
+            LiteralStringNode::NODE_KIND => AutobindValue::Concrete(n.into()),
+            _ => panic!("Unknown autobind value kind: {}", kind)
         }
     }
 }
@@ -260,15 +258,45 @@ impl StatementTraversal for AutobindDeclarationNode<'_> {
 
 #[derive(Clone)]
 pub enum AutobindValue<'script> {
-    Single(UnnamedNode<'script>),
+    Single(AutobindValueSingleNode<'script>),
     Concrete(LiteralStringNode<'script>)
 }
 
 impl Debug for AutobindValue<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Single(n) => write!(f, "Single {}", n.range().debug()),
+            Self::Single(n) => f.debug_maybe_alternate(n),
             Self::Concrete(n) => f.debug_maybe_alternate(n)
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct AutobindValueSingle;
+
+pub type AutobindValueSingleNode<'script> = SyntaxNode<'script, AutobindValueSingle>;
+
+impl NamedSyntaxNode for AutobindValueSingleNode<'_> {
+    const NODE_KIND: &'static str = "autobind_single";
+}
+
+impl AutobindValueSingleNode<'_> {}
+
+impl Debug for AutobindValueSingleNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Single {}", self.range().debug())
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for AutobindValueSingleNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }
