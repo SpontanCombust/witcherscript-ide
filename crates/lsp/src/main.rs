@@ -93,7 +93,9 @@ impl LanguageServer for Backend {
 }
 
 
-#[tokio::main]
+/// The server communicates only with 1 client, so the protocol handling part itself does not need more resources than maybe 2 threads.
+/// This way the rest of threads will be free to do some heavy lifting. 
+#[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() {
     let (stdin, stdout) = (tokio::io::stdin(), tokio::io::stdout());
 
