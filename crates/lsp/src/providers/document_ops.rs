@@ -101,7 +101,18 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
             backend.scan_source_tree(&containing_content_path).await;
         }
 
-        if let Some(script) = backend.scripts.get(&doc_path) {
+
+        // replace the doc content completely
+        let mut doc_buff = backend
+            .doc_buffers
+            .entry(doc_path.clone())
+            .insert(ScriptDocument::from_str(&params.text.unwrap()));
+
+        if let Some(mut script) = backend.scripts.get_mut(&doc_path) {
+            if let Err(err) = script.update(&mut doc_buff) {
+                backend.log_error(err).await;
+            }
+
             script_syntax_diagnostics(&*script, backend, params.text_document.uri).await;
         }
         

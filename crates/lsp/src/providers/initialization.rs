@@ -24,7 +24,7 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
                 will_save: Some(false),
                 will_save_wait_until: Some(false),
                 save: Some(lsp::TextDocumentSyncSaveOptions::SaveOptions(lsp::SaveOptions {
-                    include_text: Some(false)
+                    include_text: Some(true)
                 }))
             })),
             workspace: Some(lsp::WorkspaceServerCapabilities {
