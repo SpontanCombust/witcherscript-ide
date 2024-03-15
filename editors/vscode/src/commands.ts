@@ -6,8 +6,8 @@ import * as state from './state';
 
 export function registerCommands(context: vscode.ExtensionContext) {
     context.subscriptions.push(
-        vscode.commands.registerCommand("witcherscript-ide.workspace.initProject", commandInitProject()),
-        vscode.commands.registerCommand("witcherscript-ide.workspace.createProject", commandCreateProject(context)),
+        vscode.commands.registerCommand("witcherscript-ide.projects.init", commandInitProject()),
+        vscode.commands.registerCommand("witcherscript-ide.projects.create", commandCreateProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context))
     );
 }

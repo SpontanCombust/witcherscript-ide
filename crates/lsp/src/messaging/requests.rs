@@ -19,7 +19,7 @@ pub mod create_project {
         pub manifest_content_name_range: lsp::Range
     }
 
-    pub const METHOD: &'static str = "witcherscript-ide/workspace/createProject";
+    pub const METHOD: &'static str = "witcherscript-ide/projects/create";
 }
 
 pub mod script_ast {

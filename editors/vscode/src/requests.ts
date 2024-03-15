@@ -1,6 +1,7 @@
 import { RequestType } from 'vscode-languageclient';
 import * as lsp from 'vscode-languageserver-protocol';
 
+
 export namespace CreateProject {
     export interface Parameters {
         // Path to a directory where the project should be created
@@ -14,7 +15,7 @@ export namespace CreateProject {
         manifestContentNameRange: lsp.Range
     }
 
-    export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/workspace/createProject");
+    export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/projects/create");
 }
 
 
