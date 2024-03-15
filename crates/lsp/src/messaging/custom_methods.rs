@@ -1,14 +1,13 @@
 use std::io::Write;
-
 use tower_lsp::{jsonrpc, lsp_types as lsp};
 use tower_lsp::jsonrpc::Result;
 use witcherscript_project::Manifest;
 use crate::Backend;
-use super::requests::{create_project, script_ast};
+use super::requests;
 
 
 impl Backend {
-    pub async fn handle_create_project_request(&self, params: create_project::Parameters) -> Result<create_project::Response> {
+    pub async fn handle_create_project_request(&self, params: requests::projects::create::Parameters) -> Result<requests::projects::create::Response> {
         let project_dir;
         if let Ok(path) = params.directory_uri.to_file_path() {
             project_dir = path;
@@ -78,13 +77,13 @@ impl Backend {
         }
 
         let manifest_uri = lsp::Url::from_file_path(manifest_path).unwrap();
-        Ok(create_project::Response { 
+        Ok(requests::projects::create::Response { 
             manifest_uri,
             manifest_content_name_range
         })
     }
 
-    pub async fn handle_script_ast_request(&self, params: script_ast::Parameters) -> Result<script_ast::Response> {
+    pub async fn handle_script_ast_request(&self, params: requests::debug::script_ast::Parameters) -> Result<requests::debug::script_ast::Response> {
         let path = params.script_uri.to_file_path().map_err(|_| jsonrpc::Error::invalid_params("script_uri parameter is not a file URI"))?;
         let script = self.scripts.get(&path).ok_or(jsonrpc::Error {
             code: jsonrpc::ErrorCode::ServerError(-1100),
@@ -94,7 +93,7 @@ impl Backend {
 
         let ast = format!("{:#?}", script.root_node());
 
-        Ok(script_ast::Response { 
+        Ok(requests::debug::script_ast::Response { 
             ast
         })
     }

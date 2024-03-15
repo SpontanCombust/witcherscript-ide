@@ -18,10 +18,10 @@ function commandInitProject(): Cmd {
     return async () => {
         if (vscode.workspace.workspaceFolders) {
             const projectDirectory = vscode.workspace.workspaceFolders[0].uri;
-            const params: requests.CreateProject.Parameters = {
+            const params: requests.projects.create.Parameters = {
                 directoryUri: client.code2ProtocolConverter.asUri(projectDirectory)
             }
-            client.sendRequest(requests.CreateProject.type, params).then(
+            client.sendRequest(requests.projects.create.type, params).then(
                 (response) => {
                     const manifestUri = client.protocol2CodeConverter.asUri(response.manifestUri);
                     const manifestSelectionRange = client.protocol2CodeConverter.asRange(response.manifestContentNameRange);
@@ -55,11 +55,11 @@ function commandCreateProject(context: vscode.ExtensionContext): Cmd {
         }).then((folders) => {
             if (folders) {
                 const projectDirectoryUri = folders[0];
-                const params: requests.CreateProject.Parameters = {
+                const params: requests.projects.create.Parameters = {
                     directoryUri: client.code2ProtocolConverter.asUri(projectDirectoryUri)
                 }
     
-                client.sendRequest(requests.CreateProject.type, params).then(
+                client.sendRequest(requests.projects.create.type, params).then(
                     async (response) => {
                         const manifestUri = client.protocol2CodeConverter.asUri(response.manifestUri);
                         const manifestSelectionRange = client.protocol2CodeConverter.asRange(response.manifestContentNameRange);
@@ -125,10 +125,10 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
             // Anyways, LS needs name of the actual file, so the decoratory suffix needs to be gone from that URI.
             uri = vscode.Uri.file(uri.fsPath.substring(0, uri.fsPath.length - astSuffix.length));
 
-            const params: requests.ScriptAst.Parameters = {
+            const params: requests.debug.scriptAst.Parameters = {
                 scriptUri: client.code2ProtocolConverter.asUri(uri)
             }
-            return client.sendRequest(requests.ScriptAst.type, params).then(
+            return client.sendRequest(requests.debug.scriptAst.type, params).then(
                 (response) => {
                     return response.ast;
                 },

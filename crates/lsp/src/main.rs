@@ -100,8 +100,8 @@ async fn main() {
     let (stdin, stdout) = (tokio::io::stdin(), tokio::io::stdout());
 
     let (service, socket) = LspService::build(|client| Backend::new(client))
-        .custom_method(requests::create_project::METHOD, Backend::handle_create_project_request)
-        .custom_method(requests::script_ast::METHOD, Backend::handle_script_ast_request)
+        .custom_method(requests::projects::create::METHOD, Backend::handle_create_project_request)
+        .custom_method(requests::debug::script_ast::METHOD, Backend::handle_script_ast_request)
         .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
