@@ -18,16 +18,19 @@ function commandInitProject(): Cmd {
     return async () => {
         if (vscode.workspace.workspaceFolders) {
             const projectDirectory = vscode.workspace.workspaceFolders[0].uri;
-            const params = new requests.CreateProject.Parameters(projectDirectory);
-            client.sendRequest(requests.CreateProject.type, params.intoDto(client.code2ProtocolConverter)).then(
-                (dto) => {
-                    const response = requests.CreateProject.Response.fromDto(client.protocol2CodeConverter, dto);
+            const params: requests.CreateProject.Parameters = {
+                directoryUri: client.code2ProtocolConverter.asUri(projectDirectory)
+            }
+            client.sendRequest(requests.CreateProject.type, params).then(
+                (response) => {
+                    const manifestUri = client.protocol2CodeConverter.asUri(response.manifestUri);
+                    const manifestSelectionRange = client.protocol2CodeConverter.asRange(response.manifestContentNameRange);
     
-                    const params: vscode.TextDocumentShowOptions = {
-                        selection: response.manifestContentNameRange,
+                    const showOptions: vscode.TextDocumentShowOptions = {
+                        selection: manifestSelectionRange,
                         preview: false
                     };
-                    vscode.window.showTextDocument(response.manifestUri, params).then(
+                    vscode.window.showTextDocument(manifestUri, showOptions).then(
                         _ => {},
                         (err) => client.debug('Manifest could not be shown: ' + err)
                     );
@@ -51,22 +54,25 @@ function commandCreateProject(context: vscode.ExtensionContext): Cmd {
             title: "Choose the project folder",
         }).then((folders) => {
             if (folders) {
-                const projectDirectory = folders[0];
-                const params = new requests.CreateProject.Parameters(projectDirectory);
+                const projectDirectoryUri = folders[0];
+                const params: requests.CreateProject.Parameters = {
+                    directoryUri: client.code2ProtocolConverter.asUri(projectDirectoryUri)
+                }
     
-                client.sendRequest(requests.CreateProject.type, params.intoDto(client.code2ProtocolConverter)).then(
-                    async (dto) => {
-                        const response = requests.CreateProject.Response.fromDto(client.protocol2CodeConverter, dto);
+                client.sendRequest(requests.CreateProject.type, params).then(
+                    async (response) => {
+                        const manifestUri = client.protocol2CodeConverter.asUri(response.manifestUri);
+                        const manifestSelectionRange = client.protocol2CodeConverter.asRange(response.manifestContentNameRange);
     
                         // check if the project directory is contained somewhere inside the workspace
                         // in this case just open the manifest
                         // otherwise, ask the user if they'd like to open the project
-                        if (vscode.workspace.workspaceFolders.some(f => projectDirectory.fsPath.startsWith(f.uri.fsPath))) {
+                        if (vscode.workspace.workspaceFolders.some(f => projectDirectoryUri.fsPath.startsWith(f.uri.fsPath))) {
                             const params: vscode.TextDocumentShowOptions = {
-                                selection: response.manifestContentNameRange,
+                                selection: manifestSelectionRange,
                                 preview: false
                             };
-                            vscode.window.showTextDocument(response.manifestUri, params).then(
+                            vscode.window.showTextDocument(manifestUri, params).then(
                                 _ => {},
                                 (err) => client.debug('Manifest could not be shown: ' + err)
                             );
@@ -82,14 +88,14 @@ function commandCreateProject(context: vscode.ExtensionContext): Cmd {
         
                             if (answer != undefined && answer != Answer.NO) {
                                 const memento = new state.OpenManifestOnInit.Memento(
-                                    projectDirectory,
-                                    response.manifestUri,
-                                    response.manifestContentNameRange
+                                    projectDirectoryUri,
+                                    manifestUri,
+                                    manifestSelectionRange
                                 );
                                 await context.globalState.update(state.OpenManifestOnInit.KEY, memento.intoDto());
         
                                 const openNewWindow = answer == Answer.YES_IN_NEW;
-                                await vscode.commands.executeCommand("vscode.openFolder", projectDirectory, {
+                                await vscode.commands.executeCommand("vscode.openFolder", projectDirectoryUri, {
                                     forceNewWindow: openNewWindow
                                 });
                             }
@@ -119,10 +125,11 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
             // Anyways, LS needs name of the actual file, so the decoratory suffix needs to be gone from that URI.
             uri = vscode.Uri.file(uri.fsPath.substring(0, uri.fsPath.length - astSuffix.length));
 
-            const params = new requests.ScriptAst.Parameters(uri);
-            return client.sendRequest(requests.ScriptAst.type, params.intoDto(client.code2ProtocolConverter)).then(
-                (dto) => {
-                    const response = requests.ScriptAst.Response.fromDto(client.protocol2CodeConverter, dto);
+            const params: requests.ScriptAst.Parameters = {
+                scriptUri: client.code2ProtocolConverter.asUri(uri)
+            }
+            return client.sendRequest(requests.ScriptAst.type, params).then(
+                (response) => {
                     return response.ast;
                 },
                 (error) => {
@@ -166,11 +173,9 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
             // E.g. Identifier [10, 1] - [10, 5]
             // with [line1, column1] - [line2, column2] being the range in question.
             // So here I just search for such a range that hopefully appears in the AST.
-            client.debug('Active line: ' + scriptLine);
             const match = astText.search(new RegExp("\\[" + scriptLine));
             if (match != -1) {
                 const targetPos = editor.document.positionAt(match);
-                client.debug('Found AST range: ' + JSON.stringify(targetPos));
                 // Scroll the cursor in AST's editor to searched position
                 editor.revealRange(new vscode.Range(targetPos, targetPos), vscode.TextEditorRevealType.AtTop);
             }
