@@ -1,14 +1,15 @@
 use std::io::Write;
+use std::path::PathBuf;
 use tower_lsp::{jsonrpc, lsp_types as lsp};
 use tower_lsp::jsonrpc::Result;
 use witcherscript_project::Manifest;
 use crate::Backend;
-use super::requests;
+use super::requests::{self, ContentInfo};
 
 
 impl Backend {
-    pub async fn handle_create_project_request(&self, params: requests::projects::create::Parameters) -> Result<requests::projects::create::Response> {
-        let project_dir;
+    pub async fn handle_projects_create_request(&self, params: requests::projects::create::Parameters) -> Result<requests::projects::create::Response> {
+        let project_dir: PathBuf;
         if let Ok(path) = params.directory_uri.to_file_path() {
             project_dir = path;
         } else {
@@ -86,7 +87,7 @@ impl Backend {
     pub async fn handle_script_ast_request(&self, params: requests::debug::script_ast::Parameters) -> Result<requests::debug::script_ast::Response> {
         let path = params.script_uri.to_file_path().map_err(|_| jsonrpc::Error::invalid_params("script_uri parameter is not a file URI"))?;
         let script = self.scripts.get(&path).ok_or(jsonrpc::Error {
-            code: jsonrpc::ErrorCode::ServerError(-1100),
+            code: jsonrpc::ErrorCode::ServerError(-1010),
             message: "Script file not found".into(),
             data: None
         })?;
@@ -95,6 +96,119 @@ impl Backend {
 
         Ok(requests::debug::script_ast::Response { 
             ast
+        })
+    }
+
+    pub async fn handle_scripts_parent_content_request(&self, params: requests::scripts::parent_content::Parameters) -> Result<requests::scripts::parent_content::Response>  {
+        let script_path: PathBuf;
+        if let Ok(path) = params.script_uri.to_file_path() {
+            script_path = path;
+        } else {
+            return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
+        }
+
+        let mut parent_content_path = None;
+        for it in self.source_trees.iter() {
+            let source_tree = it.value();
+            if source_tree.contains(&script_path) {
+                parent_content_path = Some(it.key().to_owned());
+                break;
+            }
+        }
+
+        if parent_content_path.is_none() {
+            return Err(jsonrpc::Error {
+                code: jsonrpc::ErrorCode::ServerError(-1020),
+                message: "Script does not belong to any content in the content graph".into(),
+                data: None
+            })
+        }
+        let parent_content_path = parent_content_path.unwrap();
+        
+        if let Some(n) = self.content_graph.read().await.get_node_by_path(&parent_content_path) {
+            Ok(requests::scripts::parent_content::Response {
+                parent_content_info: ContentInfo { 
+                    content_uri: lsp::Url::from_file_path(&parent_content_path).unwrap(), 
+                    scripts_root_uri: lsp::Url::from_file_path(n.content.source_tree_root()).unwrap(), 
+                    content_name: n.content.content_name().into(),
+                    is_in_workspace: n.in_workspace,
+                    is_in_repository: n.in_repository
+                }
+            })
+        } else {
+            Err(jsonrpc::Error {
+                code: jsonrpc::ErrorCode::ServerError(-1021),
+                message: "Could not find content in content graph".into(),
+                data: None
+            })
+        }
+    }
+
+    pub async fn handle_projects_vanilla_dependency_content_request(&self, params: requests::projects::vanilla_dependency_content::Parameters) -> Result<requests::projects::vanilla_dependency_content::Response> {
+        let project_path: PathBuf;
+        if let Ok(path) = params.project_uri.to_file_path() {
+            project_path = path;
+        } else {
+            return Err(jsonrpc::Error::invalid_params("project_uri parameter is not a valid file URI"));
+        }
+
+        let graph = self.content_graph.read().await;
+        if graph.get_node_by_path(&project_path).is_none() {
+            return Err(jsonrpc::Error { 
+                code: jsonrpc::ErrorCode::ServerError(-1030), 
+                message: "The project is absent from the content graph".into(), 
+                data: None
+            })
+        }
+
+        let mut content0_info = None;
+        graph.walk_dependencies(&project_path, |n| {
+            if n.content.content_name() == "content0" {
+                content0_info = Some(ContentInfo {
+                    content_uri: lsp::Url::from_file_path(n.content.path()).unwrap(),
+                    scripts_root_uri: lsp::Url::from_file_path(n.content.source_tree_root()).unwrap(),
+                    content_name: n.content.content_name().to_owned(),
+                    is_in_workspace: n.in_workspace,
+                    is_in_repository: n.in_repository
+                });
+            }
+        });
+
+        if let Some(content0_info) = content0_info {
+            Ok(requests::projects::vanilla_dependency_content::Response {
+                content0_info,
+            })
+        } else {
+            Err(jsonrpc::Error {
+                code: jsonrpc::ErrorCode::ServerError(-1031),
+                message: "Project does not depend on content0".into(),
+                data: None
+            })
+        }
+    }
+
+    pub async fn handle_projects_list_request(&self, params: requests::projects::list::Parameters) -> Result<requests::projects::list::Response> {
+        let only_from_workspace = params.only_from_workspace.unwrap_or(true);
+
+        let mut project_infos = Vec::new();
+
+        let graph = self.content_graph.read().await;
+        for n in graph.nodes() {
+            if only_from_workspace && !n.in_workspace {
+                continue;
+            }
+
+            project_infos.push(ContentInfo { 
+                content_uri: lsp::Url::from_file_path(n.content.path()).unwrap(), 
+                scripts_root_uri: lsp::Url::from_file_path(n.content.source_tree_root()).unwrap(), 
+                content_name: n.content.content_name().into(), 
+                is_in_workspace: n.in_workspace, 
+                is_in_repository: n.in_repository 
+            })
+        }
+
+        Ok(requests::projects::list::Response {
+            project_infos
         })
     }
 }

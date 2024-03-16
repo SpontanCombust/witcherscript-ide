@@ -163,6 +163,7 @@ impl ContentGraph {
         diff.added.extend(new_content_paths.difference(&prev_content_paths).cloned());
         diff.removed.extend(prev_content_paths.difference(&new_content_paths).cloned());
 
+        //FIXME when manifest is modified it is not registered as a modification to the graph
         diff
     }
 
@@ -171,6 +172,7 @@ impl ContentGraph {
         self.get_node_index_by_path(content_path).map(|i| &self.nodes[i])
     }
 
+    //TODO turn this into a dedicated iterator type
     /// Visits all content nodes that are dependencies to the specified content.
     pub fn walk_dependencies(&self, content_path: &Path, mut visitor: impl FnMut(&GraphNode)) {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
@@ -189,6 +191,10 @@ impl ContentGraph {
                 visitor(node)
             });
         }
+    }
+
+    pub fn nodes(&self) -> impl Iterator<Item = &GraphNode> {
+        self.nodes.iter()
     }
 
 

@@ -11,23 +11,31 @@ use crate::FileError;
 pub trait Content : core::fmt::Debug + dyn_clone::DynClone + Send + Sync {
     fn path(&self) -> &Path;
     fn content_name(&self) -> &str;
-    fn source_tree(&self) -> SourceTree;
+    fn source_tree_root(&self) -> &Path;
     fn dependencies(&self) -> Option<&Dependencies>;
-
+    
     fn as_any(self: Box<Self>) -> Box<dyn Any>;
+
+    fn source_tree(&self) -> SourceTree {
+        SourceTree::new(self.source_tree_root().to_owned())
+    }
 }
 
 
 /// Directory that has "scripts" folder directly inside it i.e. content0.
 #[derive(Debug, Clone)]
 pub struct UnpackedContentDirectory {
-    path: PathBuf
+    path: PathBuf,
+    script_root: PathBuf
 }
 
 impl UnpackedContentDirectory {
     pub fn new(path: PathBuf) -> Self {
+        let script_root = path.join("scripts");
+
         Self {
-            path
+            path,
+            script_root
         }
     }
 }
@@ -41,9 +49,8 @@ impl Content for UnpackedContentDirectory {
         self.path.file_name().unwrap().to_str().unwrap()
     }
 
-    fn source_tree(&self) -> SourceTree {
-        let script_root = self.path.join("scripts");
-        SourceTree::new(script_root)
+    fn source_tree_root(&self) -> &Path {
+        &self.script_root
     }
 
     fn dependencies(&self) -> Option<&Dependencies> {
@@ -60,13 +67,17 @@ impl Content for UnpackedContentDirectory {
 /// This means every packed mod folder inside "Mods" directory.
 #[derive(Debug, Clone)]
 pub struct PackedContentDirectory {
-    path: PathBuf
+    path: PathBuf,
+    script_root: PathBuf
 }
 
 impl PackedContentDirectory {
     pub fn new(path: PathBuf) -> Self {
+        let script_root = path.join("content").join("scripts");
+
         Self {
-            path
+            path,
+            script_root
         }
     }
 }
@@ -80,9 +91,8 @@ impl Content for PackedContentDirectory {
         self.path.file_name().unwrap().to_str().unwrap()
     }
 
-    fn source_tree(&self) -> SourceTree {
-        let script_root = self.path.join("content").join("scripts");
-        SourceTree::new(script_root)
+    fn source_tree_root(&self) -> &Path {
+        &self.script_root
     }
 
     fn dependencies(&self) -> Option<&Dependencies> {
@@ -99,17 +109,20 @@ impl Content for PackedContentDirectory {
 #[derive(Debug, Clone)]
 pub struct ProjectDirectory {
     path: PathBuf,
+    script_root: PathBuf,
     manifest: Manifest
 }
 
 impl ProjectDirectory {
     pub fn new(path: PathBuf) -> Result<Self, ManifestParseError> {
+        let script_root = path.join("scripts");
         let manifest_path = path.join(Manifest::FILE_NAME);
         let manifest = Manifest::from_file(manifest_path)?;
 
         Ok(Self {
             path,
-            manifest
+            script_root,
+            manifest,
         })
     }
 
@@ -127,9 +140,8 @@ impl Content for ProjectDirectory {
         &self.manifest.content.name
     }
 
-    fn source_tree(&self) -> SourceTree {
-        let script_root = self.path.join("scripts");
-        SourceTree::new(script_root)
+    fn source_tree_root(&self) -> &Path {
+        &self.script_root
     }
 
     fn dependencies(&self) -> Option<&Dependencies> {
