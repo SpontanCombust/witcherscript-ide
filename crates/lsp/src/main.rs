@@ -13,7 +13,7 @@ use crate::messaging::requests;
 mod providers;
 mod config;
 mod reporting;
-mod source_management;
+mod indexing;
 mod messaging;
 
 

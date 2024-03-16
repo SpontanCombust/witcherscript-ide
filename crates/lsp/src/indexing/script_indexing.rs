@@ -25,16 +25,19 @@ impl Backend {
             } else {
                 self.log_info("Found no changes.").await;
             }
+
+            //TODO add time elapsed logs
         }
     }
 
     pub async fn on_source_tree_changed(&self, content_path: &Path, diff: SourceTreeDifference) {
+        let _ = content_path; // param unused for now
         let (diff_added, diff_removed) = (diff.added, diff.removed);
-        self.on_source_tree_paths_removed(content_path, diff_removed).await;
-        self.on_source_tree_paths_added(content_path, diff_added).await;
+        self.on_source_tree_paths_removed(diff_removed).await;
+        self.on_source_tree_paths_added(diff_added).await;
     }
 
-    async fn on_source_tree_paths_added(&self, content_path: &Path, added_paths: Vec<SourceFilePath>) {
+    async fn on_source_tree_paths_added(&self, added_paths: Vec<SourceFilePath>) {
         // No multi-threading for now!
 
         let mut script_parse_tasks = Vec::with_capacity(added_paths.len());
@@ -57,7 +60,7 @@ impl Backend {
         }
     }
 
-    async fn on_source_tree_paths_removed(&self, content_path: &Path, removed_paths: Vec<SourceFilePath>) {
+    async fn on_source_tree_paths_removed(&self, removed_paths: Vec<SourceFilePath>) {
         for removed_path in removed_paths {
             self.scripts.remove(removed_path.absolute());
             self.log_info(format!("Delisted script: {}", removed_path)).await;
