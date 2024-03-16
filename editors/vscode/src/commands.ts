@@ -12,6 +12,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.projects.init", commandInitProject()),
         vscode.commands.registerCommand("witcherscript-ide.projects.create", commandCreateProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.scripts.importVanilla", commandImportVanillaScripts()),
+        vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", commandDiffScriptWithVanilla()),
         vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context))
     );
 }
@@ -284,6 +285,52 @@ function commandImportVanillaScripts(): Cmd {
                 vscode.window.showInformationMessage("Successfully imported vanilla scripts into the project!")
             }
         }
+    }
+}
+
+function commandDiffScriptWithVanilla(): Cmd {
+    return async () => {
+        if (!vscode.window.activeTextEditor) {
+            vscode.window.showErrorMessage("No active editor available!");
+            return;
+        }
+
+        const currentScriptUri = vscode.window.activeTextEditor.document.uri;
+
+        let currentContent: requests.ContentInfo;
+        let vanillaContent: requests.ContentInfo;
+        try {
+            currentContent = (await client.sendRequest(requests.scripts.parent_content.type, {
+                scriptUri: client.code2ProtocolConverter.asUri(currentScriptUri)
+            })).parentContentInfo;
+
+            vanillaContent = (await client.sendRequest(requests.projects.vanillaDependencyContent.type, {
+                projectUri: currentContent.contentUri
+            })).content0Info;
+        } catch(error) {
+            return vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+        }
+
+        const currentScriptPath = currentScriptUri.fsPath;
+        const currentScriptRootPath = client.protocol2CodeConverter.asUri(currentContent.scriptsRootUri).fsPath;
+        const vanillaScriptRootPath = client.protocol2CodeConverter.asUri(vanillaContent.scriptsRootUri).fsPath;
+
+        const relativePath = path.relative(currentScriptRootPath, currentScriptPath);
+        const vanillaScriptPath = path.join(vanillaScriptRootPath, relativePath);
+
+        let counterpartExists = true;
+        try {
+            const _ = await fs.stat(vanillaScriptPath);
+        } catch(_) {
+            counterpartExists = false;
+        }
+
+        if (!counterpartExists) {
+            return vscode.window.showErrorMessage(`Script ${relativePath} does not have a vanilla counterpart`);
+        }
+
+        const vanillaScriptUri = vscode.Uri.file(vanillaScriptPath);
+        return await vscode.commands.executeCommand("vscode.diff", vanillaScriptUri, currentScriptUri);
     }
 }
 

@@ -74,6 +74,12 @@
         "category": "WitcherScript-IDE"
       },
       {
+        "command": "witcherscript-ide.scripts.diffVanilla",
+        "title": "Compare this script with vanilla counterpart",
+        "category": "WitcherScript-IDE",
+        "enablement": "editorLangId == 'witcherscript'"
+      },
+      {
         "command": "witcherscript-ide.debug.showScriptAst",
         "title": "Show script AST",
         "category": "WitcherScript-IDE (debug)",
