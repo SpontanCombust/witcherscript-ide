@@ -11,7 +11,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand("witcherscript-ide.projects.init", commandInitProject()),
         vscode.commands.registerCommand("witcherscript-ide.projects.create", commandCreateProject(context)),
-        vscode.commands.registerCommand("witcherscript-ide.projects.importVanillaScript", commandImportVanillaScripts()),
+        vscode.commands.registerCommand("witcherscript-ide.scripts.importVanilla", commandImportVanillaScripts()),
         vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context))
     );
 }

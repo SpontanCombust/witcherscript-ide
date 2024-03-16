@@ -69,7 +69,7 @@
         "category": "WitcherScript-IDE"
       },
       {
-        "command": "witcherscript-ide.projects.importVanillaScript",
+        "command": "witcherscript-ide.scripts.importVanilla",
         "title": "Import scripts from vanilla...",
         "category": "WitcherScript-IDE"
       },
