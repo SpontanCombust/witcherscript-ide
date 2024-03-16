@@ -1,4 +1,7 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs/promises';
+
 import { client } from "./extension"
 import * as requests from './requests';
 import * as state from './state';
@@ -8,6 +11,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand("witcherscript-ide.projects.init", commandInitProject()),
         vscode.commands.registerCommand("witcherscript-ide.projects.create", commandCreateProject(context)),
+        vscode.commands.registerCommand("witcherscript-ide.projects.importVanillaScript", commandImportVanillaScripts()),
         vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context))
     );
 }
@@ -67,7 +71,7 @@ function commandCreateProject(context: vscode.ExtensionContext): Cmd {
                         // check if the project directory is contained somewhere inside the workspace
                         // in this case just open the manifest
                         // otherwise, ask the user if they'd like to open the project
-                        if (vscode.workspace.workspaceFolders.some(f => projectDirectoryUri.fsPath.startsWith(f.uri.fsPath))) {
+                        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.some(f => projectDirectoryUri.fsPath.startsWith(f.uri.fsPath))) {
                             const params: vscode.TextDocumentShowOptions = {
                                 selection: manifestSelectionRange,
                                 preview: false
@@ -181,4 +185,165 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
             }
         })
     };
+}
+
+function commandImportVanillaScripts(): Cmd {
+    return async () => {
+        let projectContentInfo: requests.ContentInfo;
+        let content0Info: requests.ContentInfo;
+
+        try {
+            // Decide on which project in the workspace is the target of the import
+
+            const projectInfos = (await client.sendRequest(requests.projects.list.type, {
+                onlyFromWorkspace: true
+            })).projectInfos;
+
+            if (projectInfos.length == 0) {
+                return vscode.window.showErrorMessage("No project available to import scripts into!");
+            } else {
+                projectContentInfo = await chooseProject(projectInfos);
+                if (!projectContentInfo) {
+                    return;
+                }
+            }
+
+            // Get information about content0 (if it doesn't exist it will throw)
+            content0Info = (await client.sendRequest(requests.projects.vanillaDependencyContent.type, {
+                projectUri: projectContentInfo.contentUri
+            })).content0Info;
+        } catch (error) {
+            return vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+        }
+
+        // Prompt the user to choose scripts for import
+
+        const content0ScriptsRootUri = client.protocol2CodeConverter.asUri(content0Info.scriptsRootUri);
+        let scriptsToImport = await vscode.window.showOpenDialog({
+            title: "Select script files",
+            openLabel: "Import",
+            canSelectFiles: true,
+            canSelectFolders: false,
+            canSelectMany: true,
+            defaultUri: content0ScriptsRootUri,
+            filters: {
+                'WitcherScript': ['ws']
+            },
+        });
+        
+        if (scriptsToImport && scriptsToImport.length > 0) {
+            let encounteredProblems = false;
+            
+            const content0ScriptsRootPath = content0ScriptsRootUri.fsPath;
+            const projectScriptsRootPath = client.protocol2CodeConverter.asUri(projectContentInfo.scriptsRootUri).fsPath;
+
+            scriptsToImport = scriptsToImport.filter(uri => {
+                const isContent0Script = uri.fsPath.startsWith(content0ScriptsRootPath);
+
+                if (!isContent0Script) {
+                    client.warn(uri.fsPath + " is not a content0 script!", undefined, false);
+                    encounteredProblems = true;
+                }
+
+                return isContent0Script;
+            });
+
+            // Finally import scripts while doing a little validation
+
+            for (const content0ScriptUri of scriptsToImport) {
+                const content0ScriptPath = content0ScriptUri.fsPath;
+                const relativePath = path.relative(content0ScriptsRootPath, content0ScriptPath);
+                const projectScriptPath = path.join(projectScriptsRootPath, relativePath);
+
+                let fileAlreadyExists = true;
+                try {
+                    const _ = await fs.stat(projectScriptPath);
+                } catch(_) {
+                    fileAlreadyExists = false;
+                }
+
+                if (fileAlreadyExists) {
+                    client.warn(`Script ${relativePath} already exists in project's source tree`);
+                    encounteredProblems = true;
+                } else {
+                    try {
+                        const projectScriptDir = path.dirname(projectScriptPath);
+                        // make sure that all the intermediary path components exist
+                        await fs.mkdir(projectScriptDir, { recursive: true });
+                        await fs.copyFile(content0ScriptPath, projectScriptPath);
+                        client.info(`Successfully imported ${relativePath} into the project`);
+                    } catch (err) {
+                        client.error(`Failed to import script ${relativePath}: ${err}`);
+                    }
+                }
+            }
+
+            if (encounteredProblems) {
+                vscode.window.showWarningMessage("Scripts imported with some problems (check extension output)");
+            } else {
+                vscode.window.showInformationMessage("Successfully imported vanilla scripts into the project!")
+            }
+        }
+    }
+}
+
+
+
+/**
+ * Returns the result of user's choice of a project through a quick pick.
+ * If there is only one project available, returns that without asking the user.
+ * If there are no projects in the workspace or the user cancels the action, returns undefined
+ * 
+ * @returns ContentInfo or undefined
+ */
+async function chooseProject(projects: requests.ContentInfo[]): Promise<requests.ContentInfo | undefined> {
+    if (!projects || projects.length == 0) {
+        return undefined;
+    } else if (projects.length == 1) {
+        return projects[0];
+    } else {
+        return await new Promise<requests.ContentInfo | undefined>((resolve, _) => {
+            const qp = vscode.window.createQuickPick<ContentQuickPickItem>();
+            qp.placeholder = "Select a project";
+            qp.canSelectMany = false;
+            qp.matchOnDetail = true;
+            qp.ignoreFocusOut = true;
+            qp.items = projects.map(c => new ContentQuickPickItem(c));
+            qp.onDidChangeSelection(items => {
+                resolve(items[0].content);
+                qp.hide();
+            });
+            qp.onDidHide(_ => {
+                resolve(undefined);
+                qp.dispose();
+            })
+
+            qp.show();
+        })
+    }
+}
+
+class ContentQuickPickItem implements vscode.QuickPickItem {
+    public content: requests.ContentInfo
+
+    label: string;
+    kind?: vscode.QuickPickItemKind;
+    iconPath?: vscode.Uri | { light: vscode.Uri; dark: vscode.Uri; } | vscode.ThemeIcon;
+    description?: string;
+    detail?: string;
+    picked?: boolean;
+    alwaysShow?: boolean;
+    buttons?: readonly vscode.QuickInputButton[];
+
+    constructor(content: requests.ContentInfo) {
+        this.content = content;
+
+        this.label = content.contentName;
+        this.kind = vscode.QuickPickItemKind.Default;
+        this.iconPath = undefined;
+        this.description = undefined;
+        this.detail = vscode.Uri.parse(content.contentUri).fsPath;
+        this.alwaysShow = true;
+        this.buttons = undefined;
+    }
 }
