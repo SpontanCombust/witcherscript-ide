@@ -137,6 +137,15 @@ impl SourceTree {
     }    
 }
 
+impl IntoIterator for SourceTree {
+    type Item = SourceFilePath;
+    type IntoIter = <BTreeSet<SourceFilePath> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.tree.into_iter()
+    }
+}
+
 
 #[derive(Debug, Clone, Default)]
 pub struct SourceTreeDifference {

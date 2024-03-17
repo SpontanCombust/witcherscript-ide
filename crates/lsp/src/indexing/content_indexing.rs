@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
+use tokio::time::Instant;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory, find_content_in_directory};
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{Content, ContentRepositories, FileError};
@@ -36,8 +37,8 @@ impl Backend {
             }
         }
     
-        let mut lock = self.content_graph.write().await;
-        lock.set_workspace_projects(projects);
+        let mut graph = self.content_graph.write().await;
+        graph.set_workspace_projects(projects);
     } 
     
     pub async fn scan_content_repositories(&self) {
@@ -86,28 +87,32 @@ impl Backend {
             }
         }
 
-        self.log_info("Content graph built.").await;
-
         drop(graph);
 
         if !diff.is_empty() {
             self.on_content_graph_changed(diff).await;
         } else {
-            self.log_info("Found no changes.").await;
+            self.log_info("Found no content graph changes.").await;
         }
     }
 
     pub async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {
+        let start = Instant::now();
+
         let (diff_added, diff_removed) = (diff.added, diff.removed);
         self.on_graph_contents_removed(diff_removed).await;
         self.on_graph_contents_added(diff_added).await;
+
+        let duration = Instant::now() - start;
+        self.log_info(format!("Handled content graph related changes in {:.3}s", duration.as_secs_f32())).await;
     }
 
     async fn on_graph_contents_added(&self, added_content_paths: Vec<PathBuf>) {
-        let graph = self.content_graph.read().await;
-        
         let mut source_tree_diffs = HashMap::new();
+
+        let graph = self.content_graph.read().await;
         for added_path in added_content_paths {
+            self.log_info(format!("Discovered content: {}", added_path.display())).await; 
 
             let added_content = &graph.get_node_by_path(&added_path).unwrap().content;
             let source_tree = added_content.source_tree();
@@ -124,24 +129,31 @@ impl Backend {
             });
 
             self.source_trees.insert(added_path.clone(), source_tree);
-
-            self.log_info(format!("Found new content: {}", added_path.display())).await; 
         }
-
         drop(graph);
 
+        // handling source tree changes in a seperate step to not lock resources for too long
         for (content_path, diff) in source_tree_diffs {
-            let script_count = diff.added.len();
             self.on_source_tree_changed(&content_path, diff).await;
-            self.log_info(format!("Found in total {} scripts in {}", script_count, content_path.display())).await;
         }
     }
 
     async fn on_graph_contents_removed(&self, removed_content_paths: Vec<PathBuf>) {
+        let mut source_tree_diffs = HashMap::new();
         for removed_path in removed_content_paths {
-            self.source_trees.remove(&removed_path);
-            self.log_info(format!("Delisted deprecated content: {}", removed_path.display())).await;
-        }   
+            self.log_info(format!("Deprecated content: {}", removed_path.display())).await;
+
+            if let Some((_, source_tree)) = self.source_trees.remove(&removed_path) {
+                source_tree_diffs.insert(removed_path.clone(), SourceTreeDifference {
+                    added: vec![],
+                    removed: source_tree.into_iter().collect()
+                });
+            }
+        }
+
+        for (content_path, diff) in source_tree_diffs {
+            self.on_source_tree_changed(&content_path, diff).await;
+        }
     }
 
 
