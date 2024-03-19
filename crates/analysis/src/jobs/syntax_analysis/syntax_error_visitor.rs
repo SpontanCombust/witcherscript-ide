@@ -500,6 +500,10 @@ impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
     fn visit_func_call_expr(&mut self, n: &FunctionCallExpressionNode) {
         self.check_missing(&n.func(), "function");
 
+        if let Some(args) = n.args() {
+            self.check_errors(&args);
+        }
+
         self.check_errors(n);
     }
 
@@ -537,6 +541,6 @@ impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
 
         self.check_errors(n);
     }
-
+    
     // No point in checking single token expressions
 }

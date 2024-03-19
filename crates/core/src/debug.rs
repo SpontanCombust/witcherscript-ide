@@ -27,9 +27,15 @@ pub trait DebugRange {
     fn debug(&self) -> String;
 }
 
-impl DebugRange for lsp_types::Range {
+impl DebugRange for lsp_types::Position {
     fn debug(&self) -> String {
         // added +1 to make it more intuitive inside an editor
-        format!("[{}, {}] - [{}, {}]", self.start.line + 1, self.start.character + 1, self.end.line + 1, self.end.character + 1)
+        format!("[{}, {}]", self.line + 1, self.character + 1)
+    }
+}
+
+impl DebugRange for lsp_types::Range {
+    fn debug(&self) -> String {
+        format!("{} - {}", self.start.debug(), self.end.debug())
     }
 }

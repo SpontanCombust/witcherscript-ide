@@ -25,7 +25,7 @@ pub trait ExpressionVisitor {
     /// Called when visiting a function call argument.
     /// The call is optionally preceeded by a visit to the expression it represents.
     /// Node may be None due to it referring to an optional parameter.
-    fn visit_func_call_arg(&mut self, _: &Option<ExpressionNode>) {}
+    fn visit_func_call_arg(&mut self, _: &FunctionCallArgument) {}
     /// Called when visiting an indexing expression.
     /// The call is preceeded by visits to this node's [accessor][ArrayExpressionNode::accessor] and [index][ArrayExpressionNode::index] expressions in that order.
     fn visit_array_expr(&mut self, _: &ArrayExpressionNode) {}

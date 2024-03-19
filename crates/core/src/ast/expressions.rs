@@ -210,8 +210,8 @@ impl FunctionCallExpressionNode<'_> {
         self.field_child("func").unwrap().into()
     }
 
-    pub fn args(&self) -> impl Iterator<Item = FuncCallArg> {
-        func_args(self)
+    pub fn args(&self) -> Option<FunctionCallArgumentsNode> {
+        self.field_child("args").map(|n| n.into())
     }
 }
 
@@ -219,7 +219,7 @@ impl Debug for FunctionCallExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct(&format!("FunctionCallExpression {}", self.range().debug()))
             .field("func", &self.func())
-            .field("args", &self.args().collect::<Vec<_>>())
+            .field("args", &self.args())
             .finish()
     }
 }
@@ -239,65 +239,105 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionCallExpressionNode<'script> 
 impl ExpressionTraversal for FunctionCallExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         self.func().accept(visitor);
-        self.args().for_each(|arg| arg.accept(visitor));
+        self.args().map(|n| n.accept(visitor));
         visitor.visit_func_call_expr(self);
     }
 }
 
 
-type FuncCallArg<'script> = Option<ExpressionNode<'script>>;
 
-impl ExpressionTraversal for FuncCallArg<'_> {
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        if let Some(expr) = self {
-            expr.accept(visitor);
-        }
-        visitor.visit_func_call_arg(self);
+#[derive(Debug, Clone)]
+pub struct FunctionCallArguments;
+
+pub type FunctionCallArgumentsNode<'script> = SyntaxNode<'script, FunctionCallArguments>;
+
+impl NamedSyntaxNode for FunctionCallArgumentsNode<'_> {
+    const NODE_KIND: &'static str = "func_call_args";
+}
+
+impl FunctionCallArgumentsNode<'_> {
+    pub fn iter(&self) -> impl Iterator<Item = FunctionCallArgument> {
+        self.into_iter()
     }
 }
 
-fn func_args<'script, T: Clone>(func_node: &'script SyntaxNode<'_, T>) -> impl Iterator<Item = FuncCallArg<'script>> {
-    if let Some(args_node) = func_node.tree_node.child_by_field_name("args") {
-        let mut cursor = args_node.walk();
-        cursor.goto_first_child();
-        
-        let mut v = vec![];
+impl Debug for FunctionCallArgumentsNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate_named(
+            &format!("FunctionCallArguments {}", self.range().debug()), 
+            &self.iter().collect::<Vec<_>>()
+        )
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for FunctionCallArgumentsNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl<'script> IntoIterator for &'script FunctionCallArgumentsNode<'script> {
+    type Item = FunctionCallArgument<'script>;
+    type IntoIter = std::vec::IntoIter<FunctionCallArgument<'script>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let children = self.children();
+
+        let mut args = Vec::new();
         let mut previous_was_comma = true;
-        
-        loop {
-            let n = cursor.node();
-            // Because of how default parameters in WitcherScript work we can't simply do a delimited list, 
-            // because the values in that list can be empty space or no space at all. We need to put 
-            // special care into handling commas.
-            // If a node is named, some argument was passed. If a node is anonymous it is a comma.
-            // If we encounter a comma right after a previous comma, we have a defaulted argument.
-            if !n.is_error() && !n.is_extra() {
-                if n.is_named() {
-                    v.push(Some(SyntaxNode::new(n)));
-                    previous_was_comma = false;
-                } else {
-                    if previous_was_comma {
-                        v.push(None);
-                    }
-                    previous_was_comma = true;
+        for n in children {
+            if n.tree_node.is_named() {
+                args.push(FunctionCallArgument::Some(n.into()));
+                previous_was_comma = false;
+            } else {
+                if previous_was_comma {
+                    let range = n.range();
+                    args.push(FunctionCallArgument::Omitted(lsp_types::Position { 
+                        line: range.start.line, 
+                        character: range.start.character - 1 // -1 because the arg would be before the comma
+                    }));
                 }
-            }
-
-            if !cursor.goto_next_sibling() {
-                break;
+                previous_was_comma = true;
             }
         }
 
-        if previous_was_comma {
-            v.push(None);
+        args.into_iter()
+    }
+}
+
+impl ExpressionTraversal for FunctionCallArgumentsNode<'_> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        self.iter().for_each(|n| n.accept(visitor))
+    }
+}
+
+
+pub enum FunctionCallArgument<'script> {
+    Some(ExpressionNode<'script>),
+    Omitted(lsp_types::Position)
+}
+
+impl Debug for FunctionCallArgument<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Some(n) => f.debug_maybe_alternate(n),
+            Self::Omitted(pos) => write!(f, "Omitted {}", pos.debug()),
         }
-        
-        v.into_iter()
-    } else {
-        // If the argument list is empty we don't know whether it actually takes no arguments
-        // or all the arguments it takes are optional. It is difficult to figure that out
-        // without looking at this function's declaration.
-        vec![].into_iter()
+    }
+}
+
+impl ExpressionTraversal for FunctionCallArgument<'_> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        if let FunctionCallArgument::Some(n) = self {
+            n.accept(visitor);
+        }
+        visitor.visit_func_call_arg(self);
     }
 }
 
@@ -444,7 +484,7 @@ impl<'script> TryFrom<AnyNode<'script>> for NewExpressionNode<'script> {
 
 impl ExpressionTraversal for NewExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.lifetime_obj().accept(visitor);
+        self.lifetime_obj().map(|n| n.accept(visitor));
         visitor.visit_new_expr(self);
     }
 }
@@ -786,7 +826,7 @@ impl<'script> ExpressionNode<'script> {
             LiteralStringNode::NODE_KIND    |
             LiteralNameNode::NODE_KIND      |
             LiteralNullNode::NODE_KIND      => Expression::Literal(self.into()),
-            _ => panic!("Unknown expression type: {}", self.tree_node.kind())
+            _ => panic!("Unknown expression type: {} at {}", self.tree_node.kind(), self.range().debug()) //TODO add range for similar cases
         }
     }
 }
