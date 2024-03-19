@@ -1,5 +1,6 @@
 use std::path::Path;
-use tokio::time::Instant;
+use rayon::iter::{ParallelBridge, ParallelIterator};
+use tokio::{sync::mpsc, time::Instant};
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_analysis::{diagnostics::Diagnostic, jobs::syntax_analysis};
 use witcherscript_project::source_tree::{SourceFilePath, SourceTreeDifference};
@@ -44,20 +45,33 @@ impl Backend {
     }
 
     async fn on_source_tree_paths_added(&self, added_paths: Vec<SourceFilePath>) {
-        // No multi-threading for now!
-        
-        for added_path in added_paths {
-            self.log_info(format!("Discovered script: {}", added_path)).await;
+        let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
 
-            let doc = ScriptDocument::from_file(added_path.absolute()).unwrap();
-            let script = Script::new(&doc).unwrap();
+        rayon::spawn(move || {
+            added_paths.into_iter()
+                .par_bridge()
+                .map(|p| p.absolute().to_path_buf())
+                .map(|p| {
+                    let doc = ScriptDocument::from_file(&p).unwrap();
+                    (p, doc)
+                })
+                .map(|(p, doc)| {
+                    let script = Script::new(&doc).unwrap();
+                    (p, script)
+                })
+                .map(|(p, script)| {
+                    let mut diagnostics: Vec<Diagnostic> = Vec::new();
+                    syntax_analysis::syntax_analysis(script.root_node(), &mut diagnostics);
+                    let lsp_diags: Vec<_> = diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic()).collect();
+                    (p, script, lsp_diags)
+                })
+                .for_each(|result| send.blocking_send(result).expect("mpsc send fail"));
+        });
 
-            let mut diagnostics: Vec<Diagnostic> = Vec::new();
-            syntax_analysis::syntax_analysis(script.root_node(), &mut diagnostics);
-            let lsp_diags = diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic());
-
-            self.scripts.insert(added_path.absolute().to_owned(), script);
-            self.publish_diagnostics(added_path.absolute().to_owned(), lsp_diags).await;
+        while let Some((script_path, script, diags)) = recv.recv().await {
+            self.log_info(format!("Discovered script: {}", script_path.display())).await;
+            self.scripts.insert(script_path.clone(), script);
+            self.publish_diagnostics(script_path, diags).await;
         }
     }
 
