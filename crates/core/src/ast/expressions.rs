@@ -271,7 +271,7 @@ fn func_args<'script, T: Clone>(func_node: &'script SyntaxNode<'_, T>) -> impl I
             // special care into handling commas.
             // If a node is named, some argument was passed. If a node is anonymous it is a comma.
             // If we encounter a comma right after a previous comma, we have a defaulted argument.
-            if !n.is_error() {
+            if !n.is_error() && !n.is_extra() {
                 if n.is_named() {
                     v.push(Some(SyntaxNode::new(n)));
                     previous_was_comma = false;

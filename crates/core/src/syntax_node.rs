@@ -52,7 +52,7 @@ impl<'script, T> SyntaxNode<'script, T> {
     /// Returns an iterator over non-error named children of this node as AnyNodes
     pub(crate) fn named_children(&self) -> impl Iterator<Item = AnyNode> {
         self.children()
-            .filter(|n| n.tree_node.is_named())
+            .filter(|n| n.tree_node.is_named() && !n.tree_node.is_extra())
     }
 
     /// Returns the first non-error child of this node as an AnyNodes
@@ -60,7 +60,7 @@ impl<'script, T> SyntaxNode<'script, T> {
         self.children()
             .filter(|n| 
                 if must_be_named { 
-                    n.tree_node.is_named() 
+                    n.tree_node.is_named() && !n.tree_node.is_extra()
                 } else { 
                     true 
                 }
@@ -77,7 +77,7 @@ impl<'script, T> SyntaxNode<'script, T> {
         let mut cursor = self.tree_node.walk();
         let name_nodes = self.tree_node
             .children_by_field_name(field, &mut cursor)
-            .filter(|n| !n.is_error() && n.is_named())
+            .filter(|n| !n.is_error() && n.is_named() && !n.is_extra())
             .collect::<Vec<_>>();
 
         name_nodes.into_iter()
