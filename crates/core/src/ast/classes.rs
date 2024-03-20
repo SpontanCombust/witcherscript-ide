@@ -3,9 +3,15 @@ use crate::{attribs::*, tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, Nam
 use super::*;
 
 
-pub struct ClassDeclaration;
+mod tags {
+    pub struct ClassDeclaration;
+    pub struct ClassBlock;
+    pub struct AutobindDeclaration;
+    pub struct AutobindValueSingle;
+}
 
-pub type ClassDeclarationNode<'script> = SyntaxNode<'script, ClassDeclaration>;
+
+pub type ClassDeclarationNode<'script> = SyntaxNode<'script, tags::ClassDeclaration>;
 
 impl NamedSyntaxNode for ClassDeclarationNode<'_> {
     const NODE_KIND: &'static str = "class_decl_stmt";
@@ -63,9 +69,7 @@ impl StatementTraversal for ClassDeclarationNode<'_> {
 
 
 
-pub struct ClassBlock;
-
-pub type ClassBlockNode<'script> = SyntaxNode<'script, ClassBlock>;
+pub type ClassBlockNode<'script> = SyntaxNode<'script, tags::ClassBlock>;
 
 impl NamedSyntaxNode for ClassBlockNode<'_> {
     const NODE_KIND: &'static str = "class_block";
@@ -191,9 +195,7 @@ impl StatementTraversal for ClassStatementNode<'_> {
 
 
 
-pub struct AutobindDeclaration;
-
-pub type AutobindDeclarationNode<'script> = SyntaxNode<'script, AutobindDeclaration>;
+pub type AutobindDeclarationNode<'script> = SyntaxNode<'script, tags::AutobindDeclaration>;
 
 impl NamedSyntaxNode for AutobindDeclarationNode<'_> {
     const NODE_KIND: &'static str = "autobind_stmt";
@@ -269,9 +271,7 @@ impl Debug for AutobindValue<'_> {
 }
 
 
-pub struct AutobindValueSingle;
-
-pub type AutobindValueSingleNode<'script> = SyntaxNode<'script, AutobindValueSingle>;
+pub type AutobindValueSingleNode<'script> = SyntaxNode<'script, tags::AutobindValueSingle>;
 
 impl NamedSyntaxNode for AutobindValueSingleNode<'_> {
     const NODE_KIND: &'static str = "autobind_single";

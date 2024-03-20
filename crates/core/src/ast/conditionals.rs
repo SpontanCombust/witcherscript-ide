@@ -3,9 +3,16 @@ use crate::{AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNod
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
 
 
-pub struct IfConditional;
+mod tags {
+    pub struct IfConditional;
+    pub struct SwitchConditional;
+    pub struct SwitchConditionalBlock;
+    pub struct SwitchConditionalCaseLabel;
+    pub struct SwitchConditionalDefaultLabel;
+}
 
-pub type IfConditionalNode<'script> = SyntaxNode<'script, IfConditional>;
+
+pub type IfConditionalNode<'script> = SyntaxNode<'script, tags::IfConditional>;
 
 impl NamedSyntaxNode for IfConditionalNode<'_> {
     const NODE_KIND: &'static str = "if_stmt";
@@ -58,9 +65,7 @@ impl StatementTraversal for IfConditionalNode<'_> {
 
 
 
-pub struct SwitchConditional;
-
-pub type SwitchConditionalNode<'script> = SyntaxNode<'script, SwitchConditional>;
+pub type SwitchConditionalNode<'script> = SyntaxNode<'script, tags::SwitchConditional>;
 
 impl NamedSyntaxNode for SwitchConditionalNode<'_> {
     const NODE_KIND: &'static str = "switch_stmt";
@@ -107,9 +112,7 @@ impl StatementTraversal for SwitchConditionalNode<'_> {
 
 
 
-pub struct SwitchConditionalBlock;
-
-pub type SwitchConditionalBlockNode<'script> = SyntaxNode<'script, SwitchConditionalBlock>;
+pub type SwitchConditionalBlockNode<'script> = SyntaxNode<'script, tags::SwitchConditionalBlock>;
 
 impl NamedSyntaxNode for SwitchConditionalBlockNode<'_> {
     const NODE_KIND: &'static str = "switch_block";
@@ -223,9 +226,7 @@ impl StatementTraversal for SwitchConditionalSectionNode<'_> {
 
 
 
-pub struct SwitchConditionalCaseLabel;
-
-pub type SwitchConditionalCaseLabelNode<'script> = SyntaxNode<'script, SwitchConditionalCaseLabel>;
+pub type SwitchConditionalCaseLabelNode<'script> = SyntaxNode<'script, tags::SwitchConditionalCaseLabel>;
 
 impl NamedSyntaxNode for SwitchConditionalCaseLabelNode<'_> {
     const NODE_KIND: &'static str = "switch_case_label";
@@ -264,9 +265,7 @@ impl StatementTraversal for SwitchConditionalCaseLabelNode<'_> {
 }
 
 
-pub struct SwitchConditionalDefaultLabel;
-
-pub type SwitchConditionalDefaultLabelNode<'script> = SyntaxNode<'script, SwitchConditionalDefaultLabel>;
+pub type SwitchConditionalDefaultLabelNode<'script> = SyntaxNode<'script, tags::SwitchConditionalDefaultLabel>;
 
 impl NamedSyntaxNode for SwitchConditionalDefaultLabelNode<'_> {
     const NODE_KIND: &'static str = "switch_default_label";

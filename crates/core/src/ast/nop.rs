@@ -3,10 +3,13 @@ use crate::{AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::StatementTraversal;
 
 
-// Empty type essentially representing an orphaned/trailing semicolon
-pub struct Nop;
+mod tags {
+    // Empty type essentially representing an orphaned/trailing semicolon
+    pub struct Nop;
+}
 
-pub type NopNode<'script> = SyntaxNode<'script, Nop>;
+
+pub type NopNode<'script> = SyntaxNode<'script, tags::Nop>;
 
 impl NamedSyntaxNode for NopNode<'_> {
     const NODE_KIND: &'static str = "nop";

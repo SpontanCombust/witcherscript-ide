@@ -3,9 +3,17 @@ use crate::{attribs::StructSpecifierNode, tokens::{IdentifierNode, LiteralString
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, MemberVarDeclarationNode, NopNode};
 
 
-pub struct StructDeclaration;
+mod tags {
+    pub struct StructDeclaration;
+    pub struct StructBlock;
+    pub struct MemberDefaultsBlock;
+    pub struct MemberDefaultsBlockAssignment;
+    pub struct MemberDefaultValue; 
+    pub struct MemberHint; 
+}
 
-pub type StructDeclarationNode<'script> = SyntaxNode<'script, StructDeclaration>;
+
+pub type StructDeclarationNode<'script> = SyntaxNode<'script, tags::StructDeclaration>;
 
 impl NamedSyntaxNode for StructDeclarationNode<'_> {
     const NODE_KIND: &'static str = "struct_decl_stmt";
@@ -58,9 +66,7 @@ impl StatementTraversal for StructDeclarationNode<'_> {
 
 
 
-pub struct StructBlock;
-
-pub type StructBlockNode<'script> = SyntaxNode<'script, StructBlock>;
+pub type StructBlockNode<'script> = SyntaxNode<'script, tags::StructBlock>;
 
 impl NamedSyntaxNode for StructBlockNode<'_> {
     const NODE_KIND: &'static str = "struct_block";
@@ -176,9 +182,7 @@ impl StatementTraversal for StructStatementNode<'_> {
 
 
 
-pub struct MemberDefaultsBlock;
-
-pub type MemberDefaultsBlockNode<'script> = SyntaxNode<'script, MemberDefaultsBlock>;
+pub type MemberDefaultsBlockNode<'script> = SyntaxNode<'script, tags::MemberDefaultsBlock>;
 
 impl NamedSyntaxNode for MemberDefaultsBlockNode<'_> {
     const NODE_KIND: &'static str = "member_defaults_block_stmt";
@@ -218,9 +222,8 @@ impl StatementTraversal for MemberDefaultsBlockNode<'_> {
 }
 
 
-pub struct MemberDefaultsBlockAssignment;
 
-pub type MemberDefaultsBlockAssignmentNode<'script> = SyntaxNode<'script, MemberDefaultsBlockAssignment>;
+pub type MemberDefaultsBlockAssignmentNode<'script> = SyntaxNode<'script, tags::MemberDefaultsBlockAssignment>;
 
 impl NamedSyntaxNode for MemberDefaultsBlockAssignmentNode<'_> {
     const NODE_KIND: &'static str = "member_defaults_block_assign";
@@ -265,9 +268,7 @@ impl StatementTraversal for MemberDefaultsBlockAssignmentNode<'_> {
 
 
 
-pub struct MemberDefaultValue; 
-
-pub type MemberDefaultValueNode<'script> = SyntaxNode<'script, MemberDefaultValue>;
+pub type MemberDefaultValueNode<'script> = SyntaxNode<'script, tags::MemberDefaultValue>;
 
 impl NamedSyntaxNode for MemberDefaultValueNode<'_> {
     const NODE_KIND: &'static str = "member_default_val_stmt";
@@ -312,9 +313,7 @@ impl StatementTraversal for MemberDefaultValueNode<'_> {
 
 
 
-pub struct MemberHint; 
-
-pub type MemberHintNode<'script> = SyntaxNode<'script, MemberHint>;
+pub type MemberHintNode<'script> = SyntaxNode<'script, tags::MemberHint>;
 
 impl NamedSyntaxNode for MemberHintNode<'_> {
     const NODE_KIND: &'static str = "member_hint_stmt";

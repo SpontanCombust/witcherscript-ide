@@ -3,6 +3,11 @@ use crate::{AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNod
 use super::*;
 
 
+mod tags {
+    pub struct Root;
+}
+
+
 #[derive(Clone)]
 pub enum RootStatement<'script> {
     Function(GlobalFunctionDeclarationNode<'script>),
@@ -83,9 +88,8 @@ impl StatementTraversal for RootStatementNode<'_> {
 }
 
 
-pub struct Root;
 
-pub type RootNode<'script> = SyntaxNode<'script, Root>;
+pub type RootNode<'script> = SyntaxNode<'script, tags::Root>;
 
 impl NamedSyntaxNode for RootNode<'_> {
     const NODE_KIND: &'static str = "script";

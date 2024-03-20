@@ -3,9 +3,14 @@ use crate::{attribs::MemberVarSpecifierNode, tokens::IdentifierNode, AnyNode, De
 use super::{StatementTraversal, StatementVisitor, ExpressionNode};
 
 
-pub struct TypeAnnotation;
+mod tags {
+    pub struct TypeAnnotation;
+    pub struct VarDeclaration;
+    pub struct MemberVarDeclaration;
+}
 
-pub type TypeAnnotationNode<'script> = SyntaxNode<'script, TypeAnnotation>;
+
+pub type TypeAnnotationNode<'script> = SyntaxNode<'script, tags::TypeAnnotation>;
 
 impl NamedSyntaxNode for TypeAnnotationNode<'_> {
     const NODE_KIND: &'static str = "type_annot";
@@ -44,10 +49,7 @@ impl<'script> TryFrom<AnyNode<'script>> for TypeAnnotationNode<'script> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct VarDeclaration;
-
-pub type VarDeclarationNode<'script> = SyntaxNode<'script, VarDeclaration>;
+pub type VarDeclarationNode<'script> = SyntaxNode<'script, tags::VarDeclaration>;
 
 impl NamedSyntaxNode for VarDeclarationNode<'_> {
     const NODE_KIND: &'static str = "var_decl_stmt";
@@ -96,9 +98,8 @@ impl StatementTraversal for VarDeclarationNode<'_> {
 }
 
 
-pub struct MemberVarDeclaration;
 
-pub type MemberVarDeclarationNode<'script> = SyntaxNode<'script, MemberVarDeclaration>;
+pub type MemberVarDeclarationNode<'script> = SyntaxNode<'script, tags::MemberVarDeclaration>;
 
 impl NamedSyntaxNode for MemberVarDeclarationNode<'_> {
     const NODE_KIND: &'static str = "member_var_decl_stmt";

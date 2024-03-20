@@ -3,9 +3,27 @@ use crate::{tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode
 use super::{StatementTraversal, ExpressionVisitor, ExpressionTraversal, StatementVisitor};
 
 
-pub struct NestedExpression;
+mod tags {
+    pub struct NestedExpression;
+    pub struct ThisExpression;
+    pub struct SuperExpression;
+    pub struct ParentExpression;
+    pub struct VirtualParentExpression;
+    pub struct FunctionCallExpression;
+    pub struct FunctionCallArguments;
+    pub struct ArrayExpression;
+    pub struct MemberFieldExpression;
+    pub struct NewExpression;
+    pub struct TypeCastExpression;
+    pub struct UnaryOperationExpression;
+    pub struct BinaryOperationExpression;
+    pub struct AssignmentOperationExpression;
+    pub struct TernaryConditionalExpression;
+    pub struct ExpressionStatement;
+}
 
-pub type NestedExpressionNode<'script> = SyntaxNode<'script, NestedExpression>;
+
+pub type NestedExpressionNode<'script> = SyntaxNode<'script, tags::NestedExpression>;
 
 impl NamedSyntaxNode for NestedExpressionNode<'_> {
     const NODE_KIND: &'static str = "nested_expr";
@@ -46,9 +64,7 @@ impl ExpressionTraversal for NestedExpressionNode<'_> {
 
 
 
-pub struct ThisExpression;
-
-pub type ThisExpressionNode<'script> = SyntaxNode<'script, ThisExpression>;
+pub type ThisExpressionNode<'script> = SyntaxNode<'script, tags::ThisExpression>;
 
 impl NamedSyntaxNode for ThisExpressionNode<'_> {
     const NODE_KIND: &'static str = "this_expr";
@@ -82,9 +98,7 @@ impl ExpressionTraversal for ThisExpressionNode<'_> {
 
 
 
-pub struct SuperExpression;
-
-pub type SuperExpressionNode<'script> = SyntaxNode<'script, SuperExpression>;
+pub type SuperExpressionNode<'script> = SyntaxNode<'script, tags::SuperExpression>;
 
 impl NamedSyntaxNode for SuperExpressionNode<'_> {
     const NODE_KIND: &'static str = "super_expr";
@@ -118,9 +132,7 @@ impl ExpressionTraversal for SuperExpressionNode<'_> {
 
 
 
-pub struct ParentExpression;
-
-pub type ParentExpressionNode<'script> = SyntaxNode<'script, ParentExpression>;
+pub type ParentExpressionNode<'script> = SyntaxNode<'script, tags::ParentExpression>;
 
 impl NamedSyntaxNode for ParentExpressionNode<'_> {
     const NODE_KIND: &'static str = "parent_expr";
@@ -154,9 +166,7 @@ impl ExpressionTraversal for ParentExpressionNode<'_> {
 
 
 
-pub struct VirtualParentExpression;
-
-pub type VirtualParentExpressionNode<'script> = SyntaxNode<'script, VirtualParentExpression>;
+pub type VirtualParentExpressionNode<'script> = SyntaxNode<'script, tags::VirtualParentExpression>;
 
 impl NamedSyntaxNode for VirtualParentExpressionNode<'_> {
     const NODE_KIND: &'static str = "virtual_parent_expr";
@@ -190,10 +200,7 @@ impl ExpressionTraversal for VirtualParentExpressionNode<'_> {
 
 
 
-
-pub struct FunctionCallExpression;
-
-pub type FunctionCallExpressionNode<'script> = SyntaxNode<'script, FunctionCallExpression>;
+pub type FunctionCallExpressionNode<'script> = SyntaxNode<'script, tags::FunctionCallExpression>;
 
 impl NamedSyntaxNode for FunctionCallExpressionNode<'_> {
     const NODE_KIND: &'static str = "func_call_expr";
@@ -240,9 +247,7 @@ impl ExpressionTraversal for FunctionCallExpressionNode<'_> {
 
 
 
-pub struct FunctionCallArguments;
-
-pub type FunctionCallArgumentsNode<'script> = SyntaxNode<'script, FunctionCallArguments>;
+pub type FunctionCallArgumentsNode<'script> = SyntaxNode<'script, tags::FunctionCallArguments>;
 
 impl NamedSyntaxNode for FunctionCallArgumentsNode<'_> {
     const NODE_KIND: &'static str = "func_call_args";
@@ -328,9 +333,7 @@ impl ExpressionTraversal for FunctionCallArgument<'_> {
 
 
 
-pub struct ArrayExpression;
-
-pub type ArrayExpressionNode<'script> = SyntaxNode<'script, ArrayExpression>;
+pub type ArrayExpressionNode<'script> = SyntaxNode<'script, tags::ArrayExpression>;
 
 impl NamedSyntaxNode for ArrayExpressionNode<'_> {
     const NODE_KIND: &'static str = "array_expr";
@@ -377,9 +380,7 @@ impl ExpressionTraversal for ArrayExpressionNode<'_> {
 
 
 
-pub struct MemberFieldExpression;
-
-pub type MemberFieldExpressionNode<'script> = SyntaxNode<'script, MemberFieldExpression>;
+pub type MemberFieldExpressionNode<'script> = SyntaxNode<'script, tags::MemberFieldExpression>;
 
 impl NamedSyntaxNode for MemberFieldExpressionNode<'_> {
     const NODE_KIND: &'static str = "member_field_expr";
@@ -425,9 +426,7 @@ impl ExpressionTraversal for MemberFieldExpressionNode<'_> {
 
 
 
-pub struct NewExpression;
-
-pub type NewExpressionNode<'script> = SyntaxNode<'script, NewExpression>;
+pub type NewExpressionNode<'script> = SyntaxNode<'script, tags::NewExpression>;
 
 impl NamedSyntaxNode for NewExpressionNode<'_> {
     const NODE_KIND: &'static str = "new_expr";
@@ -473,9 +472,7 @@ impl ExpressionTraversal for NewExpressionNode<'_> {
 
 
 
-pub struct TypeCastExpression;
-
-pub type TypeCastExpressionNode<'script> = SyntaxNode<'script, TypeCastExpression>;
+pub type TypeCastExpressionNode<'script> = SyntaxNode<'script, tags::TypeCastExpression>;
 
 impl NamedSyntaxNode for TypeCastExpressionNode<'_> {
     const NODE_KIND: &'static str = "cast_expr";
@@ -521,9 +518,7 @@ impl ExpressionTraversal for TypeCastExpressionNode<'_> {
 
 
 
-pub struct UnaryOperationExpression;
-
-pub type UnaryOperationExpressionNode<'script> = SyntaxNode<'script, UnaryOperationExpression>;
+pub type UnaryOperationExpressionNode<'script> = SyntaxNode<'script, tags::UnaryOperationExpression>;
 
 impl NamedSyntaxNode for UnaryOperationExpressionNode<'_> {
     const NODE_KIND: &'static str = "unary_op_expr";
@@ -569,9 +564,7 @@ impl ExpressionTraversal for UnaryOperationExpressionNode<'_> {
 
 
 
-pub struct BinaryOperationExpression;
-
-pub type BinaryOperationExpressionNode<'script> = SyntaxNode<'script, BinaryOperationExpression>;
+pub type BinaryOperationExpressionNode<'script> = SyntaxNode<'script, tags::BinaryOperationExpression>;
 
 impl NamedSyntaxNode for BinaryOperationExpressionNode<'_> {
     const NODE_KIND: &'static str = "binary_op_expr";
@@ -623,9 +616,7 @@ impl ExpressionTraversal for BinaryOperationExpressionNode<'_> {
 
 
 
-pub struct AssignmentOperationExpression;
-
-pub type AssignmentOperationExpressionNode<'script> = SyntaxNode<'script, AssignmentOperationExpression>;
+pub type AssignmentOperationExpressionNode<'script> = SyntaxNode<'script, tags::AssignmentOperationExpression>;
 
 impl NamedSyntaxNode for AssignmentOperationExpressionNode<'_> {
     const NODE_KIND: &'static str = "assign_op_expr";
@@ -677,9 +668,7 @@ impl ExpressionTraversal for AssignmentOperationExpressionNode<'_> {
 
 
 
-pub struct TernaryConditionalExpression;
-
-pub type TernaryConditionalExpressionNode<'script> = SyntaxNode<'script, TernaryConditionalExpression>;
+pub type TernaryConditionalExpressionNode<'script> = SyntaxNode<'script, tags::TernaryConditionalExpression>;
 
 impl NamedSyntaxNode for TernaryConditionalExpressionNode<'_> {
     const NODE_KIND: &'static str = "ternary_cond_expr";
@@ -875,9 +864,7 @@ impl ExpressionTraversal for ExpressionNode<'_> {
 
 
 
-pub struct ExpressionStatement;
-
-pub type ExpressionStatementNode<'script> = SyntaxNode<'script, ExpressionStatement>;
+pub type ExpressionStatementNode<'script> = SyntaxNode<'script, tags::ExpressionStatement>;
 
 impl NamedSyntaxNode for ExpressionStatementNode<'_> {
     const NODE_KIND: &'static str = "expr_stmt";

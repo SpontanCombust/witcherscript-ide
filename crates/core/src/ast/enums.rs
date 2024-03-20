@@ -3,9 +3,14 @@ use crate::{tokens::{IdentifierNode, LiteralHexNode, LiteralIntNode}, AnyNode, D
 use super::{StatementTraversal, StatementVisitor};
 
 
-pub struct EnumDeclaration;
+mod tags {
+    pub struct EnumDeclaration;
+    pub struct EnumBlock;
+    pub struct EnumVariantDeclaration;
+}
 
-pub type EnumDeclarationNode<'script> = SyntaxNode<'script, EnumDeclaration>;
+
+pub type EnumDeclarationNode<'script> = SyntaxNode<'script, tags::EnumDeclaration>;
 
 impl NamedSyntaxNode for EnumDeclarationNode<'_> {
     const NODE_KIND: &'static str = "enum_decl_stmt";
@@ -53,9 +58,7 @@ impl StatementTraversal for EnumDeclarationNode<'_> {
 
 
 
-pub struct EnumBlock;
-
-pub type EnumBlockNode<'script> = SyntaxNode<'script, EnumBlock>;
+pub type EnumBlockNode<'script> = SyntaxNode<'script, tags::EnumBlock>;
 
 impl NamedSyntaxNode for EnumBlockNode<'_> {
     const NODE_KIND: &'static str = "enum_block";
@@ -95,9 +98,7 @@ impl StatementTraversal for EnumBlockNode<'_> {
 }
 
 
-pub struct EnumVariantDeclaration;
-
-pub type EnumVariantDeclarationNode<'script> = SyntaxNode<'script, EnumVariantDeclaration>;
+pub type EnumVariantDeclarationNode<'script> = SyntaxNode<'script, tags::EnumVariantDeclaration>;
 
 impl NamedSyntaxNode for EnumVariantDeclarationNode<'_> {
     const NODE_KIND: &'static str = "enum_decl_variant";

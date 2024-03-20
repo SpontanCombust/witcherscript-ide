@@ -3,9 +3,12 @@ use crate::{attribs::StateSpecifierNode, tokens::IdentifierNode, AnyNode, DebugR
 use super::{StatementTraversal, StatementVisitor, ClassBlockNode};
 
 
-pub struct StateDeclaration;
+mod tags {
+    pub struct StateDeclaration;
+}
 
-pub type StateDeclarationNode<'script> = SyntaxNode<'script, StateDeclaration>;
+
+pub type StateDeclarationNode<'script> = SyntaxNode<'script, tags::StateDeclaration>;
 
 impl NamedSyntaxNode for StateDeclarationNode<'_> {
     const NODE_KIND: &'static str = "state_decl_stmt";

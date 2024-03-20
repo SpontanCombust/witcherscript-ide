@@ -3,9 +3,21 @@ use crate::{attribs::*, tokens::IdentifierNode, AnyNode, DebugMaybeAlternate, De
 use super::*;
 
 
-pub struct EventDeclaration;
+mod tags {
+    pub struct EventDeclaration;
+    pub struct GlobalFunctionDeclaration;
+    pub struct MemberFunctionDeclaration;
+    pub struct FunctionParameters;
+    pub struct FunctionParameterGroup;
+    pub struct FunctionBlock;
+    pub struct BreakStatement;
+    pub struct ContinueStatement;
+    pub struct ReturnStatement;
+    pub struct DeleteStatement;
+}
 
-pub type EventDeclarationNode<'script> = SyntaxNode<'script, EventDeclaration>;
+
+pub type EventDeclarationNode<'script> = SyntaxNode<'script, tags::EventDeclaration>;
 
 impl NamedSyntaxNode for EventDeclarationNode<'_> {
     const NODE_KIND: &'static str = "event_decl_stmt";
@@ -67,9 +79,7 @@ impl StatementTraversal for EventDeclarationNode<'_> {
 
 
 
-pub struct GlobalFunctionDeclaration;
-
-pub type GlobalFunctionDeclarationNode<'script> = SyntaxNode<'script, GlobalFunctionDeclaration>;
+pub type GlobalFunctionDeclarationNode<'script> = SyntaxNode<'script, tags::GlobalFunctionDeclaration>;
 
 impl NamedSyntaxNode for GlobalFunctionDeclarationNode<'_> {
     const NODE_KIND: &'static str = "global_func_decl_stmt";
@@ -141,9 +151,7 @@ impl StatementTraversal for GlobalFunctionDeclarationNode<'_> {
 
 
 
-pub struct MemberFunctionDeclaration;
-
-pub type MemberFunctionDeclarationNode<'script> = SyntaxNode<'script, MemberFunctionDeclaration>;
+pub type MemberFunctionDeclarationNode<'script> = SyntaxNode<'script, tags::MemberFunctionDeclaration>;
 
 impl NamedSyntaxNode for MemberFunctionDeclarationNode<'_> {
     const NODE_KIND: &'static str = "member_func_decl_stmt";
@@ -274,9 +282,7 @@ impl StatementTraversal for FunctionDefinitionNode<'_> {
 
 
 
-pub struct FunctionParameters;
-
-pub type FunctionParametersNode<'script> = SyntaxNode<'script, FunctionParameters>;
+pub type FunctionParametersNode<'script> = SyntaxNode<'script, tags::FunctionParameters>;
 
 impl NamedSyntaxNode for FunctionParametersNode<'_> {
     const NODE_KIND: &'static str = "func_params";
@@ -317,9 +323,7 @@ impl StatementTraversal for FunctionParametersNode<'_> {
 
 
 
-pub struct FunctionParameterGroup;
-
-pub type FunctionParameterGroupNode<'script> = SyntaxNode<'script, FunctionParameterGroup>;
+pub type FunctionParameterGroupNode<'script> = SyntaxNode<'script, tags::FunctionParameterGroup>;
 
 impl NamedSyntaxNode for FunctionParameterGroupNode<'_> {
     const NODE_KIND: &'static str = "func_param_group";
@@ -483,9 +487,7 @@ impl StatementTraversal for FunctionStatementNode<'_> {
 }
 
 
-pub struct FunctionBlock;
-
-pub type FunctionBlockNode<'script> = SyntaxNode<'script, FunctionBlock>;
+pub type FunctionBlockNode<'script> = SyntaxNode<'script, tags::FunctionBlock>;
 
 impl NamedSyntaxNode for FunctionBlockNode<'_> {
     const NODE_KIND: &'static str = "func_block";
@@ -527,9 +529,7 @@ impl StatementTraversal for FunctionBlockNode<'_> {
 
 
 
-pub struct BreakStatement;
-
-pub type BreakStatementNode<'script> = SyntaxNode<'script, BreakStatement>;
+pub type BreakStatementNode<'script> = SyntaxNode<'script, tags::BreakStatement>;
 
 impl NamedSyntaxNode for BreakStatementNode<'_> {
     const NODE_KIND: &'static str = "break_stmt";
@@ -563,9 +563,7 @@ impl StatementTraversal for BreakStatementNode<'_> {
 
 
 
-pub struct ContinueStatement;
-
-pub type ContinueStatementNode<'script> = SyntaxNode<'script, ContinueStatement>;
+pub type ContinueStatementNode<'script> = SyntaxNode<'script, tags::ContinueStatement>;
 
 impl NamedSyntaxNode for ContinueStatementNode<'_> {
     const NODE_KIND: &'static str = "continue_stmt";
@@ -599,9 +597,7 @@ impl StatementTraversal for ContinueStatementNode<'_> {
 
 
 
-pub struct ReturnStatement;
-
-pub type ReturnStatementNode<'script> = SyntaxNode<'script, ReturnStatement>;
+pub type ReturnStatementNode<'script> = SyntaxNode<'script, tags::ReturnStatement>;
 
 impl NamedSyntaxNode for ReturnStatementNode<'_> {
     const NODE_KIND: &'static str = "return_stmt";
@@ -641,9 +637,7 @@ impl StatementTraversal for ReturnStatementNode<'_> {
 
 
 
-pub struct DeleteStatement;
-
-pub type DeleteStatementNode<'script> = SyntaxNode<'script, DeleteStatement>;
+pub type DeleteStatementNode<'script> = SyntaxNode<'script, tags::DeleteStatement>;
 
 impl NamedSyntaxNode for DeleteStatementNode<'_> {
     const NODE_KIND: &'static str = "delete_stmt";
