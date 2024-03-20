@@ -1,5 +1,6 @@
 use lsp_types::{Range, Position};
-use std::{marker::PhantomData, fmt::Debug};
+use tree_sitter as ts;
+use std::{fmt::Debug, marker::PhantomData};
 use crate::{SyntaxError, script_document::ScriptDocument};
 
 
@@ -11,16 +12,14 @@ use crate::{SyntaxError, script_document::ScriptDocument};
 /// 
 /// It works as an adapter for tree-sitter's nodes. Generic parameter T denotes the type of node, e.g. `Identifier`. 
 /// It can be just a marker type. What is important is to have a distinct type for a given node type in the parsed tree.
-#[derive(Clone)]
 pub struct SyntaxNode<'script, T> {
-    pub(crate) tree_node: tree_sitter::Node<'script>,
-    // TODO for later - see if storing RefCell<TreeCursor> would make any improvement in parsing speed
-    pub(crate) phantom : PhantomData<T>
+    pub(crate) tree_node: ts::Node<'script>,
+    phantom : PhantomData<T>
 }
 
 impl<'script, T> SyntaxNode<'script, T> {
     /// Constructs a completely new node from a tree-sitter node and a rope 
-    pub(crate) fn new(tree_node: tree_sitter::Node<'script>) -> Self {
+    pub(crate) fn new(tree_node: ts::Node<'script>) -> Self {
         Self {
             tree_node,
             phantom: PhantomData,
@@ -38,50 +37,28 @@ impl<'script, T> SyntaxNode<'script, T> {
     }
 
     /// Returns an iterator over non-error children of this node as AnyNodes
-    pub fn children(&self) -> impl Iterator<Item = AnyNode> {
-        let mut cursor = self.tree_node.walk();
-        let name_nodes = self.tree_node
-            .children(&mut cursor)
-            .filter(|n| !n.is_error() && !n.is_extra())
-            .collect::<Vec<_>>();
-
-        name_nodes.into_iter()
-            .map(|n| AnyNode::new(n))
+    pub fn children(&self) -> SyntaxNodeChildren {
+        SyntaxNodeChildren::new(&self.tree_node, false)
     }
 
     /// Returns an iterator over non-error named children of this node as AnyNodes
-    pub(crate) fn named_children(&self) -> impl Iterator<Item = AnyNode> {
-        self.children()
-            .filter(|n| n.tree_node.is_named() && !n.tree_node.is_extra())
+    pub(crate) fn named_children(&self) -> SyntaxNodeChildren {
+        SyntaxNodeChildren::new(&self.tree_node, true)
     }
 
     /// Returns the first non-error child of this node as an AnyNodes
     pub(crate) fn first_child(&self, must_be_named: bool) -> Option<AnyNode> {
-        self.children()
-            .filter(|n| 
-                if must_be_named { 
-                    n.tree_node.is_named() && !n.tree_node.is_extra()
-                } else { 
-                    true 
-                }
-            ).next()
+        SyntaxNodeChildren::new(&self.tree_node, must_be_named).next()
     }
 
     /// Returns the first non-error child of this node with a given field name as an AnyNodes
     pub(crate) fn field_child(&self, field: &'static str) -> Option<AnyNode> {
-        self.field_children(field).next()
+        SyntaxNodeFieldChildren::new(&self.tree_node, field).next()
     }
 
     /// Returns an iterator over named, non-error children of this node with a given field name
-    pub(crate) fn field_children(&self, field: &'static str) -> impl Iterator<Item = AnyNode> {
-        let mut cursor = self.tree_node.walk();
-        let name_nodes = self.tree_node
-            .children_by_field_name(field, &mut cursor)
-            .filter(|n| !n.is_error() && n.is_named() && !n.is_extra())
-            .collect::<Vec<_>>();
-
-        name_nodes.into_iter()
-            .map(|n| AnyNode::new(n))
+    pub(crate) fn field_children(&self, field: &'static str) -> SyntaxNodeFieldChildren {
+        SyntaxNodeFieldChildren::new(&self.tree_node, field)
     }
 
 
@@ -210,6 +187,15 @@ impl<'script, T> SyntaxNode<'script, T> {
     }
 }
 
+impl<T> Clone for SyntaxNode<'_, T> {
+    fn clone(&self) -> Self {
+        Self {
+            tree_node: self.tree_node.clone(),
+            phantom: PhantomData
+        }
+    }
+}
+
 impl<T> PartialEq for SyntaxNode<'_, T> {
     fn eq(&self, other: &Self) -> bool {
         self.tree_node == other.tree_node
@@ -229,6 +215,93 @@ impl Debug for AnyNode<'_> {
         f.debug_struct("SyntaxNode")
             .field("tree_node", &self.tree_node)
             .finish()
+    }
+}
+
+
+
+pub struct SyntaxNodeChildren<'script> {
+    cursor: ts::TreeCursor<'script>,
+    any_children_left: bool,
+    must_be_named: bool
+}
+
+impl<'script> SyntaxNodeChildren<'script> {
+    // the iterator always starts out as an iterator over AnyNodes
+    fn new(tree_node: &ts::Node<'script>, must_be_named: bool) -> Self {
+        let mut cursor = tree_node.walk();
+        let any_children_left = cursor.goto_first_child(); 
+
+        Self {
+            cursor,
+            any_children_left,
+            must_be_named
+        }       
+    }
+}
+
+impl<'script> Iterator for SyntaxNodeChildren<'script> {
+    type Item = AnyNode<'script>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.any_children_left {
+            let mut n = self.cursor.node();
+            while n.is_error() || n.is_extra() || (self.must_be_named && !n.is_named()) {
+                if self.cursor.goto_next_sibling() {
+                    n = self.cursor.node();
+                } else {
+                    return None;
+                }
+            }
+
+            self.any_children_left = self.cursor.goto_next_sibling();
+            Some(AnyNode::new(n))
+        } else {
+            None
+        }
+    }
+}
+
+
+pub struct SyntaxNodeFieldChildren<'script> {
+    cursor: ts::TreeCursor<'script>,
+    any_children_left: bool,
+    field_id: u16
+}
+
+impl<'script> SyntaxNodeFieldChildren<'script> {
+    fn new(tree_node: &ts::Node<'script>, field_name: &str) -> Self {
+        let mut cursor = tree_node.walk();
+        let any_children_left = cursor.goto_first_child();
+        let field_id = tree_sitter_witcherscript::language().field_id_for_name(field_name).expect("Unknown field name");
+    
+        Self {
+            cursor,
+            any_children_left,
+            field_id
+        }       
+    }
+}
+
+impl<'script> Iterator for SyntaxNodeFieldChildren<'script> {
+    type Item = AnyNode<'script>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.any_children_left {
+            let mut n = self.cursor.node();
+            while self.cursor.field_id() != Some(self.field_id) || n.is_error() || n.is_extra() || !n.is_named() {
+                if self.cursor.goto_next_sibling() {
+                    n = self.cursor.node();
+                } else {
+                    return None;
+                }
+            }
+
+            self.any_children_left = self.cursor.goto_next_sibling();
+            Some(AnyNode::new(n))
+        } else {
+            None
+        }
     }
 }
 
