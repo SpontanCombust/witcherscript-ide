@@ -792,7 +792,7 @@ impl<'script> ExpressionNode<'script> {
             LiteralStringNode::NODE_KIND    |
             LiteralNameNode::NODE_KIND      |
             LiteralNullNode::NODE_KIND      => Expression::Literal(self.into()),
-            _ => panic!("Unknown expression type: {} {}", self.tree_node.kind(), self.range().debug()) //TODO add range for similar cases
+            _ => panic!("Unknown expression type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use std::str::FromStr;
-use crate::{tokens::Keyword, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{tokens::Keyword, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -32,8 +32,7 @@ impl StateSpecifierNode<'_> {
 
 impl Debug for StateSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())?;
-        write!(f, " {}", self.range().debug())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 

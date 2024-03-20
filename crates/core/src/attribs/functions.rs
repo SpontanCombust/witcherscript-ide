@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use std::str::FromStr;
-use crate::{tokens::Keyword, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{tokens::Keyword, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::AccessModifier;
 
 
@@ -33,8 +33,7 @@ impl FunctionParameterSpecifierNode<'_> {
 
 impl Debug for FunctionParameterSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())?;
-        write!(f, " {}", self.range().debug())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 
@@ -82,8 +81,7 @@ impl GlobalFunctionSpecifierNode<'_> {
 
 impl Debug for GlobalFunctionSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())?;
-        write!(f, " {}", self.range().debug())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 
@@ -133,8 +131,7 @@ impl GlobalFunctionFlavourNode<'_> {
 
 impl Debug for GlobalFunctionFlavourNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())?;
-        write!(f, " {}", self.range().debug())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 
@@ -188,8 +185,7 @@ impl MemberFunctionSpecifierNode<'_> {
 
 impl Debug for MemberFunctionSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())?;
-        write!(f, " {}", self.range().debug())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 
@@ -237,8 +233,7 @@ impl MemberFunctionFlavourNode<'_> {
 
 impl Debug for MemberFunctionFlavourNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())?;
-        write!(f, " {}", self.range().debug())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 
