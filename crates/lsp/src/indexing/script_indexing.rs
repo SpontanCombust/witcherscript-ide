@@ -34,6 +34,9 @@ impl Backend {
     }
 
     pub async fn on_source_tree_changed(&self, content_path: &Path, diff: SourceTreeDifference) {
+        let (added_count, removed_count) = (diff.added.len(), diff.removed.len());
+        self.log_info(format!("Changes to source tree in {}: {} script(s) discovered, {} to be deprecated", content_path.display(), added_count, removed_count)).await;
+
         let start = Instant::now();
 
         let (diff_added, diff_removed) = (diff.added, diff.removed);
@@ -69,7 +72,8 @@ impl Backend {
         });
 
         while let Some((script_path, script, diags)) = recv.recv().await {
-            self.log_info(format!("Discovered script: {}", script_path.display())).await;
+            // Doing to many logs at once puts a strain on the connection, better to do this through a Progress or something...
+            // self.log_info(format!("Discovered script: {}", script_path.display())).await;
             self.scripts.insert(script_path.clone(), script);
             self.publish_diagnostics(script_path, diags).await;
         }
@@ -77,8 +81,9 @@ impl Backend {
 
     async fn on_source_tree_paths_removed(&self, removed_paths: Vec<SourceFilePath>) {
         for removed_path in removed_paths {
-            self.log_info(format!("Deprecated script: {}", removed_path)).await;
+            // self.log_info(format!("Deprecated script: {}", removed_path)).await;
             self.scripts.remove(removed_path.absolute());
+            // clearing diagnostics is done in will_delete_files
         }
     }
 }

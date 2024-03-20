@@ -97,6 +97,9 @@ impl Backend {
     }
 
     pub async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {
+        let (added_count, removed_count) = (diff.added.len(), diff.removed.len());
+        self.log_info(format!("Changes to the content graph: {} content(s) discovered, {} to be deprecated", added_count, removed_count)).await;
+
         let start = Instant::now();
 
         let (diff_added, diff_removed) = (diff.added, diff.removed);

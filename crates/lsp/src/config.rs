@@ -51,6 +51,11 @@ impl Backend {
                 let mut old_config = self.config.write().await;
                 let config_changed = *old_config != new_config;
                 *old_config = new_config;
+
+                if config_changed {
+                    self.log_info("No changes to configuration detected.").await;
+                }
+
                 config_changed
             },
             Err(err) => {
