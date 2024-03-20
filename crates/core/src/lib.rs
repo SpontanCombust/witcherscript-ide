@@ -1,5 +1,3 @@
-mod tests;
-
 mod script;
 pub use script::*;
 
