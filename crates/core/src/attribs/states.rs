@@ -26,7 +26,7 @@ impl StateSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown state specifier: {}", s);
+        panic!("Unknown state specifier: {} {}", s, self.range().debug());
     }
 }
 

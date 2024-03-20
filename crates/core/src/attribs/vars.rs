@@ -37,7 +37,7 @@ impl MemberVarSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown member var specifier: {}", s)
+        panic!("Unknown member var specifier: {} {}", s, self.range().debug())
     }
 }
 

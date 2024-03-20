@@ -3,7 +3,6 @@ use crate::{AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
 
 
-#[derive(Debug, Clone)]
 pub struct ForLoop;
 
 pub type ForLoopNode<'script> = SyntaxNode<'script, ForLoop>;
@@ -63,7 +62,6 @@ impl StatementTraversal for ForLoopNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct WhileLoop;
 
 pub type WhileLoopNode<'script> = SyntaxNode<'script, WhileLoop>;
@@ -113,7 +111,6 @@ impl StatementTraversal for WhileLoopNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct DoWhileLoop;
 
 pub type DoWhileLoopNode<'script> = SyntaxNode<'script, DoWhileLoop>;

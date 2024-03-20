@@ -3,7 +3,6 @@ use crate::{attribs::StructSpecifierNode, tokens::{IdentifierNode, LiteralString
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, MemberVarDeclarationNode, NopNode};
 
 
-#[derive(Debug, Clone)]
 pub struct StructDeclaration;
 
 pub type StructDeclarationNode<'script> = SyntaxNode<'script, StructDeclaration>;
@@ -59,7 +58,6 @@ impl StatementTraversal for StructDeclarationNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct StructBlock;
 
 pub type StructBlockNode<'script> = SyntaxNode<'script, StructBlock>;
@@ -69,7 +67,7 @@ impl NamedSyntaxNode for StructBlockNode<'_> {
 }
 
 impl StructBlockNode<'_> {
-    pub fn statements(&self) -> impl Iterator<Item = StructStatementNode> {
+    pub fn iter(&self) -> impl Iterator<Item = StructStatementNode> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -78,7 +76,7 @@ impl Debug for StructBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_maybe_alternate_named(
             &format!("StructBlock {}", self.range().debug()), 
-            &self.statements().collect::<Vec<_>>()
+            &self.iter().collect::<Vec<_>>()
         )
     }
 }
@@ -97,7 +95,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StructBlockNode<'script> {
 
 impl StatementTraversal for StructBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.statements().for_each(|s| s.accept(visitor));
+        self.iter().for_each(|s| s.accept(visitor));
     }
 }
 
@@ -134,7 +132,7 @@ impl<'script> StructStatementNode<'script> {
             MemberDefaultsBlockNode::NODE_KIND => StructStatement::DefaultsBlock(self.into()),
             MemberHintNode::NODE_KIND => StructStatement::Hint(self.into()),
             NopNode::NODE_KIND => StructStatement::Nop(self.into()),
-            _ => panic!("Unknown struct statement type: {}", self.tree_node.kind())
+            _ => panic!("Unknown struct statement type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
@@ -178,7 +176,6 @@ impl StatementTraversal for StructStatementNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct MemberDefaultsBlock;
 
 pub type MemberDefaultsBlockNode<'script> = SyntaxNode<'script, MemberDefaultsBlock>;
@@ -188,7 +185,7 @@ impl NamedSyntaxNode for MemberDefaultsBlockNode<'_> {
 }
 
 impl MemberDefaultsBlockNode<'_> {
-    pub fn assignments(&self) -> impl Iterator<Item = MemberDefaultsBlockAssignmentNode> {
+    pub fn iter(&self) -> impl Iterator<Item = MemberDefaultsBlockAssignmentNode> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -197,7 +194,7 @@ impl Debug for MemberDefaultsBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_maybe_alternate_named(
             &format!("MemberDefaultsBlock {}", self.range().debug()), 
-            &self.assignments().collect::<Vec<_>>()
+            &self.iter().collect::<Vec<_>>()
         )
     }
 }
@@ -216,12 +213,11 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockNode<'script> {
 
 impl StatementTraversal for MemberDefaultsBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.assignments().for_each(|n| n.accept(visitor))
+        self.iter().for_each(|n| n.accept(visitor))
     }
 }
 
 
-#[derive(Debug, Clone)]
 pub struct MemberDefaultsBlockAssignment;
 
 pub type MemberDefaultsBlockAssignmentNode<'script> = SyntaxNode<'script, MemberDefaultsBlockAssignment>;
@@ -269,7 +265,6 @@ impl StatementTraversal for MemberDefaultsBlockAssignmentNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct MemberDefaultValue; 
 
 pub type MemberDefaultValueNode<'script> = SyntaxNode<'script, MemberDefaultValue>;
@@ -317,7 +312,6 @@ impl StatementTraversal for MemberDefaultValueNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct MemberHint; 
 
 pub type MemberHintNode<'script> = SyntaxNode<'script, MemberHint>;

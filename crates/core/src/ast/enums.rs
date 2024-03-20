@@ -3,7 +3,6 @@ use crate::{tokens::{IdentifierNode, LiteralHexNode, LiteralIntNode}, AnyNode, D
 use super::{StatementTraversal, StatementVisitor};
 
 
-#[derive(Debug, Clone)]
 pub struct EnumDeclaration;
 
 pub type EnumDeclarationNode<'script> = SyntaxNode<'script, EnumDeclaration>;
@@ -54,7 +53,6 @@ impl StatementTraversal for EnumDeclarationNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct EnumBlock;
 
 pub type EnumBlockNode<'script> = SyntaxNode<'script, EnumBlock>;
@@ -64,7 +62,7 @@ impl NamedSyntaxNode for EnumBlockNode<'_> {
 }
 
 impl EnumBlockNode<'_> {
-    pub fn variants(&self) -> impl Iterator<Item = EnumVariantDeclarationNode> {
+    pub fn iter(&self) -> impl Iterator<Item = EnumVariantDeclarationNode> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -73,7 +71,7 @@ impl Debug for EnumBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_maybe_alternate_named(
             &format!("EnumBlock {}", self.range().debug()), 
-            &self.variants().collect::<Vec<_>>()
+            &self.iter().collect::<Vec<_>>()
         )
     }
 }
@@ -92,12 +90,11 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumBlockNode<'script> {
 
 impl StatementTraversal for EnumBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.variants().for_each(|s| s.accept(visitor));
+        self.iter().for_each(|s| s.accept(visitor));
     }
 }
 
 
-#[derive(Debug, Clone)]
 pub struct EnumVariantDeclaration;
 
 pub type EnumVariantDeclarationNode<'script> = SyntaxNode<'script, EnumVariantDeclaration>;
@@ -117,7 +114,7 @@ impl EnumVariantDeclarationNode<'_> {
             match kind {
                 LiteralIntNode::NODE_KIND => EnumVariantValue::Int(n.into()),
                 LiteralHexNode::NODE_KIND => EnumVariantValue::Hex(n.into()),
-                _ => panic!("Unknown enum variant value kind: {}", kind)
+                _ => panic!("Unknown enum variant value kind: {} {}", kind, self.range().debug())
             }
         })
     }

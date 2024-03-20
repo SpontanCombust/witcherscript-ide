@@ -24,7 +24,7 @@ impl StructSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown struct specifier: {}", s)
+        panic!("Unknown struct specifier: {} {}", s, self.range().debug())
     }
 }
 

@@ -19,7 +19,7 @@ impl UnaryOperatorNode<'_> {
             "unary_op_not" => UnaryOperator::Not,
             "unary_op_bitnot" => UnaryOperator::BitNot,
             "unary_op_plus" => UnaryOperator::Plus,
-            _ => panic!("Unknown unary operator: {}", self.tree_node.kind())
+            _ => panic!("Unknown unary operator: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
@@ -90,7 +90,7 @@ impl BinaryOperatorNode<'_> {
             "binary_op_mod" => BinaryOperator::Mod,
             "binary_op_div" => BinaryOperator::Div,
             "binary_op_mult" => BinaryOperator::Mult,
-            _ => panic!("Unknown binary operator: {}", self.tree_node.kind())
+            _ => panic!("Unknown binary operator: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
@@ -154,7 +154,7 @@ impl AssignmentOperatorNode<'_> {
             "assign_op_mult" => AssignmentOperator::Mult,
             "assign_op_div" => AssignmentOperator::Div,
             "assign_op_mod" => AssignmentOperator::Mod,
-            _ => panic!("Unknown assignment operator: {}", self.tree_node.kind())
+            _ => panic!("Unknown assignment operator: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }

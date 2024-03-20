@@ -3,7 +3,6 @@ use crate::{AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNod
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
 
 
-#[derive(Debug, Clone)]
 pub struct IfConditional;
 
 pub type IfConditionalNode<'script> = SyntaxNode<'script, IfConditional>;
@@ -59,7 +58,6 @@ impl StatementTraversal for IfConditionalNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct SwitchConditional;
 
 pub type SwitchConditionalNode<'script> = SyntaxNode<'script, SwitchConditional>;
@@ -109,7 +107,6 @@ impl StatementTraversal for SwitchConditionalNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct SwitchConditionalBlock;
 
 pub type SwitchConditionalBlockNode<'script> = SyntaxNode<'script, SwitchConditionalBlock>;
@@ -182,12 +179,14 @@ impl<'script> SwitchConditionalSectionNode<'script> {
         if k == SwitchConditionalDefaultLabelNode::NODE_KIND {
             return SwitchConditionalSection::Default(self.into());
         }
+
+        let range = self.range();
         // if self is not label then it must be a function statement
         if let Ok(stmt) = FunctionStatementNode::try_from(self.into_any()) {
             return SwitchConditionalSection::Statement(stmt);
         }
 
-        panic!("Unexpected switch conditional section node")
+        panic!("Unexpected switch conditional section node: {} {}", k, range.debug())
     }
 }
 
@@ -224,7 +223,6 @@ impl StatementTraversal for SwitchConditionalSectionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct SwitchConditionalCaseLabel;
 
 pub type SwitchConditionalCaseLabelNode<'script> = SyntaxNode<'script, SwitchConditionalCaseLabel>;
@@ -266,7 +264,6 @@ impl StatementTraversal for SwitchConditionalCaseLabelNode<'_> {
 }
 
 
-#[derive(Debug, Clone)]
 pub struct SwitchConditionalDefaultLabel;
 
 pub type SwitchConditionalDefaultLabelNode<'script> = SyntaxNode<'script, SwitchConditionalDefaultLabel>;

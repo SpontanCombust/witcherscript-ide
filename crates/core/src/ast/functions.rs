@@ -3,7 +3,6 @@ use crate::{attribs::*, tokens::IdentifierNode, AnyNode, DebugMaybeAlternate, De
 use super::*;
 
 
-#[derive(Debug, Clone)]
 pub struct EventDeclaration;
 
 pub type EventDeclarationNode<'script> = SyntaxNode<'script, EventDeclaration>;
@@ -68,7 +67,6 @@ impl StatementTraversal for EventDeclarationNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct GlobalFunctionDeclaration;
 
 pub type GlobalFunctionDeclarationNode<'script> = SyntaxNode<'script, GlobalFunctionDeclaration>;
@@ -143,7 +141,6 @@ impl StatementTraversal for GlobalFunctionDeclarationNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct MemberFunctionDeclaration;
 
 pub type MemberFunctionDeclarationNode<'script> = SyntaxNode<'script, MemberFunctionDeclaration>;
@@ -240,7 +237,7 @@ impl<'script> FunctionDefinitionNode<'script> {
         match self.tree_node.kind() {
             FunctionBlockNode::NODE_KIND => FunctionDefinition::Some(self.into()),
             NopNode::NODE_KIND => FunctionDefinition::None(self.into()),
-            _ => panic!("Unknown function definition node: {}", self.tree_node.kind())
+            _ => panic!("Unknown function definition node: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
@@ -277,7 +274,6 @@ impl StatementTraversal for FunctionDefinitionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct FunctionParameters;
 
 pub type FunctionParametersNode<'script> = SyntaxNode<'script, FunctionParameters>;
@@ -287,7 +283,7 @@ impl NamedSyntaxNode for FunctionParametersNode<'_> {
 }
 
 impl FunctionParametersNode<'_> {
-    pub fn groups(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
+    pub fn iter(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -296,7 +292,7 @@ impl Debug for FunctionParametersNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_maybe_alternate_named(
             &format!("FunctionParameters {}", self.range().debug()), 
-            &self.groups().collect::<Vec<_>>()
+            &self.iter().collect::<Vec<_>>()
         )
     }
 }
@@ -315,13 +311,12 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionParametersNode<'script> {
 
 impl StatementTraversal for FunctionParametersNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.groups().for_each(|s| s.accept(visitor));
+        self.iter().for_each(|s| s.accept(visitor));
     }
 }
 
 
 
-#[derive(Debug, Clone)]
 pub struct FunctionParameterGroup;
 
 pub type FunctionParameterGroupNode<'script> = SyntaxNode<'script, FunctionParameterGroup>;
@@ -429,7 +424,7 @@ impl<'script> FunctionStatementNode<'script> {
             DeleteStatementNode::NODE_KIND => FunctionStatement::Delete(self.into()),
             FunctionBlockNode::NODE_KIND => FunctionStatement::Block(self.into()),
             NopNode::NODE_KIND => FunctionStatement::Nop(self.into()),
-            _ => panic!("Unknown function statement type: {}", self.tree_node.kind())
+            _ => panic!("Unknown function statement type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
@@ -488,7 +483,6 @@ impl StatementTraversal for FunctionStatementNode<'_> {
 }
 
 
-#[derive(Debug, Clone)]
 pub struct FunctionBlock;
 
 pub type FunctionBlockNode<'script> = SyntaxNode<'script, FunctionBlock>;
@@ -498,7 +492,7 @@ impl NamedSyntaxNode for FunctionBlockNode<'_> {
 }
 
 impl FunctionBlockNode<'_> {
-    pub fn statements(&self) -> impl Iterator<Item = FunctionStatementNode> {
+    pub fn iter(&self) -> impl Iterator<Item = FunctionStatementNode> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -507,7 +501,7 @@ impl Debug for FunctionBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_maybe_alternate_named(
             &format!("FunctionBlock {}", self.range().debug()), 
-            &self.statements().collect::<Vec<_>>()
+            &self.iter().collect::<Vec<_>>()
         )
     }
 }
@@ -527,13 +521,12 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionBlockNode<'script> {
 impl StatementTraversal for FunctionBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_block_stmt(self);
-        self.statements().for_each(|s| s.accept(visitor));
+        self.iter().for_each(|s| s.accept(visitor));
     }
 }
 
 
 
-#[derive(Debug, Clone)]
 pub struct BreakStatement;
 
 pub type BreakStatementNode<'script> = SyntaxNode<'script, BreakStatement>;
@@ -570,7 +563,6 @@ impl StatementTraversal for BreakStatementNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct ContinueStatement;
 
 pub type ContinueStatementNode<'script> = SyntaxNode<'script, ContinueStatement>;
@@ -607,7 +599,6 @@ impl StatementTraversal for ContinueStatementNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct ReturnStatement;
 
 pub type ReturnStatementNode<'script> = SyntaxNode<'script, ReturnStatement>;
@@ -650,7 +641,6 @@ impl StatementTraversal for ReturnStatementNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct DeleteStatement;
 
 pub type DeleteStatementNode<'script> = SyntaxNode<'script, DeleteStatement>;

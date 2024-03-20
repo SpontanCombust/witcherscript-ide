@@ -323,7 +323,7 @@ impl<'script> LiteralNode<'script> {
             LiteralStringNode::NODE_KIND => Literal::String(self.into()),
             LiteralNameNode::NODE_KIND => Literal::Name(self.into()),
             LiteralNullNode::NODE_KIND => Literal::Null(self.into()),
-            _ => panic!("Unknown literal type: {}", self.tree_node.kind())
+            _ => panic!("Unknown literal type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }

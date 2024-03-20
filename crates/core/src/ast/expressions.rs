@@ -3,7 +3,6 @@ use crate::{tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode
 use super::{StatementTraversal, ExpressionVisitor, ExpressionTraversal, StatementVisitor};
 
 
-#[derive(Debug, Clone)]
 pub struct NestedExpression;
 
 pub type NestedExpressionNode<'script> = SyntaxNode<'script, NestedExpression>;
@@ -13,7 +12,7 @@ impl NamedSyntaxNode for NestedExpressionNode<'_> {
 }
 
 impl NestedExpressionNode<'_> {
-    pub fn value(&self) -> ExpressionNode {
+    pub fn inner(&self) -> ExpressionNode {
         self.first_child(true).unwrap().into()
     }
 }
@@ -21,7 +20,7 @@ impl NestedExpressionNode<'_> {
 impl Debug for NestedExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple(&format!("NestedExpression {}", self.range().debug()))
-            .field(&self.value())
+            .field(&self.inner())
             .finish()
     }
 }
@@ -40,14 +39,13 @@ impl<'script> TryFrom<AnyNode<'script>> for NestedExpressionNode<'script> {
 
 impl ExpressionTraversal for NestedExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.value().accept(visitor);
+        self.inner().accept(visitor);
         visitor.visit_nested_expr(self);
     }
 }
 
 
 
-#[derive(Debug, Clone)]
 pub struct ThisExpression;
 
 pub type ThisExpressionNode<'script> = SyntaxNode<'script, ThisExpression>;
@@ -84,7 +82,6 @@ impl ExpressionTraversal for ThisExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct SuperExpression;
 
 pub type SuperExpressionNode<'script> = SyntaxNode<'script, SuperExpression>;
@@ -121,7 +118,6 @@ impl ExpressionTraversal for SuperExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct ParentExpression;
 
 pub type ParentExpressionNode<'script> = SyntaxNode<'script, ParentExpression>;
@@ -158,7 +154,6 @@ impl ExpressionTraversal for ParentExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct VirtualParentExpression;
 
 pub type VirtualParentExpressionNode<'script> = SyntaxNode<'script, VirtualParentExpression>;
@@ -196,7 +191,6 @@ impl ExpressionTraversal for VirtualParentExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct FunctionCallExpression;
 
 pub type FunctionCallExpressionNode<'script> = SyntaxNode<'script, FunctionCallExpression>;
@@ -246,7 +240,6 @@ impl ExpressionTraversal for FunctionCallExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct FunctionCallArguments;
 
 pub type FunctionCallArgumentsNode<'script> = SyntaxNode<'script, FunctionCallArguments>;
@@ -257,36 +250,6 @@ impl NamedSyntaxNode for FunctionCallArgumentsNode<'_> {
 
 impl FunctionCallArgumentsNode<'_> {
     pub fn iter(&self) -> impl Iterator<Item = FunctionCallArgument> {
-        self.into_iter()
-    }
-}
-
-impl Debug for FunctionCallArgumentsNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named(
-            &format!("FunctionCallArguments {}", self.range().debug()), 
-            &self.iter().collect::<Vec<_>>()
-        )
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for FunctionCallArgumentsNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
-    }
-}
-
-impl<'script> IntoIterator for &'script FunctionCallArgumentsNode<'script> {
-    type Item = FunctionCallArgument<'script>;
-    type IntoIter = std::vec::IntoIter<FunctionCallArgument<'script>>;
-
-    fn into_iter(self) -> Self::IntoIter {
         let children = self.children();
 
         let mut args = Vec::new();
@@ -311,6 +274,27 @@ impl<'script> IntoIterator for &'script FunctionCallArgumentsNode<'script> {
     }
 }
 
+impl Debug for FunctionCallArgumentsNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate_named(
+            &format!("FunctionCallArguments {}", self.range().debug()), 
+            &self.iter().collect::<Vec<_>>()
+        )
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for FunctionCallArgumentsNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 impl ExpressionTraversal for FunctionCallArgumentsNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         self.iter().for_each(|n| n.accept(visitor))
@@ -318,6 +302,7 @@ impl ExpressionTraversal for FunctionCallArgumentsNode<'_> {
 }
 
 
+#[derive(Clone)]
 pub enum FunctionCallArgument<'script> {
     Some(ExpressionNode<'script>),
     Omitted(lsp_types::Position)
@@ -343,7 +328,6 @@ impl ExpressionTraversal for FunctionCallArgument<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct ArrayExpression;
 
 pub type ArrayExpressionNode<'script> = SyntaxNode<'script, ArrayExpression>;
@@ -393,7 +377,6 @@ impl ExpressionTraversal for ArrayExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct MemberFieldExpression;
 
 pub type MemberFieldExpressionNode<'script> = SyntaxNode<'script, MemberFieldExpression>;
@@ -442,7 +425,6 @@ impl ExpressionTraversal for MemberFieldExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct NewExpression;
 
 pub type NewExpressionNode<'script> = SyntaxNode<'script, NewExpression>;
@@ -491,7 +473,6 @@ impl ExpressionTraversal for NewExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct TypeCastExpression;
 
 pub type TypeCastExpressionNode<'script> = SyntaxNode<'script, TypeCastExpression>;
@@ -540,7 +521,6 @@ impl ExpressionTraversal for TypeCastExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct UnaryOperationExpression;
 
 pub type UnaryOperationExpressionNode<'script> = SyntaxNode<'script, UnaryOperationExpression>;
@@ -589,7 +569,6 @@ impl ExpressionTraversal for UnaryOperationExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct BinaryOperationExpression;
 
 pub type BinaryOperationExpressionNode<'script> = SyntaxNode<'script, BinaryOperationExpression>;
@@ -644,7 +623,6 @@ impl ExpressionTraversal for BinaryOperationExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct AssignmentOperationExpression;
 
 pub type AssignmentOperationExpressionNode<'script> = SyntaxNode<'script, AssignmentOperationExpression>;
@@ -699,7 +677,6 @@ impl ExpressionTraversal for AssignmentOperationExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct TernaryConditionalExpression;
 
 pub type TernaryConditionalExpressionNode<'script> = SyntaxNode<'script, TernaryConditionalExpression>;
@@ -826,7 +803,7 @@ impl<'script> ExpressionNode<'script> {
             LiteralStringNode::NODE_KIND    |
             LiteralNameNode::NODE_KIND      |
             LiteralNullNode::NODE_KIND      => Expression::Literal(self.into()),
-            _ => panic!("Unknown expression type: {} at {}", self.tree_node.kind(), self.range().debug()) //TODO add range for similar cases
+            _ => panic!("Unknown expression type: {} {}", self.tree_node.kind(), self.range().debug()) //TODO add range for similar cases
         }
     }
 }
@@ -898,7 +875,6 @@ impl ExpressionTraversal for ExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct ExpressionStatement;
 
 pub type ExpressionStatementNode<'script> = SyntaxNode<'script, ExpressionStatement>;

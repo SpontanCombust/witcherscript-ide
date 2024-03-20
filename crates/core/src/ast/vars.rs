@@ -3,7 +3,6 @@ use crate::{attribs::MemberVarSpecifierNode, tokens::IdentifierNode, AnyNode, De
 use super::{StatementTraversal, StatementVisitor, ExpressionNode};
 
 
-#[derive(Debug, Clone)]
 pub struct TypeAnnotation;
 
 pub type TypeAnnotationNode<'script> = SyntaxNode<'script, TypeAnnotation>;
@@ -97,7 +96,6 @@ impl StatementTraversal for VarDeclarationNode<'_> {
 }
 
 
-#[derive(Debug, Clone)]
 pub struct MemberVarDeclaration;
 
 pub type MemberVarDeclarationNode<'script> = SyntaxNode<'script, MemberVarDeclaration>;

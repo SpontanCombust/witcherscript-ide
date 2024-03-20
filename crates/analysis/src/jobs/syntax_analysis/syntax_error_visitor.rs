@@ -522,7 +522,7 @@ impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
     }
 
     fn visit_nested_expr(&mut self, n: &NestedExpressionNode) {
-        self.check_expression(&n.value());
+        self.check_expression(&n.inner());
 
         self.check_errors(n);
     }

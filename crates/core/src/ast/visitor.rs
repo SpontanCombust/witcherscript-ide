@@ -47,11 +47,11 @@ pub trait ExpressionVisitor {
     fn visit_unary_op_expr(&mut self, _: &UnaryOperationExpressionNode) {}
     /// Called when visiting a binary operation expression.
     /// The call is preceeded by visits to this node's [left][BinaryOperationExpressionNode::left] and [right][BinaryOperationExpressionNode::right] nodes in that order. 
-    /// The `op` operator node is not visited automatically.
+    /// The [operator][BinaryOperationExpressionNode::op] node is not visited automatically.
     fn visit_binary_op_expr(&mut self, _: &BinaryOperationExpressionNode) {}
     /// Called when visiting an assignment operation expression.
     /// The call is preceeded by visits to this node's [left][AssignmentOperationExpressionNode::left] and [right][AssignmentOperationExpressionNode::right] nodes in that order. 
-    /// The `op` operator node is not visited automatically.
+    /// The [operator][AssignmentOperationExpressionNode::op] node is not visited automatically.
     fn visit_assign_op_expr(&mut self, _: &AssignmentOperationExpressionNode) {}
     /// Called when visiting a ternary conditional expression (expr1 ? expr2 : expr3).
     /// The call is preceeded by visits to this node's [cond][TernaryConditionalExpressionNode::cond], 
@@ -164,7 +164,7 @@ pub trait StatementVisitor {
     /// Called when visiting a `delete` statement.
     fn visit_delete_stmt(&mut self, _: &DeleteStatementNode) {}
     /// Called when visiting a function block. This may mean a function definition or a scope inside that function.
-    /// Should return whether to traverse into [statements][FunctionBlockNode::statements] of the block. True by default.
+    /// Should return whether to traverse into [statements][FunctionBlockNode::iter] of the block. True by default.
     fn visit_block_stmt(&mut self, _: &FunctionBlockNode) -> bool { true }
     /// Called when visiting a NOP statement. 
     /// It can mean multiple things, but most notably:

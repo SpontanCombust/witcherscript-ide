@@ -36,7 +36,7 @@ impl ClassSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown class specifier: {}", s);
+        panic!("Unknown class specifier: {} {}", s, self.range().debug());
     }
 }
 
@@ -85,7 +85,7 @@ impl AutobindSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown class autobind specifier: {}", s)
+        panic!("Unknown class autobind specifier: {} {}", s, self.range().debug())
     }
 }
 

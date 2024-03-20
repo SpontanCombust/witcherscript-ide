@@ -3,7 +3,6 @@ use crate::{attribs::*, tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, Nam
 use super::*;
 
 
-#[derive(Debug, Clone)]
 pub struct ClassDeclaration;
 
 pub type ClassDeclarationNode<'script> = SyntaxNode<'script, ClassDeclaration>;
@@ -64,7 +63,6 @@ impl StatementTraversal for ClassDeclarationNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct ClassBlock;
 
 pub type ClassBlockNode<'script> = SyntaxNode<'script, ClassBlock>;
@@ -74,7 +72,7 @@ impl NamedSyntaxNode for ClassBlockNode<'_> {
 }
 
 impl ClassBlockNode<'_> {
-    pub fn statements(&self) -> impl Iterator<Item = ClassStatementNode> {
+    pub fn iter(&self) -> impl Iterator<Item = ClassStatementNode> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -83,7 +81,7 @@ impl Debug for ClassBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_maybe_alternate_named(
             &format!("ClassBlock {}", self.range().debug()), 
-            &self.statements().collect::<Vec<_>>()
+            &self.iter().collect::<Vec<_>>()
         )
     }
 }
@@ -102,7 +100,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassBlockNode<'script> {
 
 impl StatementTraversal for ClassBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.statements().for_each(|s| s.accept(visitor));
+        self.iter().for_each(|s| s.accept(visitor));
     }
 }
 
@@ -147,7 +145,7 @@ impl<'script> ClassStatementNode<'script> {
             MemberFunctionDeclarationNode::NODE_KIND => ClassStatement::Method(self.into()),
             EventDeclarationNode::NODE_KIND => ClassStatement::Event(self.into()),
             NopNode::NODE_KIND => ClassStatement::Nop(self.into()),
-            _ => panic!("Unknown class statement type: {}", self.tree_node.kind())
+            _ => panic!("Unknown class statement type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
@@ -193,7 +191,6 @@ impl StatementTraversal for ClassStatementNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
 pub struct AutobindDeclaration;
 
 pub type AutobindDeclarationNode<'script> = SyntaxNode<'script, AutobindDeclaration>;
@@ -221,7 +218,7 @@ impl AutobindDeclarationNode<'_> {
         match kind {
             AutobindValueSingleNode::NODE_KIND => AutobindValue::Single(n.into()),
             LiteralStringNode::NODE_KIND => AutobindValue::Concrete(n.into()),
-            _ => panic!("Unknown autobind value kind: {}", kind)
+            _ => panic!("Unknown autobind value kind: {} {}", kind, self.range().debug())
         }
     }
 }
@@ -272,7 +269,6 @@ impl Debug for AutobindValue<'_> {
 }
 
 
-#[derive(Debug, Clone)]
 pub struct AutobindValueSingle;
 
 pub type AutobindValueSingleNode<'script> = SyntaxNode<'script, AutobindValueSingle>;

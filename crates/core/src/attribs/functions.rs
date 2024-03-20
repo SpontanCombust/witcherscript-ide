@@ -27,7 +27,7 @@ impl FunctionParameterSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown function parameter specifier: {}", s)
+        panic!("Unknown function parameter specifier: {} {}", s, self.range().debug())
     }
 }
 
@@ -76,7 +76,7 @@ impl GlobalFunctionSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown global function specifier: {}", s)
+        panic!("Unknown global function specifier: {} {}", s, self.range().debug())
     }
 }
 
@@ -127,7 +127,7 @@ impl GlobalFunctionFlavourNode<'_> {
             }
         }
 
-        panic!("Unknown global function flavour: {}", s)
+        panic!("Unknown global function flavour: {} {}", s, self.range().debug())
     }
 }
 
@@ -182,7 +182,7 @@ impl MemberFunctionSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown member function specifier: {}", s)
+        panic!("Unknown member function specifier: {} {}", s, self.range().debug())
     }
 }
 
@@ -231,7 +231,7 @@ impl MemberFunctionFlavourNode<'_> {
             }
         }
 
-        panic!("Unknown member function flavour: {}", s)
+        panic!("Unknown member function flavour: {} {}", s, self.range().debug())
     }
 }
 

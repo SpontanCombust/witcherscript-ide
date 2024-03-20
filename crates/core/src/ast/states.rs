@@ -3,7 +3,6 @@ use crate::{attribs::StateSpecifierNode, tokens::IdentifierNode, AnyNode, DebugR
 use super::{StatementTraversal, StatementVisitor, ClassBlockNode};
 
 
-#[derive(Debug, Clone)]
 pub struct StateDeclaration;
 
 pub type StateDeclarationNode<'script> = SyntaxNode<'script, StateDeclaration>;

@@ -4,7 +4,6 @@ use super::StatementTraversal;
 
 
 // Empty type essentially representing an orphaned/trailing semicolon
-#[derive(Debug, Clone)]
 pub struct Nop;
 
 pub type NopNode<'script> = SyntaxNode<'script, Nop>;
