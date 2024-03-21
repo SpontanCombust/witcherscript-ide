@@ -36,7 +36,7 @@ jobs:
       run: cargo build --package xtask --target ${{ matrix.target }} --release
     - name: Prepare and pack the client
       run: |
-        cargo xtask prep-lsp --target ${{ matrix.target }} --release
+        cargo xtask prep-server --target ${{ matrix.target }} --release
         cargo xtask package --out-dir . --out-name "witcherscript-ide-${{ github.ref_name }}-${{ matrix.target }}"
       
     - name: Create draft release
