@@ -150,9 +150,19 @@
 					"end": "'"
 				},
 				{
-					"comment": "Numbers",
+					"comment": "Hex",
 					"name": "constant.numeric.ws",
-					"match": "\\b[0-9]+(\\.[0-9]*f?)?\\b"
+					"match": "0[xX][0-9a-fA-F]+"
+				},
+				{
+					"comment": "Floats",
+					"name": "constant.numeric.ws",
+					"match": "(([0-9]+\\.[0-9]*)|(\\.[0-9]+))f?"
+				},
+				{
+					"comment": "Ints",
+					"name": "constant.numeric.ws",
+					"match": "[0-9]+"
 				}
 			]
 		},
@@ -202,11 +212,10 @@
 							"match": "\\b[a-zA-Z]\\w*\\b"
 						},
 						{
-							"name": "constant.numeric.ws",
-							"match": "\\b[0-9]+\\b"
+							"include": "#comments"
 						},
 						{
-							"include": "#comments"
+							"include": "#literals"
 						}
 					]
 				},
