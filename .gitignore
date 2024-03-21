@@ -6,3 +6,5 @@
 /editors/vscode/out
 /editors/vscode/server
 *.vsix
+
+/site

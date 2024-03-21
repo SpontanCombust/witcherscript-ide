@@ -1,0 +1,28 @@
+name: deploy-pages
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-pages:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.x
+    - name: Install dependencies
+      run: |
+        pip install mkdocs
+        pip install mkdocs-cinder
+    - name: Deploy
+      run: >
+        mkdocs gh-deploy -m "ci: update github pages"
