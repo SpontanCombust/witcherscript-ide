@@ -1,4 +1,3 @@
-use std::path::PathBuf;
 use xshell::{Shell, cmd};
 
 
@@ -6,10 +5,11 @@ const LSP_DST: &str = "./editors/vscode/server/bin";
 
 pub fn prep_server(release: bool, target: Option<String>) -> anyhow::Result<()> {
     let sh = Shell::new()?;
+    let root = project_root::get_project_root()?;
   
     let mut build = cmd!(sh, "cargo build --package witcherscript-lsp");
 
-    let mut lsp_src = PathBuf::from("./target");
+    let mut lsp_src = root.join("target");
     if let Some(target) = target {
         build = build.arg("--target").arg(&target);
         lsp_src.push(target);
@@ -33,10 +33,11 @@ pub fn prep_server(release: bool, target: Option<String>) -> anyhow::Result<()> 
 
 
     // make sure destination folder exists
-    sh.create_dir(LSP_DST)?;
+    let lsp_dst = root.join(LSP_DST).canonicalize()?;
+    sh.create_dir(&lsp_dst)?;
 
-    sh.copy_file(lsp_src, LSP_DST)?;
-    println!("Copied LSP into {}", LSP_DST);
+    sh.copy_file(lsp_src, &lsp_dst)?;
+    println!("Copied LSP into {}", lsp_dst.display());
 
     Ok(())
 }

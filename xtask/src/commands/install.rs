@@ -7,8 +7,10 @@ const VSIX_NAME: &str = "witcherscript-ide.vsix";
 
 pub fn install() -> anyhow::Result<()> {
     let sh = Shell::new()?;
+    let root = project_root::get_project_root()?;
 
-    sh.change_dir(EXT_DIR);
+    let ext_dir = root.join(EXT_DIR).canonicalize()?;
+    sh.change_dir(ext_dir);
 
     if cfg!(unix) {
         cmd!(sh, "npm --version").run().with_context(|| "npm is required")?;

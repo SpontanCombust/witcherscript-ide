@@ -8,6 +8,7 @@ const VSIX_NAME: &str = "witcherscript-ide.vsix";
 
 pub fn package(out_dir: Option<String>, out_name: Option<String>) -> anyhow::Result<()> {
     let sh = Shell::new()?;
+    let root = project_root::get_project_root()?;
 
     // normalize the output path so it stays valid when we change cwd
     let out_dir = if let Some(out_dir) = out_dir {
@@ -17,7 +18,8 @@ pub fn package(out_dir: Option<String>, out_name: Option<String>) -> anyhow::Res
         None
     };
 
-    sh.change_dir(EXT_DIR);
+    let ext_dir = root.join(EXT_DIR).canonicalize()?;
+    sh.change_dir(ext_dir);
     
     if cfg!(unix) {
         cmd!(sh, "npm --version").run().with_context(|| "npm is required")?;

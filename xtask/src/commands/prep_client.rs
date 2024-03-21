@@ -6,8 +6,11 @@ const EXT_DIR: &str = "./editors/vscode";
 
 pub fn prep_client(watch: bool) -> anyhow::Result<()> {
     let sh = Shell::new()?;
+    let root = project_root::get_project_root()?;
 
-    sh.change_dir(EXT_DIR);
+    let ext_dir = root.join(EXT_DIR).canonicalize()?;
+    sh.change_dir(ext_dir);
+
     let command = if watch { "watch" } else { "build" };
 
     if cfg!(unix) {
