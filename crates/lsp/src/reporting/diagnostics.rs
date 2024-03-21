@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tower_lsp::{jsonrpc, lsp_types as lsp};
 use witcherscript_analysis::diagnostics::{Diagnostic, DiagnosticBody};
 use witcherscript_project::{manifest::ManifestParseError, FileError};
@@ -44,12 +44,10 @@ impl IntoLspDiagnostic for FileError<ManifestParseError> {
         let range = match error {
             ManifestParseError::Io(_) => lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1)),
             ManifestParseError::Toml { range, msg: _ } => range.clone(),
+            ManifestParseError::InvalidNameField { range } => range.clone(),
         };
 
-        let message = match error {
-            ManifestParseError::Io(err) => err.to_string(),
-            ManifestParseError::Toml { range: _, msg } => msg.clone(),
-        };
+        let message = error.to_string();
 
         lsp::Diagnostic {
             range,
@@ -85,6 +83,13 @@ impl TryIntoUrl for lsp::Url {
 }
 
 impl TryIntoUrl for PathBuf {
+    fn try_into_url(self) -> Result<lsp::Url, ()> {
+        let path = self.canonicalize().map_err(|_| ())?;
+        lsp::Url::from_file_path(path)
+    }
+}
+
+impl TryIntoUrl for &Path {
     fn try_into_url(self) -> Result<lsp::Url, ()> {
         let path = self.canonicalize().map_err(|_| ())?;
         lsp::Url::from_file_path(path)

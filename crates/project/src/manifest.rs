@@ -18,7 +18,7 @@ pub struct Manifest {
 #[derive(Debug, Clone)]
 pub struct Content {
     /// Name of this project, for example SharedUtils
-    pub name: String, //TODO manifest - validate the name
+    pub name: Ranged<String>,
     /// Version of this project, has to abide to semantic versioning
     pub version: Version,
     /// Version(s) of the game this project is compatible with 
@@ -75,26 +75,41 @@ impl FromStr for Manifest {
         let rope = Rope::from_str(s);
         let raw: Result<raw::Manifest, toml::de::Error> = toml::from_str(s);
 
-        match raw {
-            Ok(raw) => Ok(Self::from_raw(raw, &rope)),
-            Err(err) => {
-                Err(ManifestParseError::Toml {
-                    range: span_to_range(err.span().unwrap_or_default(), &rope),
-                    msg: err.to_string()
-                })
-            },
+        if let Err(err) = raw {
+            return Err(ManifestParseError::Toml {
+                range: span_to_range(err.span().unwrap_or_default(), &rope),
+                msg: err.to_string()
+            });
         }
+
+        let manifest = Self::from_raw(raw.unwrap(), &rope);
+
+        // validate content name
+        let name_chars: Vec<_> = manifest.content.name.chars().collect();
+        if name_chars.is_empty()
+        || (!name_chars[0].is_ascii_alphabetic() && name_chars[0] != '_')
+        || name_chars.iter().any(|c| !c.is_ascii_alphanumeric() && c != &'_') {
+            return Err(ManifestParseError::InvalidNameField {
+                range: manifest.content.name.range.clone()
+            })
+        }
+
+        Ok(manifest)
     }
 }
 
 #[derive(Debug, Clone, Error)]
 pub enum ManifestParseError {
-    #[error("file access error")]
+    #[error("file access error: {}", .0)]
     Io(#[from] Arc<io::Error>),
-    #[error("TOML file parsing error")]
+    #[error("TOML file parsing error: {msg}")]
     Toml {
         range: lsp::Range,
         msg: String
+    },
+    #[error("The `name` field in `[content]` table is invalid")]
+    InvalidNameField {
+        range: lsp::Range
     }
 }
 
@@ -114,9 +129,9 @@ impl FromRaw for Manifest {
 impl FromRaw for Content {
     type RawType = raw::Content;
 
-    fn from_raw(raw: Self::RawType, _: &Rope) -> Self {
+    fn from_raw(raw: Self::RawType, rope: &Rope) -> Self {
         Self {
-           name: raw.name,
+           name: Ranged::from_raw(raw.name, rope),
            version: raw.version,
            authors: raw.authors,
            game_version: raw.game_version,
@@ -258,7 +273,7 @@ mod raw {
 
     #[derive(Serialize, Deserialize)]
     pub struct Content {
-        pub name: String,
+        pub name: toml::Spanned<String>,
         pub version: Version,
         pub authors: Option<Vec<String>>,
         pub game_version: String,
@@ -308,7 +323,7 @@ shared_utils = true
     
         let manifest = Manifest::from_str(s).unwrap();
     
-        assert_eq!(manifest.content.name, "ExampleMod");
+        assert_eq!(manifest.content.name.value, "ExampleMod");
         assert_eq!(manifest.content.version, Version::from_str("0.9.0").unwrap());
         assert_eq!(manifest.content.authors, Some(vec!["Rip Van Winkle".into()]));
         assert_eq!(manifest.content.game_version, String::from("4.04"));
