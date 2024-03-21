@@ -2,10 +2,12 @@ use crate::tokens::*;
 use super::*;
 
 
-//TODO specify `exit` functions just like in StatementVisitor - this will mean the traversall will no longer be purely right-recursed
+/// Handle visitations to expression nodes.
+/// Traversion is done using right-recursion, so the most nested expressions are visited first.
+/// Due to this and the recursive nature of expressions it is recommended to use a helper stack.
 pub trait ExpressionVisitor {
     /// Called when visiting a parenthesized expression node.
-    /// The call is preceeded by a visit to the [expression][NestedExpressionNode::value] nested inside it.
+    /// The call is proceeded by a visit to the expression [nested][NestedExpressionNode::inner] inside it.
     fn visit_nested_expr(&mut self, _: &NestedExpressionNode) {}
     /// Called when visiting a node representing any literal.
     fn visit_literal_expr(&mut self, _: &LiteralNode) {}
@@ -38,7 +40,7 @@ pub trait ExpressionVisitor {
     /// The [class][NewExpressionNode::class] identifier is not visited automatically.
     fn visit_new_expr(&mut self, _: &NewExpressionNode) {}
     /// Called when visiting a type-casting expression.
-    /// The call is preceeded by a visit to this node's [value][NewExpressionNode::value] node. 
+    /// The call is preceeded by a visit to this node's [value][NewExpressionNode::class] node. 
     /// The [target_type][NewExpressionNode::target_type] identifier is not visited automatically.
     fn visit_type_cast_expr(&mut self, _: &TypeCastExpressionNode) {}
     /// Called when visiting an unary operation expression.
@@ -59,15 +61,17 @@ pub trait ExpressionVisitor {
     fn visit_ternary_cond_expr(&mut self, _: &TernaryConditionalExpressionNode) {}
 }
 
-/// Do a left-to-right tree traversal using right-recursion.
-/// Should first traverse to children and then call the visitor.
-/// Used for homogeneously nesting nodes, i.e. expressions.
-/// Due to the recursive nature of expressions it is recommended to handle them using a stack.
+/// Traverse an expression node using right-recursion.
 pub trait ExpressionTraversal {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V);
 }
 
 
+/// Handle visitations to statement nodes.
+/// Traversion is done using left-recursion, so the most top level statement nodes are visited first.
+/// 
+/// Additional `exit_` functions are available for some nodes to make the process more flexible.
+/// They are run after the visit to the node itself and possibly nodes nested inside it.
 pub trait StatementVisitor {
     /// Called when visiting the highest node in the hierarchy.
     /// Should return whether to traverse into the body of the script afterwards. True by default.
@@ -174,9 +178,7 @@ pub trait StatementVisitor {
     fn visit_nop_stmt(&mut self, _: &NopNode) {}
 }
 
-/// Do a left-to-right tree traversal using left-recursion.
-/// Should first call the visitor on the node and then traverse to children.
-/// Used for sequential nodes, i.e. statements.
+/// Traverse a statement node using left-recursion.
 pub trait StatementTraversal {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V);
 }
