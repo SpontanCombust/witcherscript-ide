@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WitcherScript-IDE - Witcher 3 scripting tooling">
+    <meta name="author" content="Przemysław Cedro (SpontanCombust)">
+    <link rel="canonical" href="https://spontancombust.github.io/witcherscript-ide/dev-manual/">
+    <link rel="shortcut icon" href="../img/favicon.ico">
+
+    
+    <title>Developer Manual - WitcherScript IDE</title>
+    
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/v4-shims.css">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack.min.css">
+    <link href='//rsms.me/inter/inter.css' rel='stylesheet' type='text/css'>
+    <link href='//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,700italic,400,300,600,700&subset=latin-ext,latin' rel='stylesheet' type='text/css'>
+    <link href="../css/bootstrap-custom.min.css" rel="stylesheet">
+    <link href="../css/base.min.css" rel="stylesheet">
+    <link href="../css/cinder.min.css" rel="stylesheet">
+
+    
+        
+        <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.18.0/build/styles/github.min.css">
+        
+    
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+            <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+        <![endif]-->
+
+    
+
+     
+</head>
+
+<body>
+
+    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            
+
+            <!-- Main title -->
+
+            
+              <a class="navbar-brand" href="..">WitcherScript IDE</a>
+            
+        </div>
+
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+                <!-- Main navigation -->
+                <ul class="nav navbar-nav">
+                
+                
+                    <li >
+                        <a href="..">Home</a>
+                    </li>
+                
+                
+                
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">User Manual <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../user-manual/script-content/">Script Content</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../user-manual/project-manifest/">Project Manifest</a>
+</li>
+
+                        
+                        </ul>
+                    </li>
+                
+                
+                
+                    <li class="active">
+                        <a href="./">Developer Manual</a>
+                    </li>
+                
+                
+                
+                    <li >
+                        <a href="../changelog/">Changelog</a>
+                    </li>
+                
+                
+                
+                    <li >
+                        <a href="../copyright/">Copyright</a>
+                    </li>
+                
+                
+                </ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                            <i class="fas fa-search"></i> Search
+                        </a>
+                    </li>
+                    <li >
+                        <a rel="prev" href="../user-manual/project-manifest/">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </a>
+                    </li>
+                    <li >
+                        <a rel="next" href="../changelog/">
+                            Next <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/SpontanCombust/witcherscript-ide/edit/master/docs/dev-manual.md"><i class="fab fa-github"></i> Edit on GitHub</a>
+                    </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+    <div class="container">
+        
+        
+        <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+        <li class="first-level active"><a href="#developer-manual">Developer manual</a></li>
+            <li class="second-level"><a href="#project-structure">Project structure</a></li>
+                
+            <li class="second-level"><a href="#building-the-project">Building the project</a></li>
+                
+            <li class="second-level"><a href="#debugging">Debugging</a></li>
+                
+            <li class="second-level"><a href="#the-project-board">The project board</a></li>
+                
+            <li class="second-level"><a href="#contributing">Contributing</a></li>
+                
+    </ul>
+</div></div>
+        <div class="col-md-9" role="main">
+
+<h1 id="developer-manual">Developer manual</h1>
+<p>Here you will find the information you need if you want to contribute to this project's creation or just want to compile the project yourself.</p>
+<h2 id="project-structure">Project structure</h2>
+<ul>
+<li><code>.vscode</code> - VSCode specific files with debugging configurations </li>
+<li><code>crates</code> - server Rust code. The main crate is <code>lsp</code>, which contains language server implementation</li>
+<li><code>docs</code> - project documentation from which this website is built</li>
+<li><code>editors</code> - contains implementations of WitcherScript language client, currently just <code>vscode</code> client written in TypeScript</li>
+<li><code>xtask</code> - code for build commands to speed up development</li>
+</ul>
+<h2 id="building-the-project">Building the project</h2>
+<p>You will need <a href="https://rustup.rs/">Rust with Cargo</a> to build the server and <a href="https://nodejs.org/en">node.js with npm</a> to build the client.</p>
+<p>Project utilises the <code>xtask</code> convention of writing build scripts in Rust. To call a build script simply run <code>cargo xtask {command}</code> in the root project directory. You can run <code>cargo xtask --help</code> to see all the available commands and what they do.</p>
+<p>Currently available xtask commands:</p>
+<ul>
+<li><code>prep-server</code> - build and copy LSP server executable into VSCode's extension directory<ul>
+<li><code>--release</code> - should LSP be built with optimised release profile</li>
+<li><code>--target</code> - compilation target triple</li>
+</ul>
+</li>
+<li><code>prep-client</code> - build VSCode client<ul>
+<li><code>--watch</code> - whether client should be continuously watched for changes made to it and rebuilt </li>
+</ul>
+</li>
+<li><code>package</code> - build and package VSCode extension into a .vsix file<ul>
+<li><code>--out-dir</code> - output directory for the .vsix file; default is the current working directory</li>
+<li><code>--out-name</code> - name of the output file without the extension; default is "witcherscript-ide"</li>
+</ul>
+</li>
+<li><code>install</code> - build, package and install the VSCode extension</li>
+</ul>
+<h2 id="debugging">Debugging</h2>
+<p>Use VSCode to debug the client and server. The project provides launch configurations for both of them:</p>
+<ul>
+<li><code>Launch Client</code> - launches the extension host session of the client. Client needs to be built first!</li>
+<li><code>Attach to Server</code> - attaches to the currently running server process created by the client. You need the <a href="https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb">CodeLLDB extension</a> for this.</li>
+</ul>
+<h2 id="the-project-board">The project board</h2>
+<p>You can access the <a href="https://github.com/users/SpontanCombust/projects/2/views/1">project board</a> conveniently detailing what has been done and future plans.</p>
+<h2 id="contributing">Contributing</h2>
+<p>Contributions to the project are welcome. First create an issue or a PR to discuss the change you want to make and ensure that it doesn't conflict with any future plans or core features. The active development branch is <code>dev</code>.</p>
+<p>You can also catch me in the <a href="https://discord.gg/S3HjaY65uh">Wolven Workshop</a> Discord server.</p></div>
+        
+        
+    </div>
+
+    
+      <footer class="col-md-12 text-center">
+          
+          
+            <hr>
+            <p>
+            <small>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</small>
+            </p>
+          
+
+          
+          
+      </footer>
+    
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="../js/bootstrap-3.0.3.min.js"></script>
+
+    
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.18.0/build/highlight.min.js"></script>
+        
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    <script>var base_url = ".."</script>
+    
+    <script src="../js/base.js"></script>
+    <script src="../search/main.js"></script>
+
+    <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+    </body>
+
+</html>
