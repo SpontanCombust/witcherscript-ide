@@ -173,7 +173,33 @@ impl ContentGraph {
     }
 
 
-    /// Iterate over content nodes that are dependencies to the specified content starting from it.
+    
+    pub fn nodes<'g>(&'g self) -> Iter<'g> {
+        let indices = (0..self.nodes.len()).collect();
+        Iter::new(self, indices)
+    }
+
+
+    pub fn direct_dependencies<'g>(&'g self, content_path: &Path) -> Iter<'g> {
+        if let Some(idx) = self.get_node_index_by_path(content_path) {
+            let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependencies).collect();
+            Iter::new(self, indices)
+        } else {
+            Iter::new(self, vec![])
+        }
+    }
+
+    pub fn direct_dependants<'g>(&'g self, content_path: &Path) -> Iter<'g> {
+        if let Some(idx) = self.get_node_index_by_path(content_path) {
+            let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependants).collect();
+            Iter::new(self, indices)
+        } else {
+            Iter::new(self, vec![])
+        }
+    }
+
+
+    /// Iterate over all content nodes that are direct or indirect dependencies to the specified content starting from it.
     pub fn walk_dependencies<'g>(&'g self, content_path: &Path) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependencies);
@@ -183,7 +209,7 @@ impl ContentGraph {
         }
     }
 
-    /// Iterate over content nodes that are dependants of the specified content starting from it.
+    /// Iterate over all content nodes that are direct or indirect dependants of the specified content starting from it.
     pub fn walk_dependants<'g>(&'g self, content_path: &Path) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependants);
@@ -191,10 +217,6 @@ impl ContentGraph {
         } else {
             Iter::new(self, vec![])
         }
-    }
-
-    pub fn nodes(&self) -> impl Iterator<Item = &GraphNode> {
-        self.nodes.iter()
     }
 
 
@@ -334,12 +356,18 @@ impl ContentGraph {
 
 
 
-
     /// Returns the index of this node
     fn insert_node(&mut self, node: GraphNode) -> usize {
         self.nodes.push(node);
         self.nodes.len() - 1
     }
+    
+    fn insert_edge(&mut self, edge: GraphEdge) {
+        if !self.edges.contains(&edge) {
+            self.edges.push(edge);
+        }
+    }
+
 
     /// Changes node indices. Be aware!
     fn remove_node_by_path(&mut self, content_path: &Path) {
@@ -403,13 +431,24 @@ impl ContentGraph {
         }
     }
 
-    fn insert_edge(&mut self, edge: GraphEdge) {
-        if !self.edges.contains(&edge) {
-            self.edges.push(edge);
-        }
+    /// Get iterator over direct neighbours of a given node
+    fn neighbour_indices_in_direction<'g>(&'g self, node_idx: usize, direction: GraphEdgeDirection) -> impl Iterator<Item = usize> + 'g {
+        self.edges.iter()
+            .filter(move |edge| {
+                node_idx == match direction {
+                    GraphEdgeDirection::Dependants => edge.dependency_idx,
+                    GraphEdgeDirection::Dependencies => edge.dependant_idx,
+                }
+            })
+            .map(move |edge| {
+                match direction {
+                    GraphEdgeDirection::Dependants => edge.dependant_idx,
+                    GraphEdgeDirection::Dependencies => edge.dependency_idx,
+                }
+            })
     }
 
-
+    /// Get a vec of all node indices related to the given node in a given direction. The starting node is included in the vec.
     fn relatives_indices_in_direction(&self, starting_idx: usize, direction: GraphEdgeDirection) -> Vec<usize> {
         let mut indices = Vec::with_capacity(self.nodes.capacity());
 
@@ -418,19 +457,7 @@ impl ContentGraph {
         let mut i = 0;
         while i < indices.len() {
             let current_idx = indices[i];
-            let neighbours = self.edges.iter()
-                .filter(|edge| {
-                    current_idx == match direction {
-                        GraphEdgeDirection::Dependants => edge.dependency_idx,
-                        GraphEdgeDirection::Dependencies => edge.dependant_idx,
-                    }
-                })
-                .map(|edge| {
-                    match direction {
-                        GraphEdgeDirection::Dependants => edge.dependant_idx,
-                        GraphEdgeDirection::Dependencies => edge.dependency_idx,
-                    }
-                });
+            let neighbours = self.neighbour_indices_in_direction(current_idx, direction);
 
             for idx in neighbours {
                 if !indices.contains(&idx) {
@@ -449,7 +476,7 @@ impl ContentGraph {
 pub struct Iter<'g> {
     graph: &'g ContentGraph,
     node_indices: Vec<usize>,
-    i: usize
+    i: usize // index of node_indices, not of graph.nodes
 }
 
 impl<'g> Iter<'g> {
@@ -460,14 +487,27 @@ impl<'g> Iter<'g> {
             i: 0
         }
     }
+
+    #[inline(always)]
+    fn current_node_idx(&self) -> Option<usize> {
+        if self.i < self.node_indices.len() {
+            Some(self.node_indices[self.i])
+        } else {
+            None
+        }
+    }
+
+    #[inline(always)]
+    fn current_node(&self) -> Option<&'g GraphNode> {
+        self.current_node_idx().map(|idx| &self.graph.nodes[idx])
+    }    
 }
 
 impl<'g> Iterator for Iter<'g> {
     type Item = &'g GraphNode;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.i < self.node_indices.len() {
-            let n = &self.graph.nodes[self.i];
+        if let Some(n) = self.current_node() {
             self.i += 1;
             Some(n)
         } else {

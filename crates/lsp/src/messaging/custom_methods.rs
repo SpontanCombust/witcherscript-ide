@@ -84,7 +84,7 @@ impl Backend {
         })
     }
 
-    pub async fn handle_script_ast_request(&self, params: requests::debug::script_ast::Parameters) -> Result<requests::debug::script_ast::Response> {
+    pub async fn handle_debug_script_ast_request(&self, params: requests::debug::script_ast::Parameters) -> Result<requests::debug::script_ast::Response> {
         let path = params.script_uri.to_file_path().map_err(|_| jsonrpc::Error::invalid_params("script_uri parameter is not a file URI"))?;
         let script = self.scripts.get(&path).ok_or(jsonrpc::Error {
             code: jsonrpc::ErrorCode::ServerError(-1010),
@@ -209,6 +209,37 @@ impl Backend {
 
         Ok(requests::projects::list::Response {
             project_infos
+        })
+    }
+
+    pub async fn handle_debug_content_graph_dot_request(&self, _params: requests::debug::content_graph_dot::Parameters) -> Result<requests::debug::content_graph_dot::Response> {
+        let graph = self.content_graph.read().await;
+
+        let mut dot_graph = String::new();
+        dot_graph += "digraph {\n";
+        dot_graph += "\tcomment=\"Edge direction is: dependant ---> dependency\"\n";
+        dot_graph += "\n";
+
+        for n in graph.nodes() {
+            let content_name = n.content.content_name();
+            let content_uri = lsp::Url::from_file_path(n.content.path()).unwrap().to_string();
+            dot_graph += &format!("\t{content_name} [URL=\"{content_uri}\"]\n");
+        }
+
+        dot_graph += "\n";
+
+        for n in graph.nodes() {
+            let content_name = n.content.content_name();
+            for dep in graph.direct_dependencies(n.content.path()) {
+                let dep_name = dep.content.content_name();
+                dot_graph += &format!("\t{content_name} -> {dep_name}\n");
+            }
+        }
+
+        dot_graph += "}";
+
+        Ok(requests::debug::content_graph_dot::Response {
+            dot_graph
         })
     }
 }

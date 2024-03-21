@@ -124,4 +124,23 @@ pub mod debug {
     
         pub const METHOD: &'static str = "witcherscript-ide/debug/scriptAst";
     }
+
+    /// Returns the content graph visualization in graphviz .dot format
+    pub mod content_graph_dot {
+        use super::*;
+
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Parameters {
+            
+        }
+        
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Response {
+            pub dot_graph: String
+        }
+    
+        pub const METHOD: &'static str = "witcherscript-ide/debug/contentGraphDot";
+    }
 }

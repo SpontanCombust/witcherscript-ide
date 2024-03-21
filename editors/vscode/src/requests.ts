@@ -80,4 +80,16 @@ export namespace debug {
     
         export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/debug/scriptAst");
     }
+
+    export namespace contentGraphDot {
+        export interface Parameters {
+
+        }
+
+        export interface Response {
+            dotGraph: string
+        }
+
+        export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/debug/contentGraphDot");
+    }
 }

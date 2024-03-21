@@ -84,6 +84,11 @@
         "title": "Show script AST",
         "category": "WitcherScript-IDE (debug)",
         "enablement": "editorLangId == 'witcherscript'"
+      },
+      {
+        "command": "witcherscript-ide.debug.contentGraphDot",
+        "title": "Show content graph in the Graphviz DOT format",
+        "category": "WitcherScript-IDE (debug)"
       }
     ],
     "grammars": [
@@ -108,10 +113,10 @@
     "vscode-languageserver-protocol": "^3.17.0"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "@types/vscode": "^1.75.1",
     "@vscode/vsce": "^2.19.0",
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "esbuild": "^0.18.12"
+    "esbuild": "^0.18.12",
+    "typescript": "^5.0.0"
   }
 }

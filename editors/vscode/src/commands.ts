@@ -13,7 +13,8 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.projects.create", commandCreateProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.scripts.importVanilla", commandImportVanillaScripts()),
         vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", commandDiffScriptWithVanilla()),
-        vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context))
+        vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context)),
+        vscode.commands.registerCommand("witcherscript-ide.debug.contentGraphDot", commandContentGraphDot(context))
     );
 }
 
@@ -120,7 +121,7 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
     const astSuffix = " - AST";
 
     const tdcp = new (class implements vscode.TextDocumentContentProvider {
-        readonly schema = "witcherscript-ide-ast";
+        readonly scheme = "witcherscript-ide-ast";
 
         eventEmitter = new vscode.EventEmitter<vscode.Uri>();
 
@@ -150,7 +151,7 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
         }
     })();
 
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(tdcp.schema, tdcp));
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(tdcp.scheme, tdcp));
 
     return async () => {
         const activeEditor = vscode.window.activeTextEditor;
@@ -160,7 +161,7 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
 
         const scriptPath = activeEditor.document.uri.fsPath;
         const scriptLine = activeEditor.selection.active.line + 1;
-        const uri = vscode.Uri.file(scriptPath + astSuffix).with({ scheme: tdcp.schema });
+        const uri = vscode.Uri.file(scriptPath + astSuffix).with({ scheme: tdcp.scheme });
         
         const doc = await vscode.workspace.openTextDocument(uri);
         const options: vscode.TextDocumentShowOptions = {
@@ -279,7 +280,7 @@ function commandImportVanillaScripts(): Cmd {
 
                 let fileAlreadyExists = true;
                 try {
-                    const _ = await fs.stat(projectScriptPath);
+                    await fs.stat(projectScriptPath);
                 } catch(_) {
                     fileAlreadyExists = false;
                 }
@@ -341,7 +342,7 @@ function commandDiffScriptWithVanilla(): Cmd {
 
         let counterpartExists = true;
         try {
-            const _ = await fs.stat(vanillaScriptPath);
+            await fs.stat(vanillaScriptPath);
         } catch(_) {
             counterpartExists = false;
         }
@@ -354,6 +355,50 @@ function commandDiffScriptWithVanilla(): Cmd {
         return await vscode.commands.executeCommand("vscode.diff", vanillaScriptUri, currentScriptUri);
     }
 }
+
+function commandContentGraphDot(context: vscode.ExtensionContext): Cmd {
+    const tdcp = new (class implements vscode.TextDocumentContentProvider {
+        readonly scheme = "witcherscript-ide-graph-dot";
+
+        eventEmitter = new vscode.EventEmitter<vscode.Uri>();
+
+        provideTextDocumentContent(_: vscode.Uri): vscode.ProviderResult<string> {
+            const params: requests.debug.contentGraphDot.Parameters = {};
+            return client.sendRequest(requests.debug.contentGraphDot.type, params).then(
+                (response) => {
+                    return response.dotGraph;
+                },
+                (error) => {
+                    vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+                    return ""
+                }
+            )
+        }
+
+        get onDidChange(): vscode.Event<vscode.Uri> {
+            return this.eventEmitter.event;
+        }
+    })();
+
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(tdcp.scheme, tdcp));
+
+    return async () => {
+        const virtFileName = "WitcherScript Content Graph";
+        const uri = vscode.Uri.file(virtFileName).with({ scheme: tdcp.scheme });
+
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const options: vscode.TextDocumentShowOptions = {
+            viewColumn: vscode.ViewColumn.Two,
+            preview: false,
+            preserveFocus: true
+        };
+
+        tdcp.eventEmitter.fire(uri);
+
+        await vscode.window.showTextDocument(doc, options);
+    }
+}
+
 
 
 

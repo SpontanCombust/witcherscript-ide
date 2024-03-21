@@ -104,7 +104,8 @@ async fn main() {
         .custom_method(requests::projects::list::METHOD, Backend::handle_projects_list_request)
         .custom_method(requests::projects::vanilla_dependency_content::METHOD, Backend::handle_projects_vanilla_dependency_content_request)
         .custom_method(requests::scripts::parent_content::METHOD, Backend::handle_scripts_parent_content_request)
-        .custom_method(requests::debug::script_ast::METHOD, Backend::handle_script_ast_request)
+        .custom_method(requests::debug::script_ast::METHOD, Backend::handle_debug_script_ast_request)
+        .custom_method(requests::debug::content_graph_dot::METHOD, Backend::handle_debug_content_graph_dot_request)
         .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
