@@ -11,7 +11,7 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Build and copy LSP server into VSCode's extension directory
+    /// Build and copy LSP server executable into VSCode's extension directory
     PrepServer {
         /// Should LSP be built with optimised release profile
         #[arg(long)]
@@ -31,7 +31,7 @@ pub enum Commands {
         /// Output directory for the .vsix file; default is the current working directory
         #[arg(long)]
         out_dir: Option<String>,
-        /// Name of the output file without the extension
+        /// Name of the output file without the extension; default is "witcherscript-ide"
         #[arg(long)]
         out_name: Option<String>
     },
