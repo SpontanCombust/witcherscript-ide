@@ -162,7 +162,7 @@ impl Backend {
         }
 
         let mut content0_info = None;
-        graph.walk_dependencies(&project_path, |n| {
+        for n in graph.walk_dependencies(&project_path) {
             if n.content.content_name() == "content0" {
                 content0_info = Some(ContentInfo {
                     content_uri: lsp::Url::from_file_path(n.content.path()).unwrap(),
@@ -172,7 +172,7 @@ impl Backend {
                     is_in_repository: n.in_repository
                 });
             }
-        });
+        }
 
         if let Some(content0_info) = content0_info {
             Ok(requests::projects::vanilla_dependency_content::Response {
@@ -227,11 +227,11 @@ authors = []
 game_version = "4.04"
 
 # Any dependencies that this project might need
-# The allowed formats for now are:
-# modTest1 = true   # get the dependency from a repository
-# modTest2 = {{ path = "../path/to/modTest2" }}     # get the dependency from a specific path
 [dependencies]
 content0 = true
+
+# For details check the manual
+# https://spontancombust.github.io/witcherscript-ide/user-manual/project-manifest/
 "#
     );
 

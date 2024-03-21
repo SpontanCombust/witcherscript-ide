@@ -172,24 +172,24 @@ impl ContentGraph {
         self.get_node_index_by_path(content_path).map(|i| &self.nodes[i])
     }
 
-    //TODO turn this into a dedicated iterator type
-    /// Visits all content nodes that are dependencies to the specified content.
-    pub fn walk_dependencies(&self, content_path: &Path, mut visitor: impl FnMut(&GraphNode)) {
+
+    /// Iterate over content nodes that are dependencies to the specified content starting from it.
+    pub fn walk_dependencies<'g>(&'g self, content_path: &Path) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
-            self.walk_by_index(idx, GraphEdgeDirection::Dependencies, |idx| {
-                let node = &self.nodes[idx];
-                visitor(node)
-            });
+            let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependencies);
+            Iter::new(self, indices)
+        } else {
+            Iter::new(self, vec![])
         }
     }
 
-    /// Visits all content nodes that are dependants of the specified content.
-    pub fn walk_dependants(&self, content_path: &Path, mut visitor: impl FnMut(&GraphNode)) {
+    /// Iterate over content nodes that are dependants of the specified content starting from it.
+    pub fn walk_dependants<'g>(&'g self, content_path: &Path) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
-            self.walk_by_index(idx, GraphEdgeDirection::Dependants, |idx| {
-                let node = &self.nodes[idx];
-                visitor(node)
-            });
+            let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependants);
+            Iter::new(self, indices)
+        } else {
+            Iter::new(self, vec![])
         }
     }
 
@@ -409,36 +409,69 @@ impl ContentGraph {
         }
     }
 
-    /// Visits every node according to the given direction starting from the specified node.
-    fn walk_by_index(&self, node_idx: usize, direction: GraphEdgeDirection, mut visitor: impl FnMut(usize)) {
-        let mut visited = HashSet::new();
 
-        visitor(node_idx);
-        visited.insert(node_idx);
-        self._walk_by_index(node_idx, direction, &mut visitor, &mut visited);
-    }
+    fn relatives_indices_in_direction(&self, starting_idx: usize, direction: GraphEdgeDirection) -> Vec<usize> {
+        let mut indices = Vec::with_capacity(self.nodes.capacity());
 
-    fn _walk_by_index(&self, node_idx: usize, direction: GraphEdgeDirection, visitor: &mut impl FnMut(usize), visited: &mut HashSet<usize>) {
-        let edge_iter = self.edges.iter().filter(|edge| {
-            let current_idx = match direction {
-                GraphEdgeDirection::Dependants => edge.dependency_idx,
-                GraphEdgeDirection::Dependencies => edge.dependant_idx,
-            };
+        indices.push(starting_idx);
 
-            current_idx == node_idx
-        });
+        let mut i = 0;
+        while i < indices.len() {
+            let current_idx = indices[i];
+            let neighbours = self.edges.iter()
+                .filter(|edge| {
+                    current_idx == match direction {
+                        GraphEdgeDirection::Dependants => edge.dependency_idx,
+                        GraphEdgeDirection::Dependencies => edge.dependant_idx,
+                    }
+                })
+                .map(|edge| {
+                    match direction {
+                        GraphEdgeDirection::Dependants => edge.dependant_idx,
+                        GraphEdgeDirection::Dependencies => edge.dependency_idx,
+                    }
+                });
 
-        for edge in edge_iter {
-            let target_idx = match direction {
-                GraphEdgeDirection::Dependants => edge.dependant_idx,
-                GraphEdgeDirection::Dependencies => edge.dependency_idx,
-            };
-
-            if !visited.contains(&target_idx) {
-                visitor(target_idx);
-                visited.insert(target_idx);
-                self._walk_by_index(target_idx, direction, visitor, visited);
+            for idx in neighbours {
+                if !indices.contains(&idx) {
+                    indices.push(idx);
+                }
             }
+
+            i += 1;
+        }
+
+        indices
+    }
+}
+
+
+pub struct Iter<'g> {
+    graph: &'g ContentGraph,
+    node_indices: Vec<usize>,
+    i: usize
+}
+
+impl<'g> Iter<'g> {
+    fn new(graph: &'g ContentGraph, node_indices: Vec<usize>) -> Self {
+        Self {
+            graph,
+            node_indices,
+            i: 0
+        }
+    }
+}
+
+impl<'g> Iterator for Iter<'g> {
+    type Item = &'g GraphNode;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i < self.node_indices.len() {
+            let n = &self.graph.nodes[self.i];
+            self.i += 1;
+            Some(n)
+        } else {
+            None
         }
     }
 }
