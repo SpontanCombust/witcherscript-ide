@@ -18,7 +18,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
 }
 
 type Cmd = (...args: any[]) => unknown;
-
+//TODO rework init/create commands - init should make a project in an existing directory, create should make a new folder
 function commandInitProject(): Cmd {
     return async () => {
         if (vscode.workspace.workspaceFolders) {
@@ -83,23 +83,24 @@ function commandCreateProject(context: vscode.ExtensionContext): Cmd {
                             );
                         } else {
                             enum Answer {
-                                YES_HERE = "Open in this window",
-                                YES_IN_NEW = "Open in a new window",
-                                NO = "No"
+                                YesHere = "Open in this window",
+                                YesInNew = "Open in a new window",
+                                No = "No"
                             }
         
                             const answer = await vscode.window.showInformationMessage("Would you like to open the project?",
-                                Answer.YES_HERE, Answer.YES_IN_NEW, Answer.NO);
+                                Answer.YesHere, Answer.YesInNew, Answer.No);
         
-                            if (answer != undefined && answer != Answer.NO) {
+                            if (answer != undefined && answer != Answer.No) {
                                 const memento = new state.OpenManifestOnInit.Memento(
                                     projectDirectoryUri,
                                     manifestUri,
                                     manifestSelectionRange
                                 );
-                                await context.globalState.update(state.OpenManifestOnInit.KEY, memento.intoDto());
+
+                                await memento.store(context);
         
-                                const openNewWindow = answer == Answer.YES_IN_NEW;
+                                const openNewWindow = answer == Answer.YesInNew;
                                 await vscode.commands.executeCommand("vscode.openFolder", projectDirectoryUri, {
                                     forceNewWindow: openNewWindow
                                 });
@@ -114,7 +115,7 @@ function commandCreateProject(context: vscode.ExtensionContext): Cmd {
         })
     }
 }
-//TODO in the release description disclose that ranges won't be accurate when the document is indented using tabs instead of spaces
+
 function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
     const astSuffix = " - AST";
 
@@ -170,7 +171,7 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
 
         tdcp.eventEmitter.fire(uri);
         
-        vscode.window.showTextDocument(doc, options).then(editor => {
+        vscode.window.showTextDocument(doc, options).then(async editor => {
             const astText = editor.document.getText();
             // Searching for corresponding node in AST text.
             // A naive approach leveraging the format of returned AST text.
@@ -184,7 +185,25 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
                 // Scroll the cursor in AST's editor to searched position
                 editor.revealRange(new vscode.Range(targetPos, targetPos), vscode.TextEditorRevealType.AtTop);
             }
-        })
+
+            const rememberedChoices = state.RememberedChoices.Memento.fetchOrDefault(context);
+            if (!rememberedChoices.neverShowAgainDebugAstNotif) {
+                enum Answer {
+                    Close = "I understand",
+                    NeverShowAgain = "Never show this message again"
+                }
+
+                const answer = await vscode.window.showInformationMessage(
+                    "Beware! Displayed ranges in the AST may not be accurate if your document is formatted using tabs instead of spaces",
+                    Answer.Close, Answer.NeverShowAgain
+                );
+
+                if (answer == Answer.NeverShowAgain) {
+                    rememberedChoices.neverShowAgainDebugAstNotif = true;
+                    rememberedChoices.store(context);
+                }
+            }
+        });
     };
 }
 
@@ -203,8 +222,10 @@ function commandImportVanillaScripts(): Cmd {
             if (projectInfos.length == 0) {
                 return vscode.window.showErrorMessage("No project available to import scripts into!");
             } else {
-                projectContentInfo = await chooseProject(projectInfos);
-                if (!projectContentInfo) {
+                const chosen = await chooseProject(projectInfos);
+                if (chosen) {
+                    projectContentInfo = chosen;
+                } else {
                     return;
                 }
             }
@@ -213,7 +234,7 @@ function commandImportVanillaScripts(): Cmd {
             content0Info = (await client.sendRequest(requests.projects.vanillaDependencyContent.type, {
                 projectUri: projectContentInfo.contentUri
             })).content0Info;
-        } catch (error) {
+        } catch (error: any) {
             return vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
         }
 
@@ -307,7 +328,7 @@ function commandDiffScriptWithVanilla(): Cmd {
             vanillaContent = (await client.sendRequest(requests.projects.vanillaDependencyContent.type, {
                 projectUri: currentContent.contentUri
             })).content0Info;
-        } catch(error) {
+        } catch(error: any) {
             return vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
         }
 

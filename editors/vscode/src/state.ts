@@ -16,8 +16,8 @@ export namespace OpenManifestOnInit {
             this.selectionRange = selectionRange;
         }
 
-        public intoDto(): MementoDto {
-            return {
+        public async store(context: vscode.ExtensionContext) {
+            const dto: MementoDto = {
                 workspaceUriStr: this.workspaceUri.toString(),
                 manifestUriStr: this.manifestUri.toString(),
                 selectionRange: [
@@ -26,23 +26,72 @@ export namespace OpenManifestOnInit {
                     this.selectionRange.end.line,
                     this.selectionRange.end.character
                 ]
+            };
+
+            await context.globalState.update(KEY, dto);
+        }
+
+        public static fetch(context: vscode.ExtensionContext): Memento | undefined {
+            const dto = context.globalState.get<MementoDto>(KEY);
+            if (dto) {
+                const memento = new Memento(
+                    vscode.Uri.parse(dto.workspaceUriStr),
+                    vscode.Uri.parse(dto.manifestUriStr),
+                    new vscode.Range(dto.selectionRange[0], dto.selectionRange[1], dto.selectionRange[2], dto.selectionRange[3])  
+                );
+
+                return memento;
+            } else {
+                return undefined;
             }
         }
 
-        public static fromDto(dto: MementoDto): Memento {
-            const memento = new Memento(
-                vscode.Uri.parse(dto.workspaceUriStr),
-                vscode.Uri.parse(dto.manifestUriStr),
-                new vscode.Range(dto.selectionRange[0], dto.selectionRange[1], dto.selectionRange[2], dto.selectionRange[3])  
-            );
-
-            return memento;
+        public static erase(context: vscode.ExtensionContext) {
+            context.globalState.update(KEY, undefined);
         }
     }
 
-    export interface MementoDto {
+    interface MementoDto {
         workspaceUriStr: string,
         manifestUriStr: string,
         selectionRange: [number, number, number, number]
+    }
+}
+
+export namespace RememberedChoices {
+    export const KEY = "RememberedChoices";
+
+    export class Memento {
+        public neverShowAgainDebugAstNotif: boolean
+
+        constructor(neverShowAgainDebugAstNotif: boolean) {
+            this.neverShowAgainDebugAstNotif = neverShowAgainDebugAstNotif;
+        }
+
+        public async store(context: vscode.ExtensionContext) {
+            const dto: MementoDto = {
+                neverShowAgainDebugAstNotif: this.neverShowAgainDebugAstNotif
+            };
+
+            context.globalState.update(KEY, dto);
+        }
+
+        public static fetchOrDefault(context: vscode.ExtensionContext): Memento {
+            const dto = context.globalState.get<MementoDto>(KEY);
+
+            if (dto) {
+                return new Memento(
+                    dto.neverShowAgainDebugAstNotif
+                );
+            } else {
+                return new Memento(
+                    false
+                )
+            }
+        }
+    }
+
+    interface MementoDto {
+        neverShowAgainDebugAstNotif: boolean
     }
 }

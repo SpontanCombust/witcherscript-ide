@@ -38,7 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
 		synchronize: {
 			// Notify the server about file changes to *.ws files contained in the workspace
 			fileEvents: [
-				vscode.workspace.createFileSystemWatcher('**/.ws'),
+				vscode.workspace.createFileSystemWatcher('**/*.ws'),
 				vscode.workspace.createFileSystemWatcher('**/witcherscript.toml')
 			]
 		}
@@ -53,13 +53,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Start the client. This will also launch the server
 	client.start().then(_ => {
-		const mementoDto = context.globalState.get<state.OpenManifestOnInit.MementoDto>(state.OpenManifestOnInit.KEY);
+		const memento = state.OpenManifestOnInit.Memento.fetch(context);
 		
-		if (mementoDto != undefined) {
-			const memento = state.OpenManifestOnInit.Memento.fromDto(mementoDto);
-			
+		if (memento != undefined) {
 			// If a new project has just been created in this directory and the user agreed to open it, show them the manifest of said project
-			if (vscode.workspace.workspaceFolders.some(f => f.uri.fsPath == memento.workspaceUri.fsPath)) {
+			if (vscode.workspace.workspaceFolders?.some(f => f.uri.fsPath == memento.workspaceUri.fsPath)) {
 				const params: vscode.TextDocumentShowOptions = {
 					selection: memento.selectionRange,
 					preview: false
