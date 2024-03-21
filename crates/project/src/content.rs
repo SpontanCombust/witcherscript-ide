@@ -1,5 +1,6 @@
 use std::any::Any;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use thiserror::Error;
 
 use crate::manifest::{Dependencies, Manifest, ManifestParseError};
@@ -109,25 +110,33 @@ impl Content for PackedContentDirectory {
 #[derive(Debug, Clone)]
 pub struct ProjectDirectory {
     path: PathBuf,
+    manifest_path: PathBuf,
     script_root: PathBuf,
     manifest: Manifest
 }
 
 impl ProjectDirectory {
     pub fn new(path: PathBuf) -> Result<Self, ManifestParseError> {
-        let script_root = path.join("scripts");
         let manifest_path = path.join(Manifest::FILE_NAME);
-        let manifest = Manifest::from_file(manifest_path)?;
+        let manifest = Manifest::from_file(&manifest_path)?;
+
+        let manifest_script_root = manifest.content.scripts_root.clone().unwrap_or(PathBuf::from_str("./scripts").unwrap());
+        let script_root = if manifest_script_root.is_relative() {
+            path.join(manifest_script_root)
+        } else {
+            manifest_script_root
+        };
 
         Ok(Self {
             path,
+            manifest_path,
             script_root,
             manifest,
         })
     }
 
-    pub fn manifest_path(&self) -> PathBuf {
-        self.path.join(Manifest::FILE_NAME)
+    pub fn manifest_path(&self) -> &Path {
+        &self.manifest_path
     }
 }
 

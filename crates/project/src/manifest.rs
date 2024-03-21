@@ -5,7 +5,7 @@ use shrinkwraprs::Shrinkwrap;
 use thiserror::Error;
 use lsp_types as lsp;
 
-//TODO write docs about the manifest format
+
 /// WitcherScript manifest file containing project metadata.
 #[derive(Debug, Clone)]
 pub struct Manifest {
@@ -18,21 +18,23 @@ pub struct Manifest {
 #[derive(Debug, Clone)]
 pub struct Content {
     /// Name of this project, for example SharedUtils
-    pub name: String,
+    pub name: String, //TODO manifest - validate the name
     /// Version of this project, has to abide to semantic versioning
     pub version: Version,
-    /// List of this project authors (optional)
-    pub authors: Option<Vec<String>>,
     /// Version(s) of the game this project is compatible with 
     pub game_version: String, // CDPR's versioning system doesn't comply with semver, so string will have to do for now
+    /// List of this project authors (optional)
+    pub authors: Option<Vec<String>>,
+    /// Relative path to the `scripts` directory. "./scripts" by default
+    pub scripts_root: Option<PathBuf>
 }
 
 /// A list of dependency entries
-#[derive(Debug, Clone, Shrinkwrap)]
+#[derive(Debug, Clone, Shrinkwrap, PartialEq, Eq)]
 pub struct Dependencies(Vec<DependencyEntry>);
 
 // Dependency item as a key-value pair of dependency name and dependency source specifier
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DependencyEntry {
     pub name: Ranged<String>,
     pub value: Ranged<DependencyValue>
@@ -117,7 +119,8 @@ impl FromRaw for Content {
            name: raw.name,
            version: raw.version,
            authors: raw.authors,
-           game_version: raw.game_version 
+           game_version: raw.game_version,
+           scripts_root: raw.scripts_root
         }
     }
 }
@@ -259,6 +262,7 @@ mod raw {
         pub version: Version,
         pub authors: Option<Vec<String>>,
         pub game_version: String,
+        pub scripts_root: Option<PathBuf>
     }
 
     pub type Dependencies = BTreeMap<toml::Spanned<String>, toml::Spanned<DependencyValue>>;
@@ -287,7 +291,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn test() {
+    fn test_all() {
         let s = 
 r#"
 [content]
@@ -295,6 +299,7 @@ name = "ExampleMod"
 version = "0.9.0"
 authors = ["Rip Van Winkle"]
 game_version = "4.04"
+scripts_root = "./content/scripts"
 
 [dependencies]
 content0 = { path = "../Witcher 3/content/content0" }
@@ -307,20 +312,40 @@ shared_utils = true
         assert_eq!(manifest.content.version, Version::from_str("0.9.0").unwrap());
         assert_eq!(manifest.content.authors, Some(vec!["Rip Van Winkle".into()]));
         assert_eq!(manifest.content.game_version, String::from("4.04"));
+        assert_eq!(manifest.content.scripts_root, Some(PathBuf::from_str("./content/scripts").unwrap()));
     
 
         assert_eq!(manifest.dependencies.len(), 2);
 
         let content0 = manifest.dependencies[0].clone();
         assert_eq!(content0.name.value, "content0".to_string());
-        assert_eq!(content0.name.range, lsp::Range::new(lsp::Position::new(8, 0), lsp::Position::new(8, 8)));
+        assert_eq!(content0.name.range, lsp::Range::new(lsp::Position::new(9, 0), lsp::Position::new(9, 8)));
         assert_eq!(content0.value.value, DependencyValue::FromPath { path: PathBuf::from("../Witcher 3/content/content0") });
-        assert_eq!(content0.value.range, lsp::Range::new(lsp::Position::new(8, 11), lsp::Position::new(8, 53)));
+        assert_eq!(content0.value.range, lsp::Range::new(lsp::Position::new(9, 11), lsp::Position::new(9, 53)));
 
         let shared_utils = manifest.dependencies[1].clone();
         assert_eq!(shared_utils.name.value, "shared_utils".to_string());
-        assert_eq!(shared_utils.name.range, lsp::Range::new(lsp::Position::new(9, 0), lsp::Position::new(9, 12)));
+        assert_eq!(shared_utils.name.range, lsp::Range::new(lsp::Position::new(10, 0), lsp::Position::new(10, 12)));
         assert_eq!(shared_utils.value.value, DependencyValue::FromRepo(true));
-        assert_eq!(shared_utils.value.range, lsp::Range::new(lsp::Position::new(9, 15), lsp::Position::new(9, 19)));
+        assert_eq!(shared_utils.value.range, lsp::Range::new(lsp::Position::new(10, 15), lsp::Position::new(10, 19)));
+    }
+
+    #[test]
+    fn test_optional() {
+        let s = 
+r#"
+[content]
+name = "ExampleMod"
+version = "1.0.0"
+game_version = "4.04"
+
+[dependencies]
+"#;
+
+        let manifest = Manifest::from_str(s).unwrap();
+
+        assert_eq!(manifest.content.authors, None);
+        assert_eq!(manifest.content.scripts_root, None);
+        assert_eq!(*manifest.dependencies, vec![]);
     }
 }

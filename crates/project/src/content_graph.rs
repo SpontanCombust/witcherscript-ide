@@ -227,7 +227,13 @@ impl ContentGraph {
                         self.link_dependencies_value_from_repo(node_idx, visited, &entry.name, entry.name.range(), *active);
                     },
                     DependencyValue::FromPath { path } => {
-                        self.link_dependencies_value_from_path(node_idx, visited, path, entry.value.range());
+                        let final_path = if path.is_relative() {
+                            self.nodes[node_idx].content.path().join(path)
+                        } else {
+                            path.clone()
+                        };
+
+                        self.link_dependencies_value_from_path(node_idx, visited, &final_path, entry.value.range());
                     },
                 }
             }
