@@ -22,7 +22,7 @@ Every manifest is composed of following sections:
 Project metadata establishing basic information on how its content is named and structured.
 
 #### The `name` field
-Name of the project. It must begin with a letter and contain only alphanumerical characters or underscores and have no spaces.
+Name of the project. It must begin with an ASCII letter or underscore and contain only alphanumerical ASCII characters or underscores. Spaces are not allowed.
 
 #### The `version` field
 Version of the project. It must follow [semantic versioning](https://semver.org/) format.
