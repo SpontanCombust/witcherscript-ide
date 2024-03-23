@@ -33,7 +33,7 @@ pub fn prep_server(release: bool, target: Option<String>) -> anyhow::Result<()> 
 
 
     // make sure destination folder exists
-    let lsp_dst = root.join(LSP_DST).canonicalize()?;
+    let lsp_dst = root.join(LSP_DST);
     sh.create_dir(&lsp_dst)?;
 
     sh.copy_file(lsp_src, &lsp_dst)?;

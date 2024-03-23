@@ -8,7 +8,7 @@ pub fn prep_client(watch: bool) -> anyhow::Result<()> {
     let sh = Shell::new()?;
     let root = project_root::get_project_root()?;
 
-    let ext_dir = root.join(EXT_DIR).canonicalize()?;
+    let ext_dir = root.join(EXT_DIR);
     sh.change_dir(ext_dir);
 
     let command = if watch { "watch" } else { "build" };

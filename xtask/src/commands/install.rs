@@ -2,14 +2,14 @@ use anyhow::{Context, bail};
 use xshell::{Shell, cmd};
 
 
-const EXT_DIR: &str = "./editors/vscode";
+const EXT_DIR: &str = "editors/vscode";
 const VSIX_NAME: &str = "witcherscript-ide.vsix";
 
 pub fn install() -> anyhow::Result<()> {
     let sh = Shell::new()?;
     let root = project_root::get_project_root()?;
 
-    let ext_dir = root.join(EXT_DIR).canonicalize()?;
+    let ext_dir = root.join(EXT_DIR);
     sh.change_dir(ext_dir);
 
     if cfg!(unix) {
