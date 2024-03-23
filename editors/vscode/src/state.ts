@@ -8,24 +8,16 @@ export namespace OpenManifestOnInit {
     export class Memento {
         public workspaceUri: vscode.Uri;
         public manifestUri: vscode.Uri;
-        public selectionRange: vscode.Range
 
-        constructor(workspaceUri: vscode.Uri, manifestUri: vscode.Uri, selectionRange: vscode.Range) {
+        constructor(workspaceUri: vscode.Uri, manifestUri: vscode.Uri) {
             this.workspaceUri = workspaceUri;
             this.manifestUri = manifestUri;
-            this.selectionRange = selectionRange;
         }
 
         public async store(context: vscode.ExtensionContext) {
             const dto: MementoDto = {
                 workspaceUriStr: this.workspaceUri.toString(),
                 manifestUriStr: this.manifestUri.toString(),
-                selectionRange: [
-                    this.selectionRange.start.line,
-                    this.selectionRange.start.character,
-                    this.selectionRange.end.line,
-                    this.selectionRange.end.character
-                ]
             };
 
             await context.globalState.update(KEY, dto);
@@ -37,7 +29,6 @@ export namespace OpenManifestOnInit {
                 const memento = new Memento(
                     vscode.Uri.parse(dto.workspaceUriStr),
                     vscode.Uri.parse(dto.manifestUriStr),
-                    new vscode.Range(dto.selectionRange[0], dto.selectionRange[1], dto.selectionRange[2], dto.selectionRange[3])  
                 );
 
                 return memento;
@@ -53,8 +44,7 @@ export namespace OpenManifestOnInit {
 
     interface MementoDto {
         workspaceUriStr: string,
-        manifestUriStr: string,
-        selectionRange: [number, number, number, number]
+        manifestUriStr: string
     }
 }
 

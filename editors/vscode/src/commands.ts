@@ -9,7 +9,7 @@ import * as state from './state';
 
 export function registerCommands(context: vscode.ExtensionContext) {
     context.subscriptions.push(
-        vscode.commands.registerCommand("witcherscript-ide.projects.init", commandInitProject()),
+        vscode.commands.registerCommand("witcherscript-ide.projects.init", commandInitProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.projects.create", commandCreateProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.scripts.importVanilla", commandImportVanillaScripts()),
         vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", commandDiffScriptWithVanilla()),
@@ -19,103 +19,147 @@ export function registerCommands(context: vscode.ExtensionContext) {
 }
 
 type Cmd = (...args: any[]) => unknown;
-//TODO rework init/create commands - init should make a project in an existing directory, create should make a new folder
-function commandInitProject(): Cmd {
+
+function commandInitProject(context: vscode.ExtensionContext): Cmd {
     return async () => {
-        if (vscode.workspace.workspaceFolders) {
-            const projectDirectory = vscode.workspace.workspaceFolders[0].uri;
-            const params: requests.projects.create.Parameters = {
-                directoryUri: client.code2ProtocolConverter.asUri(projectDirectory)
-            }
-            client.sendRequest(requests.projects.create.type, params).then(
-                (response) => {
-                    const manifestUri = client.protocol2CodeConverter.asUri(response.manifestUri);
-                    const manifestSelectionRange = client.protocol2CodeConverter.asRange(response.manifestContentNameRange);
-    
-                    const showOptions: vscode.TextDocumentShowOptions = {
-                        selection: manifestSelectionRange,
-                        preview: false
-                    };
-                    vscode.window.showTextDocument(manifestUri, showOptions).then(
-                        _ => {},
-                        (err) => client.debug('Manifest could not be shown: ' + err)
-                    );
-                },
-                (error) => {
-                    vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
-                }
-            )
-        } else {
-            vscode.window.showErrorMessage("No workspace folder is opened in the editor");
+        const initialDirUri = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : undefined;
+
+        const projectDirUri = await vscode.window.showOpenDialog({
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+            defaultUri: initialDirUri,
+            title: "Choose project directory"
+        }).then(folders => {
+            return folders ? folders[0] : undefined;
+        });
+
+        if (!projectDirUri) {
+            return;
         }
+
+        
+        const initProjectName = path.parse(projectDirUri.fsPath).name.replace(' ', '');
+
+        const projectName = await vscode.window.showInputBox({
+            prompt: "Enter the name of the project",
+            ignoreFocusOut: true,
+            value: initProjectName,
+            validateInput: validateProjectName
+        });
+
+        if (!projectName) {
+            return;
+        }
+
+
+        await initializeProjectInDirectory(projectDirUri, projectName, context);
     }
 }
 
 function commandCreateProject(context: vscode.ExtensionContext): Cmd {
     return async () => {
-        vscode.window.showOpenDialog({
+        const projectName = await vscode.window.showInputBox({
+            prompt: "Enter the name of the project",
+            ignoreFocusOut: true,
+            validateInput: validateProjectName
+        });
+
+        if (!projectName) {
+            return;
+        }
+
+
+        const initialDirUri = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : undefined;
+
+        const containingDirUri = await vscode.window.showOpenDialog({
             canSelectFiles: false,
             canSelectFolders: true,
             canSelectMany: false,
-            title: "Choose the project folder",
-        }).then((folders) => {
-            if (folders) {
-                const projectDirectoryUri = folders[0];
-                const params: requests.projects.create.Parameters = {
-                    directoryUri: client.code2ProtocolConverter.asUri(projectDirectoryUri)
-                }
-    
-                client.sendRequest(requests.projects.create.type, params).then(
-                    async (response) => {
-                        const manifestUri = client.protocol2CodeConverter.asUri(response.manifestUri);
-                        const manifestSelectionRange = client.protocol2CodeConverter.asRange(response.manifestContentNameRange);
-    
-                        // check if the project directory is contained somewhere inside the workspace
-                        // in this case just open the manifest
-                        // otherwise, ask the user if they'd like to open the project
-                        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.some(f => projectDirectoryUri.fsPath.startsWith(f.uri.fsPath))) {
-                            const params: vscode.TextDocumentShowOptions = {
-                                selection: manifestSelectionRange,
-                                preview: false
-                            };
-                            vscode.window.showTextDocument(manifestUri, params).then(
-                                _ => {},
-                                (err) => client.debug('Manifest could not be shown: ' + err)
-                            );
-                        } else {
-                            enum Answer {
-                                YesHere = "Open in this window",
-                                YesInNew = "Open in a new window",
-                                No = "No"
-                            }
-        
-                            const answer = await vscode.window.showInformationMessage("Would you like to open the project?",
-                                Answer.YesHere, Answer.YesInNew, Answer.No);
-        
-                            if (answer != undefined && answer != Answer.No) {
-                                const memento = new state.OpenManifestOnInit.Memento(
-                                    projectDirectoryUri,
-                                    manifestUri,
-                                    manifestSelectionRange
-                                );
+            defaultUri: initialDirUri,
+            title: "Choose project folder destination"
+        }).then(folders => {
+            return folders ? folders[0] : undefined;
+        });
 
-                                await memento.store(context);
-        
-                                const openNewWindow = answer == Answer.YesInNew;
-                                await vscode.commands.executeCommand("vscode.openFolder", projectDirectoryUri, {
-                                    forceNewWindow: openNewWindow
-                                });
-                            }
-                        }
-                    },
-                    (error) => {
-                        vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
-                    }
-                )
-            }
-        })
+        if (!containingDirUri) {
+            return;
+        }
+
+        const projectDir = path.join(containingDirUri.fsPath, projectName);
+
+        try {
+            await fs.mkdir(projectDir, { recursive: false });
+        } catch (error: any) {
+            vscode.window.showErrorMessage("Failed to create project folder: " + error);
+            return;
+        }
+
+
+        const projectDirUri = vscode.Uri.file(projectDir);
+        await initializeProjectInDirectory(projectDirUri, projectName, context);
     }
 }
+
+// Returns undefined if the input is valid, error message otherwise
+function validateProjectName(input: string): string | undefined {
+    if (input.match(/[_a-zA-Z][_a-zA-Z0-9]*/)) {
+        return undefined;
+    } else {
+        return "Project name is invalid. Please refer to the user manual for more information"
+    }
+}
+
+async function initializeProjectInDirectory(projectDirUri: vscode.Uri, projectName: string, context: vscode.ExtensionContext) {
+    let manifestUri: vscode.Uri;
+    try {
+        const params: requests.projects.create.Parameters = {
+            directoryUri: client.code2ProtocolConverter.asUri(projectDirUri),
+            projectName: projectName
+        }
+
+        const response = await client.sendRequest(requests.projects.create.type, params);
+        manifestUri = client.protocol2CodeConverter.asUri(response.manifestUri);
+
+    } catch (error: any) {
+        vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+        return;
+    }
+
+    if (vscode.workspace.workspaceFolders?.some(wf => manifestUri.fsPath.startsWith(wf.uri.fsPath))) {
+        const showOptions: vscode.TextDocumentShowOptions = {
+            preview: false
+        };
+        vscode.window.showTextDocument(manifestUri, showOptions).then(
+            _ => {},
+            (err) => client.debug('Manifest could not be shown: ' + err)
+        );
+    } else {
+        enum Answer {
+            YesHere = "Open in this window",
+            YesInNew = "Open in a new window",
+            No = "No"
+        }
+
+        const answer = await vscode.window.showInformationMessage("Would you like to open the project?",
+            Answer.YesHere, Answer.YesInNew, Answer.No);
+
+        if (answer != undefined && answer != Answer.No) {
+            const memento = new state.OpenManifestOnInit.Memento(
+                projectDirUri,
+                manifestUri
+            );
+
+            await memento.store(context);
+
+            const openNewWindow = answer == Answer.YesInNew;
+            await vscode.commands.executeCommand("vscode.openFolder", projectDirUri, {
+                forceNewWindow: openNewWindow
+            });
+        }
+    }
+}
+
 
 function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
     const astSuffix = " - AST";

@@ -26,7 +26,7 @@ pub struct Content {
     /// List of this project authors (optional)
     pub authors: Option<Vec<String>>,
     /// Relative path to the `scripts` directory. "./scripts" by default
-    pub scripts_root: Option<PathBuf>
+    pub scripts_root: Option<PathBuf> //TODO make mandatory so it can be detected if in existing directory
 }
 
 /// A list of dependency entries
@@ -66,6 +66,15 @@ impl Manifest {
 
         Self::from_str(&buff)
     }
+
+    /// Returns true if the given name is a valid project content name. False otherwise.
+    pub fn validate_content_name(name: &str) -> bool {
+        let name_chars: Vec<_> = name.chars().collect();
+
+        return !name_chars.is_empty()
+            && (name_chars[0].is_ascii_alphabetic() || name_chars[0] == '_')
+            && name_chars.iter().all(|c| c.is_ascii_alphanumeric() || c != &'_');
+    }
 }
 
 impl FromStr for Manifest {
@@ -85,10 +94,7 @@ impl FromStr for Manifest {
         let manifest = Self::from_raw(raw.unwrap(), &rope);
 
         // validate content name
-        let name_chars: Vec<_> = manifest.content.name.chars().collect();
-        if name_chars.is_empty()
-        || (!name_chars[0].is_ascii_alphabetic() && name_chars[0] != '_')
-        || name_chars.iter().any(|c| !c.is_ascii_alphanumeric() && c != &'_') {
+        if !Self::validate_content_name(&manifest.content.name) {
             return Err(ManifestParseError::InvalidNameField {
                 range: manifest.content.name.range.clone()
             })

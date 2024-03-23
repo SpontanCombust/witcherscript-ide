@@ -59,15 +59,14 @@ export function activate(context: vscode.ExtensionContext) {
 			// If a new project has just been created in this directory and the user agreed to open it, show them the manifest of said project
 			if (vscode.workspace.workspaceFolders?.some(f => f.uri.fsPath == memento.workspaceUri.fsPath)) {
 				const params: vscode.TextDocumentShowOptions = {
-					selection: memento.selectionRange,
 					preview: false
 				};
 				vscode.window.showTextDocument(memento.manifestUri, params).then(
 					_ => {},
 					(err) => client.debug('Manifest could not be shown: ' + err)
 				);
-	
-				context.globalState.update(state.OpenManifestOnInit.KEY, undefined);
+
+				state.OpenManifestOnInit.Memento.erase(context);
 			}
 		}
 	});

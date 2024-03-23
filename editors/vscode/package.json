@@ -60,12 +60,12 @@
     "commands": [
       {
         "command": "witcherscript-ide.projects.init",
-        "title": "Create a WitcherScript project in existing directory...",
+        "title": "Initialize a WitcherScript project in existing directory...",
         "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.projects.create",
-        "title": "Create a WitcherScript project...",
+        "title": "Create a new WitcherScript project...",
         "category": "WitcherScript-IDE"
       },
       {

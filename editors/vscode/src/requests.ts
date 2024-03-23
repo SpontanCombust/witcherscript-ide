@@ -1,5 +1,4 @@
 import { RequestType } from 'vscode-languageclient';
-import * as lsp from 'vscode-languageserver-protocol';
 
 
 export interface ContentInfo {
@@ -14,15 +13,14 @@ export interface ContentInfo {
 export namespace projects {
     export namespace create {
         export interface Parameters {
-            // Path to a directory where the project should be created
+            // Path to a directory where project files should be created
             directoryUri: string
+            projectName: string
         }
     
         export interface Response {
             // Path to the newly created manifest that should be opened by the client
             manifestUri: string
-            // Range in the manifest that spans the content name
-            manifestContentNameRange: lsp.Range
         }
     
         export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/projects/create");

@@ -25,14 +25,14 @@ pub mod projects {
         #[derive(Debug, Serialize, Deserialize)]
         #[serde(rename_all = "camelCase")]
         pub struct Parameters {
-            pub directory_uri: lsp::Url
+            pub directory_uri: lsp::Url,
+            pub project_name: String
         }
         
         #[derive(Debug, Serialize, Deserialize)]
         #[serde(rename_all = "camelCase")]
         pub struct Response {
-            pub manifest_uri: lsp::Url,
-            pub manifest_content_name_range: lsp::Range
+            pub manifest_uri: lsp::Url
         }
 
         pub const METHOD: &'static str = "witcherscript-ide/projects/create";
@@ -76,8 +76,6 @@ pub mod projects {
 
         pub const METHOD: &'static str = "witcherscript-ide/projects/vanillaDependencyContent";
     }
-
-    // TODO dependency graph request - result in the graphviz dot format 
 }
 
 pub mod scripts {

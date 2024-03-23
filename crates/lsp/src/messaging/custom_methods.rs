@@ -61,17 +61,19 @@ impl Backend {
             },
         };
 
-        let project_name = project_dir
-            .file_name().unwrap()
-            .to_string_lossy()
-            .to_string()
-            .replace(" ", ""); // remove spaces
+        if !Manifest::validate_content_name(&params.project_name) {
+            return Err(jsonrpc::Error { 
+                code: jsonrpc::ErrorCode::ServerError(-1004), 
+                message: format!("Name of the project is invalid. Please refer to the user manual to find out about proper project name.").into(), 
+                data: None
+            })
+        }
 
-        let (template, manifest_content_name_range) = manifest_template(&project_name);
+        let template = manifest_template(&params.project_name);
 
         if let Err(err) = manifest_file.write_all(template.as_bytes()) {
             return Err(jsonrpc::Error { 
-                code: jsonrpc::ErrorCode::ServerError(-1004), 
+                code: jsonrpc::ErrorCode::ServerError(-1005), 
                 message: format!("File system error: {err}").into(), 
                 data: None
             })
@@ -79,8 +81,7 @@ impl Backend {
 
         let manifest_uri = lsp::Url::from_file_path(manifest_path).unwrap();
         Ok(requests::projects::create::Response { 
-            manifest_uri,
-            manifest_content_name_range
+            manifest_uri
         })
     }
 
@@ -245,10 +246,10 @@ impl Backend {
 }
 
 
-fn manifest_template(project_name: &str) -> (String, lsp::Range) {
+fn manifest_template(project_name: &str) -> String {
     // Serialization would've been better if not for the fact that the default behaviour for inline tables
-    // is to instead create a new table with a dotted key. So it would require extra effort to make something
-    // small look better.
+    // is to instead create a new table with a dotted key. 
+    // So it would require extra effort to make something small look better when you can just write the template by hand.
     let text = format!(
 r#"# Basic information about this project
 [content]
@@ -266,10 +267,7 @@ content0 = true
 "#
     );
 
-    // if text above is changed in any way before {project_name} the range has to be updated
-    let content_name_range = lsp::Range::new(lsp::Position::new(2, 8), lsp::Position::new(2, 8 + project_name.len() as u32));
-
-    (text, content_name_range)
+    text
 }
 
 
@@ -282,7 +280,7 @@ mod test {
 
     #[test]
     fn test_manifest_template() {
-        let (template, _) = manifest_template("modFoo_Bar");
+        let template = manifest_template("modFoo_Bar");
         let manifest = Manifest::from_str(&template);
         assert!(manifest.is_ok());
     }
