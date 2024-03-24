@@ -71,9 +71,9 @@ impl Manifest {
     pub fn validate_content_name(name: &str) -> bool {
         let name_chars: Vec<_> = name.chars().collect();
 
-        return !name_chars.is_empty()
-            && (name_chars[0].is_ascii_alphabetic() || name_chars[0] == '_')
-            && name_chars.iter().all(|c| c.is_ascii_alphanumeric() || c != &'_');
+        !name_chars.is_empty()
+        && (name_chars[0].is_ascii_alphabetic() || name_chars[0] == '_')
+        && name_chars.iter().all(|c| c.is_ascii_alphanumeric() || c == &'_')
     }
 }
 
