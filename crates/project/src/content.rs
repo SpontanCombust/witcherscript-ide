@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::manifest::{Dependencies, Manifest, ManifestParseError};
+use crate::manifest::{Manifest, ManifestParseError};
 use crate::source_tree::SourceTree;
 use crate::FileError;
 
@@ -13,9 +13,9 @@ pub trait Content : core::fmt::Debug + dyn_clone::DynClone + Send + Sync {
     fn path(&self) -> &Path;
     fn content_name(&self) -> &str;
     fn source_tree_root(&self) -> &Path;
-    fn dependencies(&self) -> Option<&Dependencies>;
     
-    fn as_any(self: Box<Self>) -> Box<dyn Any>;
+    fn as_any(&self) -> &dyn Any;
+    fn into_any(self: Box<Self>) -> Box<dyn Any>;
 
     fn source_tree(&self) -> SourceTree {
         SourceTree::new(self.source_tree_root().to_owned())
@@ -54,11 +54,11 @@ impl Content for UnpackedContentDirectory {
         &self.script_root
     }
 
-    fn dependencies(&self) -> Option<&Dependencies> {
-        None
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 
-    fn as_any(self: Box<Self>) -> Box<dyn Any> {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 }
@@ -96,11 +96,11 @@ impl Content for PackedContentDirectory {
         &self.script_root
     }
 
-    fn dependencies(&self) -> Option<&Dependencies> {
-        None
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 
-    fn as_any(self: Box<Self>) -> Box<dyn Any> {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 }
@@ -138,6 +138,10 @@ impl ProjectDirectory {
     pub fn manifest_path(&self) -> &Path {
         &self.manifest_path
     }
+
+    pub fn manifest(&self) -> &Manifest {
+        &self.manifest
+    }
 }
 
 impl Content for ProjectDirectory {
@@ -153,11 +157,11 @@ impl Content for ProjectDirectory {
         &self.script_root
     }
 
-    fn dependencies(&self) -> Option<&Dependencies> {
-        Some(&self.manifest.dependencies)
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 
-    fn as_any(self: Box<Self>) -> Box<dyn Any> {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 }

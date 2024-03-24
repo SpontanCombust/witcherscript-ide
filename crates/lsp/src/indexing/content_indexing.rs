@@ -19,7 +19,7 @@ impl Backend {
             let (contents, errors) = find_content_in_directory(root, true);
         
             for content in contents {
-                if let Ok(proj) = content.as_any().downcast::<ProjectDirectory>() { 
+                if let Ok(proj) = content.into_any().downcast::<ProjectDirectory>() { 
                     projects.push(proj);
                 }
             }

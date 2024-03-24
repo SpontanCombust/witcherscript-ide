@@ -242,11 +242,16 @@ impl ContentGraph {
 
         visited.insert(node_idx);
 
-        if let Some(dependencies) = self.nodes[node_idx].content.dependencies().cloned() {
+        let manifest_path_and_deps = self.nodes[node_idx]
+            .content.as_any()
+            .downcast_ref::<ProjectDirectory>()
+            .map(|proj| (proj.manifest_path().to_owned(), proj.manifest().dependencies.clone()));
+
+        if let Some((manifest_path, dependencies)) = manifest_path_and_deps {
             for entry in dependencies.into_iter() {
                 match entry.value.inner() {
                     DependencyValue::FromRepo(active) => {
-                        self.link_dependencies_value_from_repo(node_idx, visited, &entry.name, entry.name.range(), *active);
+                        self.link_dependencies_value_from_repo(node_idx, &manifest_path, visited, &entry.name, entry.name.range(), *active);
                     },
                     DependencyValue::FromPath { path } => {
                         let final_path = if path.is_relative() {
@@ -254,16 +259,18 @@ impl ContentGraph {
                         } else {
                             path.clone()
                         };
-
-                        self.link_dependencies_value_from_path(node_idx, visited, &final_path, entry.value.range());
+    
+                        self.link_dependencies_value_from_path(node_idx, &manifest_path, visited, final_path, entry.value.range());
                     },
                 }
             }
-        }
+        }        
+
     }
 
     fn link_dependencies_value_from_repo(&mut self, 
-        node_idx: usize, 
+        node_idx: usize,
+        manifest_path: &Path,
         visited: &mut HashSet<usize>, 
         dependency_name: &str,
         dependency_name_range: &lsp::Range,
@@ -279,13 +286,13 @@ impl ContentGraph {
                     if dep_count == 0 {
                         self.errors.push(ContentGraphError::DependencyNameNotFound { 
                             content_name: dependency_name.to_string(), 
-                            manifest_path: self.nodes[node_idx].content.path().to_path_buf(), 
+                            manifest_path: manifest_path.to_owned(),
                             manifest_range: dependency_name_range.clone()
                         });
                     } else {
                         self.errors.push(ContentGraphError::MultipleMatchingDependencies { 
                             content_name: dependency_name.to_string(), 
-                            manifest_path: self.nodes[node_idx].content.path().to_path_buf(), 
+                            manifest_path: manifest_path.to_owned(), 
                             manifest_range: dependency_name_range.clone()
                         });
                     }
@@ -296,8 +303,9 @@ impl ContentGraph {
 
     fn link_dependencies_value_from_path(&mut self, 
         node_idx: usize, 
+        manifest_path: &Path,
         visited: &mut HashSet<usize>,
-        dependency_path: &Path,
+        dependency_path: PathBuf,
         dependency_path_range: &lsp::Range
     ) {
         let dependant_path = self.nodes[node_idx].content.path().to_path_buf();
@@ -335,7 +343,7 @@ impl ContentGraph {
                                 ContentScanError::NotContent => {
                                     self.errors.push(ContentGraphError::DependencyPathNotFound { 
                                         content_path: dep_path, 
-                                        manifest_path: dependant_path.to_path_buf(),
+                                        manifest_path: manifest_path.to_owned(),
                                         manifest_range: dependency_path_range.clone()
                                     })
                                 },
@@ -347,7 +355,7 @@ impl ContentGraph {
             Err(_) => {
                 self.errors.push(ContentGraphError::DependencyPathNotFound { 
                     content_path: dependency_path.to_path_buf(), 
-                    manifest_path: dependant_path.to_path_buf(),
+                    manifest_path: manifest_path.to_owned(),
                     manifest_range: dependency_path_range.clone()
                 })
             }
