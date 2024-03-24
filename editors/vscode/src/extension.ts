@@ -4,6 +4,7 @@ import * as lsp from 'vscode-languageclient/node';
 
 import * as commands from './commands';
 import * as state from './state';
+import * as config from './config';
 
 
 export let client: lsp.LanguageClient;
@@ -29,6 +30,10 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	};
 
+	const initializationOptions: InitializationOptions = {
+		config: config.getConfiguration()
+	};
+
 	const clientOptions: lsp.LanguageClientOptions = {
 		// Register the server for WitcherScript documents
 		documentSelector: [
@@ -41,7 +46,8 @@ export function activate(context: vscode.ExtensionContext) {
 				vscode.workspace.createFileSystemWatcher('**/*.ws'),
 				vscode.workspace.createFileSystemWatcher('**/witcherscript.toml')
 			]
-		}
+		},
+		initializationOptions: initializationOptions
 	};
 
 	client = new lsp.LanguageClient(
@@ -77,4 +83,9 @@ export function deactivate(): Thenable<void> | undefined {
 		return undefined;
 	}
 	return client.stop();
+}
+
+
+interface InitializationOptions {
+	config: config.Config
 }

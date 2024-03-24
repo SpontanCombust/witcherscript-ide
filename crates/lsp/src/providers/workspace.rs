@@ -17,7 +17,7 @@ pub async fn did_change_workspace_folders(backend: &Backend, params: lsp::DidCha
         workspace_roots.extend(added);
     }
 
-    backend.clear_all_diagnostics().await.unwrap();
+    backend.clear_all_diagnostics().await;
 
     backend.scan_workspace_projects().await;
     backend.build_content_graph().await;

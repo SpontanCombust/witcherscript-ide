@@ -1,11 +1,13 @@
 use std::path::PathBuf;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tower_lsp::{Client, jsonrpc};
 use tower_lsp::lsp_types as lsp;
 use crate::Backend;
 
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Config {
     pub game_directory: PathBuf,
     pub project_repositories: Vec<PathBuf>

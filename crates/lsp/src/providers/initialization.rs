@@ -1,8 +1,17 @@
+use serde::Deserialize;
 use tower_lsp::lsp_types::notification::Notification;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
+use witcherscript_project::Manifest;
+use crate::config::Config;
 use crate::Backend;
 
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct InitializationOptions {
+    config: Config
+}
 
 pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Result<lsp::InitializeResult> {
     if let Some(workspace_folders) = params.workspace_folders {
@@ -10,6 +19,18 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
         *workspace_roots = workspace_folders.into_iter()
             .map(|f| f.uri.to_file_path().unwrap())
             .collect();
+    }
+
+    if let Some(init_opts) = params.initialization_options {
+        match serde_json::from_value::<InitializationOptions>(init_opts) {
+            Ok(val) => {
+                let mut config = backend.config.write().await;
+                *config = val.config;
+            },
+            Err(err) => {
+                backend.log_error(format!("initializationOptions deserialization fail: {}", err)).await;
+            },
+        }
     }
 
     Ok(lsp::InitializeResult {
@@ -49,8 +70,6 @@ pub async fn initialized(backend: &Backend, _: lsp::InitializedParams) {
             register_options: None 
         }
     ]).await.unwrap();
-
-    backend.fetch_config().await;
 
     backend.scan_content_repositories().await;
     backend.scan_workspace_projects().await;

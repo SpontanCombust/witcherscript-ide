@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-use tower_lsp::{jsonrpc, lsp_types as lsp};
+use tower_lsp::lsp_types as lsp;
 use witcherscript_analysis::diagnostics::{Diagnostic, DiagnosticBody};
 use witcherscript_project::{manifest::ManifestParseError, FileError};
 use crate::Backend;
@@ -109,7 +109,7 @@ impl Backend {
         }
     }
 
-    pub async fn clear_all_diagnostics(&self) -> jsonrpc::Result<()> {
-        self.client.workspace_diagnostic_refresh().await
+    pub async fn clear_all_diagnostics(&self) {
+        let _ = self.client.workspace_diagnostic_refresh().await;
     }
 }
