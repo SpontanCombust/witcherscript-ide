@@ -1,57 +1,59 @@
 use std::collections::HashMap;
 use tokio::time::Instant;
 use abs_path::AbsPath;
-use witcherscript_project::content::{ContentScanError, ProjectDirectory, find_content_in_directory};
+use witcherscript_project::content::ContentScanError;
 use witcherscript_project::source_tree::SourceTreeDifference;
-use witcherscript_project::{Content, ContentRepositories, FileError};
+use witcherscript_project::{ContentScanner, FileError};
 use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError};
 use crate::{reporting::IntoLspDiagnostic, Backend};
 
 
 impl Backend {
-    pub async fn scan_workspace_projects(&self) {
-        self.log_info("Scanning workspace projects...").await;
-
-        let mut projects = Vec::new();
-    
-        let workspace_roots = self.workspace_roots.read().await;
-        for root in workspace_roots.iter() {
-            let (contents, errors) = find_content_in_directory(root, true);
-        
-            for content in contents {
-                if let Ok(proj) = content.into_any().downcast::<ProjectDirectory>() { 
-                    projects.push(proj);
-                }
-            }
-        
-            for err in errors {
-                self.report_content_scan_error(err).await;    
-            }
-        }
-
-        if projects.is_empty() {
-            self.log_info("Found no projects in the workspace.").await;
-        } else {
-            for proj in &projects {
-                self.log_info(format!("Found project {}", proj.content_name())).await;
-            }
-        }
-    
+    pub async fn setup_workspace_content_scanners(&self) {
         let mut graph = self.content_graph.write().await;
-        graph.set_workspace_projects(projects);
-    } 
-    
-    pub async fn scan_content_repositories(&self) {
-        self.log_info("Scanning content repositories...").await;
+        let workspace_roots = self.workspace_roots.read().await;
 
-        let mut repos = ContentRepositories::new();
-    
+        graph.clear_workspace_scanners();
+
+        for root in workspace_roots.iter() {
+            let scanner = 
+                ContentScanner::new(root.clone()).unwrap()
+                .recursive(true)
+                .only_projects(true);
+
+            graph.add_workspace_scanner(scanner);
+        }
+    }
+
+    pub async fn setup_repository_content_scanners(&self) {
+        let mut graph = self.content_graph.write().await;
         let config = self.config.read().await;
+
+        let mut repo_paths = Vec::new();
+        
         for repo in &config.project_repositories {
+            repo_paths.push(repo.clone());
+        }
+        
+        repo_paths.push(config.game_directory.join("content"));
+        repo_paths.push(config.game_directory.join("Mods"));
+
+
+        graph.clear_repository_scanners();
+
+        for repo in repo_paths {
             if !repo.as_os_str().is_empty() {
-                match AbsPath::resolve(repo, None) {
+                match AbsPath::resolve(&repo, None) {
                     Ok(abs_repo) => {
-                        repos.add_repository(abs_repo);
+                        match ContentScanner::new(abs_repo) {
+                            Ok(scanner) => {
+                                let scanner = scanner.recursive(false).only_projects(false);
+                                graph.add_repository_scanner(scanner);
+                            },
+                            Err(err) => {
+                                self.report_content_scan_error(err).await;
+                            },
+                        }
                     }
                     Err(_) => {
                         self.log_error(format!("Invalid project repository path: {}", repo.display())).await;
@@ -59,38 +61,12 @@ impl Backend {
                 }
             }
         }
-        if !config.game_directory.as_os_str().is_empty() {
-            match AbsPath::resolve(&config.game_directory, None) {
-                Ok(abs_game_directory) => {
-                    repos.add_repository(abs_game_directory.join("content").unwrap());
-                    repos.add_repository(abs_game_directory.join("Mods").unwrap());
-                }
-                Err(_) => {
-                    self.log_error(format!("Invalid game directory path: {}", config.game_directory.display())).await;
-                }
-            }
-        }
-    
-        repos.scan();
-    
-        for err in &repos.errors {
-            self.report_content_scan_error(err.clone()).await;    
-        }
-
-        if repos.found_content().is_empty() {
-            self.log_info("Found no script contents in repositories.").await;
-        } else {
-            for content in repos.found_content() {
-                self.log_info(format!("Found script content {}", content.content_name())).await;
-            }
-        }
-    
-        let mut graph = self.content_graph.write().await;
-        graph.set_repositories(repos);
     }
     
     pub async fn build_content_graph(&self) {
         self.log_info("Building content graph...").await;
+
+        self.clear_all_diagnostics().await;
 
         let mut graph = self.content_graph.write().await;
         let diff = graph.build();

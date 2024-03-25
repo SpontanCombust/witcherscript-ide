@@ -5,10 +5,10 @@ pub mod source_tree;
 pub use source_tree::SourceTree;
 
 pub mod content;
-pub use content::{Content, find_content_in_directory};
+pub use content::{Content, try_make_content};
 
-mod content_repository;
-pub use content_repository::ContentRepositories;
+mod content_scanner;
+pub use content_scanner::ContentScanner;
 
 pub mod content_graph;
 pub use content_graph::ContentGraph;

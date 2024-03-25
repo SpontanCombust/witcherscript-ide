@@ -72,7 +72,7 @@ pub async fn initialized(backend: &Backend, _: lsp::InitializedParams) {
         }
     ]).await.unwrap();
 
-    backend.scan_content_repositories().await;
-    backend.scan_workspace_projects().await;
+    backend.setup_workspace_content_scanners().await;
+    backend.setup_repository_content_scanners().await;
     backend.build_content_graph().await;
 }

@@ -4,7 +4,7 @@ use abs_path::AbsPath;
 use thiserror::Error;
 use lsp_types as lsp;
 use crate::content::{try_make_content, ContentScanError, ProjectDirectory};
-use crate::{Content, ContentRepositories, FileError};
+use crate::{Content, FileError, ContentScanner};
 use crate::manifest::{DependencyValue, ManifestParseError};
 
 
@@ -44,8 +44,8 @@ pub enum ContentGraphError {
 /// Stores contents needed in the current workspace and tracks relationships between them.
 #[derive(Debug)]
 pub struct ContentGraph {
-    repos: ContentRepositories,
-    workspace_projects: Vec<Box<ProjectDirectory>>,
+    repo_scanners: Vec<ContentScanner>,
+    workspace_scanners: Vec<ContentScanner>,
 
     nodes: Vec<GraphNode>,
     edges: Vec<GraphEdge>,
@@ -78,8 +78,8 @@ enum GraphEdgeDirection {
 impl ContentGraph {
     pub fn new() -> Self {
         Self {
-            repos: ContentRepositories::new(),
-            workspace_projects: Vec::new(),
+            repo_scanners: Vec::new(),
+            workspace_scanners: Vec::new(),
 
             nodes: Vec::new(),
             edges: Vec::new(),
@@ -88,22 +88,20 @@ impl ContentGraph {
         }
     }
 
-    /// Set repositories which the graph can access for any dependencies
-    pub fn set_repositories(&mut self, repos: ContentRepositories) {
-        self.repos = repos;
+    pub fn clear_repository_scanners(&mut self) {
+        self.repo_scanners.clear();
     }
 
-    pub fn get_reposity_contents(&self) -> &[Box<dyn Content>] {
-        self.repos.found_content()
+    pub fn add_repository_scanner(&mut self, scanner: ContentScanner) {
+        self.repo_scanners.push(scanner);
     }
 
-    /// Set paths to contents from the workspace that should be actively monitored
-    pub fn set_workspace_projects(&mut self, contents: Vec<Box<ProjectDirectory>>) {
-        self.workspace_projects = contents;
+    pub fn clear_workspace_scanners(&mut self) {
+        self.workspace_scanners.clear();
     }
 
-    pub fn get_workspace_projects(&self) -> &[Box<ProjectDirectory>] {
-        &self.workspace_projects
+    pub fn add_workspace_scanner(&mut self, scanner: ContentScanner) {
+        self.workspace_scanners.push(scanner);
     }
 
 
@@ -116,24 +114,12 @@ impl ContentGraph {
         self.edges.clear();
         self.errors.clear();
 
-        if !self.workspace_projects.is_empty() {     
-            for i in 0..self.workspace_projects.len() {
-                let content = &self.workspace_projects[i];
-                self.create_node_for_content(content.clone(), false, true);
-            }
-    
-            for i in 0..self.repos.found_content().len() {
-                let content = &self.repos.found_content()[i];
-                self.create_node_for_content(dyn_clone::clone_box(&**content), true, false);
-            }
-    
-            // Correct nodes if repository and workspace paths overlap
-            for n in &mut self.nodes {
-                if self.repos.found_content().iter().any(|repo_content| repo_content.path() == n.content.path()) {
-                    n.in_repository = true;
-                }
-            }
-    
+        self.create_workspace_content_nodes();
+
+        // do not try finding dependencies etc. if workspace scanners returned no contents
+        if !self.nodes.is_empty() {
+            self.create_repository_content_nodes();
+
             // Now visit each of workspace content nodes to check for their dependencies.
             let mut visited = HashSet::new();
             for i in 0..self.nodes.len() {
@@ -141,18 +127,18 @@ impl ContentGraph {
                     self.link_dependencies(i, &mut visited);
                 }
             }
-    
+
             // At the start all contents found in repos were given a node.
             // Now we're going to remove nodes that are not needed anymore (the ones not used by workspace's projects).
             // Since we've built dependencies only for workspace contents, the contents that do not have any dependants are technically unnecessary.
-            let unneeded_content_paths: Vec<_> = self.nodes.iter()
+            let unneeded_content_indices: Vec<_> = self.nodes.iter()
                 .enumerate()
                 .filter(|(i, n)| !n.in_workspace && !self.edges.iter().any(|e| e.dependency_idx == *i))
-                .map(|(_, n)| n.content.path().clone())
+                .map(|(i, _)| i)
                 .collect();
     
-            for p in unneeded_content_paths {
-                self.remove_node_by_path(&p);
+            for i in unneeded_content_indices {
+                self.remove_node_by_index(i);
             }
         }
 
@@ -222,18 +208,66 @@ impl ContentGraph {
 
 
 
-    /// Returns index of the node if it was inserted successfully
-    fn create_node_for_content(&mut self, content: Box<dyn Content>, in_repository: bool, in_workspace: bool) {
-        if self.get_node_index_by_path(content.path()).is_some() {
-            // node has already been made for this content
-            return;
-        }
+    fn create_workspace_content_nodes(&mut self) {
+        for scanner in &self.workspace_scanners {
+            let (contents, errors) = scanner.scan();
 
-        self.insert_node(GraphNode { 
-            content,
-            in_workspace, 
-            in_repository,
-        });
+            for content in contents {
+                if let Some(i) = self.get_node_index_by_path(content.path()) { 
+                    self.nodes[i].in_workspace = true;
+                } else {
+                    self.nodes.push(GraphNode { 
+                        content,
+                        in_workspace: true, 
+                        in_repository: false,
+                    });
+                }
+            }
+
+            for err in errors {
+                match err {
+                    ContentScanError::Io(err) => {
+                        self.errors.push(ContentGraphError::Io(err));
+                    },
+                    ContentScanError::ManifestParse(err) => {
+                        self.errors.push(ContentGraphError::ManifestParse(err))
+                    },
+                    // NotContent only occurs when trying to make content manually and not when scanning
+                    ContentScanError::NotContent => {},
+                }
+            }
+        }
+    }
+
+    fn create_repository_content_nodes(&mut self) {
+        for scanner in &self.repo_scanners {
+            let (contents, errors) = scanner.scan();
+
+            for content in contents {
+                if let Some(i) = self.get_node_index_by_path(content.path()) { 
+                    self.nodes[i].in_repository = true;
+                } else {
+                    self.nodes.push(GraphNode { 
+                        content,
+                        in_workspace: false, 
+                        in_repository: true,
+                    });
+                }
+            }
+
+            for err in errors {
+                match err {
+                    ContentScanError::Io(err) => {
+                        self.errors.push(ContentGraphError::Io(err));
+                    },
+                    ContentScanError::ManifestParse(err) => {
+                        self.errors.push(ContentGraphError::ManifestParse(err))
+                    },
+                    // NotContent only occurs when trying to make content manually and not when scanning
+                    ContentScanError::NotContent => {},
+                }
+            }
+        }
     }
 
     fn link_dependencies(&mut self, node_idx: usize, visited: &mut HashSet<usize>) {
@@ -256,18 +290,6 @@ impl ContentGraph {
                     },
                     DependencyValue::FromPath { path } => {
                         self.link_dependencies_value_from_path(node_idx, &manifest_path, visited, path, entry.value.range());
-                        // if `path` is absolute it will be returned as-is without joining it onto content path
-                        // match self.nodes[node_idx].content.path().join(path) {
-                            // Ok(final_path) => {
-                            // },
-                            // Err(_) => {
-                            //     self.errors.push(ContentGraphError::DependencyPathNotFound { 
-                            //         content_path: path.to_path_buf(), 
-                            //         manifest_path: manifest_path.clone(),
-                            //         manifest_range: entry.value.range().clone()
-                            //     })  
-                            // },
-                        // }
                     },
                 }
             }
@@ -381,34 +403,32 @@ impl ContentGraph {
 
 
     /// Changes node indices. Be aware!
-    fn remove_node_by_path(&mut self, content_path: &AbsPath) {
-        if let Some(target_idx) = self.get_node_index_by_path(content_path) {
-            // first remove all edges that mention this node
-            self.edges.retain(|edge| edge.dependant_idx != target_idx && edge.dependency_idx != target_idx);
+    fn remove_node_by_index(&mut self, target_idx: usize) {
+        // first remove all edges that mention this node
+        self.edges.retain(|edge| edge.dependant_idx != target_idx && edge.dependency_idx != target_idx);
 
-            let last_idx = self.nodes.len() - 1;
-            if self.nodes.len() > 1 && target_idx != last_idx {
-                // swap this and the last node to retain the same indices for all but these swapped nodes
-                self.nodes.swap(target_idx, last_idx);
-                
-                // fix references to the swapped edge
-                self.edges.iter_mut()
-                    .for_each(|edge| { 
-                        if edge.dependant_idx == last_idx {
-                            edge.dependant_idx = target_idx;
-                        }
-                        if edge.dependency_idx == last_idx {
-                            edge.dependency_idx = target_idx;
-                        }
-                    });
+        let last_idx = self.nodes.len() - 1;
+        if self.nodes.len() > 1 && target_idx != last_idx {
+            // swap this and the last node to retain the same indices for all but these swapped nodes
+            self.nodes.swap(target_idx, last_idx);
+            
+            // fix references to the swapped edge
+            self.edges.iter_mut()
+                .for_each(|edge| { 
+                    if edge.dependant_idx == last_idx {
+                        edge.dependant_idx = target_idx;
+                    }
+                    if edge.dependency_idx == last_idx {
+                        edge.dependency_idx = target_idx;
+                    }
+                });
 
-                self.edges.sort();
-            }
-
-            // remove the last element
-            // if we did a swap it is the node we've been intending to remove
-            self.nodes.pop();
+            self.edges.sort();
         }
+
+        // remove the last element
+        // if we did a swap it is the node we've been intending to remove
+        self.nodes.pop();
     }
 
     fn get_node_index_by_path(&self, path: &AbsPath) -> Option<usize> {

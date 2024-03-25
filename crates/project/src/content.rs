@@ -176,53 +176,6 @@ pub enum ContentScanError {
     NotContent,
 }
 
-pub fn find_content_in_directory(path: &AbsPath, scan_recursively: bool) -> (Vec<Box<dyn Content>>, Vec<ContentScanError>) {
-    let mut contents = Vec::new();
-    let mut errors = Vec::new();
-
-    if path.is_dir() {
-        if let Ok(content) = try_make_content(path) {
-            contents.push(content);
-        } else {
-            _find_content_in_directory(path, scan_recursively, &mut contents, &mut errors);
-        }
-    }
-
-    (contents, errors)
-}
-
-fn _find_content_in_directory(path: &AbsPath, scan_recursively: bool, contents: &mut Vec<Box<dyn Content>>, errors: &mut Vec<ContentScanError>) {
-    match std::fs::read_dir(path) {
-        Ok(iter) => {
-            for entry in iter {
-                match entry {
-                    Ok(entry) => {
-                        let candidate = AbsPath::resolve(entry.path(), None).unwrap();
-                        if candidate.is_dir() {
-                            match try_make_content(&candidate) {
-                                Ok(content) => contents.push(content),
-                                Err(err) => {
-                                    if let (&ContentScanError::NotContent, true) = (&err, scan_recursively) {
-                                        _find_content_in_directory(&candidate, scan_recursively, contents, errors)
-                                    } else {
-                                        errors.push(err);
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    Err(err) => {
-                        errors.push(FileError::new(path.clone(), err).into());
-                    }
-                }
-            }
-        },
-        Err(err) => {
-            errors.push(FileError::new(path.clone(), err).into());
-        }
-    }
-}
-
 pub fn try_make_content(path: &AbsPath) -> Result<Box<dyn Content>, ContentScanError> {
     let manifest_path = path.join(Manifest::FILE_NAME).unwrap();
     if manifest_path.exists() {

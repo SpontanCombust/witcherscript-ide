@@ -4,7 +4,7 @@ use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_analysis::{diagnostics::Diagnostic, jobs::syntax_analysis};
-use witcherscript_project::Manifest;
+use witcherscript_project::{content::ProjectDirectory, Manifest};
 use crate::{reporting::IntoLspDiagnostic, Backend};
 
 
@@ -49,13 +49,12 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
         let project_is_known = backend
             .content_graph
             .read().await
-            .get_workspace_projects()
-            .iter()
+            .nodes()
+            .filter_map(|n| n.content.as_any().downcast_ref::<ProjectDirectory>())
             .any(|p| p.manifest_path() == &doc_path);
 
         if !project_is_known {
             backend.log_info("Opened unknown manifest file").await;
-            backend.scan_workspace_projects().await;
             backend.build_content_graph().await;
         }
     }
