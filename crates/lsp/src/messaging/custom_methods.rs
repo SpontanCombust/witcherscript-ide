@@ -1,7 +1,7 @@
 use std::io::Write;
-use std::path::PathBuf;
 use tower_lsp::{jsonrpc, lsp_types as lsp};
 use tower_lsp::jsonrpc::Result;
+use abs_path::AbsPath;
 use witcherscript_project::Manifest;
 use crate::Backend;
 use super::requests::{self, ContentInfo};
@@ -9,8 +9,8 @@ use super::requests::{self, ContentInfo};
 
 impl Backend {
     pub async fn handle_projects_create_request(&self, params: requests::projects::create::Parameters) -> Result<requests::projects::create::Response> {
-        let project_dir: PathBuf;
-        if let Ok(path) = params.directory_uri.to_file_path() {
+        let project_dir: AbsPath;
+        if let Ok(path) = AbsPath::try_from(params.directory_uri) {
             project_dir = path;
         } else {
             return Err(jsonrpc::Error::invalid_params("directory_uri parameter is not a file URI"));
@@ -26,7 +26,7 @@ impl Backend {
             })
         }
 
-        let manifest_path = project_dir.join(Manifest::FILE_NAME);
+        let manifest_path = project_dir.join(Manifest::FILE_NAME).unwrap();
         if manifest_path.exists() {
             return Err(jsonrpc::Error { 
                 code: jsonrpc::ErrorCode::ServerError(-1001), 
@@ -36,7 +36,7 @@ impl Backend {
         }
 
 
-        let scripts_path = project_dir.join("scripts");
+        let scripts_path = project_dir.join("scripts").unwrap();
         if !scripts_path.exists() {
             if let Err(err) = std::fs::create_dir(scripts_path) {
                 return Err(jsonrpc::Error { 
@@ -79,15 +79,20 @@ impl Backend {
             })
         }
 
-        let manifest_uri = lsp::Url::from_file_path(manifest_path).unwrap();
         Ok(requests::projects::create::Response { 
-            manifest_uri
+            manifest_uri: manifest_path.into()
         })
     }
 
     pub async fn handle_debug_script_ast_request(&self, params: requests::debug::script_ast::Parameters) -> Result<requests::debug::script_ast::Response> {
-        let path = params.script_uri.to_file_path().map_err(|_| jsonrpc::Error::invalid_params("script_uri parameter is not a file URI"))?;
-        let script = self.scripts.get(&path).ok_or(jsonrpc::Error {
+        let script_path: AbsPath;
+        if let Ok(path) = AbsPath::try_from(params.script_uri) {
+            script_path = path;
+        } else {
+            return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
+        }
+
+        let script = self.scripts.get(&script_path).ok_or(jsonrpc::Error {
             code: jsonrpc::ErrorCode::ServerError(-1010),
             message: "Script file not found".into(),
             data: None
@@ -101,8 +106,8 @@ impl Backend {
     }
 
     pub async fn handle_scripts_parent_content_request(&self, params: requests::scripts::parent_content::Parameters) -> Result<requests::scripts::parent_content::Response>  {
-        let script_path: PathBuf;
-        if let Ok(path) = params.script_uri.to_file_path() {
+        let script_path: AbsPath;
+        if let Ok(path) = AbsPath::try_from(params.script_uri) {
             script_path = path;
         } else {
             return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
@@ -129,8 +134,8 @@ impl Backend {
         if let Some(n) = self.content_graph.read().await.get_node_by_path(&parent_content_path) {
             Ok(requests::scripts::parent_content::Response {
                 parent_content_info: ContentInfo { 
-                    content_uri: lsp::Url::from_file_path(&parent_content_path).unwrap(), 
-                    scripts_root_uri: lsp::Url::from_file_path(n.content.source_tree_root()).unwrap(), 
+                    content_uri: parent_content_path.into(), 
+                    scripts_root_uri: n.content.source_tree_root().to_uri(), 
                     content_name: n.content.content_name().into(),
                     is_in_workspace: n.in_workspace,
                     is_in_repository: n.in_repository
@@ -146,9 +151,9 @@ impl Backend {
     }
 
     pub async fn handle_projects_vanilla_dependency_content_request(&self, params: requests::projects::vanilla_dependency_content::Parameters) -> Result<requests::projects::vanilla_dependency_content::Response> {
-        let project_path: PathBuf;
-        if let Ok(path) = params.project_uri.to_file_path() {
-            project_path = path;
+        let project_path: AbsPath;
+        if let Ok(abs_path) = AbsPath::try_from(params.project_uri) {
+            project_path = abs_path;
         } else {
             return Err(jsonrpc::Error::invalid_params("project_uri parameter is not a valid file URI"));
         }
@@ -166,8 +171,8 @@ impl Backend {
         for n in graph.walk_dependencies(&project_path) {
             if n.content.content_name() == "content0" {
                 content0_info = Some(ContentInfo {
-                    content_uri: lsp::Url::from_file_path(n.content.path()).unwrap(),
-                    scripts_root_uri: lsp::Url::from_file_path(n.content.source_tree_root()).unwrap(),
+                    content_uri: n.content.path().to_uri(),
+                    scripts_root_uri: n.content.source_tree_root().to_uri(),
                     content_name: n.content.content_name().to_owned(),
                     is_in_workspace: n.in_workspace,
                     is_in_repository: n.in_repository

@@ -1,6 +1,6 @@
-use std::path::Path;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use tokio::{sync::mpsc, time::Instant};
+use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_analysis::{diagnostics::Diagnostic, jobs::syntax_analysis};
 use witcherscript_project::source_tree::{SourceFilePath, SourceTreeDifference};
@@ -8,7 +8,7 @@ use crate::{reporting::IntoLspDiagnostic, Backend};
 
 
 impl Backend {
-    pub async fn scan_source_tree(&self, content_path: &Path) {
+    pub async fn scan_source_tree(&self, content_path: &AbsPath) {
         let mut diff: Option<SourceTreeDifference> = None;
         if let Some(mut source_tree) = self.source_trees.get_mut(content_path) {
             self.log_info(format!("Scanning source tree of content {} for changes...", content_path.display())).await;
@@ -33,7 +33,7 @@ impl Backend {
         }
     }
 
-    pub async fn on_source_tree_changed(&self, content_path: &Path, diff: SourceTreeDifference) {
+    pub async fn on_source_tree_changed(&self, content_path: &AbsPath, diff: SourceTreeDifference) {
         let (added_count, removed_count) = (diff.added.len(), diff.removed.len());
         self.log_info(format!("Changes to source tree in {}: {} script(s) discovered, {} to be deprecated", content_path.display(), added_count, removed_count)).await;
 
@@ -53,7 +53,7 @@ impl Backend {
         rayon::spawn(move || {
             added_paths.into_iter()
                 .par_bridge()
-                .map(|p| p.absolute().to_path_buf())
+                .map(|p| p.absolute().to_owned())
                 .map(|p| {
                     let doc = ScriptDocument::from_file(&p).unwrap();
                     (p, doc)

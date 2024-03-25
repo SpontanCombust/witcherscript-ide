@@ -1,6 +1,6 @@
 use std::any::Any;
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
+use std::path::PathBuf;
+use abs_path::AbsPath;
 use thiserror::Error;
 
 use crate::manifest::{Manifest, ManifestParseError};
@@ -10,9 +10,9 @@ use crate::FileError;
 
 /// Characteristics of a directory that contains a "scripts" folder.
 pub trait Content : core::fmt::Debug + dyn_clone::DynClone + Send + Sync {
-    fn path(&self) -> &Path;
+    fn path(&self) -> &AbsPath;
     fn content_name(&self) -> &str;
-    fn source_tree_root(&self) -> &Path;
+    fn source_tree_root(&self) -> &AbsPath;
     
     fn as_any(&self) -> &dyn Any;
     fn into_any(self: Box<Self>) -> Box<dyn Any>;
@@ -26,13 +26,13 @@ pub trait Content : core::fmt::Debug + dyn_clone::DynClone + Send + Sync {
 /// Directory that has "scripts" folder directly inside it i.e. content0.
 #[derive(Debug, Clone)]
 pub struct UnpackedContentDirectory {
-    path: PathBuf,
-    script_root: PathBuf
+    path: AbsPath,
+    script_root: AbsPath
 }
 
 impl UnpackedContentDirectory {
-    pub fn new(path: PathBuf) -> Self {
-        let script_root = path.join("scripts");
+    pub fn new(path: AbsPath) -> Self {
+        let script_root = path.join("scripts").unwrap();
 
         Self {
             path,
@@ -42,7 +42,7 @@ impl UnpackedContentDirectory {
 }
 
 impl Content for UnpackedContentDirectory {
-    fn path(&self) -> &Path {
+    fn path(&self) -> &AbsPath {
         &self.path
     }
 
@@ -50,7 +50,7 @@ impl Content for UnpackedContentDirectory {
         self.path.file_name().unwrap().to_str().unwrap()
     }
 
-    fn source_tree_root(&self) -> &Path {
+    fn source_tree_root(&self) -> &AbsPath {
         &self.script_root
     }
 
@@ -68,13 +68,13 @@ impl Content for UnpackedContentDirectory {
 /// This means every packed mod folder inside "Mods" directory.
 #[derive(Debug, Clone)]
 pub struct PackedContentDirectory {
-    path: PathBuf,
-    script_root: PathBuf
+    path: AbsPath,
+    script_root: AbsPath
 }
 
 impl PackedContentDirectory {
-    pub fn new(path: PathBuf) -> Self {
-        let script_root = path.join("content").join("scripts");
+    pub fn new(path: AbsPath) -> Self {
+        let script_root = path.join("content/scripts").unwrap();
 
         Self {
             path,
@@ -84,7 +84,7 @@ impl PackedContentDirectory {
 }
 
 impl Content for PackedContentDirectory {
-    fn path(&self) -> &Path {
+    fn path(&self) -> &AbsPath {
         &self.path
     }
 
@@ -92,7 +92,7 @@ impl Content for PackedContentDirectory {
         self.path.file_name().unwrap().to_str().unwrap()
     }
 
-    fn source_tree_root(&self) -> &Path {
+    fn source_tree_root(&self) -> &AbsPath {
         &self.script_root
     }
 
@@ -109,24 +109,20 @@ impl Content for PackedContentDirectory {
 /// Directory with a script project manifest.
 #[derive(Debug, Clone)]
 pub struct ProjectDirectory {
-    path: PathBuf,
-    manifest_path: PathBuf,
-    script_root: PathBuf,
-    manifest: Manifest
+    path: AbsPath,
+    manifest_path: AbsPath,
+    script_root: AbsPath,
+    manifest: Manifest //FIXME when manifest of a project changes it is not registered in LSP, because content graph would still contain the same objects without reparsing the manifest
 }
 
 impl ProjectDirectory {
-    pub fn new(path: PathBuf) -> Result<Self, ManifestParseError> {
-        let manifest_path = path.join(Manifest::FILE_NAME);
+    pub fn new(path: AbsPath) -> Result<Self, ManifestParseError> {
+        let manifest_path = path.join(Manifest::FILE_NAME).unwrap();
         let manifest = Manifest::from_file(&manifest_path)?;
 
-        let manifest_script_root = manifest.content.scripts_root.clone().unwrap_or(PathBuf::from_str("./scripts").unwrap());
-        let script_root = if manifest_script_root.is_relative() {
-            path.join(manifest_script_root)
-        } else {
-            manifest_script_root
-        };
-
+        let manifest_script_root = manifest.content.scripts_root.clone().unwrap_or(PathBuf::from("scripts"));
+        let script_root = path.join(manifest_script_root).unwrap();
+            
         Ok(Self {
             path,
             manifest_path,
@@ -135,7 +131,7 @@ impl ProjectDirectory {
         })
     }
 
-    pub fn manifest_path(&self) -> &Path {
+    pub fn manifest_path(&self) -> &AbsPath {
         &self.manifest_path
     }
 
@@ -145,7 +141,7 @@ impl ProjectDirectory {
 }
 
 impl Content for ProjectDirectory {
-    fn path(&self) -> &Path {
+    fn path(&self) -> &AbsPath {
         &self.path
     }
 
@@ -153,7 +149,7 @@ impl Content for ProjectDirectory {
         &self.manifest.content.name
     }
 
-    fn source_tree_root(&self) -> &Path {
+    fn source_tree_root(&self) -> &AbsPath {
         &self.script_root
     }
 
@@ -173,26 +169,14 @@ impl Content for ProjectDirectory {
 #[derive(Debug, Clone, Error)]
 pub enum ContentScanError {
     #[error(transparent)]
-    Io(FileError<std::io::Error>),
+    Io(#[from] FileError<std::io::Error>),
     #[error(transparent)]
-    ManifestParse(FileError<ManifestParseError>),
+    ManifestParse(#[from] FileError<ManifestParseError>),
     #[error("this is not content directory")]
-    NotContent
+    NotContent,
 }
 
-impl From<FileError<std::io::Error>> for ContentScanError {
-    fn from(value: FileError<std::io::Error>) -> Self {
-        Self::Io(value)
-    }
-}
-
-impl From<FileError<ManifestParseError>> for ContentScanError {
-    fn from(value: FileError<ManifestParseError>) -> Self {
-        Self::ManifestParse(value)
-    }
-}
-
-pub fn find_content_in_directory(path: &Path, scan_recursively: bool) -> (Vec<Box<dyn Content>>, Vec<ContentScanError>) {
+pub fn find_content_in_directory(path: &AbsPath, scan_recursively: bool) -> (Vec<Box<dyn Content>>, Vec<ContentScanError>) {
     let mut contents = Vec::new();
     let mut errors = Vec::new();
 
@@ -207,13 +191,13 @@ pub fn find_content_in_directory(path: &Path, scan_recursively: bool) -> (Vec<Bo
     (contents, errors)
 }
 
-fn _find_content_in_directory(path: &Path, scan_recursively: bool, contents: &mut Vec<Box<dyn Content>>, errors: &mut Vec<ContentScanError>) {
-    match std::fs::read_dir(&path) {
+fn _find_content_in_directory(path: &AbsPath, scan_recursively: bool, contents: &mut Vec<Box<dyn Content>>, errors: &mut Vec<ContentScanError>) {
+    match std::fs::read_dir(path) {
         Ok(iter) => {
             for entry in iter {
                 match entry {
                     Ok(entry) => {
-                        let candidate = entry.path();
+                        let candidate = AbsPath::resolve(entry.path(), None).unwrap();
                         if candidate.is_dir() {
                             match try_make_content(&candidate) {
                                 Ok(content) => contents.push(content),
@@ -228,21 +212,21 @@ fn _find_content_in_directory(path: &Path, scan_recursively: bool, contents: &mu
                         }
                     },
                     Err(err) => {
-                        errors.push(FileError::new(path, err).into());
+                        errors.push(FileError::new(path.clone(), err).into());
                     }
                 }
             }
         },
         Err(err) => {
-            errors.push(FileError::new(path, err).into());
+            errors.push(FileError::new(path.clone(), err).into());
         }
     }
 }
 
-pub fn try_make_content(path: &Path) -> Result<Box<dyn Content>, ContentScanError> {
-    let manifest_path = path.join(Manifest::FILE_NAME);
+pub fn try_make_content(path: &AbsPath) -> Result<Box<dyn Content>, ContentScanError> {
+    let manifest_path = path.join(Manifest::FILE_NAME).unwrap();
     if manifest_path.exists() {
-        match ProjectDirectory::new(path.to_path_buf()) {
+        match ProjectDirectory::new(path.clone()) {
             Ok(proj) => {
                 Ok(Box::new(proj))
             },
@@ -250,10 +234,10 @@ pub fn try_make_content(path: &Path) -> Result<Box<dyn Content>, ContentScanErro
                 Err(FileError::new(manifest_path, err).into())
             },
         }
-    } else if path.join("scripts").exists() {
-        Ok(Box::new(UnpackedContentDirectory::new(path.to_path_buf())))
-    } else if path.join("content").join("scripts").exists() {
-        Ok(Box::new(PackedContentDirectory::new(path.to_path_buf())))
+    } else if path.join("scripts").unwrap().exists() {
+        Ok(Box::new(UnpackedContentDirectory::new(path.clone())))
+    } else if path.join("content/scripts").unwrap().exists() {
+        Ok(Box::new(PackedContentDirectory::new(path.clone())))
     } else {
         Err(ContentScanError::NotContent)
     }

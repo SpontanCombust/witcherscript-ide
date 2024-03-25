@@ -61,6 +61,10 @@ impl AbsPath {
         }
     }
 
+    pub fn to_uri(&self) -> lsp_types::Url {
+        lsp_types::Url::from_file_path(self).unwrap()
+    }
+
 
     /// Divides the given path into prefix disk (if exists) and the relative path after the root
     /// `unnormalized` should be an absolute, possibly unnormalized path

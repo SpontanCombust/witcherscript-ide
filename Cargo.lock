@@ -1279,6 +1279,7 @@ dependencies = [
 name = "witcherscript-lsp"
 version = "0.1.0"
 dependencies = [
+ "abs-path",
  "dashmap",
  "rayon",
  "serde",
@@ -1295,6 +1296,7 @@ dependencies = [
 name = "witcherscript-project"
 version = "0.1.0"
 dependencies = [
+ "abs-path",
  "dyn-clone",
  "lsp-types",
  "ropey",

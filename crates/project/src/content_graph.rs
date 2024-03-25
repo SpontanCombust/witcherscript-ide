@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
+use abs_path::AbsPath;
 use thiserror::Error;
 use lsp_types as lsp;
 use crate::content::{try_make_content, ContentScanError, ProjectDirectory};
@@ -17,7 +18,7 @@ pub enum ContentGraphError {
     DependencyPathNotFound {
         content_path: PathBuf,
         /// Manifest from which this error originated
-        manifest_path: PathBuf,
+        manifest_path: AbsPath,
         // Location in the manifest where the path is present
         manifest_range: lsp::Range
     },
@@ -25,7 +26,7 @@ pub enum ContentGraphError {
     DependencyNameNotFound {
         content_name: String,
         /// Manifest from which this error originated
-        manifest_path: PathBuf,
+        manifest_path: AbsPath,
         // Location in the manifest where the name is present
         manifest_range: lsp::Range
     },
@@ -33,7 +34,7 @@ pub enum ContentGraphError {
     MultipleMatchingDependencies {
         content_name: String,
         /// Manifest from which this error originated
-        manifest_path: PathBuf,
+        manifest_path: AbsPath,
         // Location in the manifest where the name is present
         manifest_range: lsp::Range
     }
@@ -147,7 +148,7 @@ impl ContentGraph {
             let unneeded_content_paths: Vec<_> = self.nodes.iter()
                 .enumerate()
                 .filter(|(i, n)| !n.in_workspace && !self.edges.iter().any(|e| e.dependency_idx == *i))
-                .map(|(_, n)| n.content.path().to_path_buf())
+                .map(|(_, n)| n.content.path().clone())
                 .collect();
     
             for p in unneeded_content_paths {
@@ -168,7 +169,7 @@ impl ContentGraph {
     }
 
 
-    pub fn get_node_by_path(&self, content_path: &Path) -> Option<&GraphNode> {
+    pub fn get_node_by_path(&self, content_path: &AbsPath) -> Option<&GraphNode> {
         self.get_node_index_by_path(content_path).map(|i| &self.nodes[i])
     }
 
@@ -180,7 +181,7 @@ impl ContentGraph {
     }
 
 
-    pub fn direct_dependencies<'g>(&'g self, content_path: &Path) -> Iter<'g> {
+    pub fn direct_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependencies).collect();
             Iter::new(self, indices)
@@ -189,7 +190,7 @@ impl ContentGraph {
         }
     }
 
-    pub fn direct_dependants<'g>(&'g self, content_path: &Path) -> Iter<'g> {
+    pub fn direct_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependants).collect();
             Iter::new(self, indices)
@@ -200,7 +201,7 @@ impl ContentGraph {
 
 
     /// Iterate over all content nodes that are direct or indirect dependencies to the specified content starting from it.
-    pub fn walk_dependencies<'g>(&'g self, content_path: &Path) -> Iter<'g> {
+    pub fn walk_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependencies);
             Iter::new(self, indices)
@@ -210,7 +211,7 @@ impl ContentGraph {
     }
 
     /// Iterate over all content nodes that are direct or indirect dependants of the specified content starting from it.
-    pub fn walk_dependants<'g>(&'g self, content_path: &Path) -> Iter<'g> {
+    pub fn walk_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependants);
             Iter::new(self, indices)
@@ -254,13 +255,19 @@ impl ContentGraph {
                         self.link_dependencies_value_from_repo(node_idx, &manifest_path, visited, &entry.name, entry.name.range(), *active);
                     },
                     DependencyValue::FromPath { path } => {
-                        let final_path = if path.is_relative() {
-                            self.nodes[node_idx].content.path().join(path)
-                        } else {
-                            path.clone()
-                        };
-    
-                        self.link_dependencies_value_from_path(node_idx, &manifest_path, visited, final_path, entry.value.range());
+                        self.link_dependencies_value_from_path(node_idx, &manifest_path, visited, path, entry.value.range());
+                        // if `path` is absolute it will be returned as-is without joining it onto content path
+                        // match self.nodes[node_idx].content.path().join(path) {
+                            // Ok(final_path) => {
+                            // },
+                            // Err(_) => {
+                            //     self.errors.push(ContentGraphError::DependencyPathNotFound { 
+                            //         content_path: path.to_path_buf(), 
+                            //         manifest_path: manifest_path.clone(),
+                            //         manifest_range: entry.value.range().clone()
+                            //     })  
+                            // },
+                        // }
                     },
                 }
             }
@@ -270,7 +277,7 @@ impl ContentGraph {
 
     fn link_dependencies_value_from_repo(&mut self, 
         node_idx: usize,
-        manifest_path: &Path,
+        manifest_path: &AbsPath,
         visited: &mut HashSet<usize>, 
         dependency_name: &str,
         dependency_name_range: &lsp::Range,
@@ -303,19 +310,15 @@ impl ContentGraph {
 
     fn link_dependencies_value_from_path(&mut self, 
         node_idx: usize, 
-        manifest_path: &Path,
+        manifest_path: &AbsPath,
         visited: &mut HashSet<usize>,
-        dependency_path: PathBuf,
+        dependency_path: &Path,
         dependency_path_range: &lsp::Range
     ) {
-        let dependant_path = self.nodes[node_idx].content.path().to_path_buf();
-        let final_dependency_path = if dependency_path.is_absolute() {
-            dependency_path.canonicalize()
-        } else {
-            dependant_path.join(&dependency_path).canonicalize()
-        };
+        let dependant_path = self.nodes[node_idx].content.path();
+        let abs_dependency_path = AbsPath::resolve(dependency_path, Some(dependant_path));
 
-        match final_dependency_path {
+        match abs_dependency_path {
             Ok(dep_path) => {
                 if let Some(dep_idx) = self.get_node_index_by_path(&dep_path) {
                     self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
@@ -342,7 +345,7 @@ impl ContentGraph {
                                 },
                                 ContentScanError::NotContent => {
                                     self.errors.push(ContentGraphError::DependencyPathNotFound { 
-                                        content_path: dep_path, 
+                                        content_path: dep_path.into(), 
                                         manifest_path: manifest_path.to_owned(),
                                         manifest_range: dependency_path_range.clone()
                                     })
@@ -378,7 +381,7 @@ impl ContentGraph {
 
 
     /// Changes node indices. Be aware!
-    fn remove_node_by_path(&mut self, content_path: &Path) {
+    fn remove_node_by_path(&mut self, content_path: &AbsPath) {
         if let Some(target_idx) = self.get_node_index_by_path(content_path) {
             // first remove all edges that mention this node
             self.edges.retain(|edge| edge.dependant_idx != target_idx && edge.dependency_idx != target_idx);
@@ -408,7 +411,7 @@ impl ContentGraph {
         }
     }
 
-    fn get_node_index_by_path(&self, path: &Path) -> Option<usize> {
+    fn get_node_index_by_path(&self, path: &AbsPath) -> Option<usize> {
         for (i, n) in self.nodes.iter().enumerate() {
             if n.content.path() == path {
                 return Some(i)
@@ -524,11 +527,11 @@ impl<'g> Iterator for Iter<'g> {
     }
 }
 
-
+//TODO remake as an enum, add ManifestChanged variant, add timestamp to GraphNode
 #[derive(Debug, Clone, Default)]
 pub struct ContentGraphDifference {
-    pub added: Vec<PathBuf>,
-    pub removed: Vec<PathBuf>
+    pub added: Vec<AbsPath>,
+    pub removed: Vec<AbsPath>
 }
 
 impl ContentGraphDifference {

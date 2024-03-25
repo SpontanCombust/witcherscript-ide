@@ -1,4 +1,5 @@
-use std::{path::{Path, PathBuf}, sync::Arc};
+use std::sync::Arc;
+use abs_path::AbsPath;
 use thiserror::Error;
 
 
@@ -6,16 +7,16 @@ use thiserror::Error;
 #[error("error for file or directory {}: {}", .path.display(), .error)]
 pub struct FileError<T>
 where T: std::error::Error {
-    pub path: PathBuf,
+    pub path: AbsPath,
     #[source]
     pub error: Arc<T>
 }
 
 impl<T> FileError<T> 
 where T: std::error::Error {
-    pub fn new<P: AsRef<Path>>(path: P, error: T) -> Self {
+    pub fn new(path: AbsPath, error: T) -> Self {
         Self {
-            path: path.as_ref().to_path_buf(),
+            path,
             error: Arc::new(error)
         }
     }

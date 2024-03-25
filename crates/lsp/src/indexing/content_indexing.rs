@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
 use tokio::time::Instant;
+use abs_path::AbsPath;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory, find_content_in_directory};
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{Content, ContentRepositories, FileError};
@@ -49,12 +49,26 @@ impl Backend {
         let config = self.config.read().await;
         for repo in &config.project_repositories {
             if !repo.as_os_str().is_empty() {
-                repos.add_repository(&repo);
+                match AbsPath::resolve(repo, None) {
+                    Ok(abs_repo) => {
+                        repos.add_repository(abs_repo);
+                    }
+                    Err(_) => {
+                        self.log_error(format!("Invalid project repository path: {}", repo.display())).await;
+                    }
+                }
             }
         }
         if !config.game_directory.as_os_str().is_empty() {
-            repos.add_repository(config.game_directory.join("content"));
-            repos.add_repository(config.game_directory.join("Mods"));
+            match AbsPath::resolve(&config.game_directory, None) {
+                Ok(abs_game_directory) => {
+                    repos.add_repository(abs_game_directory.join("content").unwrap());
+                    repos.add_repository(abs_game_directory.join("Mods").unwrap());
+                }
+                Err(_) => {
+                    self.log_error(format!("Invalid game directory path: {}", config.game_directory.display())).await;
+                }
+            }
         }
     
         repos.scan();
@@ -110,7 +124,7 @@ impl Backend {
         self.log_info(format!("Handled content graph related changes in {:.3}s", duration.as_secs_f32())).await;
     }
 
-    async fn on_graph_contents_added(&self, added_content_paths: Vec<PathBuf>) {
+    async fn on_graph_contents_added(&self, added_content_paths: Vec<AbsPath>) {
         let mut source_tree_diffs = HashMap::new();
 
         let graph = self.content_graph.read().await;
@@ -141,7 +155,7 @@ impl Backend {
         }
     }
 
-    async fn on_graph_contents_removed(&self, removed_content_paths: Vec<PathBuf>) {
+    async fn on_graph_contents_removed(&self, removed_content_paths: Vec<AbsPath>) {
         let mut source_tree_diffs = HashMap::new();
         for removed_path in removed_content_paths {
             self.log_info(format!("Deprecated content: {}", removed_path.display())).await;

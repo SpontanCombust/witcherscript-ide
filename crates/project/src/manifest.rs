@@ -1,4 +1,5 @@
-use std::{fs::File, io::{self, Read}, path::{Path, PathBuf}, str::FromStr, sync::Arc};
+use std::{fs::File, io::{self, Read}, path::PathBuf, str::FromStr, sync::Arc};
+use abs_path::AbsPath;
 use ropey::Rope;
 use semver::Version;
 use shrinkwraprs::Shrinkwrap;
@@ -56,9 +57,8 @@ pub enum DependencyValue {
 impl Manifest {
     pub const FILE_NAME: &str = "witcherscript.toml";
 
-    pub fn from_file<P>(path: P) -> Result<Self, ManifestParseError> 
-    where P: AsRef<Path> {
-        let mut f = File::open(&path).map_err(|err| Arc::new(err))?;
+    pub fn from_file(path: &AbsPath) -> Result<Self, ManifestParseError> {
+        let mut f = File::open(path).map_err(|err| Arc::new(err))?;
 
         let mut buff = String::new();
         // manifests are usually comparatively small, so reading it all at once shouldn't be that big of a deal

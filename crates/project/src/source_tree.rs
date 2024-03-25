@@ -1,19 +1,20 @@
 use std::borrow::Borrow;
 use std::collections::BTreeSet;
 use std::fmt::Display;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
+use abs_path::AbsPath;
 use crate::FileError;
 
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SourceFilePath {
-    script_root: Arc<PathBuf>,
-    abs_path: PathBuf
+    script_root: Arc<AbsPath>,
+    abs_path: AbsPath
 }
 
 impl SourceFilePath {
-    fn new(script_root: Arc<PathBuf>, abs_path: PathBuf) -> Self {
+    fn new(script_root: Arc<AbsPath>, abs_path: AbsPath) -> Self {
         Self {
             script_root,
             abs_path
@@ -21,7 +22,7 @@ impl SourceFilePath {
     }
 
     /// A full path to the file
-    pub fn absolute(&self) -> &Path {
+    pub fn absolute(&self) -> &AbsPath {
         &self.abs_path
     }
 
@@ -31,34 +32,34 @@ impl SourceFilePath {
     }
 
     /// A full path to the "scripts" directory
-    pub fn root(&self) -> &Path {
+    pub fn root(&self) -> &AbsPath {
         self.script_root.as_ref()
     }
 }
 
-impl Borrow<Path> for SourceFilePath {
-    fn borrow(&self) -> &Path {
+impl Borrow<AbsPath> for SourceFilePath {
+    fn borrow(&self) -> &AbsPath {
         &self.abs_path
     }
 }
 
 impl Display for SourceFilePath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.abs_path.display())
+        write!(f, "{}", self.abs_path)
     }
 }
 
 
 #[derive(Debug, Clone)]
 pub struct SourceTree {
-    script_root: Arc<PathBuf>,
+    script_root: Arc<AbsPath>,
     tree: BTreeSet<SourceFilePath>,
     /// Errors encountered during scanning
     pub errors: Vec<FileError<std::io::Error>>
 }
 
 impl SourceTree {
-    pub(crate) fn new(script_root: PathBuf) -> Self {
+    pub(crate) fn new(script_root: AbsPath) -> Self {
         let mut tree = Self {
             script_root: Arc::new(script_root),
             tree: BTreeSet::new(),
@@ -70,13 +71,13 @@ impl SourceTree {
         tree
     }
 
-    fn scan_visit_dir(&mut self, path: PathBuf) {
+    fn scan_visit_dir(&mut self, path: AbsPath) {
         match std::fs::read_dir(&path) {
             Ok(iter) => {
                 for entry in iter {
                     match entry {
                         Ok(entry) => {
-                            let path = entry.path();
+                            let path = AbsPath::resolve(entry.path(), None).unwrap();
                             if path.is_dir() {
                                 self.scan_visit_dir(path);
                             } else {
@@ -90,12 +91,12 @@ impl SourceTree {
                 }
             },
             Err(err) => {
-                self.errors.push(FileError::new(path, err));
+                self.errors.push(FileError::new(path.clone(), err));
             },
         }
     }
 
-    fn scan_visit_file(&mut self, path: PathBuf) {
+    fn scan_visit_file(&mut self, path: AbsPath) {
         if let Some(ext) = path.extension() {
             if ext == "ws" {
                 self.tree.insert(SourceFilePath::new(self.script_root.clone(), path));
@@ -119,7 +120,7 @@ impl SourceTree {
     }
 
     
-    pub fn script_root(&self) -> &Path {
+    pub fn script_root(&self) -> &AbsPath {
         &self.script_root
     }
 
@@ -127,8 +128,7 @@ impl SourceTree {
         self.tree.len()
     }
 
-    /// The path should be absoulte
-    pub fn contains(&self, path: &Path) -> bool {
+    pub fn contains(&self, path: &AbsPath) -> bool {
         self.tree.contains(path)
     }
 
@@ -146,7 +146,7 @@ impl IntoIterator for SourceTree {
     }
 }
 
-
+//TODO remake as an enum, add Changed variant, add timestamp to SourceFilePath
 #[derive(Debug, Clone, Default)]
 pub struct SourceTreeDifference {
     pub added: Vec<SourceFilePath>,

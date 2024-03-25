@@ -1,5 +1,7 @@
 use std::{borrow::Borrow, ops::DerefMut};
 use tower_lsp::lsp_types as lsp;
+use tower_lsp::jsonrpc::Result;
+use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_analysis::{diagnostics::Diagnostic, jobs::syntax_analysis};
 use witcherscript_project::Manifest;
@@ -7,7 +9,7 @@ use crate::{reporting::IntoLspDiagnostic, Backend};
 
 
 pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams) {
-    let doc_path = params.text_document.uri.to_file_path().unwrap();
+    let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
     let belongs_to_workspace = backend
         .workspace_roots
         .read().await
@@ -49,7 +51,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
             .read().await
             .get_workspace_projects()
             .iter()
-            .any(|p| p.manifest_path() == doc_path);
+            .any(|p| p.manifest_path() == &doc_path);
 
         if !project_is_known {
             backend.log_info("Opened unknown manifest file").await;
@@ -60,7 +62,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
 }
 
 pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentParams) {
-    let doc_path = params.text_document.uri.to_file_path().unwrap();
+    let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
     if let Some(mut doc) = backend.doc_buffers.get_mut(&doc_path) {
         for edit in params.content_changes {
             doc.deref_mut().edit(&edit);
@@ -77,7 +79,7 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
 }
 
 pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams) {
-    let doc_path = params.text_document.uri.to_file_path().unwrap();
+    let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
 
     let belongs_to_workspace = backend
         .workspace_roots
@@ -122,7 +124,7 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
 }
 
 pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParams) {
-    let doc_path = params.text_document.uri.to_file_path().unwrap();
+    let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
     if doc_path.extension().map(|ext| ext == "ws").unwrap_or(false) {
         let belongs_to_workspace = backend
             .workspace_roots

@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use abs_path::AbsPath;
 use crate::{content::ContentScanError, find_content_in_directory, Content};
 
 
@@ -7,7 +7,7 @@ use crate::{content::ContentScanError, find_content_in_directory, Content};
 /// Mainly used repositories are `Witcher 3/content` and `Witcher 3/Mods`.
 #[derive(Debug, Default)]
 pub struct ContentRepositories {
-    repository_paths: Vec<PathBuf>,
+    repository_paths: Vec<AbsPath>,
     found_content: Vec<Box<dyn Content>>,
     /// Errors encountered during scanning
     pub errors: Vec<ContentScanError>
@@ -22,11 +22,9 @@ impl ContentRepositories {
         }
     }
 
-    pub fn add_repository<P>(&mut self, path: P) 
-    where P: AsRef<Path> {
-        let pathbuf = path.as_ref().to_path_buf();
-        if !self.repository_paths.contains(&pathbuf) {
-            self.repository_paths.push(pathbuf);
+    pub fn add_repository(&mut self, path: AbsPath) {
+        if !self.repository_paths.contains(&path) {
+            self.repository_paths.push(path);
         }
     }
 

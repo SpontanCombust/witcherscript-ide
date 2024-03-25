@@ -1,3 +1,4 @@
+use abs_path::AbsPath;
 use serde::Deserialize;
 use tower_lsp::lsp_types::notification::Notification;
 use tower_lsp::lsp_types as lsp;
@@ -17,7 +18,7 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
     if let Some(workspace_folders) = params.workspace_folders {
         let mut workspace_roots = backend.workspace_roots.write().await;
         *workspace_roots = workspace_folders.into_iter()
-            .map(|f| f.uri.to_file_path().unwrap())
+            .map(|f| AbsPath::try_from(f.uri).unwrap())
             .collect();
     }
 
