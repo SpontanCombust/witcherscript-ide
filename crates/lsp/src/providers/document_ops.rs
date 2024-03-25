@@ -105,13 +105,15 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
 
 
         // replace the doc content completely
-        let mut doc_buff = backend
+        let doc_buff = backend
             .doc_buffers
             .entry(doc_path.clone())
             .insert(ScriptDocument::from_str(&params.text.unwrap()));
 
         if let Some(mut script) = backend.scripts.get_mut(&doc_path) {
-            if let Err(err) = script.update(&mut doc_buff) {
+            // do a fresh reparse without caring about the previous state 
+            // as a fail-safe in case of bad edits or document being changed outside of the editor
+            if let Err(err) = script.refresh(&doc_buff) {
                 backend.log_error(err).await;
             }
 

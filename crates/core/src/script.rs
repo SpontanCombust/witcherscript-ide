@@ -29,7 +29,7 @@ impl Script {
         })
     }
 
-    /// Reparses AST based on the script document.
+    /// Reparses AST based on the previous script state and changes made to the document.
     /// Clear document's edit history.
     pub fn update(&mut self, doc: &mut ScriptDocument) -> Result<(), ScriptError> {
         for edit in &doc.edits {
@@ -41,6 +41,16 @@ impl Script {
         self.prev_tree = Some(prev_tree);
 
         doc.edits.clear();
+
+        Ok(())
+    }
+
+    /// Reparses AST based on the script document alone.
+    /// The range of the entire script will be different after the operation.
+    pub fn refresh(&mut self, doc: &ScriptDocument) -> Result<(), ScriptError> {
+        let current_tree = Self::parse_rope(&doc.rope, None)?;
+        let prev_tree = std::mem::replace(&mut self.current_tree, current_tree);
+        self.prev_tree = Some(prev_tree);
 
         Ok(())
     }
