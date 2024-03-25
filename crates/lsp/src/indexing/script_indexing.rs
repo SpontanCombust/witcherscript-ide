@@ -65,8 +65,7 @@ impl Backend {
                 .map(|(p, script)| {
                     let mut diagnostics: Vec<Diagnostic> = Vec::new();
                     syntax_analysis::syntax_analysis(script.root_node(), &mut diagnostics);
-                    let lsp_diags: Vec<_> = diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic()).collect();
-                    (p, script, lsp_diags)
+                    (p, script, diagnostics)
                 })
                 .for_each(|result| send.blocking_send(result).expect("mpsc send fail"));
         });
@@ -75,7 +74,9 @@ impl Backend {
             // Doing to many logs at once puts a strain on the connection, better to do this through a Progress or something...
             // self.log_info(format!("Discovered script: {}", script_path.display())).await;
             self.scripts.insert(script_path.clone(), script);
-            self.publish_diagnostics(script_path, diags).await;
+            for diag in diags.into_iter().map(|diag| diag.into_lsp_diagnostic()) {
+                self.push_diagnostic(&script_path, diag);
+            }
         }
     }
 
@@ -83,7 +84,7 @@ impl Backend {
         for removed_path in removed_paths {
             // self.log_info(format!("Deprecated script: {}", removed_path)).await;
             self.scripts.remove(removed_path.absolute());
-            // clearing diagnostics is done in will_delete_files
+            self.purge_diagnostics(removed_path.absolute());
         }
     }
 }

@@ -37,7 +37,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
             backend.log_info("Opened script file not belonging to any known content").await;
             match Script::new(&doc_buff) {
                 Ok(script) => {
-                    script_syntax_diagnostics(&script, backend, params.text_document.uri.clone()).await;
+                    script_syntax_diagnostics(&script, backend, &doc_path);
                     backend.scripts.insert(doc_path, script);
                 },
                 Err(err) => {
@@ -58,6 +58,8 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
             backend.build_content_graph().await;
         }
     }
+
+    backend.publish_all_diagnostics().await;
 }
 
 pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentParams) {
@@ -72,7 +74,8 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
                 backend.log_error(err).await;
             }
 
-            script_syntax_diagnostics(&*script, backend, params.text_document.uri).await;
+            script_syntax_diagnostics(&*script, backend, &doc_path);
+            backend.publish_diagnostics(&doc_path).await;
         }
     }
 }
@@ -116,12 +119,14 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
                 backend.log_error(err).await;
             }
 
-            script_syntax_diagnostics(&*script, backend, params.text_document.uri).await;
+            script_syntax_diagnostics(&*script, backend, &doc_path);
         }
         
     } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
         backend.build_content_graph().await;
     }
+
+    backend.publish_all_diagnostics().await;
 }
 
 pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParams) {
@@ -143,20 +148,23 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
     
         // script does not belong to the pool of actively monitored scripts, so it can be let go on close
         if !belongs_to_workspace && !belongs_to_source_tree {
-            backend.clear_diagnostics(params.text_document.uri.clone()).await;
+            backend.purge_diagnostics(&doc_path);
             backend.scripts.remove(&doc_path);
+            backend.publish_diagnostics(&doc_path).await;
         }
-    
+        
         backend.doc_buffers.remove(&doc_path);
     }
 }
 
 
-async fn script_syntax_diagnostics<S: Borrow<Script>>(script: S, backend: &Backend, url: lsp::Url) {
+fn script_syntax_diagnostics<S: Borrow<Script>>(script: S, backend: &Backend, path: &AbsPath) {
     let mut diagnostics: Vec<Diagnostic> = Vec::new();
 
     syntax_analysis::syntax_analysis(script.borrow().root_node(), &mut diagnostics);
 
-    let lsp_diags = diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic());
-    backend.publish_diagnostics(url, lsp_diags).await;
+    backend.clear_diagnostics(path);
+    for lsp_diag in diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic()) {
+        backend.push_diagnostic(path, lsp_diag);
+    }
 }

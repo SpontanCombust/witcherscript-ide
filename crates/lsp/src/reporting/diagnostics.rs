@@ -1,4 +1,5 @@
 use tower_lsp::lsp_types as lsp;
+use abs_path::AbsPath;
 use witcherscript_analysis::diagnostics::{Diagnostic, DiagnosticBody};
 use witcherscript_project::{manifest::ManifestParseError, FileError};
 use crate::Backend;
@@ -71,16 +72,86 @@ impl IntoLspDiagnostic for (String, lsp::Range) {
 }
 
 
+#[derive(Debug)]
+pub struct PendingDiagnostics {
+    pub diags: Vec<lsp::Diagnostic>,
+    pub changed: bool,
+    pub should_purge: bool
+}
+
 impl Backend {
-    pub async fn publish_diagnostics<P: Into<lsp::Url>>(&self, path: P, diags: impl IntoIterator<Item = lsp::Diagnostic>) {
-        self.client.publish_diagnostics(path.into(), diags.into_iter().collect(), None).await;
+    pub fn push_diagnostic<D>(&self, path: &AbsPath, diag: D)
+    where D: Into<lsp::Diagnostic> {
+        if let Some(mut kv) = self.owned_diagnostics.get_mut(path) {
+            let v = kv.value_mut();
+            v.diags.push(diag.into());
+            v.changed = true;
+        } else {
+            self.owned_diagnostics.insert(path.clone(), PendingDiagnostics {
+                diags: vec![diag.into()],
+                changed: true,
+                should_purge: false
+            });
+        }
     }
 
-    pub async fn clear_diagnostics<P: Into<lsp::Url>>(&self, path: P) {
-        self.client.publish_diagnostics(path.into(), Vec::new(), None).await;
+    pub fn clear_diagnostics(&self, path: &AbsPath) {
+        self.owned_diagnostics
+            .alter(path, |_, mut v|  {
+                v.diags.clear();
+                v.changed = true;
+                v
+            });
     }
 
-    pub async fn clear_all_diagnostics(&self) {
-        let _ = self.client.workspace_diagnostic_refresh().await;
+    /// In addition to clearing diagnostics for a given file, said file will be forgotten about
+    pub fn purge_diagnostics(&self, path: &AbsPath) {
+        self.owned_diagnostics
+            .alter(path, |_, mut v|  {
+                v.diags.clear();
+                v.changed = true;
+                v.should_purge = true;
+                v
+            });
+    }
+
+    pub fn clear_all_diagnostics(&self) {
+        self.owned_diagnostics
+            .alter_all(|_, mut v| {
+                v.diags.clear();
+                v.changed = true;
+                v
+            });
+    }
+
+
+    pub async fn publish_diagnostics(&self, path: &AbsPath) {
+        if let Some(mut kv) = self.owned_diagnostics.get_mut(path) {
+            if kv.value().changed {
+                let uri = kv.key().to_uri();
+    
+                let v = kv.value_mut();
+                let diags = v.diags.drain(..).collect();
+                v.changed = false;
+    
+                self.client.publish_diagnostics(uri, diags, None).await;
+            }
+        }
+
+        self.owned_diagnostics.remove_if(path, |_, v| v.should_purge);
+    }
+
+    pub async fn publish_all_diagnostics(&self) {
+        for mut kv in self.owned_diagnostics.iter_mut().filter(|kv| kv.value().changed) {
+            let uri = kv.key().to_uri();
+
+            let v = kv.value_mut();
+            let diags = v.diags.drain(..).collect();
+            v.changed = false;
+
+            self.client.publish_diagnostics(uri, diags, None).await;
+        }
+
+        self.owned_diagnostics.retain(|_, v| !v.should_purge);
     }
 }

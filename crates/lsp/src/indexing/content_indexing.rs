@@ -66,8 +66,9 @@ impl Backend {
     pub async fn build_content_graph(&self) {
         self.log_info("Building content graph...").await;
 
-        self.clear_all_diagnostics().await;
-
+        self.clear_all_diagnostics();
+        //TODO run diagnositcs on all scripts
+        
         let mut graph = self.content_graph.write().await;
         let diff = graph.build();
     
@@ -142,6 +143,8 @@ impl Backend {
                     removed: source_tree.into_iter().collect()
                 });
             }
+
+            //TODO remove diagnostics for forgotten manifest
         }
 
         for (content_path, diff) in source_tree_diffs {
@@ -156,7 +159,7 @@ impl Backend {
                 self.log_warning(format!("Content scanning issue for {}: {}", err.path.display(), err.error)).await;
             },
             ContentScanError::ManifestParse(err) => {
-                self.publish_diagnostics(err.path.clone(), [err.into_lsp_diagnostic()]).await;
+                self.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
             },
             ContentScanError::NotContent => {},
         }
@@ -169,16 +172,16 @@ impl Backend {
                 self.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
             },
             ContentGraphError::ManifestParse(err) => {
-                self.publish_diagnostics(err.path.clone(), [err.into_lsp_diagnostic()]).await;
+                self.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
             },
             ContentGraphError::DependencyPathNotFound { content_path: _, manifest_path, manifest_range } => {
-                self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
+                self.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
             },
             ContentGraphError::DependencyNameNotFound { content_name: _, manifest_path, manifest_range } => {
-                self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
+                self.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
             },
             ContentGraphError::MultipleMatchingDependencies { content_name: _, manifest_path, manifest_range } => {
-                self.publish_diagnostics(manifest_path, [(err_str, manifest_range).into_lsp_diagnostic()]).await;
+                self.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
             }
         }
     }

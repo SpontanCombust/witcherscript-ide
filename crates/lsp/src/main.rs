@@ -9,6 +9,7 @@ use witcherscript::script_document::ScriptDocument;
 use witcherscript_project::{ContentGraph, SourceTree};
 use crate::config::Config;
 use crate::messaging::requests;
+use crate::reporting::PendingDiagnostics;
 
 mod providers;
 mod config;
@@ -22,6 +23,7 @@ pub struct Backend {
     client: Client,
     config: RwLock<Config>,
     workspace_roots: RwLock<Vec<AbsPath>>,
+    owned_diagnostics: DashMap<AbsPath, PendingDiagnostics>,
 
     content_graph: RwLock<ContentGraph>,
     
@@ -42,6 +44,7 @@ impl Backend {
             client,
             config: RwLock::new(Config::default()),
             workspace_roots: RwLock::new(Vec::new()),
+            owned_diagnostics: DashMap::new(),
 
             content_graph: RwLock::new(ContentGraph::new()),
             

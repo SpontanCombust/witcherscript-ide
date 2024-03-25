@@ -75,4 +75,6 @@ pub async fn initialized(backend: &Backend, _: lsp::InitializedParams) {
     backend.setup_workspace_content_scanners().await;
     backend.setup_repository_content_scanners().await;
     backend.build_content_graph().await;
+
+    backend.publish_all_diagnostics().await;
 }
