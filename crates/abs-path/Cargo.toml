@@ -1,0 +1,12 @@
+[package]
+name = "abs-path"
+description = "Provides a type that can only represent an absolute file path"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+shrinkwraprs.workspace = true
+lsp-types.workspace = true
+thiserror.workspace = true
+serde.workspace = true
