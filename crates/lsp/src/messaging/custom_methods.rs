@@ -92,13 +92,13 @@ impl Backend {
             return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
         }
 
-        let script = self.scripts.get(&script_path).ok_or(jsonrpc::Error {
+        let script_entry = self.scripts.get(&script_path).ok_or(jsonrpc::Error {
             code: jsonrpc::ErrorCode::ServerError(-1010),
             message: "Script file not found".into(),
             data: None
         })?;
 
-        let ast = format!("{:#?}", script.root_node());
+        let ast = format!("{:#?}", script_entry.value().script.root_node());
 
         Ok(requests::debug::script_ast::Response { 
             ast

@@ -4,7 +4,7 @@ use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_analysis::{diagnostics::Diagnostic, jobs::syntax_analysis};
 use witcherscript_project::source_tree::{SourceFilePath, SourceTreeDifference};
-use crate::{reporting::IntoLspDiagnostic, Backend};
+use crate::{reporting::IntoLspDiagnostic, Backend, ScriptState};
 
 
 impl Backend {
@@ -73,7 +73,11 @@ impl Backend {
         while let Some((script_path, script, diags)) = recv.recv().await {
             // Doing to many logs at once puts a strain on the connection, better to do this through a Progress or something...
             // self.log_info(format!("Discovered script: {}", script_path.display())).await;
-            self.scripts.insert(script_path.clone(), script);
+            self.scripts.insert(script_path.clone(), ScriptState { 
+                script, 
+                buffer: None,
+                is_foreign: false
+            });
             for diag in diags.into_iter().map(|diag| diag.into_lsp_diagnostic()) {
                 self.push_diagnostic(&script_path, diag);
             }

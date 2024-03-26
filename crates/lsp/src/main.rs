@@ -26,14 +26,20 @@ pub struct Backend {
     owned_diagnostics: DashMap<AbsPath, PendingDiagnostics>,
 
     content_graph: RwLock<ContentGraph>,
-    
     // key is path to content directory
     source_trees: DashMap<AbsPath, SourceTree>,
-
     // key is path to the file
-    doc_buffers: DashMap<AbsPath, ScriptDocument>,
-    scripts: DashMap<AbsPath, Script>
+    scripts: DashMap<AbsPath, ScriptState>
 }
+
+#[derive(Debug)]
+pub struct ScriptState {
+    script: Script,
+    buffer: Option<ScriptDocument>,
+    /// Marks a script that is not known to any content in the content graph
+    is_foreign: bool
+}
+
 
 impl Backend {
     pub const LANGUAGE_ID: &str = "witcherscript";
@@ -47,10 +53,7 @@ impl Backend {
             owned_diagnostics: DashMap::new(),
 
             content_graph: RwLock::new(ContentGraph::new()),
-            
             source_trees: DashMap::new(),
-
-            doc_buffers: DashMap::new(),
             scripts: DashMap::new()
         }
     }
