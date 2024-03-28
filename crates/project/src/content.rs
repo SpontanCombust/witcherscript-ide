@@ -112,7 +112,7 @@ pub struct ProjectDirectory {
     path: AbsPath,
     manifest_path: AbsPath,
     script_root: AbsPath,
-    manifest: Manifest //FIXME when manifest of a project changes it is not registered in LSP, because content graph would still contain the same objects without reparsing the manifest
+    manifest: Manifest
 }
 
 impl ProjectDirectory {

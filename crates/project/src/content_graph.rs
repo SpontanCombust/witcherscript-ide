@@ -150,7 +150,6 @@ impl ContentGraph {
         diff.added.extend(new_content_paths.difference(&prev_content_paths).cloned());
         diff.removed.extend(prev_content_paths.difference(&new_content_paths).cloned());
 
-        //FIXME when manifest is modified it is not registered as a modification to the graph
         diff
     }
 
