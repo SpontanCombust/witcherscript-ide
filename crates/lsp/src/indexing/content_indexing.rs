@@ -56,7 +56,7 @@ impl Backend {
                         }
                     }
                     Err(_) => {
-                        self.log_error(format!("Invalid project repository path: {}", repo.display())).await;
+                        self.reporter.log_error(format!("Invalid project repository path: {}", repo.display())).await;
                     }
                 }
             }
@@ -64,9 +64,9 @@ impl Backend {
     }
     
     pub async fn build_content_graph(&self) {
-        self.log_info("Building content graph...").await;
+        self.reporter.log_info("Building content graph...").await;
 
-        self.clear_all_diagnostics();
+        self.reporter.clear_all_diagnostics();
         //TODO run diagnositcs on all scripts
         
         let mut graph = self.content_graph.write().await;
@@ -83,13 +83,13 @@ impl Backend {
         if !diff.is_empty() {
             self.on_content_graph_changed(diff).await;
         } else {
-            self.log_info("Found no content graph changes.").await;
+            self.reporter.log_info("Found no content graph changes.").await;
         }
     }
 
     pub async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {
         let (added_count, removed_count) = (diff.added.len(), diff.removed.len());
-        self.log_info(format!("Changes to the content graph: {} content(s) discovered, {} to be deprecated", added_count, removed_count)).await;
+        self.reporter.log_info(format!("Changes to the content graph: {} content(s) discovered, {} to be deprecated", added_count, removed_count)).await;
 
         let start = Instant::now();
 
@@ -98,7 +98,7 @@ impl Backend {
         self.on_graph_contents_added(diff_added).await;
 
         let duration = Instant::now() - start;
-        self.log_info(format!("Handled content graph related changes in {:.3}s", duration.as_secs_f32())).await;
+        self.reporter.log_info(format!("Handled content graph related changes in {:.3}s", duration.as_secs_f32())).await;
     }
 
     async fn on_graph_contents_added(&self, added_content_paths: Vec<AbsPath>) {
@@ -106,7 +106,7 @@ impl Backend {
 
         let graph = self.content_graph.read().await;
         for added_path in added_content_paths {
-            self.log_info(format!("Discovered content: {}", added_path.display())).await; 
+            self.reporter.log_info(format!("Discovered content: {}", added_path.display())).await; 
 
             let added_content = &graph.get_node_by_path(&added_path).unwrap().content;
             let source_tree = added_content.source_tree();
@@ -135,7 +135,7 @@ impl Backend {
     async fn on_graph_contents_removed(&self, removed_content_paths: Vec<AbsPath>) {
         let mut source_tree_diffs = HashMap::new();
         for removed_path in removed_content_paths {
-            self.log_info(format!("Deprecated content: {}", removed_path.display())).await;
+            self.reporter.log_info(format!("Deprecated content: {}", removed_path.display())).await;
 
             if let Some((_, source_tree)) = self.source_trees.remove(&removed_path) {
                 source_tree_diffs.insert(removed_path.clone(), SourceTreeDifference {
@@ -156,10 +156,10 @@ impl Backend {
     async fn report_content_scan_error(&self, err: ContentScanError) {
         match err {
             ContentScanError::Io(err) => {
-                self.log_warning(format!("Content scanning issue for {}: {}", err.path.display(), err.error)).await;
+                self.reporter.log_warning(format!("Content scanning issue for {}: {}", err.path.display(), err.error)).await;
             },
             ContentScanError::ManifestParse(err) => {
-                self.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
             },
             ContentScanError::NotContent => {},
         }
@@ -169,24 +169,24 @@ impl Backend {
         let err_str = err.to_string();
         match err {
             ContentGraphError::Io(err) => {
-                self.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
+                self.reporter.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
             },
             ContentGraphError::ManifestParse(err) => {
-                self.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
             },
             ContentGraphError::DependencyPathNotFound { content_path: _, manifest_path, manifest_range } => {
-                self.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
             },
             ContentGraphError::DependencyNameNotFound { content_name: _, manifest_path, manifest_range } => {
-                self.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
             },
             ContentGraphError::MultipleMatchingDependencies { content_name: _, manifest_path, manifest_range } => {
-                self.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
             }
         }
     }
 
     async fn report_source_tree_scan_error(&self, err: FileError<std::io::Error>) {
-        self.log_warning(format!("Source tree scanning issue for {}: {}", err.path.display(), err.error)).await
+        self.reporter.log_warning(format!("Source tree scanning issue for {}: {}", err.path.display(), err.error)).await
     }
 }

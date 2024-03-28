@@ -7,6 +7,6 @@ pub async fn did_change_configuration(backend: &Backend, _: lsp::DidChangeConfig
         backend.setup_repository_content_scanners().await;
         backend.build_content_graph().await;
         
-        backend.publish_all_diagnostics().await;
+        backend.reporter.commit_all_diagnostics().await;
     }
 }

@@ -21,7 +21,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
         if let Some(mut script_entry) = backend.scripts.get_mut(&doc_path) {
             script_entry.value_mut().buffer.replace(doc_buff);
         } else {
-            backend.log_info("Opened script file unknown to the content graph").await;
+            backend.reporter.log_info("Opened script file unknown to the content graph").await;
 
             let script = Script::new(&doc_buff).unwrap();
             script_syntax_diagnostics(&script, backend, &doc_path);
@@ -41,12 +41,12 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
             .any(|p| p.manifest_path() == &doc_path);
 
         if !project_is_known {
-            backend.log_info("Opened unknown manifest file").await;
+            backend.reporter.log_info("Opened unknown manifest file").await;
             backend.build_content_graph().await;
         }
     }
 
-    backend.publish_all_diagnostics().await;
+    backend.reporter.commit_all_diagnostics().await;
 }
 
 pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentParams) {
@@ -60,11 +60,11 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
             }
 
             if let Err(err) = script_state.script.update(buf) {
-                backend.log_error(err).await;
+                backend.reporter.log_error(err).await;
             }
     
             script_syntax_diagnostics(&script_state.script, backend, &doc_path);
-            backend.publish_diagnostics(&doc_path).await;
+            backend.reporter.commit_diagnostics(&doc_path).await;
         }
     }
 }
@@ -102,7 +102,7 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
             // do a fresh reparse without caring about the previous state 
             // as a fail-safe in case of bad edits or document being changed outside of the editor
             if let Err(err) = script_state.script.refresh(&doc_buff) {
-                backend.log_error(err).await;
+                backend.reporter.log_error(err).await;
             }
 
             script_syntax_diagnostics(&script_state.script, backend, &doc_path);
@@ -111,7 +111,7 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
         backend.build_content_graph().await;
     }
 
-    backend.publish_all_diagnostics().await;
+    backend.reporter.commit_all_diagnostics().await;
 }
 
 pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParams) {
@@ -122,8 +122,8 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
             let script_state = entry.value_mut();
 
             if script_state.is_foreign {
-                backend.purge_diagnostics(&doc_path);
-                backend.publish_diagnostics(&doc_path).await;
+                backend.reporter.purge_diagnostics(&doc_path);
+                backend.reporter.commit_diagnostics(&doc_path).await;
                 should_remove_script = true;
             } else {
                 script_state.buffer = None;
@@ -139,11 +139,8 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
 
 fn script_syntax_diagnostics<S: Borrow<Script>>(script: S, backend: &Backend, path: &AbsPath) {
     let mut diagnostics: Vec<Diagnostic> = Vec::new();
-
     syntax_analysis::syntax_analysis(script.borrow().root_node(), &mut diagnostics);
 
-    backend.clear_diagnostics(path);
-    for lsp_diag in diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic()) {
-        backend.push_diagnostic(path, lsp_diag);
-    }
+    backend.reporter.clear_diagnostics(path);
+    backend.reporter.push_diagnostics(path, diagnostics.into_iter().map(|d| d.into_lsp_diagnostic()));
 }

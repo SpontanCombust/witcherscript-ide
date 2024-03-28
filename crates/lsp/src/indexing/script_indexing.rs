@@ -11,13 +11,13 @@ impl Backend {
     pub async fn scan_source_tree(&self, content_path: &AbsPath) {
         let mut diff: Option<SourceTreeDifference> = None;
         if let Some(mut source_tree) = self.source_trees.get_mut(content_path) {
-            self.log_info(format!("Scanning source tree of content {} for changes...", content_path.display())).await;
+            self.reporter.log_info(format!("Scanning source tree of content {} for changes...", content_path.display())).await;
 
             diff = Some(source_tree.scan());
 
             if !source_tree.errors.is_empty() {
                 for err in &source_tree.errors {
-                    self.log_warning(format!("Source tree scanning issue for {}: {}", err.path.display(), err.error)).await
+                    self.reporter.log_warning(format!("Source tree scanning issue for {}: {}", err.path.display(), err.error)).await
                 }
             }
 
@@ -28,14 +28,14 @@ impl Backend {
             if !diff.is_empty() {
                 self.on_source_tree_changed(content_path, diff).await;
             } else {
-                self.log_info("Found no source tree changes.").await;
+                self.reporter.log_info("Found no source tree changes.").await;
             }
         }
     }
 
     pub async fn on_source_tree_changed(&self, content_path: &AbsPath, diff: SourceTreeDifference) {
         let (added_count, removed_count) = (diff.added.len(), diff.removed.len());
-        self.log_info(format!("Changes to source tree in {}: {} script(s) discovered, {} to be deprecated", content_path.display(), added_count, removed_count)).await;
+        self.reporter.log_info(format!("Changes to source tree in {}: {} script(s) discovered, {} to be deprecated", content_path.display(), added_count, removed_count)).await;
 
         let start = Instant::now();
 
@@ -44,7 +44,7 @@ impl Backend {
         self.on_source_tree_paths_added(diff_added).await;
 
         let duration = Instant::now() - start;
-        self.log_info(format!("Handled source tree related changes to {} in {:.3}s", content_path.display(), duration.as_secs_f32())).await;
+        self.reporter.log_info(format!("Handled source tree related changes to {} in {:.3}s", content_path.display(), duration.as_secs_f32())).await;
     }
 
     async fn on_source_tree_paths_added(&self, added_paths: Vec<SourceFilePath>) {
@@ -79,7 +79,7 @@ impl Backend {
                 is_foreign: false
             });
             for diag in diags.into_iter().map(|diag| diag.into_lsp_diagnostic()) {
-                self.push_diagnostic(&script_path, diag);
+                self.reporter.push_diagnostic(&script_path, diag);
             }
         }
     }
@@ -88,7 +88,7 @@ impl Backend {
         for removed_path in removed_paths {
             // self.log_info(format!("Deprecated script: {}", removed_path)).await;
             self.scripts.remove(removed_path.absolute());
-            self.purge_diagnostics(removed_path.absolute());
+            self.reporter.purge_diagnostics(removed_path.absolute());
         }
     }
 }

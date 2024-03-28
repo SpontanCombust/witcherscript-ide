@@ -3,7 +3,6 @@ use serde::Deserialize;
 use tower_lsp::lsp_types::notification::Notification;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
-use witcherscript_project::Manifest;
 use crate::config::Config;
 use crate::Backend;
 
@@ -29,7 +28,7 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
                 *config = val.config;
             },
             Err(err) => {
-                backend.log_error(format!("initializationOptions deserialization fail: {}", err)).await;
+                backend.reporter.log_error(format!("initializationOptions deserialization fail: {}", err)).await;
             },
         }
     }
@@ -62,7 +61,7 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
 }
 
 pub async fn initialized(backend: &Backend, _: lsp::InitializedParams) {
-    backend.log_info("Server initialized!").await;
+    backend.reporter.log_info("Server initialized!").await;
 
     backend.client.register_capability(vec![
         lsp::Registration { 
@@ -76,5 +75,5 @@ pub async fn initialized(backend: &Backend, _: lsp::InitializedParams) {
     backend.setup_repository_content_scanners().await;
     backend.build_content_graph().await;
 
-    backend.publish_all_diagnostics().await;
+    backend.reporter.commit_all_diagnostics().await;
 }

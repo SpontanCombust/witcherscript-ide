@@ -21,5 +21,5 @@ pub async fn did_change_workspace_folders(backend: &Backend, params: lsp::DidCha
     backend.setup_workspace_content_scanners().await;
     backend.build_content_graph().await;
 
-    backend.publish_all_diagnostics().await;
+    backend.reporter.commit_all_diagnostics().await;
 }

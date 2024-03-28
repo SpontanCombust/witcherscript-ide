@@ -1,4 +1,5 @@
 use dashmap::DashMap;
+use reporting::Reporter;
 use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types as lsp;
@@ -9,7 +10,6 @@ use witcherscript::script_document::ScriptDocument;
 use witcherscript_project::{ContentGraph, SourceTree};
 use crate::config::Config;
 use crate::messaging::requests;
-use crate::reporting::PendingDiagnostics;
 
 mod providers;
 mod config;
@@ -23,7 +23,7 @@ pub struct Backend {
     client: Client,
     config: RwLock<Config>,
     workspace_roots: RwLock<Vec<AbsPath>>,
-    owned_diagnostics: DashMap<AbsPath, PendingDiagnostics>,
+    reporter: Reporter,
 
     content_graph: RwLock<ContentGraph>,
     // key is path to content directory
@@ -42,15 +42,15 @@ pub struct ScriptState {
 
 
 impl Backend {
-    pub const LANGUAGE_ID: &str = "witcherscript";
-    pub const SERVER_NAME: &str = "witcherscript-ide";
+    pub const LANGUAGE_ID: &'static str = "witcherscript";
+    pub const SERVER_NAME: &'static str = "witcherscript-ide";
 
     fn new(client: Client) -> Self {
         Self {
-            client,
             config: RwLock::new(Config::default()),
             workspace_roots: RwLock::new(Vec::new()),
-            owned_diagnostics: DashMap::new(),
+            reporter: Reporter::new(client.clone()),
+            client,
 
             content_graph: RwLock::new(ContentGraph::new()),
             source_trees: DashMap::new(),

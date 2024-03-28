@@ -3,6 +3,7 @@ use abs_path::AbsPath;
 use witcherscript_analysis::diagnostics::{Diagnostic, DiagnosticBody};
 use witcherscript_project::{manifest::ManifestParseError, FileError};
 use crate::Backend;
+use super::Reporter;
 
 
 pub trait IntoLspDiagnostic {
@@ -73,22 +74,35 @@ impl IntoLspDiagnostic for (String, lsp::Range) {
 
 
 #[derive(Debug)]
-pub struct PendingDiagnostics {
+pub struct BufferedDiagnostics {
     pub diags: Vec<lsp::Diagnostic>,
     pub changed: bool,
     pub should_purge: bool
 }
 
-impl Backend {
-    pub fn push_diagnostic<D>(&self, path: &AbsPath, diag: D)
-    where D: Into<lsp::Diagnostic> {
-        if let Some(mut kv) = self.owned_diagnostics.get_mut(path) {
+impl Reporter {
+    pub fn push_diagnostic(&self, path: &AbsPath, diag: lsp::Diagnostic) {
+        if let Some(mut kv) = self.buffered_diagnostics.get_mut(path) {
             let v = kv.value_mut();
-            v.diags.push(diag.into());
+            v.diags.push(diag);
             v.changed = true;
         } else {
-            self.owned_diagnostics.insert(path.clone(), PendingDiagnostics {
-                diags: vec![diag.into()],
+            self.buffered_diagnostics.insert(path.clone(), BufferedDiagnostics {
+                diags: vec![diag],
+                changed: true,
+                should_purge: false
+            });
+        }
+    }
+
+    pub fn push_diagnostics(&self, path: &AbsPath, diags: impl IntoIterator<Item = lsp::Diagnostic>) {
+        if let Some(mut kv) = self.buffered_diagnostics.get_mut(path) {
+            let v = kv.value_mut();
+            v.diags.extend(diags.into_iter());
+            v.changed = true;
+        } else {
+            self.buffered_diagnostics.insert(path.clone(), BufferedDiagnostics {
+                diags: diags.into_iter().collect(),
                 changed: true,
                 should_purge: false
             });
@@ -96,7 +110,7 @@ impl Backend {
     }
 
     pub fn clear_diagnostics(&self, path: &AbsPath) {
-        self.owned_diagnostics
+        self.buffered_diagnostics
             .alter(path, |_, mut v|  {
                 v.diags.clear();
                 v.changed = true;
@@ -106,7 +120,7 @@ impl Backend {
 
     /// In addition to clearing diagnostics for a given file, said file will be forgotten about
     pub fn purge_diagnostics(&self, path: &AbsPath) {
-        self.owned_diagnostics
+        self.buffered_diagnostics
             .alter(path, |_, mut v|  {
                 v.diags.clear();
                 v.changed = true;
@@ -116,7 +130,7 @@ impl Backend {
     }
 
     pub fn clear_all_diagnostics(&self) {
-        self.owned_diagnostics
+        self.buffered_diagnostics
             .alter_all(|_, mut v| {
                 v.diags.clear();
                 v.changed = true;
@@ -125,8 +139,8 @@ impl Backend {
     }
 
 
-    pub async fn publish_diagnostics(&self, path: &AbsPath) {
-        if let Some(mut kv) = self.owned_diagnostics.get_mut(path) {
+    pub async fn commit_diagnostics(&self, path: &AbsPath) {
+        if let Some(mut kv) = self.buffered_diagnostics.get_mut(path) {
             if kv.value().changed {
                 let uri = kv.key().to_uri();
     
@@ -138,11 +152,11 @@ impl Backend {
             }
         }
 
-        self.owned_diagnostics.remove_if(path, |_, v| v.should_purge);
+        self.buffered_diagnostics.remove_if(path, |_, v| v.should_purge);
     }
 
-    pub async fn publish_all_diagnostics(&self) {
-        for mut kv in self.owned_diagnostics.iter_mut().filter(|kv| kv.value().changed) {
+    pub async fn commit_all_diagnostics(&self) {
+        for mut kv in self.buffered_diagnostics.iter_mut().filter(|kv| kv.value().changed) {
             let uri = kv.key().to_uri();
 
             let v = kv.value_mut();
@@ -152,6 +166,6 @@ impl Backend {
             self.client.publish_diagnostics(uri, diags, None).await;
         }
 
-        self.owned_diagnostics.retain(|_, v| !v.should_purge);
+        self.buffered_diagnostics.retain(|_, v| !v.should_purge);
     }
 }

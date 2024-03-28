@@ -46,7 +46,7 @@ impl Config {
 impl Backend {
     // Returns whether the fetched config differs from the last state
     pub async fn fetch_config(&self) -> bool {
-        self.log_info("Fetching configuration...").await;
+        self.reporter.log_info("Fetching configuration...").await;
 
         match Config::fetch(&self.client).await {
             Ok(new_config) => {
@@ -55,13 +55,13 @@ impl Backend {
                 *old_config = new_config;
 
                 if config_changed {
-                    self.log_info("No changes to configuration detected.").await;
+                    self.reporter.log_info("No changes to configuration detected.").await;
                 }
 
                 config_changed
             },
             Err(err) => {
-                self.show_error_notification(format!("Client configuration fetch error: {}", err)).await;
+                self.reporter.show_error_notification(format!("Client configuration fetch error: {}", err)).await;
                 false
             },
         }
