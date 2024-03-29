@@ -181,17 +181,33 @@ pub fn try_make_content(path: &AbsPath) -> Result<Box<dyn Content>, ContentScanE
     if manifest_path.exists() {
         match ProjectDirectory::new(path.clone()) {
             Ok(proj) => {
-                Ok(Box::new(proj))
+                return Ok(Box::new(proj));
             },
             Err(err) => {
-                Err(FileError::new(manifest_path, err).into())
-            },
-        }
+                return Err(FileError::new(manifest_path, err).into());
+            }
+        };
     } else if path.join("scripts").unwrap().exists() {
-        Ok(Box::new(UnpackedContentDirectory::new(path.clone())))
-    } else if path.join("content/scripts").unwrap().exists() {
-        Ok(Box::new(PackedContentDirectory::new(path.clone())))
-    } else {
-        Err(ContentScanError::NotContent)
+        return Ok(Box::new(UnpackedContentDirectory::new(path.clone())));
+    } 
+    
+    let path = path.join("content").unwrap();
+
+    if path.exists() {
+        let manifest_path = path.join(Manifest::FILE_NAME).unwrap();
+        if manifest_path.exists() {
+            match ProjectDirectory::new(path.clone()) {
+                Ok(proj) => {
+                    return Ok(Box::new(proj));
+                },
+                Err(err) => {
+                    return Err(FileError::new(manifest_path, err).into());
+                }
+            };
+        } else if path.join("scripts").unwrap().exists() {
+            return Ok(Box::new(PackedContentDirectory::new(path.clone())));
+        }
     }
+    
+    Err(ContentScanError::NotContent)
 }
