@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use tokio::time::Instant;
 use abs_path::AbsPath;
-use witcherscript_project::content::ContentScanError;
+use witcherscript_project::content::{ContentScanError, ProjectDirectory};
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{ContentScanner, FileError};
-use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError};
+use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphNode};
 use crate::{reporting::IntoLspDiagnostic, Backend};
 
 
@@ -64,12 +64,12 @@ impl Backend {
     }
     
     pub async fn build_content_graph(&self) {
+        let mut graph = self.content_graph.write().await;
+        
         self.reporter.log_info("Building content graph...").await;
 
         self.reporter.clear_all_diagnostics();
-        //TODO run diagnositcs on all scripts
         
-        let mut graph = self.content_graph.write().await;
         let diff = graph.build();
     
         if !graph.errors.is_empty() {
@@ -85,6 +85,9 @@ impl Backend {
         } else {
             self.reporter.log_info("Found no content graph changes.").await;
         }
+
+
+        // TODO diagnostics for all scripts
     }
 
     pub async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {
@@ -94,21 +97,22 @@ impl Backend {
         let start = Instant::now();
 
         let (diff_added, diff_removed) = (diff.added, diff.removed);
-        self.on_graph_contents_removed(diff_removed).await;
-        self.on_graph_contents_added(diff_added).await;
+        self.on_graph_nodes_removed(diff_removed).await;
+        self.on_graph_nodes_added(diff_added).await;
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Handled content graph related changes in {:.3}s", duration.as_secs_f32())).await;
     }
 
-    async fn on_graph_contents_added(&self, added_content_paths: Vec<AbsPath>) {
+    async fn on_graph_nodes_added(&self, added_nodes: Vec<GraphNode>) {
         let mut source_tree_diffs = HashMap::new();
 
-        let graph = self.content_graph.read().await;
-        for added_path in added_content_paths {
-            self.reporter.log_info(format!("Discovered content: {}", added_path.display())).await; 
+        for added_node in added_nodes {
+            let added_content = added_node.content;
+            let added_content_path = added_content.path();
 
-            let added_content = &graph.get_node_by_path(&added_path).unwrap().content;
+            self.reporter.log_info(format!("Discovered content: {}", added_content_path)).await; 
+
             let source_tree = added_content.source_tree();
 
             if !source_tree.errors.is_empty() {
@@ -117,38 +121,42 @@ impl Backend {
                 }
             }
 
-            source_tree_diffs.insert(added_path.clone(), SourceTreeDifference {
+            source_tree_diffs.insert(added_content_path.to_owned(), SourceTreeDifference {
                 added: source_tree.iter().cloned().collect(),
                 removed: vec![]
             });
 
-            self.source_trees.insert(added_path.clone(), source_tree);
+            self.source_trees.insert(added_content_path.clone(), source_tree);
         }
-        drop(graph);
 
         // handling source tree changes in a seperate step to not lock resources for too long
         for (content_path, diff) in source_tree_diffs {
-            self.on_source_tree_changed(&content_path, diff).await;
+            self.on_source_tree_changed(&content_path, diff, false).await;
         }
     }
 
-    async fn on_graph_contents_removed(&self, removed_content_paths: Vec<AbsPath>) {
+    async fn on_graph_nodes_removed(&self, removed_nodes: Vec<GraphNode>) {
         let mut source_tree_diffs = HashMap::new();
-        for removed_path in removed_content_paths {
-            self.reporter.log_info(format!("Deprecated content: {}", removed_path.display())).await;
+        for removed_node in removed_nodes {
+            let removed_content = removed_node.content;
+            let removed_content_path = removed_content.path();
 
-            if let Some((_, source_tree)) = self.source_trees.remove(&removed_path) {
-                source_tree_diffs.insert(removed_path.clone(), SourceTreeDifference {
+            self.reporter.log_info(format!("Deprecated content: {}", removed_content_path)).await;
+
+            if let Some((_, source_tree)) = self.source_trees.remove(removed_content_path) {
+                source_tree_diffs.insert(removed_content_path.to_owned(), SourceTreeDifference {
                     added: vec![],
                     removed: source_tree.into_iter().collect()
                 });
             }
 
-            //TODO remove diagnostics for forgotten manifest
+            if let Ok(project) = removed_content.into_any().downcast::<ProjectDirectory>() {
+                self.reporter.purge_diagnostics(project.manifest_path());
+            }
         }
 
         for (content_path, diff) in source_tree_diffs {
-            self.on_source_tree_changed(&content_path, diff).await;
+            self.on_source_tree_changed(&content_path, diff, false).await;
         }
     }
 

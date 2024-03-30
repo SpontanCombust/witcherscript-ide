@@ -26,14 +26,14 @@ impl Backend {
         
         if let Some(diff) = diff {
             if !diff.is_empty() {
-                self.on_source_tree_changed(content_path, diff).await;
+                self.on_source_tree_changed(content_path, diff, true).await;
             } else {
                 self.reporter.log_info("Found no source tree changes.").await;
             }
         }
     }
 
-    pub async fn on_source_tree_changed(&self, content_path: &AbsPath, diff: SourceTreeDifference) {
+    pub async fn on_source_tree_changed(&self, content_path: &AbsPath, diff: SourceTreeDifference, run_diagnostics_for_added: bool) {
         let (added_count, removed_count) = (diff.added.len(), diff.removed.len());
         self.reporter.log_info(format!("Changes to source tree in {}: {} script(s) discovered, {} to be deprecated", content_path.display(), added_count, removed_count)).await;
 
@@ -41,13 +41,13 @@ impl Backend {
 
         let (diff_added, diff_removed) = (diff.added, diff.removed);
         self.on_source_tree_paths_removed(diff_removed).await;
-        self.on_source_tree_paths_added(diff_added).await;
+        self.on_source_tree_paths_added(diff_added, run_diagnostics_for_added).await;
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Handled source tree related changes to {} in {:.3}s", content_path.display(), duration.as_secs_f32())).await;
     }
 
-    async fn on_source_tree_paths_added(&self, added_paths: Vec<SourceFilePath>) {
+    async fn on_source_tree_paths_added(&self, added_paths: Vec<SourceFilePath>, run_diagnostics: bool) {
         let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
 
         rayon::spawn(move || {
@@ -56,16 +56,17 @@ impl Backend {
                 .map(|p| p.absolute().to_owned())
                 .map(|p| {
                     let doc = ScriptDocument::from_file(&p).unwrap();
-                    (p, doc)
-                })
-                .map(|(p, doc)| {
                     let script = Script::new(&doc).unwrap();
                     (p, script)
                 })
                 .map(|(p, script)| {
-                    let mut diagnostics: Vec<Diagnostic> = Vec::new();
-                    syntax_analysis::syntax_analysis(script.root_node(), &mut diagnostics);
-                    (p, script, diagnostics)
+                    if run_diagnostics {
+                        let mut diagnostics: Vec<Diagnostic> = Vec::new();
+                        syntax_analysis::syntax_analysis(script.root_node(), &mut diagnostics);
+                        (p, script, Some(diagnostics))
+                    } else {
+                        (p, script, None)
+                    }
                 })
                 .for_each(|result| send.blocking_send(result).expect("mpsc send fail"));
         });
@@ -78,8 +79,11 @@ impl Backend {
                 buffer: None,
                 is_foreign: false
             });
-            for diag in diags.into_iter().map(|diag| diag.into_lsp_diagnostic()) {
-                self.reporter.push_diagnostic(&script_path, diag);
+
+            if let Some(diags) = diags {
+                for diag in diags.into_iter().map(|diag| diag.into_lsp_diagnostic()) {
+                    self.reporter.push_diagnostic(&script_path, diag);
+                }
             }
         }
     }

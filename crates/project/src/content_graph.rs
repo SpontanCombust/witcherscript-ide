@@ -53,7 +53,7 @@ pub struct ContentGraph {
     pub errors: Vec<ContentGraphError>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GraphNode {
     pub content: Box<dyn Content>,
     pub in_workspace: bool,
@@ -106,13 +106,13 @@ impl ContentGraph {
 
 
     pub fn build(&mut self) -> ContentGraphDifference {
-        let prev_content_paths: HashSet<_> = self.nodes.iter()
-            .map(|n| n.content.path().to_owned())
+        let prev_nodes: Vec<_> = self.nodes
+            .drain(..)
             .collect();
 
-        self.nodes.clear();
         self.edges.clear();
         self.errors.clear();
+
 
         self.create_workspace_content_nodes();
 
@@ -142,15 +142,8 @@ impl ContentGraph {
             }
         }
 
-        let new_content_paths: HashSet<_> = self.nodes.iter()
-            .map(|n| n.content.path().to_owned())
-            .collect();
 
-        let mut diff = ContentGraphDifference::default();
-        diff.added.extend(new_content_paths.difference(&prev_content_paths).cloned());
-        diff.removed.extend(prev_content_paths.difference(&new_content_paths).cloned());
-
-        diff
+        ContentGraphDifference::from_comparison(&prev_nodes, &self.nodes)
     }
 
 
@@ -546,14 +539,43 @@ impl<'g> Iterator for Iter<'g> {
     }
 }
 
-//TODO remake as an enum, add ManifestChanged variant, add timestamp to GraphNode
+
+
 #[derive(Debug, Clone, Default)]
 pub struct ContentGraphDifference {
-    pub added: Vec<AbsPath>,
-    pub removed: Vec<AbsPath>
+    pub added: Vec<GraphNode>,
+    pub removed: Vec<GraphNode>,
 }
 
 impl ContentGraphDifference {
+    fn from_comparison(old_nodes: &Vec<GraphNode>, new_nodes: &Vec<GraphNode>) -> Self {
+        // NewType that compares nodes based upon content paths only
+        struct DiffingWrapper<'a>(&'a GraphNode);
+
+        impl PartialEq for DiffingWrapper<'_> {
+            fn eq(&self, other: &Self) -> bool {
+                self.0.content.path().eq(other.0.content.path())
+            }
+        }
+
+        impl Eq for DiffingWrapper<'_> {}
+
+        impl std::hash::Hash for DiffingWrapper<'_> {
+            fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                self.0.content.path().hash(state);
+            }
+        }
+
+
+        let old_diffable: HashSet<_> = old_nodes.iter().map(|n| DiffingWrapper(n)).collect();
+        let new_diffable: HashSet<_> = new_nodes.iter().map(|n| DiffingWrapper(n)).collect();
+
+        Self {
+            added: new_diffable.difference(&old_diffable).map(|wrapper| wrapper.0.clone()).collect(),
+            removed: old_diffable.difference(&new_diffable).map(|wrapper| wrapper.0.clone()).collect(),
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.added.is_empty() && self.removed.is_empty()
     }

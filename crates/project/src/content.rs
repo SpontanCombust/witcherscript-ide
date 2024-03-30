@@ -22,6 +22,8 @@ pub trait Content : core::fmt::Debug + dyn_clone::DynClone + Send + Sync {
     }
 }
 
+dyn_clone::clone_trait_object!(Content);
+
 
 /// Directory that has "scripts" folder directly inside it i.e. content0.
 #[derive(Debug, Clone)]
