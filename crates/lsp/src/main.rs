@@ -16,7 +16,7 @@ use crate::messaging::requests;
 mod providers;
 mod config;
 mod reporting;
-mod indexing;
+mod tasks;
 mod messaging;
 
 

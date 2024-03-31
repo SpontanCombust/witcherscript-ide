@@ -2,7 +2,7 @@ use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_project::{content::ProjectDirectory, Manifest};
-use crate::{indexing::ScriptAnalysisKind, Backend, ScriptState};
+use crate::{tasks::ScriptAnalysisKind, Backend, ScriptState};
 
 
 pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams) {
