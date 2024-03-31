@@ -108,6 +108,12 @@ impl AbsPath {
     }
 }
 
+impl AsRef<AbsPath> for AbsPath {
+    fn as_ref(&self) -> &AbsPath {
+        self
+    }
+}
+
 impl AsRef<Path> for AbsPath {
     fn as_ref(&self) -> &Path {
         self.inner.as_ref()

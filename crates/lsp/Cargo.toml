@@ -15,5 +15,7 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 rayon.workspace = true
+bitmask-enum.workspace = true
+shrinkwraprs.workspace = true
 tower-lsp = "0.20.0"
 tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "io-std", "time"] }

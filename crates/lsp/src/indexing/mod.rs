@@ -5,3 +5,6 @@ pub use content_indexing::*;
 
 mod script_indexing;
 pub use script_indexing::*;
+
+mod script_analysis_tasks;
+pub use script_analysis_tasks::*;

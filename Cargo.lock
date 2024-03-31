@@ -141,6 +141,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
+name = "bitmask-enum"
+version = "2.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9990737a6d5740ff51cdbbc0f0503015cb30c390f6623968281eb214a520cfc0"
+dependencies = [
+ "quote",
+ "syn 2.0.48",
+]
+
+[[package]]
 name = "bytes"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1280,10 +1290,12 @@ name = "witcherscript-lsp"
 version = "0.1.0"
 dependencies = [
  "abs-path",
+ "bitmask-enum",
  "dashmap",
  "rayon",
  "serde",
  "serde_json",
+ "shrinkwraprs",
  "thiserror",
  "tokio",
  "tower-lsp",

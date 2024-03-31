@@ -1,10 +1,10 @@
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use tokio::{sync::mpsc, time::Instant};
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
-use witcherscript_analysis::{diagnostics::Diagnostic, jobs::syntax_analysis};
 use witcherscript_project::source_tree::{SourceFilePath, SourceTreeDifference};
-use crate::{reporting::IntoLspDiagnostic, Backend, ScriptState};
+use crate::{Backend, ScriptState};
+use super::ScriptAnalysisKind;
 
 
 impl Backend {
@@ -48,43 +48,33 @@ impl Backend {
     }
 
     async fn on_source_tree_paths_added(&self, added_paths: Vec<SourceFilePath>, run_diagnostics: bool) {
+        let script_paths: Vec<_> = added_paths.into_iter().map(|p| p.absolute().to_owned()).collect();
+        
         let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
 
+        let script_paths_cloned = script_paths.clone();
         rayon::spawn(move || {
-            added_paths.into_iter()
-                .par_bridge()
-                .map(|p| p.absolute().to_owned())
+            script_paths_cloned.into_par_iter()
                 .map(|p| {
                     let doc = ScriptDocument::from_file(&p).unwrap();
                     let script = Script::new(&doc).unwrap();
                     (p, script)
                 })
-                .map(|(p, script)| {
-                    if run_diagnostics {
-                        let mut diagnostics: Vec<Diagnostic> = Vec::new();
-                        syntax_analysis::syntax_analysis(script.root_node(), &mut diagnostics);
-                        (p, script, Some(diagnostics))
-                    } else {
-                        (p, script, None)
-                    }
-                })
-                .for_each(|result| send.blocking_send(result).expect("mpsc send fail"));
+                .for_each(|result| send.blocking_send(result).expect("on_source_tree_paths_added mpsc::send fail"));
         });
 
-        while let Some((script_path, script, diags)) = recv.recv().await {
+        while let Some((script_path, script)) = recv.recv().await {
             // Doing to many logs at once puts a strain on the connection, better to do this through a Progress or something...
             // self.log_info(format!("Discovered script: {}", script_path.display())).await;
-            self.scripts.insert(script_path.clone(), ScriptState { 
+            self.scripts.insert(script_path, ScriptState { 
                 script, 
                 buffer: None,
                 is_foreign: false
             });
+        }
 
-            if let Some(diags) = diags {
-                for diag in diags.into_iter().map(|diag| diag.into_lsp_diagnostic()) {
-                    self.reporter.push_diagnostic(&script_path, diag);
-                }
-            }
+        if run_diagnostics {
+            self.run_script_analysis(script_paths, ScriptAnalysisKind::all()).await;
         }
     }
 

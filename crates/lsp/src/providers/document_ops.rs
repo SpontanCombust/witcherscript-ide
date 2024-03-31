@@ -1,10 +1,8 @@
-use std::borrow::Borrow;
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
-use witcherscript_analysis::{diagnostics::Diagnostic, jobs::syntax_analysis};
 use witcherscript_project::{content::ProjectDirectory, Manifest};
-use crate::{reporting::IntoLspDiagnostic, Backend, ScriptState};
+use crate::{indexing::ScriptAnalysisKind, Backend, ScriptState};
 
 
 pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams) {
@@ -24,13 +22,13 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
             backend.reporter.log_info("Opened script file unknown to the content graph").await;
 
             let script = Script::new(&doc_buff).unwrap();
-            script_syntax_diagnostics(&script, backend, &doc_path);
-
-            backend.scripts.insert(doc_path, ScriptState {
+            backend.scripts.insert(doc_path.clone(), ScriptState {
                 buffer: Some(doc_buff),
                 script,
                 is_foreign: true
             });
+
+            backend.run_script_analysis_for_single(&doc_path, ScriptAnalysisKind::SyntaxAnalysis).await;
         }
     } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
         let project_is_known = backend
@@ -51,6 +49,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
 
 pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentParams) {
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
+    let mut analysis_to_run = None;
     if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
         let script_state = entry.value_mut();
 
@@ -62,10 +61,18 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
             if let Err(err) = script_state.script.update(buf) {
                 backend.reporter.log_error(err).await;
             }
-    
-            script_syntax_diagnostics(&script_state.script, backend, &doc_path);
-            backend.reporter.commit_diagnostics(&doc_path).await;
         }
+
+        analysis_to_run = if script_state.is_foreign {
+            Some(ScriptAnalysisKind::SyntaxAnalysis)
+        } else {
+            Some(ScriptAnalysisKind::all())
+        };
+    }
+
+    if let Some(analysis_kinds) = analysis_to_run {
+        backend.run_script_analysis_for_single(&doc_path, analysis_kinds).await;
+        backend.reporter.commit_diagnostics(&doc_path).await;
     }
 }
 
@@ -80,20 +87,11 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
 
     
     if doc_path.extension().map(|ext| ext == "ws").unwrap_or(false) {
-        let mut containing_content_path = None;
-        for it in backend.source_trees.iter() {
-            let content_path = it.key();
-            let source_tree = it.value();
-            if doc_path.starts_with(source_tree.script_root()) {
-                containing_content_path = Some(content_path.to_owned());
-                break;
-            }
-        }
-
-        if let Some(containing_content_path) = containing_content_path {
+        if let Some(containing_content_path) = backend.source_trees.containing_content_path(&doc_path) {
             backend.scan_source_tree(&containing_content_path).await;
         }
 
+        let mut analysis_to_run = None;
         if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
             let script_state = entry.value_mut();
 
@@ -105,8 +103,16 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
                 backend.reporter.log_error(err).await;
             }
 
-            script_syntax_diagnostics(&script_state.script, backend, &doc_path);
-        }        
+            analysis_to_run = if script_state.is_foreign {
+                Some(ScriptAnalysisKind::SyntaxAnalysis)
+            } else {
+                Some(ScriptAnalysisKind::all())
+            };
+        }
+
+        if let Some(analysis_kinds) = analysis_to_run {
+            backend.run_script_analysis_for_single(&doc_path, analysis_kinds).await;
+        }
     } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
         backend.build_content_graph().await;
     }
@@ -134,13 +140,4 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
             backend.scripts.remove(&doc_path);
         }
     }
-}
-
-
-fn script_syntax_diagnostics<S: Borrow<Script>>(script: S, backend: &Backend, path: &AbsPath) {
-    let mut diagnostics: Vec<Diagnostic> = Vec::new();
-    syntax_analysis::syntax_analysis(script.borrow().root_node(), &mut diagnostics);
-
-    backend.reporter.clear_diagnostics(path);
-    backend.reporter.push_diagnostics(path, diagnostics.into_iter().map(|d| d.into_lsp_diagnostic()));
 }

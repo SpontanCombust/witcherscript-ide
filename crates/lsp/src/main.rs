@@ -1,5 +1,6 @@
+use std::sync::Arc;
 use dashmap::DashMap;
-use reporting::Reporter;
+use shrinkwraprs::Shrinkwrap;
 use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types as lsp;
@@ -9,6 +10,7 @@ use witcherscript::Script;
 use witcherscript::script_document::ScriptDocument;
 use witcherscript_project::{ContentGraph, SourceTree};
 use crate::config::Config;
+use crate::reporting::Reporter;
 use crate::messaging::requests;
 
 mod providers;
@@ -26,10 +28,35 @@ pub struct Backend {
     reporter: Reporter,
 
     content_graph: RwLock<ContentGraph>,
-    // key is path to content directory
-    source_trees: DashMap<AbsPath, SourceTree>,
+    source_trees: SourceTreeMap,
     // key is path to the file
-    scripts: DashMap<AbsPath, ScriptState>
+    scripts: Arc<DashMap<AbsPath, ScriptState>>
+}
+
+#[derive(Debug, Shrinkwrap)]
+pub struct SourceTreeMap {
+    // key is path to content directory
+    inner: DashMap<AbsPath, SourceTree>
+}
+
+impl SourceTreeMap {
+    fn new() -> Self {
+        Self {
+            inner: DashMap::new()
+        }
+    }
+
+    pub fn containing_content_path(&self, source_path: &AbsPath) -> Option<AbsPath> {
+        for it in self.inner.iter() {
+            let content_path = it.key();
+            let source_tree = it.value();
+            if source_path.starts_with(source_tree.script_root()) {
+                return Some(content_path.to_owned());
+            }
+        }
+
+        None
+    }
 }
 
 #[derive(Debug)]
@@ -53,8 +80,8 @@ impl Backend {
             client,
 
             content_graph: RwLock::new(ContentGraph::new()),
-            source_trees: DashMap::new(),
-            scripts: DashMap::new()
+            source_trees: SourceTreeMap::new(),
+            scripts: Arc::new(DashMap::new())
         }
     }
 }
