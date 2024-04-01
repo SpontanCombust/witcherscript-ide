@@ -40,7 +40,10 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
 
         if !project_is_known {
             backend.reporter.log_info("Opened unknown manifest file").await;
-            backend.build_content_graph().await;
+
+            if let Ok(mut content_graph) = backend.content_graph.try_write() {
+                backend.build_content_graph(&mut content_graph).await;
+            }
         }
     }
 
@@ -114,7 +117,9 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
             backend.run_script_analysis_for_single(&doc_path, analysis_kinds).await;
         }
     } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
-        backend.build_content_graph().await;
+        if let Ok(mut content_graph) = backend.content_graph.try_write() {
+            backend.build_content_graph(&mut content_graph).await;
+        }
     }
 
     backend.reporter.commit_all_diagnostics().await;

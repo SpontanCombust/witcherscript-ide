@@ -3,18 +3,17 @@ use tokio::time::Instant;
 use abs_path::AbsPath;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory};
 use witcherscript_project::source_tree::SourceTreeDifference;
-use witcherscript_project::{ContentScanner, FileError};
+use witcherscript_project::{ContentGraph, ContentScanner, FileError};
 use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphNode};
 use crate::{reporting::IntoLspDiagnostic, Backend};
 use super::ScriptAnalysisKind;
 
 
 impl Backend {
-    pub async fn setup_workspace_content_scanners(&self) {
-        let mut graph = self.content_graph.write().await;
+    pub async fn setup_workspace_content_scanners(&self, content_graph: &mut ContentGraph) {
         let workspace_roots = self.workspace_roots.read().await;
 
-        graph.clear_workspace_scanners();
+        content_graph.clear_workspace_scanners();
 
         for root in workspace_roots.iter() {
             let scanner = 
@@ -22,12 +21,11 @@ impl Backend {
                 .recursive(true)
                 .only_projects(true);
 
-            graph.add_workspace_scanner(scanner);
+            content_graph.add_workspace_scanner(scanner);
         }
     }
 
-    pub async fn setup_repository_content_scanners(&self) {
-        let mut graph = self.content_graph.write().await;
+    pub async fn setup_repository_content_scanners(&self, content_graph: &mut ContentGraph) {
         let config = self.config.read().await;
 
         let mut repo_paths = Vec::new();
@@ -40,7 +38,7 @@ impl Backend {
         repo_paths.push(config.game_directory.join("Mods"));
 
 
-        graph.clear_repository_scanners();
+        content_graph.clear_repository_scanners();
 
         for repo in repo_paths {
             if !repo.as_os_str().is_empty() {
@@ -49,7 +47,7 @@ impl Backend {
                         match ContentScanner::new(abs_repo) {
                             Ok(scanner) => {
                                 let scanner = scanner.recursive(false).only_projects(false);
-                                graph.add_repository_scanner(scanner);
+                                content_graph.add_repository_scanner(scanner);
                             },
                             Err(err) => {
                                 self.report_content_scan_error(err).await;
@@ -64,22 +62,18 @@ impl Backend {
         }
     }
     
-    pub async fn build_content_graph(&self) {
-        let mut graph = self.content_graph.write().await;
-        
+    pub async fn build_content_graph(&self, content_graph: &mut ContentGraph) {
         self.reporter.log_info("Building content graph...").await;
 
         self.reporter.clear_all_diagnostics();
         
-        let diff = graph.build();
+        let diff = content_graph.build();
     
-        if !graph.errors.is_empty() {
-            for err in &graph.errors {
+        if !content_graph.errors.is_empty() {
+            for err in &content_graph.errors {
                 self.report_content_graph_error(err.clone()).await;
             }
         }
-
-        drop(graph);
 
         if !diff.is_empty() {
             self.on_content_graph_changed(diff).await;
