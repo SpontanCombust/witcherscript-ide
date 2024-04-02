@@ -54,7 +54,7 @@ impl Backend {
                 let config_changed = *old_config != new_config;
                 *old_config = new_config;
 
-                if config_changed {
+                if !config_changed {
                     self.reporter.log_info("No changes to configuration detected.").await;
                 }
 

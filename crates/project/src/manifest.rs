@@ -27,7 +27,7 @@ pub struct Content {
     /// List of this project authors (optional)
     pub authors: Option<Vec<String>>,
     /// Relative path to the `scripts` directory. "./scripts" by default
-    pub scripts_root: Option<PathBuf> //TODO make mandatory so it can be detected if in existing directory
+    pub scripts_root: Option<PathBuf>
 }
 
 /// A list of dependency entries
