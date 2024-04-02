@@ -118,30 +118,21 @@ impl ContentGraph {
 
         // do not try finding dependencies etc. if workspace scanners returned no contents
         if !self.nodes.is_empty() {
-            self.create_repository_content_nodes();
+            // building process will gradually remove elements from this vec when needed
+            let mut repo_nodes = self.create_repository_content_nodes();
 
-            // Now visit each of workspace content nodes to check for their dependencies.
+            self.fix_workspace_repo_overlap(&mut repo_nodes);
+
+            // Now visit each node to compute its dependencies and create connections (edges) between nodes.
+            // If a node has already been visited the process will be skipped.
+            // While is needed here instead of a for loop, because the size of `self.nodes` can change
             let mut visited = HashSet::new();
-            for i in 0..self.nodes.len() {
-                if self.nodes[i].in_workspace {
-                    self.link_dependencies(i, &mut visited);
-                }
-            }
-
-            // At the start all contents found in repos were given a node.
-            // Now we're going to remove nodes that are not needed anymore (the ones not used by workspace's projects).
-            // Since we've built dependencies only for workspace contents, the contents that do not have any dependants are technically unnecessary.
-            let unneeded_content_indices: Vec<_> = self.nodes.iter()
-                .enumerate()
-                .filter(|(i, n)| !n.in_workspace && !self.edges.iter().any(|e| e.dependency_idx == *i))
-                .map(|(i, _)| i)
-                .collect();
-    
-            for i in unneeded_content_indices {
-                self.remove_node_by_index(i);
+            let mut i = 0;
+            while i < self.nodes.len() {
+                self.link_dependencies(i, &mut repo_nodes, &mut visited);
+                i += 1;
             }
         }
-
 
         ContentGraphDifference::from_comparison(&prev_nodes, &self.nodes)
     }
@@ -200,20 +191,18 @@ impl ContentGraph {
 
 
 
+
+    /// Create nodes for contents coming from `workspace_scanners` and put them in the graph
     fn create_workspace_content_nodes(&mut self) {
         for scanner in &self.workspace_scanners {
             let (contents, errors) = scanner.scan();
 
             for content in contents {
-                if let Some(i) = self.get_node_index_by_path(content.path()) { 
-                    self.nodes[i].in_workspace = true;
-                } else {
-                    self.nodes.push(GraphNode { 
-                        content,
-                        in_workspace: true, 
-                        in_repository: false,
-                    });
-                }
+                self.nodes.push(GraphNode { 
+                    content,
+                    in_workspace: true, 
+                    in_repository: false,
+                });
             }
 
             for err in errors {
@@ -231,20 +220,19 @@ impl ContentGraph {
         }
     }
 
-    fn create_repository_content_nodes(&mut self) {
+    /// Create nodes for contents coming from `repo_scanners` and return them in a container seperate from graph's
+    fn create_repository_content_nodes(&mut self) -> Vec<GraphNode> {
+        let mut repo_nodes = Vec::new();
+
         for scanner in &self.repo_scanners {
             let (contents, errors) = scanner.scan();
 
             for content in contents {
-                if let Some(i) = self.get_node_index_by_path(content.path()) { 
-                    self.nodes[i].in_repository = true;
-                } else {
-                    self.nodes.push(GraphNode { 
-                        content,
-                        in_workspace: false, 
-                        in_repository: true,
-                    });
-                }
+                repo_nodes.push(GraphNode { 
+                    content,
+                    in_workspace: false, 
+                    in_repository: true,
+                });
             }
 
             for err in errors {
@@ -260,9 +248,27 @@ impl ContentGraph {
                 }
             }
         }
+
+        repo_nodes
     }
 
-    fn link_dependencies(&mut self, node_idx: usize, visited: &mut HashSet<usize>) {
+    /// Adresses the edge case when the workspace and repository folders overlap, e.g. if workspace is inside the repository folder.
+    /// In that case nodes currently residing in the graph may already contain some nodes that are equal to those in `repo_nodes`.
+    fn fix_workspace_repo_overlap(&mut self, repo_nodes: &mut Vec<GraphNode>) {
+        let mut i = 0;
+        while i < repo_nodes.len() {
+            let repo_content_path = repo_nodes[i].content.path();
+            if let Some(already_in_graph) = self.nodes.iter_mut().find(|n| n.content.path() == repo_content_path) {
+                already_in_graph.in_repository = true;
+                repo_nodes.remove(i);
+                continue;
+            }
+
+            i += 1;
+        }
+    }
+
+    fn link_dependencies(&mut self, node_idx: usize, repo_nodes: &mut Vec<GraphNode>, visited: &mut HashSet<usize>) {
         if visited.contains(&node_idx) {
             return;
         }
@@ -278,30 +284,28 @@ impl ContentGraph {
             for entry in dependencies.into_iter() {
                 match entry.value.inner() {
                     DependencyValue::FromRepo(active) => {
-                        self.link_dependencies_value_from_repo(node_idx, &manifest_path, visited, &entry.name, entry.name.range(), *active);
+                        self.link_dependencies_value_from_repo(node_idx, repo_nodes, &manifest_path, &entry.name, entry.name.range(), *active);
                     },
                     DependencyValue::FromPath { path } => {
-                        self.link_dependencies_value_from_path(node_idx, &manifest_path, visited, path, entry.value.range());
+                        self.link_dependencies_value_from_path(node_idx, repo_nodes, &manifest_path, path, entry.value.range());
                     },
                 }
             }
-        }        
-
+        }
     }
 
     fn link_dependencies_value_from_repo(&mut self, 
         node_idx: usize,
+        repo_nodes: &mut Vec<GraphNode>,
         manifest_path: &AbsPath,
-        visited: &mut HashSet<usize>, 
         dependency_name: &str,
         dependency_name_range: &lsp::Range,
         active: bool
     ) {
         if active {
-            match self.get_node_index_by_name(&dependency_name) {
+            match self.get_dependency_node_index_by_name(&dependency_name, repo_nodes) {
                 Ok(dep_idx) => {
                     self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                    self.link_dependencies(dep_idx, visited);
                 },
                 Err(dep_count) => {
                     if dep_count == 0 {
@@ -322,10 +326,46 @@ impl ContentGraph {
         }
     }
 
+    /// If there is just one repository content with the name returns Ok with the index.
+    /// Otherwise returns Err with the number of contents encountered with that name.
+    /// So if it wasn't found returns Err(0) or if more than one with than name was found returns Err(2) for example. 
+    fn get_dependency_node_index_by_name(&mut self, name: &str, repo_nodes: &mut Vec<GraphNode>) -> Result<usize, usize> {
+        let mut candidates = Vec::new();
+        for (i, n) in self.nodes.iter().enumerate() {
+            if n.in_repository && n.content.content_name() == name {
+                candidates.push(i);
+            }
+        }
+
+        let candidates_len = candidates.len();
+        if candidates_len == 1 {
+            Ok(candidates[0])
+        } else if candidates_len > 1 {
+            Err(candidates_len)
+        } else {
+            for (i, n) in repo_nodes.iter().enumerate() {
+                if n.content.content_name() == name {
+                    candidates.push(i);
+                }
+            }
+
+            let candidates_len = candidates.len();
+            if candidates_len == 0 {
+                Err(0)
+            } else if candidates_len == 1 {
+                let target_node = repo_nodes.remove(candidates[0]);
+                let target_node_idx = self.insert_node(target_node);
+                Ok(target_node_idx)
+            } else {
+                Err(candidates_len)
+            }
+        }
+    }
+
     fn link_dependencies_value_from_path(&mut self, 
         node_idx: usize, 
+        repo_nodes: &mut Vec<GraphNode>,
         manifest_path: &AbsPath,
-        visited: &mut HashSet<usize>,
         dependency_path: &Path,
         dependency_path_range: &lsp::Range
     ) {
@@ -334,9 +374,8 @@ impl ContentGraph {
 
         match abs_dependency_path {
             Ok(dep_path) => {
-                if let Some(dep_idx) = self.get_node_index_by_path(&dep_path) {
+                if let Some(dep_idx) = self.get_dependency_node_index_by_path(&dep_path, repo_nodes) {
                     self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                    self.link_dependencies(dep_idx, visited);
                 } else {
                     match try_make_content(&dep_path) {
                         Ok(content) => {
@@ -347,7 +386,6 @@ impl ContentGraph {
                             });
 
                             self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                            self.link_dependencies(dep_idx, visited);
                         },
                         Err(err) => {
                             match err {
@@ -379,7 +417,19 @@ impl ContentGraph {
         }
     }
 
-
+    fn get_dependency_node_index_by_path(&mut self, path: &AbsPath, repo_nodes: &mut Vec<GraphNode>) -> Option<usize> {
+        if let Some(i) = self.nodes.iter().position(|n| n.content.path() == path) {
+            Some(i)
+        }
+        else if let Some(i) = repo_nodes.iter().position(|n| n.content.path() == path) {
+            let target_node = repo_nodes.remove(i);
+            let target_node_idx = self.insert_node(target_node);
+            Some(target_node_idx)
+        }
+        else {
+            None
+        }
+    }
 
     /// Returns the index of this node
     fn insert_node(&mut self, node: GraphNode) -> usize {
@@ -394,34 +444,7 @@ impl ContentGraph {
     }
 
 
-    /// Changes node indices. Be aware!
-    fn remove_node_by_index(&mut self, target_idx: usize) {
-        // first remove all edges that mention this node
-        self.edges.retain(|edge| edge.dependant_idx != target_idx && edge.dependency_idx != target_idx);
 
-        let last_idx = self.nodes.len() - 1;
-        if self.nodes.len() > 1 && target_idx != last_idx {
-            // swap this and the last node to retain the same indices for all but these swapped nodes
-            self.nodes.swap(target_idx, last_idx);
-            
-            // fix references to the swapped edge
-            self.edges.iter_mut()
-                .for_each(|edge| { 
-                    if edge.dependant_idx == last_idx {
-                        edge.dependant_idx = target_idx;
-                    }
-                    if edge.dependency_idx == last_idx {
-                        edge.dependency_idx = target_idx;
-                    }
-                });
-
-            self.edges.sort();
-        }
-
-        // remove the last element
-        // if we did a swap it is the node we've been intending to remove
-        self.nodes.pop();
-    }
 
     fn get_node_index_by_path(&self, path: &AbsPath) -> Option<usize> {
         for (i, n) in self.nodes.iter().enumerate() {
@@ -429,29 +452,7 @@ impl ContentGraph {
                 return Some(i)
             }
         }
-
         None
-    }
-
-    /// If there is just one content with the name returns Ok with the index.
-    /// Otherwise returns Err with the number of contents encountered with that name.
-    /// So if it wasn't found returns Err(0) or if more than one with than name was found returns Err(2) for example. 
-    fn get_node_index_by_name(&self, name: &str) -> Result<usize, usize> {
-        let mut candidates = Vec::new();
-        for (i, n) in self.nodes.iter().enumerate() {
-            if n.content.content_name() == name {
-                candidates.push(i);
-            }
-        }
-
-        let candidates_len = candidates.len();
-        if candidates_len == 0 {
-            Err(0)
-        } else if candidates_len == 1 {
-            Ok(candidates[0])
-        } else {
-            Err(candidates_len)
-        }
     }
 
     /// Get iterator over direct neighbours of a given node
