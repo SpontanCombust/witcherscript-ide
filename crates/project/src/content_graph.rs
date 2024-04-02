@@ -31,6 +31,14 @@ pub enum ContentGraphError {
         // Location in the manifest where the name is present
         manifest_range: lsp::Range
     },
+    #[error("project dependency with this name could not be found at specified path")]
+    DependencyNameNotFoundAtPath {
+        content_name: String,
+        /// Manifest from which this error originated
+        manifest_path: AbsPath,
+        // Location in the manifest where the name is present
+        manifest_range: lsp::Range
+    },
     #[error("there are multiple matching dependencies with this name for this project")]
     MultipleMatchingDependencies {
         content_name: String,
@@ -285,7 +293,7 @@ impl ContentGraph {
                         self.link_dependencies_value_from_repo(node_idx, repo_nodes, &manifest_path, &entry.name, entry.name.range(), *active);
                     },
                     DependencyValue::FromPath { path } => {
-                        self.link_dependencies_value_from_path(node_idx, repo_nodes, &manifest_path, path, entry.value.range());
+                        self.link_dependencies_value_from_path(node_idx, repo_nodes, &manifest_path, &entry.name, entry.name.range(), path, entry.value.range());
                     },
                 }
             }
@@ -300,25 +308,27 @@ impl ContentGraph {
         dependency_name_range: &lsp::Range,
         active: bool
     ) {
-        if active {
-            match self.get_dependency_node_index_by_name(&dependency_name, repo_nodes) {
-                Ok(dep_idx) => {
-                    self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                },
-                Err(dep_count) => {
-                    if dep_count == 0 {
-                        self.errors.push(ContentGraphError::DependencyNameNotFound { 
-                            content_name: dependency_name.to_string(), 
-                            manifest_path: manifest_path.to_owned(),
-                            manifest_range: dependency_name_range.clone()
-                        });
-                    } else {
-                        self.errors.push(ContentGraphError::MultipleMatchingDependencies { 
-                            content_name: dependency_name.to_string(), 
-                            manifest_path: manifest_path.to_owned(), 
-                            manifest_range: dependency_name_range.clone()
-                        });
-                    }
+        if !active {
+            return;
+        }
+
+        match self.get_dependency_node_index_by_name(&dependency_name, repo_nodes) {
+            Ok(dep_idx) => {
+                self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
+            },
+            Err(dep_count) => {
+                if dep_count == 0 {
+                    self.errors.push(ContentGraphError::DependencyNameNotFound { 
+                        content_name: dependency_name.to_string(), 
+                        manifest_path: manifest_path.to_owned(),
+                        manifest_range: dependency_name_range.clone()
+                    });
+                } else {
+                    self.errors.push(ContentGraphError::MultipleMatchingDependencies { 
+                        content_name: dependency_name.to_string(), 
+                        manifest_path: manifest_path.to_owned(), 
+                        manifest_range: dependency_name_range.clone()
+                    });
                 }
             }
         }
@@ -359,58 +369,83 @@ impl ContentGraph {
             }
         }
     }
-    //TODO make sure that dependency name matches as well!
+
     fn link_dependencies_value_from_path(&mut self, 
         node_idx: usize, 
         repo_nodes: &mut Vec<GraphNode>,
         manifest_path: &AbsPath,
+        dependency_name: &str,
+        dependency_name_range: &lsp::Range,
         dependency_path: &Path,
         dependency_path_range: &lsp::Range
     ) {
         let dependant_path = self.nodes[node_idx].content.path();
         let abs_dependency_path = AbsPath::resolve(dependency_path, Some(dependant_path));
 
-        match abs_dependency_path {
-            Ok(dep_path) => {
-                if let Some(dep_idx) = self.get_dependency_node_index_by_path(&dep_path, repo_nodes) {
-                    self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
-                } else {
-                    match try_make_content(&dep_path) {
-                        Ok(content) => {
-                            let dep_idx = self.insert_node(GraphNode { 
-                                content: Arc::from(content), 
-                                in_workspace: false, 
-                                in_repository: false
-                            });
+        if abs_dependency_path.is_err() {
+            self.errors.push(ContentGraphError::DependencyPathNotFound { 
+                content_path: dependency_path.to_path_buf(), 
+                manifest_path: manifest_path.to_owned(),
+                manifest_range: dependency_path_range.clone()
+            });
 
-                            self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
+            return;
+        }
+
+        let dep_path = abs_dependency_path.unwrap();
+
+        if let Some(dep_idx) = self.get_dependency_node_index_by_path(&dep_path, repo_nodes) {
+            if self.nodes[dep_idx].content.content_name() == dependency_name {
+                self.insert_edge(GraphEdge { 
+                    dependant_idx: node_idx, 
+                    dependency_idx: dep_idx 
+                });
+            } else {
+                self.errors.push(ContentGraphError::DependencyNameNotFoundAtPath { 
+                    content_name: dependency_name.into(), 
+                    manifest_path: manifest_path.to_owned(), 
+                    manifest_range: dependency_name_range.to_owned()
+                });
+            }
+        } else {
+            match try_make_content(&dep_path) {
+                Ok(content) => {
+                    if content.content_name() == dependency_name {
+                        let dep_idx = self.insert_node(GraphNode { 
+                            content: Arc::from(content), 
+                            in_workspace: false, 
+                            in_repository: false
+                        });
+    
+                        self.insert_edge(GraphEdge { 
+                            dependant_idx: node_idx, 
+                            dependency_idx: dep_idx 
+                        });
+                    } else {
+                        self.errors.push(ContentGraphError::DependencyNameNotFoundAtPath { 
+                            content_name: dependency_name.into(), 
+                            manifest_path: manifest_path.to_owned(), 
+                            manifest_range: dependency_name_range.to_owned()
+                        });
+                    }
+                },
+                Err(err) => {
+                    match err {
+                        ContentScanError::Io(err) => {
+                            self.errors.push(ContentGraphError::Io(err));
                         },
-                        Err(err) => {
-                            match err {
-                                ContentScanError::Io(err) => {
-                                    self.errors.push(ContentGraphError::Io(err));
-                                },
-                                ContentScanError::ManifestParse(err) => {
-                                    self.errors.push(ContentGraphError::ManifestParse(err));
-                                },
-                                ContentScanError::NotContent => {
-                                    self.errors.push(ContentGraphError::DependencyPathNotFound { 
-                                        content_path: dep_path.into(), 
-                                        manifest_path: manifest_path.to_owned(),
-                                        manifest_range: dependency_path_range.clone()
-                                    })
-                                },
-                            }
+                        ContentScanError::ManifestParse(err) => {
+                            self.errors.push(ContentGraphError::ManifestParse(err));
+                        },
+                        ContentScanError::NotContent => {
+                            self.errors.push(ContentGraphError::DependencyPathNotFound { 
+                                content_path: dep_path.into(), 
+                                manifest_path: manifest_path.to_owned(),
+                                manifest_range: dependency_path_range.clone()
+                            })
                         },
                     }
-                }
-            },
-            Err(_) => {
-                self.errors.push(ContentGraphError::DependencyPathNotFound { 
-                    content_path: dependency_path.to_path_buf(), 
-                    manifest_path: manifest_path.to_owned(),
-                    manifest_range: dependency_path_range.clone()
-                })
+                },
             }
         }
     }

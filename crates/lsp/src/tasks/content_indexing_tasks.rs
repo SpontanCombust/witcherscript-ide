@@ -159,7 +159,7 @@ impl Backend {
     async fn on_graph_edges_added(&self, added_edges: Vec<GraphEdgeWithContent>) {
         for added_edge in added_edges {
             self.reporter.log_info(format!(
-                "Added dependency \"{}\" to content {}", 
+                "Established \"{}\" as dependency for content {}", 
                 added_edge.dependency_content.content_name(), 
                 added_edge.dependant_content.path()
             )).await;
@@ -169,7 +169,7 @@ impl Backend {
     async fn on_graph_edges_removed(&self, removed_edges: Vec<GraphEdgeWithContent>) {
         for removed_edge in removed_edges {
             self.reporter.log_info(format!(
-                "Removed dependency \"{}\" from content {}", 
+                "Removed \"{}\" from dependencies of content {}", 
                 removed_edge.dependency_content.content_name(), 
                 removed_edge.dependant_content.path()
             )).await;
@@ -202,6 +202,9 @@ impl Backend {
                 self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
             },
             ContentGraphError::DependencyNameNotFound { content_name: _, manifest_path, manifest_range } => {
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
+            },
+            ContentGraphError::DependencyNameNotFoundAtPath { content_name: _, manifest_path, manifest_range } => {
                 self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
             },
             ContentGraphError::MultipleMatchingDependencies { content_name: _, manifest_path, manifest_range } => {
