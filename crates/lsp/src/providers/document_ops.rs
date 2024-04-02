@@ -3,7 +3,7 @@ use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_project::{content::ProjectDirectory, Manifest};
-use crate::{tasks::ScriptAnalysisKind, Backend, ScriptState};
+use crate::{Backend, ScriptState};
 
 
 pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams) {
@@ -31,7 +31,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
                 is_foreign: true
             });
 
-            backend.run_script_analysis_for_single(&doc_path, ScriptAnalysisKind::SyntaxAnalysis).await;
+            backend.run_script_analysis_for_single(&doc_path).await;
         }
     } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
         let project_is_known = backend
@@ -56,7 +56,6 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
 
 pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentParams) {
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
-    let mut analysis_to_run = None;
     if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
         let script_state = entry.value_mut();
 
@@ -72,17 +71,10 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
 
         script_state.modified_timestamp = FileTime::now();
 
-        analysis_to_run = if script_state.is_foreign {
-            Some(ScriptAnalysisKind::SyntaxAnalysis)
-        } else {
-            Some(ScriptAnalysisKind::all())
-        };
     }
 
-    if let Some(analysis_kinds) = analysis_to_run {
-        backend.run_script_analysis_for_single(&doc_path, analysis_kinds).await;
-        backend.reporter.commit_diagnostics(&doc_path).await;
-    }
+    backend.run_script_analysis_for_single(&doc_path).await;
+    backend.reporter.commit_diagnostics(&doc_path).await;
 }
 
 pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams) {

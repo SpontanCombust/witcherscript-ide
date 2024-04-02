@@ -5,7 +5,7 @@ use tokio::sync::mpsc;
 use abs_path::AbsPath;
 use witcherscript::Script;
 use witcherscript_analysis::diagnostics::Diagnostic;
-use crate::{reporting::IntoLspDiagnostic, Backend};
+use crate::{reporting::IntoLspDiagnostic, Backend, ScriptState};
 
 
 #[bitmask(u8)]
@@ -13,8 +13,18 @@ pub enum ScriptAnalysisKind {
     SyntaxAnalysis
 }
 
+impl ScriptAnalysisKind {
+    pub fn suggested_for_script(script_state: &ScriptState) -> Self {
+        if script_state.is_foreign {
+            ScriptAnalysisKind::SyntaxAnalysis
+        } else {
+            ScriptAnalysisKind::all()
+        }
+    }
+}
+
 impl Backend {
-    pub async fn run_script_analysis<It>(&self, script_paths: It, analysis_kinds: ScriptAnalysisKind) 
+    pub async fn run_script_analysis<It>(&self, script_paths: It) 
     where It: IntoParallelIterator<Item = AbsPath> + Send + 'static {
         let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
 
@@ -23,7 +33,9 @@ impl Backend {
             script_paths.into_par_iter()
                 .for_each(move |script_path| {
                     if let Some(kv) = scripts.get(&script_path) {
-                        let script = &kv.value().script;
+                        let script_state = kv.value();
+                        let script = &script_state.script;
+                        let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
                         let diagnostics = diagnose_script(script, analysis_kinds)
                             .into_iter()
                             .map(|d| d.into_lsp_diagnostic());
@@ -39,9 +51,11 @@ impl Backend {
         }
     }
 
-    pub async fn run_script_analysis_for_single(&self, script_path: &AbsPath, analysis_kinds: ScriptAnalysisKind) {
+    pub async fn run_script_analysis_for_single(&self, script_path: &AbsPath) {
         if let Some(kv) = self.scripts.get(script_path) {
-            let script = &kv.value().script;
+            let script_state = kv.value();
+            let script = &script_state.script;
+            let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
 
             let diagnostics = diagnose_script(script, analysis_kinds)
                 .into_iter()
@@ -52,15 +66,15 @@ impl Backend {
         }
     }
 
-    pub async fn run_script_analysis_for_content(&self, content_path: &AbsPath, analysis_kinds: ScriptAnalysisKind) {
+    pub async fn run_script_analysis_for_content(&self, content_path: &AbsPath) {
         if let Some(kv) = self.source_trees.get(content_path) {
             let tree = kv.value();
             let script_paths: Vec<_> = tree.iter().map(|p| p.absolute_path().to_owned()).collect();
-            self.run_script_analysis(script_paths, analysis_kinds).await;
+            self.run_script_analysis(script_paths).await;
         }
     }
 
-    pub async fn run_script_analysis_for_all(&self, analysis_kinds: ScriptAnalysisKind) {
+    pub async fn run_script_analysis_for_all(&self) {
         let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
 
         let scripts = Arc::clone(&self.scripts);
@@ -68,7 +82,9 @@ impl Backend {
             scripts.iter().par_bridge()
                 .for_each(move |kv| {
                     let script_path = kv.key().to_owned();
-                    let script = &kv.value().script;
+                    let script_state = kv.value();
+                    let script = &script_state.script;
+                    let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
                     let diagnostics = diagnose_script(script, analysis_kinds)
                         .into_iter()
                         .map(|d| d.into_lsp_diagnostic());

@@ -6,7 +6,6 @@ use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{ContentGraph, ContentScanner, FileError};
 use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphEdgeWithContent, GraphNode};
 use crate::{reporting::IntoLspDiagnostic, Backend};
-use super::ScriptAnalysisKind;
 
 
 impl Backend {
@@ -81,7 +80,7 @@ impl Backend {
             self.reporter.log_info("Found no content graph changes.").await;
         }
 
-        self.run_script_analysis_for_all(ScriptAnalysisKind::all()).await;
+        self.run_script_analysis_for_all().await;
     }
 
     pub async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {

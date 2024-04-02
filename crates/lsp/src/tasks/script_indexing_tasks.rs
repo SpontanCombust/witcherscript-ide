@@ -4,7 +4,6 @@ use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_project::source_tree::{SourceTreeFile, SourceTreeDifference};
 use crate::{Backend, ScriptState};
-use super::ScriptAnalysisKind;
 
 
 impl Backend {
@@ -79,7 +78,7 @@ impl Backend {
 
         if run_diagnostics {
             let script_paths: Vec<_> = added_files.into_iter().map(|f| f.into()).collect();
-            self.run_script_analysis(script_paths, ScriptAnalysisKind::all()).await;
+            self.run_script_analysis(script_paths).await;
         }
     }
 
@@ -110,8 +109,7 @@ impl Backend {
         }
 
         if run_diagnostics && !script_paths.is_empty() {
-            //TODO check which analysis kinds are appropriate for a given script
-            self.run_script_analysis(script_paths, ScriptAnalysisKind::all()).await;
+            self.run_script_analysis(script_paths).await;
         }
     }
 }
