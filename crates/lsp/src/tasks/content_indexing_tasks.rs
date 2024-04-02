@@ -4,7 +4,7 @@ use abs_path::AbsPath;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory};
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{ContentGraph, ContentScanner, FileError};
-use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphNode};
+use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphEdgeWithContent, GraphNode};
 use crate::{reporting::IntoLspDiagnostic, Backend};
 use super::ScriptAnalysisKind;
 
@@ -85,14 +85,16 @@ impl Backend {
     }
 
     pub async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {
-        let (added_count, removed_count) = (diff.added.len(), diff.removed.len());
-        self.reporter.log_info(format!("Changes to the content graph: {} content(s) discovered, {} to be deprecated", added_count, removed_count)).await;
+        let (added_node_count, removed_node_count) = (diff.added_nodes.len(), diff.removed_nodes.len());
+        self.reporter.log_info(format!("Changes to the content graph: {} content(s) discovered, {} to be deprecated", added_node_count, removed_node_count)).await;
 
         let start = Instant::now();
 
-        let (diff_added, diff_removed) = (diff.added, diff.removed);
-        self.on_graph_nodes_removed(diff_removed).await;
-        self.on_graph_nodes_added(diff_added).await;
+        let (diff_nodes_added, diff_nodes_removed, diff_edges_added, diff_edges_removed) = (diff.added_nodes, diff.removed_nodes, diff.added_edges, diff.removed_edges);
+        self.on_graph_nodes_removed(diff_nodes_removed).await;
+        self.on_graph_nodes_added(diff_nodes_added).await;
+        self.on_graph_edges_added(diff_edges_added).await;
+        self.on_graph_edges_removed(diff_edges_removed).await;
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Handled content graph related changes in {:.3}s", duration.as_secs_f32())).await;
@@ -105,7 +107,7 @@ impl Backend {
             let added_content = added_node.content;
             let added_content_path = added_content.path();
 
-            self.reporter.log_info(format!("Discovered content: {}", added_content_path)).await; 
+            self.reporter.log_info(format!("Discovered content \"{}\" in {}", added_content.content_name(), added_content_path)).await; 
 
             let source_tree = added_content.source_tree();
 
@@ -135,7 +137,7 @@ impl Backend {
             let removed_content = removed_node.content;
             let removed_content_path = removed_content.path();
 
-            self.reporter.log_info(format!("Deprecated content: {}", removed_content_path)).await;
+            self.reporter.log_info(format!("Deprecated content \"{}\" from {}", removed_content.content_name(), removed_content_path)).await;
 
             if let Some((_, source_tree)) = self.source_trees.remove(removed_content_path) {
                 source_tree_diffs.insert(removed_content_path.to_owned(), SourceTreeDifference {
@@ -144,13 +146,33 @@ impl Backend {
                 });
             }
 
-            if let Ok(project) = removed_content.into_any().downcast::<ProjectDirectory>() {
+            if let Some(project) = removed_content.as_any().downcast_ref::<ProjectDirectory>() {
                 self.reporter.purge_diagnostics(project.manifest_path());
             }
         }
 
         for (content_path, diff) in source_tree_diffs {
             self.on_source_tree_changed(&content_path, diff, false).await;
+        }
+    }
+
+    async fn on_graph_edges_added(&self, added_edges: Vec<GraphEdgeWithContent>) {
+        for added_edge in added_edges {
+            self.reporter.log_info(format!(
+                "Added dependency \"{}\" to content {}", 
+                added_edge.dependency_content.content_name(), 
+                added_edge.dependant_content.path()
+            )).await;
+        }
+    }
+
+    async fn on_graph_edges_removed(&self, removed_edges: Vec<GraphEdgeWithContent>) {
+        for removed_edge in removed_edges {
+            self.reporter.log_info(format!(
+                "Removed dependency \"{}\" from content {}", 
+                removed_edge.dependency_content.content_name(), 
+                removed_edge.dependant_content.path()
+            )).await;
         }
     }
 

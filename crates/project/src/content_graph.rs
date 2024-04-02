@@ -1,8 +1,9 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use abs_path::AbsPath;
+use std::sync::Arc;
 use thiserror::Error;
 use lsp_types as lsp;
+use abs_path::AbsPath;
 use crate::content::{try_make_content, ContentScanError, ProjectDirectory};
 use crate::{Content, FileError, ContentScanner};
 use crate::manifest::{DependencyValue, ManifestParseError};
@@ -55,7 +56,7 @@ pub struct ContentGraph {
 
 #[derive(Debug, Clone)]
 pub struct GraphNode {
-    pub content: Box<dyn Content>,
+    pub content: Arc<dyn Content>,
     pub in_workspace: bool,
     pub in_repository: bool,
 }
@@ -106,13 +107,10 @@ impl ContentGraph {
 
 
     pub fn build(&mut self) -> ContentGraphDifference {
-        let prev_nodes: Vec<_> = self.nodes
-            .drain(..)
-            .collect();
-
-        self.edges.clear();
         self.errors.clear();
 
+        let prev_nodes: Vec<_> = self.nodes.drain(..).collect();
+        let prev_edges: Vec<_> = self.edges.drain(..).collect();
 
         self.create_workspace_content_nodes();
 
@@ -134,7 +132,7 @@ impl ContentGraph {
             }
         }
 
-        ContentGraphDifference::from_comparison(&prev_nodes, &self.nodes)
+        ContentGraphDifference::from_comparison(&prev_nodes, &self.nodes, &prev_edges, &self.edges)
     }
 
 
@@ -199,7 +197,7 @@ impl ContentGraph {
 
             for content in contents {
                 self.nodes.push(GraphNode { 
-                    content,
+                    content: Arc::from(content),
                     in_workspace: true, 
                     in_repository: false,
                 });
@@ -229,7 +227,7 @@ impl ContentGraph {
 
             for content in contents {
                 repo_nodes.push(GraphNode { 
-                    content,
+                    content: Arc::from(content),
                     in_workspace: false, 
                     in_repository: true,
                 });
@@ -361,7 +359,7 @@ impl ContentGraph {
             }
         }
     }
-
+    //TODO make sure that dependency name matches as well!
     fn link_dependencies_value_from_path(&mut self, 
         node_idx: usize, 
         repo_nodes: &mut Vec<GraphNode>,
@@ -380,7 +378,7 @@ impl ContentGraph {
                     match try_make_content(&dep_path) {
                         Ok(content) => {
                             let dep_idx = self.insert_node(GraphNode { 
-                                content, 
+                                content: Arc::from(content), 
                                 in_workspace: false, 
                                 in_repository: false
                             });
@@ -544,40 +542,85 @@ impl<'g> Iterator for Iter<'g> {
 
 #[derive(Debug, Clone, Default)]
 pub struct ContentGraphDifference {
-    pub added: Vec<GraphNode>,
-    pub removed: Vec<GraphNode>,
+    pub added_nodes: Vec<GraphNode>,
+    pub removed_nodes: Vec<GraphNode>,
+    pub added_edges: Vec<GraphEdgeWithContent>,
+    pub removed_edges: Vec<GraphEdgeWithContent>
 }
 
 impl ContentGraphDifference {
-    fn from_comparison(old_nodes: &Vec<GraphNode>, new_nodes: &Vec<GraphNode>) -> Self {
+    fn from_comparison(
+        old_nodes: &Vec<GraphNode>, 
+        new_nodes: &Vec<GraphNode>,
+        old_edges: &Vec<GraphEdge>,
+        new_edges: &Vec<GraphEdge>
+    ) -> Self {
         // NewType that compares nodes based upon content paths only
-        struct DiffingWrapper<'a>(&'a GraphNode);
+        struct NodeDiffingWrapper<'a>(&'a GraphNode);
 
-        impl PartialEq for DiffingWrapper<'_> {
+        impl PartialEq for NodeDiffingWrapper<'_> {
             fn eq(&self, other: &Self) -> bool {
                 self.0.content.path().eq(other.0.content.path())
             }
         }
 
-        impl Eq for DiffingWrapper<'_> {}
+        impl Eq for NodeDiffingWrapper<'_> {}
 
-        impl std::hash::Hash for DiffingWrapper<'_> {
+        impl std::hash::Hash for NodeDiffingWrapper<'_> {
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
                 self.0.content.path().hash(state);
             }
         }
 
 
-        let old_diffable: HashSet<_> = old_nodes.iter().map(|n| DiffingWrapper(n)).collect();
-        let new_diffable: HashSet<_> = new_nodes.iter().map(|n| DiffingWrapper(n)).collect();
+        let old_nodes_diffable: HashSet<_> = old_nodes.iter().map(|n| NodeDiffingWrapper(n)).collect();
+        let new_nodes_diffable: HashSet<_> = new_nodes.iter().map(|n| NodeDiffingWrapper(n)).collect();
+        let old_edges_diffable: HashSet<_> = old_edges.iter().map(|e| GraphEdgeWithContent::new(e, old_nodes)).collect();
+        let new_edges_diffable: HashSet<_> = new_edges.iter().map(|e| GraphEdgeWithContent::new(e, new_nodes)).collect();
 
         Self {
-            added: new_diffable.difference(&old_diffable).map(|wrapper| wrapper.0.clone()).collect(),
-            removed: old_diffable.difference(&new_diffable).map(|wrapper| wrapper.0.clone()).collect(),
+            added_nodes: new_nodes_diffable.difference(&old_nodes_diffable).map(|wrapper| wrapper.0.clone()).collect(),
+            removed_nodes: old_nodes_diffable.difference(&new_nodes_diffable).map(|wrapper| wrapper.0.clone()).collect(),
+            added_edges: new_edges_diffable.difference(&old_edges_diffable).cloned().collect(),
+            removed_edges: old_edges_diffable.difference(&new_edges_diffable).cloned().collect(),
         }
     }
 
     pub fn is_empty(&self) -> bool {
-        self.added.is_empty() && self.removed.is_empty()
+        self.added_nodes.is_empty()     && 
+        self.removed_nodes.is_empty()   && 
+        self.added_edges.is_empty()     && 
+        self.removed_edges.is_empty()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct GraphEdgeWithContent {
+    pub dependant_content: Arc<dyn Content>,
+    pub dependency_content: Arc<dyn Content>
+}
+
+impl GraphEdgeWithContent {
+    fn new(edge: &GraphEdge, nodes: &Vec<GraphNode>) -> Self {
+        Self {
+            dependant_content: Arc::clone(&nodes[edge.dependant_idx].content),
+            dependency_content: Arc::clone(&nodes[edge.dependency_idx].content)
+        }
+    }
+}
+
+impl PartialEq for GraphEdgeWithContent {
+    fn eq(&self, other: &Self) -> bool {
+        self.dependant_content.path() == other.dependant_content.path() 
+        && self.dependency_content.path() == other.dependency_content.path()
+    }
+}
+
+impl Eq for GraphEdgeWithContent {}
+
+impl std::hash::Hash for GraphEdgeWithContent {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.dependant_content.path().hash(state);
+        self.dependency_content.path().hash(state);
     }
 }
