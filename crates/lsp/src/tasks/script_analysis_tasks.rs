@@ -55,7 +55,7 @@ impl Backend {
     pub async fn run_script_analysis_for_content(&self, content_path: &AbsPath, analysis_kinds: ScriptAnalysisKind) {
         if let Some(kv) = self.source_trees.get(content_path) {
             let tree = kv.value();
-            let script_paths: Vec<_> = tree.iter().map(|p| p.absolute().to_owned()).collect();
+            let script_paths: Vec<_> = tree.iter().map(|p| p.absolute_path().to_owned()).collect();
             self.run_script_analysis(script_paths, analysis_kinds).await;
         }
     }

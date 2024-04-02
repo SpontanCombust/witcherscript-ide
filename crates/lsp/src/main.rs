@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use dashmap::DashMap;
+use filetime::FileTime;
 use shrinkwraprs::Shrinkwrap;
 use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result;
@@ -63,6 +64,9 @@ impl SourceTreeMap {
 pub struct ScriptState {
     script: Script,
     buffer: Option<ScriptDocument>,
+    /// Timestamp for the modification of the script and not necessairly the file,
+    /// i.e. the timestamp will update with `did_change` notification even if the file itself has not been saved yet.
+    modified_timestamp: FileTime,
     /// Marks a script that is not known to any content in the content graph
     is_foreign: bool
 }

@@ -1,51 +1,106 @@
 use std::borrow::Borrow;
 use std::collections::BTreeSet;
 use std::fmt::Display;
+use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use abs_path::AbsPath;
+use filetime::FileTime;
+use shrinkwraprs::Shrinkwrap;
 use crate::FileError;
 
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct SourceFilePath {
+pub struct SourceTreeFile {
     script_root: Arc<AbsPath>,
-    abs_path: AbsPath
+    abs_path: AbsPath,
+    modified_timestamp: FileTime
 }
 
-impl SourceFilePath {
-    fn new(script_root: Arc<AbsPath>, abs_path: AbsPath) -> Self {
-        Self {
-            script_root,
-            abs_path
-        }
-    }
-
+impl SourceTreeFile {
     /// A full path to the file
-    pub fn absolute(&self) -> &AbsPath {
+    pub fn absolute_path(&self) -> &AbsPath {
         &self.abs_path
     }
 
     /// Path relative tp the root
-    pub fn local(&self) -> &Path {
+    pub fn local_path(&self) -> &Path {
         self.abs_path.strip_prefix(self.script_root.as_ref()).unwrap()
     }
 
     /// A full path to the "scripts" directory
-    pub fn root(&self) -> &AbsPath {
+    pub fn script_root(&self) -> &AbsPath {
         self.script_root.as_ref()
+    }
+
+    pub fn modified_timestamp(&self) -> FileTime {
+        self.modified_timestamp
     }
 }
 
-impl Borrow<AbsPath> for SourceFilePath {
+impl Borrow<AbsPath> for SourceTreeFile {
     fn borrow(&self) -> &AbsPath {
         &self.abs_path
     }
 }
 
-impl Display for SourceFilePath {
+impl Into<AbsPath> for SourceTreeFile {
+    fn into(self) -> AbsPath {
+        self.abs_path
+    }
+}
+
+impl Display for SourceTreeFile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.abs_path)
+    }
+}
+
+
+/// A wrapper type for SourceTreeFile made specifically to compare individual objects in the set only based on abs_path.
+/// This in turn means that set operations only take abs_path into account and not modified_timestamp.
+#[derive(Debug, Clone, Shrinkwrap)]
+struct SourceTreeFileComparatorWrapper {
+    inner: SourceTreeFile
+}
+
+impl Borrow<AbsPath> for SourceTreeFileComparatorWrapper {
+    fn borrow(&self) -> &AbsPath {
+        &self.inner.abs_path
+    }
+}
+
+impl PartialEq for SourceTreeFileComparatorWrapper {
+    fn eq(&self, other: &Self) -> bool {
+        self.inner.abs_path == other.inner.abs_path
+    }
+}
+
+impl Eq for SourceTreeFileComparatorWrapper {}
+
+impl PartialOrd for SourceTreeFileComparatorWrapper {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.inner.abs_path.partial_cmp(&other.inner.abs_path)
+    }
+}
+
+impl Ord for SourceTreeFileComparatorWrapper {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.inner.abs_path.cmp(&other.inner.abs_path)
+    }
+}
+
+impl From<SourceTreeFile> for SourceTreeFileComparatorWrapper {
+    fn from(value: SourceTreeFile) -> Self {
+        Self {
+            inner: value
+        }
+    }
+}
+
+impl From<SourceTreeFileComparatorWrapper> for SourceTreeFile {
+    fn from(value: SourceTreeFileComparatorWrapper) -> Self {
+        value.inner
     }
 }
 
@@ -53,7 +108,7 @@ impl Display for SourceFilePath {
 #[derive(Debug, Clone)]
 pub struct SourceTree {
     script_root: Arc<AbsPath>,
-    tree: BTreeSet<SourceFilePath>,
+    tree: BTreeSet<SourceTreeFileComparatorWrapper>,
     /// Errors encountered during scanning
     pub errors: Vec<FileError<std::io::Error>>
 }
@@ -99,24 +154,45 @@ impl SourceTree {
     fn scan_visit_file(&mut self, path: AbsPath) {
         if let Some(ext) = path.extension() {
             if ext == "ws" {
-                self.tree.insert(SourceFilePath::new(self.script_root.clone(), path));
+                match fs::metadata(&path) {
+                    Ok(metadata) => {
+                        let timestamp = FileTime::from_last_modification_time(&metadata);
+
+                        self.tree.insert(SourceTreeFile {
+                            script_root: self.script_root.clone(),
+                            abs_path: path,
+                            modified_timestamp: timestamp
+                        }.into());
+                    },
+                    Err(err) => {
+                        self.errors.push(FileError::new(path.clone(), err));
+                    },
+                }
             }
         }
     }
 
     pub fn scan(&mut self) -> SourceTreeDifference {
-        let mut diff = SourceTreeDifference::default();
         let old_tree = std::mem::replace(&mut self.tree, BTreeSet::new());
         self.errors.clear();
 
-        if self.script_root.is_dir() {
-            self.scan_visit_dir(self.script_root.as_ref().to_owned());
+        self.scan_visit_dir(self.script_root.as_ref().to_owned());
 
-            diff.added.extend(self.tree.difference(&old_tree).cloned());
-            diff.removed.extend(old_tree.difference(&self.tree).cloned());
+        let diff_added = self.tree.difference(&old_tree).cloned().map(|f| f.inner);
+        let diff_removed = old_tree.difference(&self.tree).cloned().map(|f| f.inner);
+        let diff_modified = self.tree.iter().filter(|self_file| {
+            if let Some(old_file) = old_tree.get(self_file.absolute_path()) {
+                self_file.modified_timestamp > old_file.modified_timestamp
+            } else {
+                false
+            }
+        }).cloned().map(|f| f.inner);
+            
+        SourceTreeDifference { 
+            added: diff_added.collect(), 
+            removed: diff_removed.collect(), 
+            modified: diff_modified.collect()
         }
-        
-        diff
     }
 
     
@@ -132,29 +208,47 @@ impl SourceTree {
         self.tree.contains(path)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &SourceFilePath> {
-        self.tree.iter()
+    pub fn iter(&self) -> impl Iterator<Item = &SourceTreeFile> {
+        self.tree.iter().map(|f| f.as_ref())
     }    
 }
 
-impl IntoIterator for SourceTree {
-    type Item = SourceFilePath;
-    type IntoIter = <BTreeSet<SourceFilePath> as IntoIterator>::IntoIter;
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.tree.into_iter()
+pub struct IntoIter {
+    iter: Box<dyn Iterator<Item = SourceTreeFile>>
+}
+
+impl Iterator for IntoIter {
+    type Item = SourceTreeFile;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next()
     }
 }
 
-//TODO remake as an enum, add Changed variant, add timestamp to SourceFilePath
+impl IntoIterator for SourceTree {
+    type Item = SourceTreeFile;
+    type IntoIter = self::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter {
+            iter: Box::new(self.tree.into_iter().map(|f| f.inner))
+        }
+    }
+}
+
+
 #[derive(Debug, Clone, Default)]
 pub struct SourceTreeDifference {
-    pub added: Vec<SourceFilePath>,
-    pub removed: Vec<SourceFilePath>
+    pub added: Vec<SourceTreeFile>,
+    pub removed: Vec<SourceTreeFile>,
+    pub modified: Vec<SourceTreeFile>
 }
 
 impl SourceTreeDifference {
     pub fn is_empty(&self) -> bool {
-        self.added.is_empty() && self.removed.is_empty()
+        self.added.is_empty() && 
+        self.removed.is_empty() && 
+        self.modified.is_empty()
     }
 }

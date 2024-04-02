@@ -1,3 +1,4 @@
+use filetime::FileTime;
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
@@ -17,7 +18,8 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
         let doc_buff = ScriptDocument::from_str(&params.text_document.text);
 
         if let Some(mut script_entry) = backend.scripts.get_mut(&doc_path) {
-            script_entry.value_mut().buffer.replace(doc_buff);
+            let script_state = script_entry.value_mut();
+            script_state.buffer.replace(doc_buff);
         } else {
             backend.reporter.log_info("Opened script file unknown to the content graph").await;
 
@@ -25,6 +27,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
             backend.scripts.insert(doc_path.clone(), ScriptState {
                 buffer: Some(doc_buff),
                 script,
+                modified_timestamp: FileTime::now(),
                 is_foreign: true
             });
 
@@ -41,6 +44,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
         if !project_is_known {
             backend.reporter.log_info("Opened unknown manifest file").await;
 
+            // try rebuilding the graph but only if it's not already being rebuilt
             if let Ok(mut content_graph) = backend.content_graph.try_write() {
                 backend.build_content_graph(&mut content_graph).await;
             }
@@ -66,6 +70,8 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
             }
         }
 
+        script_state.modified_timestamp = FileTime::now();
+
         analysis_to_run = if script_state.is_foreign {
             Some(ScriptAnalysisKind::SyntaxAnalysis)
         } else {
@@ -90,33 +96,26 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
 
     
     if doc_path.extension().map(|ext| ext == "ws").unwrap_or(false) {
-        if let Some(containing_content_path) = backend.source_trees.containing_content_path(&doc_path) {
-            backend.scan_source_tree(&containing_content_path).await;
-        }
-
-        let mut analysis_to_run = None;
+        // let mut analysis_to_run = None;
         if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
             let script_state = entry.value_mut();
 
             let doc_buff = ScriptDocument::from_str(&params.text.unwrap());
 
-            // do a fresh reparse without caring about the previous state 
-            // as a fail-safe in case of bad edits or document being changed outside of the editor
+            // Do a fresh reparse without caring about the previous state.
+            // This is a fail-safe in case of bad edits or document having been changed outside of the editor.
             if let Err(err) = script_state.script.refresh(&doc_buff) {
                 backend.reporter.log_error(err).await;
             }
 
-            analysis_to_run = if script_state.is_foreign {
-                Some(ScriptAnalysisKind::SyntaxAnalysis)
-            } else {
-                Some(ScriptAnalysisKind::all())
-            };
+            script_state.modified_timestamp = FileTime::now();
         }
 
-        if let Some(analysis_kinds) = analysis_to_run {
-            backend.run_script_analysis_for_single(&doc_path, analysis_kinds).await;
+        if let Some(containing_content_path) = backend.source_trees.containing_content_path(&doc_path) {
+            backend.scan_source_tree(&containing_content_path).await;
         }
     } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
+        // try rebuilding the graph but only if it's not already being rebuilt
         if let Ok(mut content_graph) = backend.content_graph.try_write() {
             backend.build_content_graph(&mut content_graph).await;
         }

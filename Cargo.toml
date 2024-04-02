@@ -26,3 +26,4 @@ semver = { version = "1.0", features = ["serde"] }
 dyn-clone = "1.0"
 rayon = "1.9"
 bitmask-enum = "2.2.3"
+filetime = "0.2.23"

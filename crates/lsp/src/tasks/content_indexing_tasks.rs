@@ -119,7 +119,8 @@ impl Backend {
 
             source_tree_diffs.insert(added_content_path.to_owned(), SourceTreeDifference {
                 added: source_tree.iter().cloned().collect(),
-                removed: vec![]
+                removed: vec![],
+                modified: vec![]
             });
 
             self.source_trees.insert(added_content_path.clone(), source_tree);
@@ -142,7 +143,8 @@ impl Backend {
             if let Some((_, source_tree)) = self.source_trees.remove(removed_content_path) {
                 source_tree_diffs.insert(removed_content_path.to_owned(), SourceTreeDifference {
                     added: vec![],
-                    removed: source_tree.into_iter().collect()
+                    removed: source_tree.into_iter().collect(),
+                    modified: vec![]
                 });
             }
 

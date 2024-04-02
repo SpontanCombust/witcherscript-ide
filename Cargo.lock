@@ -289,6 +289,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
+name = "filetime"
+version = "0.2.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ee447700ac8aa0b2f2bd7bc4462ad686ba06baa6727ac149a2d6277f0d240fd"
+dependencies = [
+ "cfg-if",
+ "libc",
+ "redox_syscall",
+ "windows-sys",
+]
+
+[[package]]
 name = "form_urlencoded"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1292,6 +1304,7 @@ dependencies = [
  "abs-path",
  "bitmask-enum",
  "dashmap",
+ "filetime",
  "rayon",
  "serde",
  "serde_json",
@@ -1310,6 +1323,7 @@ version = "0.1.0"
 dependencies = [
  "abs-path",
  "dyn-clone",
+ "filetime",
  "lsp-types",
  "ropey",
  "semver",
