@@ -268,7 +268,7 @@ game_version = "4.04"
 content0 = true
 
 # For details check the manual
-# https://spontancombust.github.io/witcherscript-ide/user-manual/project-manifest/
+# https://spontancombust.github.io/witcherscript-ide/user-manual/project-system/#project-manifest
 "#
     );
 

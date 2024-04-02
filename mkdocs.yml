@@ -7,16 +7,38 @@ repo_url: https://github.com/SpontanCombust/witcherscript-ide
 nav:
   - 'Home': 'index.md'
   - 'User Manual':
-    - 'Script Content': 'user-manual/script-content.md'
-    - 'Project Manifest': 'user-manual/project-manifest.md' 
+    - 'user-manual/index.md'
+    - 'Project System': 'user-manual/project-system.md' 
   - 'Developer Manual': 'dev-manual.md'
-  - 'Changelog': 'changelog.md'
-  - 'Copyright': 'copyright.md'
+  - 'About':
+    - 'about/index.md'
+    - 'Changelog': 'about/changelog.md'
+    - 'Copyright': 'about/copyright.md'
 
 theme:
-  name: cinder
-  custom_dir: docs/_theme_override/
+  name: material
+  favicon: assets/favicon.ico
+  logo: assets/logo.svg
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    primary: custom
+    accent: custom
+  features:
+    - navigation.indexes
+    - navigation.expand
+    - content.code.copy
+    - toc.follow
   locale: en
 
-exclude_docs: |
-  _theme_override
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.superfences:
+  - toc:
+      permalink: true
