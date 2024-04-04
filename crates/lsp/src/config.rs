@@ -22,7 +22,7 @@ pub enum ConfigError {
 }
 
 impl Config {
-    const CONFIG_ITEM_SECTIONS: [&str; 2] = [
+    const CONFIG_ITEM_SECTIONS: [&'static str; 2] = [
         "witcherscript-ide.gameDirectory",
         "witcherscript-ide.contentRepositories"
     ];

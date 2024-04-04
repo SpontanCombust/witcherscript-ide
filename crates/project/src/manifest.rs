@@ -55,7 +55,7 @@ pub enum DependencyValue {
 
 
 impl Manifest {
-    pub const FILE_NAME: &str = "witcherscript.toml";
+    pub const FILE_NAME: &'static str = "witcherscript.toml";
 
     pub fn from_file(path: &AbsPath) -> Result<Self, ManifestParseError> {
         let mut f = File::open(path).map_err(|err| Arc::new(err))?;
