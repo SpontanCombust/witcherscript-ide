@@ -47,7 +47,7 @@
           "default": "",
           "markdownDescription": "Path to Witcher 3's root game directory (containing bin, content, Mods folders etc.). This will effectively add `content` and `Mods` folders to content repositories."
         },
-        "witcherscript-ide.projectRepositories": {
+        "witcherscript-ide.contentRepositories": {
           "type": "array",
           "items": {
             "type": "string"
@@ -87,7 +87,7 @@
       },
       {
         "command": "witcherscript-ide.debug.contentGraphDot",
-        "title": "Show content graph in the Graphviz DOT format",
+        "title": "Show content graph",
         "category": "WitcherScript-IDE (debug)"
       }
     ],

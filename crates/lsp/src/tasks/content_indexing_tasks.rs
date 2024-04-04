@@ -29,13 +29,19 @@ impl Backend {
 
         let mut repo_paths = Vec::new();
         
-        for repo in &config.project_repositories {
+        for repo in &config.content_repositories {
             repo_paths.push(repo.clone());
         }
         
-        repo_paths.push(config.game_directory.join("content"));
-        repo_paths.push(config.game_directory.join("Mods"));
+        if !config.game_directory.as_os_str().is_empty() {
+            repo_paths.push(config.game_directory.join("content"));
+            repo_paths.push(config.game_directory.join("Mods"));
+        }
 
+        if repo_paths.is_empty() {
+            self.reporter.show_warning_notification("No content repository paths have have been configured").await;
+            return;
+        }
 
         content_graph.clear_repository_scanners();
 
@@ -54,7 +60,7 @@ impl Backend {
                         }
                     }
                     Err(_) => {
-                        self.reporter.log_error(format!("Invalid project repository path: {}", repo.display())).await;
+                        self.reporter.log_error(format!("Invalid content repository path: {}", repo.display())).await;
                     }
                 }
             }

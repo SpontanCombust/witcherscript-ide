@@ -20,7 +20,7 @@ VSCode client for WitcherScript language server.
 **witcherscript-ide.gameDirectory** <br>
 Path to Witcher 3's root game directory (containing bin, content, Mods folders etc.). This will effectively add `content` and `Mods` folders to content repositories.
 
-**witcherscript-ide.projectRepositories** <br>
+**witcherscript-ide.contentRepositories** <br>
 Paths to custom directories containing WitcherScript contents. Useful when not having Witcher 3 installed on your local machine or when simply storing scripts outside of game directory.
 
 
