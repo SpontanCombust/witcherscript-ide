@@ -1,17 +1,21 @@
 # Project System
 
-## Script Content
-//TODO
+The game during script compilation needs to think only about assembling one big blob of code that will be then compiled. Places where it looks for said code are predefined and limited. Aside from the testing stage, developing a script mod often means working in a completely unrelated workspace directory, which can additionally be stored remotely using a version control system like Git. WitcherScript IDE bridges the gap between those workspaces and scripts in the game directory by introducing a project system.
+
+Projects organize WitcherScript code into seperable packages which can depend on other packages in the form of other [projects](#project) or raw [content directories](#content-directory).
 
 
-## Project Manifest
+## Project
 
-In order for the IDE to know all the important information needed to analyze scripts a project needs a manifest file.
-This file is written in TOML format and by convention is called `witcherscript.toml`.
+A WitcherScript project that WitcherScript IDE establishes is comprised of two things: a [manifest](#manifest-format) and a scripts directory. 
+The manifest is a TOML file by convention called `witcherscript.toml`. It contains basic information about the project like its name and what are its dependencies. 
+The scripts directory is a subfolder literally called *"scripts"*, which contains all of project's WitcherScript files. The location of that folder can be configured in the manifest.
 
-Beware: format of the manifest may change in the future. Look out for breaking changes section in the changelog.
 
-## Manifest format:
+## Manifest format
+
+:exclamation: ***Beware***: *format of the manifest may change in the future. Look out for breaking changes section in the changelog.*
+
 Every manifest is composed of following sections:
 
 - [content](#the-content-table) *:
@@ -67,10 +71,23 @@ specificDependency = { path = "../dependencies/specificDependency" }
 ``` 
 
 
-## Example
-Contents of an exemplary `witcherscript.toml` manifest:
+## Project example
+
+Example of a simple script project structure:
+
+```text
+SuperSpeedMod/
+├─ witcherscript.toml
+├─ scripts/
+    ├─ game/
+    │  ├─ r4Player.ws
+    ├─ local/
+        ├─ super_speed.ws
+```
 
 ```toml
+# SuperSpeedMod/witcherscript.toml
+
 [content]
 name = "modSuperSpeed"
 version = "1.0.0"
@@ -79,7 +96,42 @@ game_version = "4.04"
 
 [dependencies]
 content0 = true # added by default
-modMovement = { path = "../modMovement" }
+modMovement = { path = "../MovementMod" }
 ```
 
-Note that you do not have to create a manifest file by hand. By using `"Initialize/Create WitcherScript project..."` commands in the editor a template manifest is generated automatically for your new project.
+Note that you do not have to create a manifest or even an entire project by hand. You can use *`"Initialize/Create WitcherScript project..."`* commands in the editor to either create a manifest in already existing directory or create an entirely new project directory.
+
+
+
+## Content directory
+
+"Content" is the term by which the IDE refers to directories containing packaged game files, among which are scripts residing in *"scripts"* directory.
+Examples of such directories in Witcher&nbsp;3's game directory include *"content0"*, which contains all vanilla scripts, and any mods in the *"Mods"* directory that contain WitcherScript.
+
+Recognized folder patterns are:
+
+1. *"scripts"* directly inside the folder (example: *"content0"*)
+```text
+{content_name}/
+├─ scripts/
+   ├─ **/*.ws
+```
+
+2. *"scripts"* inside an intermediary *"content"* directory (examples: script mod in the *"Mods"* directory)
+```text
+{content_name}/
+├─ content/
+   ├─ scripts/
+      ├─ **/*.ws
+```
+
+Project directory can be seen as an extension of a content directory, as alongside scripts it also includes the manifest. 
+Raw content recognized by the IDE purely for user convenience to not force anyone to needlesly create manifest files for directories, whose identity can be recognized from the context of their placement in the file system (case in point, again, the *"content0"* directory).
+
+Name of raw content is derived from the name of its root directory.
+
+
+
+## Content repositories
+
+"Content repositories" are directories that can contain script contents, either raw or projects. Common repositories are *"Witcher 3/content"* and *"Witcher 3/Mods"*. Repositories are configurable in the editor.
