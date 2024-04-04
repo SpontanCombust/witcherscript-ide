@@ -24,5 +24,7 @@ jobs:
         pip install mkdocs
         pip install mkdocs-material
     - name: Deploy
-      run: >
+      run: |
+        git config user.name 'github-actions[bot]'
+        git config user.email 'github-actions[bot]@users.noreply.github.com'
         mkdocs gh-deploy -m "ci: update github pages"
