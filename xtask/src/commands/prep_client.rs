@@ -16,10 +16,12 @@ pub fn prep_client(watch: bool) -> anyhow::Result<()> {
     if cfg!(unix) {
         cmd!(sh, "npm --version").run().with_context(|| "npm is required")?;
     
+        cmd!(sh, "npm ci").run()?;
         cmd!(sh, "npm run {command}").run()?;
     } else {
         cmd!(sh, "cmd.exe /c npm --version").run().with_context(|| "npm is required")?;
     
+        cmd!(sh, "cmd.exe /c npm ci").run()?;
         cmd!(sh, "cmd.exe /c npm run {command}").run()?;
     }
 
