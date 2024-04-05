@@ -15,17 +15,13 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
         .any(|root| doc_path.starts_with(root));
 
     if params.text_document.language_id == Backend::LANGUAGE_ID {
-        let doc_buff = ScriptDocument::from_str(&params.text_document.text);
-
-        if let Some(mut script_entry) = backend.scripts.get_mut(&doc_path) {
-            let script_state = script_entry.value_mut();
-            script_state.buffer.replace(doc_buff);
-        } else {
+        if !backend.scripts.contains_key(&doc_path) {
             backend.reporter.log_info("Opened script file unknown to the content graph").await;
-
+            
+            let doc_buff = ScriptDocument::from_str(&params.text_document.text);
             let script = Script::new(&doc_buff).unwrap();
             backend.scripts.insert(doc_path.clone(), ScriptState {
-                buffer: Some(doc_buff),
+                buffer: doc_buff,
                 script,
                 modified_timestamp: FileTime::now(),
                 is_foreign: true
@@ -59,14 +55,12 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
     if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
         let script_state = entry.value_mut();
 
-        if let Some(buf) = &mut script_state.buffer {
-            for edit in params.content_changes {
-                buf.edit(&edit);
-            }
+        for edit in params.content_changes {
+            script_state.buffer.edit(&edit);
+        }
 
-            if let Err(err) = script_state.script.update(buf) {
-                backend.reporter.log_error(err).await;
-            }
+        if let Err(err) = script_state.script.update(&mut script_state.buffer) {
+            backend.reporter.log_error(err).await;
         }
 
         script_state.modified_timestamp = FileTime::now();
@@ -127,8 +121,6 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
                 backend.reporter.purge_diagnostics(&doc_path);
                 backend.reporter.commit_diagnostics(&doc_path).await;
                 should_remove_script = true;
-            } else {
-                script_state.buffer = None;
             }
         }
 

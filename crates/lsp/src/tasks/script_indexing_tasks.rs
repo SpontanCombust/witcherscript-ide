@@ -60,17 +60,17 @@ impl Backend {
                     let path = f.absolute_path().to_owned();
                     let doc = ScriptDocument::from_file(&path).unwrap();
                     let script = Script::new(&doc).unwrap();
-                    (path, script, f.modified_timestamp())
+                    (path, doc, script, f.modified_timestamp())
                 })
                 .for_each(|result| send.blocking_send(result).expect("on_source_tree_paths_added mpsc::send fail"));
         });
 
-        while let Some((script_path, script, modified_timestamp)) = recv.recv().await {
+        while let Some((script_path, buffer, script, modified_timestamp)) = recv.recv().await {
             // Doing to many logs at once puts a strain on the connection, better to do this through a Progress or something...
             // self.log_info(format!("Discovered script: {}", script_path.display())).await;
             self.scripts.insert(script_path, ScriptState { 
                 script, 
-                buffer: None,
+                buffer,
                 modified_timestamp,
                 is_foreign: false
             });
@@ -98,9 +98,7 @@ impl Backend {
                 if modified_file.modified_timestamp() > script_state.modified_timestamp {
                     let doc = ScriptDocument::from_file(modified_file.absolute_path()).unwrap();
                     script_state.script.refresh(&doc).unwrap();
-                    if let Some(ref mut buffer) = script_state.buffer {
-                        *buffer = doc;
-                    }
+                    script_state.buffer = doc;
                     script_state.modified_timestamp = modified_file.modified_timestamp();
 
                     script_paths.push(modified_file.absolute_path().to_owned());
