@@ -39,7 +39,7 @@ impl Backend {
         }
 
         if repo_paths.is_empty() {
-            self.reporter.show_warning_notification("No content repository paths have have been configured").await;
+            self.reporter.show_warning_notification("No WitcherScript content repository paths have have been configured").await;
             return;
         }
 
