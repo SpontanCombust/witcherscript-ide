@@ -38,8 +38,11 @@ function commandInitProject(context: vscode.ExtensionContext): Cmd {
             return;
         }
 
-        
-        const initProjectName = path.parse(projectDirUri.fsPath).name.replace(' ', '');
+        let initProjectName = path.basename(projectDirUri.fsPath).replace(' ', '');
+        if (initProjectName == "content") {
+            const parentDir = path.dirname(projectDirUri.fsPath);
+            initProjectName = path.basename(parentDir).replace(' ', '');
+        }
 
         const projectName = await vscode.window.showInputBox({
             prompt: "Enter the name of the project",
