@@ -179,6 +179,10 @@ pub enum ContentScanError {
 }
 
 pub fn try_make_content(path: &AbsPath) -> Result<Box<dyn Content>, ContentScanError> {
+    if !path.exists() {
+        return Err(FileError::new(path.to_owned(), std::io::Error::from(std::io::ErrorKind::NotFound)).into())
+    }
+
     let manifest_path = path.join(Manifest::FILE_NAME).unwrap();
     if manifest_path.exists() {
         match ProjectDirectory::new(path.clone()) {
@@ -193,12 +197,12 @@ pub fn try_make_content(path: &AbsPath) -> Result<Box<dyn Content>, ContentScanE
         return Ok(Box::new(UnpackedContentDirectory::new(path.clone())));
     } 
     
-    let path = path.join("content").unwrap();
+    let packed_path = path.join("content").unwrap();
 
-    if path.exists() {
-        let manifest_path = path.join(Manifest::FILE_NAME).unwrap();
+    if packed_path.exists() {
+        let manifest_path = packed_path.join(Manifest::FILE_NAME).unwrap();
         if manifest_path.exists() {
-            match ProjectDirectory::new(path.clone()) {
+            match ProjectDirectory::new(packed_path.clone()) {
                 Ok(proj) => {
                     return Ok(Box::new(proj));
                 },
@@ -206,10 +210,69 @@ pub fn try_make_content(path: &AbsPath) -> Result<Box<dyn Content>, ContentScanE
                     return Err(FileError::new(manifest_path, err).into());
                 }
             };
-        } else if path.join("scripts").unwrap().exists() {
+        } else if packed_path.join("scripts").unwrap().exists() {
             return Ok(Box::new(PackedContentDirectory::new(path.clone())));
         }
     }
     
     Err(ContentScanError::NotContent)
+}
+
+
+
+
+#[cfg(test)]
+mod test {
+    use std::sync::OnceLock;
+    use super::*;
+
+
+    fn test_assets() -> &'static AbsPath {
+        static TEST_ASSETS: OnceLock<AbsPath> = OnceLock::new();
+        TEST_ASSETS.get_or_init(|| {
+            let manifest_dir = AbsPath::resolve(env!("CARGO_MANIFEST_DIR"), None).unwrap();
+            manifest_dir.join("../../test_assets/project").unwrap()
+        })
+    }
+
+    #[test]
+    fn test() {
+        let path = test_assets().join("nonexistent").unwrap();
+        let content = try_make_content(&path);
+        assert!(matches!(content, Err(ContentScanError::Io(_))));
+
+        let path = test_assets();
+        let content = try_make_content(&path);
+        assert!(matches!(content, Err(ContentScanError::NotContent)));
+
+        let path = test_assets().join("proj1").unwrap();
+        let content = try_make_content(&path).unwrap();
+        let proj = content.as_any().downcast_ref::<ProjectDirectory>().unwrap();
+        assert_eq!(proj.path(), &path);
+        assert_eq!(proj.manifest_path(), &path.join(Manifest::FILE_NAME).unwrap());
+        assert_eq!(proj.content_name(), "proj1");
+        assert_eq!(proj.source_tree_root(), &path.join("scripts").unwrap());
+
+        let path = test_assets().join("proj2").unwrap();
+        let content = try_make_content(&path).unwrap();
+        let proj = content.as_any().downcast_ref::<ProjectDirectory>().unwrap();
+        assert_eq!(proj.path(), &path);
+        assert_eq!(proj.manifest_path(), &path.join(Manifest::FILE_NAME).unwrap());
+        assert_eq!(proj.content_name(), "proj2");
+        assert_eq!(proj.source_tree_root(), &path.join("content/scripts").unwrap());
+
+        let path = test_assets().join("raw1").unwrap();
+        let content = try_make_content(&path).unwrap();
+        let raw = content.as_any().downcast_ref::<UnpackedContentDirectory>().unwrap();
+        assert_eq!(raw.path(), &path);
+        assert_eq!(raw.content_name(), "raw1");
+        assert_eq!(raw.source_tree_root(), &path.join("scripts").unwrap());
+
+        let path = test_assets().join("nested/raw2").unwrap();
+        let content = try_make_content(&path).unwrap();
+        let raw = content.as_any().downcast_ref::<PackedContentDirectory>().unwrap();
+        assert_eq!(raw.path(), &path);
+        assert_eq!(raw.content_name(), "raw2");
+        assert_eq!(raw.source_tree_root(), &path.join("content/scripts").unwrap());
+    }   
 }

@@ -14,7 +14,7 @@ impl ContentScanner {
         if !scan_root.is_dir() {
             return Err(ContentScanError::Io(FileError::new(
                 scan_root, 
-                std::io::Error::new(std::io::ErrorKind::NotFound, "Path is not an existing directory")
+                std::io::Error::from(std::io::ErrorKind::NotFound)
             ))); 
         }
 
@@ -70,8 +70,10 @@ impl ContentScanner {
                                         contents.push(content)
                                     },
                                     Err(err) => {
-                                        if let (&ContentScanError::NotContent, true) = (&err, self.recursive) {
-                                            self.find_content_in_directory(&candidate, contents, errors)
+                                        if let &ContentScanError::NotContent = &err {
+                                            if self.recursive {
+                                                self.find_content_in_directory(&candidate, contents, errors)
+                                            }
                                         } else {
                                             errors.push(err);
                                         }
@@ -89,5 +91,54 @@ impl ContentScanner {
                 errors.push(FileError::new(path.clone(), err).into());
             }
         }
+    }
+}
+
+
+
+
+#[cfg(test)]
+mod test {
+    use std::sync::OnceLock;
+    use super::*;
+
+
+    fn test_assets() -> &'static AbsPath {
+        static TEST_ASSETS: OnceLock<AbsPath> = OnceLock::new();
+        TEST_ASSETS.get_or_init(|| {
+            let manifest_dir = AbsPath::resolve(env!("CARGO_MANIFEST_DIR"), None).unwrap();
+            manifest_dir.join("../../test_assets/project").unwrap()
+        })
+    }
+
+
+    #[test]
+    fn test_repos() {
+        let scanner = ContentScanner::new(test_assets().to_owned()).unwrap()
+            .only_projects(false)
+            .recursive(false);
+
+        let (contents, errors) = scanner.scan();
+
+        assert!(errors.is_empty());
+        assert_eq!(contents.len(), 3);
+        assert!(contents.iter().any(|c| c.path() == &test_assets().join("proj1").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &test_assets().join("proj2").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &test_assets().join("raw1").unwrap()));
+    }
+
+    #[test]
+    fn test_workspaces() {
+        let scanner = ContentScanner::new(test_assets().to_owned()).unwrap()
+            .only_projects(true)
+            .recursive(true);
+
+        let (contents, errors) = scanner.scan();
+
+        assert!(errors.is_empty());
+        assert_eq!(contents.len(), 3);
+        assert!(contents.iter().any(|c| c.path() == &test_assets().join("proj1").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &test_assets().join("proj2").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &test_assets().join("nested/proj3").unwrap()));
     }
 }

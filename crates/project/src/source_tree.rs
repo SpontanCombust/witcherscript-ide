@@ -204,8 +204,17 @@ impl SourceTree {
         self.tree.len()
     }
 
+    /// Searches for a file with a given absolute path
     pub fn contains(&self, path: &AbsPath) -> bool {
         self.tree.contains(path)
+    }
+
+    /// Searches for a file with a given path relative to the tree root
+    pub fn contains_local(&self, path: &Path) -> bool {
+        self.tree.iter().any(move |f| {
+            let local = f.local_path();
+            local == path
+        })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &SourceTreeFile> {
@@ -251,4 +260,43 @@ impl SourceTreeDifference {
         self.removed.is_empty() && 
         self.modified.is_empty()
     }
+}
+
+
+
+
+
+#[cfg(test)]
+mod test {
+    use std::sync::OnceLock;
+    use crate::try_make_content;
+    use super::*;
+
+
+    fn test_assets() -> &'static AbsPath {
+        static TEST_ASSETS: OnceLock<AbsPath> = OnceLock::new();
+        TEST_ASSETS.get_or_init(|| {
+            let manifest_dir = AbsPath::resolve(env!("CARGO_MANIFEST_DIR"), None).unwrap();
+            manifest_dir.join("../../test_assets/project").unwrap()
+        })
+    }
+
+    #[test]
+    fn test() {
+        let path = test_assets().join("proj1").unwrap();
+        let content = try_make_content(&path).unwrap();
+        let tree = content.source_tree();
+        assert_eq!(tree.len(), 6);
+        assert!(tree.contains_local(&Path::new("core").join("2DArray.ws")));
+        assert!(tree.contains_local(&Path::new("core").join("states.ws")));
+        assert!(tree.contains_local(&Path::new("core").join("string.ws")));
+        assert!(tree.contains_local(&Path::new("engine").join("behavior.ws")));
+        assert!(tree.contains_local(&Path::new("engine").join("entity.ws")));
+        assert!(tree.contains_local(&Path::new("local").join("my_local.ws")));
+
+        let path = test_assets().join("nested/raw2").unwrap();
+        let content = try_make_content(&path).unwrap();
+        let tree = content.source_tree();
+        assert_eq!(tree.len(), 0);
+    }   
 }
