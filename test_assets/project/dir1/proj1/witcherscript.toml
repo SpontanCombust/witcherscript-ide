@@ -1,14 +1,13 @@
 # Basic information about this project
 [content]
-name = "proj2"
+name = "proj1"
 version = "1.0.0"
 authors = []
 game_version = "4.04"
-scripts_root = "content/scripts"
 
 # Any dependencies that this project might need
 # The allowed formats for now are:
 # modTest1 = true   # get the dependency from a repository
 # modTest2 = { path = "../path/to/modTest2" }     # get the dependency from a specific path
 [dependencies]
-content0 = true
+raw0 = true

@@ -283,7 +283,7 @@ mod test {
 
     #[test]
     fn test() {
-        let path = test_assets().join("proj1").unwrap();
+        let path = test_assets().join("dir1/proj1").unwrap();
         let content = try_make_content(&path).unwrap();
         let tree = content.source_tree();
         assert_eq!(tree.len(), 6);
@@ -294,7 +294,7 @@ mod test {
         assert!(tree.contains_local(&Path::new("engine").join("entity.ws")));
         assert!(tree.contains_local(&Path::new("local").join("my_local.ws")));
 
-        let path = test_assets().join("nested/raw2").unwrap();
+        let path = test_assets().join("dir1/nested/raw2").unwrap();
         let content = try_make_content(&path).unwrap();
         let tree = content.source_tree();
         assert_eq!(tree.len(), 0);

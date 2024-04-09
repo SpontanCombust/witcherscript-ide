@@ -7,7 +7,8 @@ game_version = "4.04"
 
 # Any dependencies that this project might need
 [dependencies]
-content0 = true
+# raw0 = true
+raw2 = { path = "../raw2" }
 proj2 = { path = "../../proj2" }
 
 # For details check the manual

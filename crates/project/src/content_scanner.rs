@@ -114,7 +114,8 @@ mod test {
 
     #[test]
     fn test_repos() {
-        let scanner = ContentScanner::new(test_assets().to_owned()).unwrap()
+        let scan_dir = test_assets().join("dir1").unwrap();
+        let scanner = ContentScanner::new(scan_dir.clone()).unwrap()
             .only_projects(false)
             .recursive(false);
 
@@ -122,14 +123,15 @@ mod test {
 
         assert!(errors.is_empty());
         assert_eq!(contents.len(), 3);
-        assert!(contents.iter().any(|c| c.path() == &test_assets().join("proj1").unwrap()));
-        assert!(contents.iter().any(|c| c.path() == &test_assets().join("proj2").unwrap()));
-        assert!(contents.iter().any(|c| c.path() == &test_assets().join("raw1").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &scan_dir.join("proj1").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &scan_dir.join("proj2").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &scan_dir.join("raw1").unwrap()));
     }
 
     #[test]
     fn test_workspaces() {
-        let scanner = ContentScanner::new(test_assets().to_owned()).unwrap()
+        let scan_dir = test_assets().join("dir1").unwrap();
+        let scanner = ContentScanner::new(scan_dir.clone()).unwrap()
             .only_projects(true)
             .recursive(true);
 
@@ -137,8 +139,8 @@ mod test {
 
         assert!(errors.is_empty());
         assert_eq!(contents.len(), 3);
-        assert!(contents.iter().any(|c| c.path() == &test_assets().join("proj1").unwrap()));
-        assert!(contents.iter().any(|c| c.path() == &test_assets().join("proj2").unwrap()));
-        assert!(contents.iter().any(|c| c.path() == &test_assets().join("nested/proj3").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &scan_dir.join("proj1").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &scan_dir.join("proj2").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &scan_dir.join("nested/proj3").unwrap()));
     }
 }

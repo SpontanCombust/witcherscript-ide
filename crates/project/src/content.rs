@@ -237,7 +237,7 @@ mod test {
 
     #[test]
     fn test() {
-        let path = test_assets().join("nonexistent").unwrap();
+        let path = test_assets().join("dir1/nonexistent").unwrap();
         let content = try_make_content(&path);
         assert!(matches!(content, Err(ContentScanError::Io(_))));
 
@@ -245,7 +245,7 @@ mod test {
         let content = try_make_content(&path);
         assert!(matches!(content, Err(ContentScanError::NotContent)));
 
-        let path = test_assets().join("proj1").unwrap();
+        let path = test_assets().join("dir1/proj1").unwrap();
         let content = try_make_content(&path).unwrap();
         let proj = content.as_any().downcast_ref::<ProjectDirectory>().unwrap();
         assert_eq!(proj.path(), &path);
@@ -253,7 +253,7 @@ mod test {
         assert_eq!(proj.content_name(), "proj1");
         assert_eq!(proj.source_tree_root(), &path.join("scripts").unwrap());
 
-        let path = test_assets().join("proj2").unwrap();
+        let path = test_assets().join("dir1/proj2").unwrap();
         let content = try_make_content(&path).unwrap();
         let proj = content.as_any().downcast_ref::<ProjectDirectory>().unwrap();
         assert_eq!(proj.path(), &path);
@@ -261,14 +261,14 @@ mod test {
         assert_eq!(proj.content_name(), "proj2");
         assert_eq!(proj.source_tree_root(), &path.join("content/scripts").unwrap());
 
-        let path = test_assets().join("raw1").unwrap();
+        let path = test_assets().join("dir1/raw1").unwrap();
         let content = try_make_content(&path).unwrap();
         let raw = content.as_any().downcast_ref::<UnpackedContentDirectory>().unwrap();
         assert_eq!(raw.path(), &path);
         assert_eq!(raw.content_name(), "raw1");
         assert_eq!(raw.source_tree_root(), &path.join("scripts").unwrap());
 
-        let path = test_assets().join("nested/raw2").unwrap();
+        let path = test_assets().join("dir1/nested/raw2").unwrap();
         let content = try_make_content(&path).unwrap();
         let raw = content.as_any().downcast_ref::<PackedContentDirectory>().unwrap();
         assert_eq!(raw.path(), &path);
