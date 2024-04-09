@@ -156,6 +156,7 @@ impl ContentGraph {
     }
 
 
+    /// Iterate over direct dependencies of specified content
     pub fn direct_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependencies).collect();
@@ -165,6 +166,7 @@ impl ContentGraph {
         }
     }
 
+    /// Iterate over direct dependants of specified content
     pub fn direct_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependants).collect();
@@ -175,7 +177,8 @@ impl ContentGraph {
     }
 
 
-    /// Iterate over all content nodes that are direct or indirect dependencies to the specified content starting from it.
+    /// Iterate over all content nodes that are direct or indirect dependencies to the specified content.
+    /// Iterator always starts with the specified content if it exists in the graph.
     pub fn walk_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependencies);
@@ -185,7 +188,8 @@ impl ContentGraph {
         }
     }
 
-    /// Iterate over all content nodes that are direct or indirect dependants of the specified content starting from it.
+    /// Iterate over all content nodes that are direct or indirect dependants of the specified content.
+    /// Iterator always starts with the specified content if it exists in the graph.
     pub fn walk_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependants);
@@ -530,6 +534,7 @@ impl ContentGraph {
 }
 
 
+#[derive(Debug, Clone)]
 pub struct Iter<'g> {
     graph: &'g ContentGraph,
     node_indices: Vec<usize>,
@@ -657,5 +662,152 @@ impl std::hash::Hash for GraphEdgeWithContent {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.dependant_content.path().hash(state);
         self.dependency_content.path().hash(state);
+    }
+}
+
+
+
+
+#[cfg(test)]
+mod test {
+    use std::sync::OnceLock;
+    use super::*;
+
+
+    fn test_assets() -> &'static AbsPath {
+        static TEST_ASSETS: OnceLock<AbsPath> = OnceLock::new();
+        TEST_ASSETS.get_or_init(|| {
+            let manifest_dir = AbsPath::resolve(env!("CARGO_MANIFEST_DIR"), None).unwrap();
+            manifest_dir.join("../../test_assets/project").unwrap()
+        })
+    }
+
+
+    #[test]
+    fn test() {
+        let mut graph = ContentGraph::new();
+
+        let workspace_scanner = ContentScanner::new(test_assets().join("dir1").unwrap()).unwrap()
+            .only_projects(true)
+            .recursive(true);
+
+        let repo_scanner = ContentScanner::new(test_assets().join("dir2").unwrap()).unwrap()
+            .only_projects(false)
+            .recursive(false);
+
+        graph.add_workspace_scanner(workspace_scanner);
+        graph.add_repository_scanner(repo_scanner);
+
+        graph.build();
+
+        assert!(graph.errors.is_empty());
+
+        assert!(graph.get_node_by_path(&test_assets().join("dir1/proj1").unwrap()).is_some());
+        assert!(graph.get_node_by_path(&test_assets().join("dir1/proj2").unwrap()).is_some());
+        assert!(graph.get_node_by_path(&test_assets().join("dir1/nested/proj3").unwrap()).is_some());
+        assert!(graph.get_node_by_path(&test_assets().join("dir1/nested/raw2").unwrap()).is_some());
+        assert!(graph.get_node_by_path(&test_assets().join("dir2/raw0").unwrap()).is_some());
+
+
+        let it = graph.nodes();
+        assert_eq!(it.clone().count(), 5);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj1").unwrap() && n.in_workspace && !n.in_repository));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap() && n.in_workspace && !n.in_repository));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/proj3").unwrap() && n.in_workspace && !n.in_repository));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/raw2").unwrap() && !n.in_workspace && !n.in_repository));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/raw0").unwrap() && !n.in_workspace && n.in_repository));
+
+
+        let mut it = graph.direct_dependencies(&test_assets().join("dir1/proj1").unwrap());
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/raw0").unwrap());
+
+        let mut it = graph.direct_dependencies(&test_assets().join("dir1/proj2").unwrap());
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/raw0").unwrap());
+
+        let it = graph.direct_dependencies(&test_assets().join("dir1/nested/proj3").unwrap());
+        assert_eq!(it.clone().count(), 2);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/raw2").unwrap()));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
+
+        let it = graph.direct_dependencies(&test_assets().join("dir1/nested/raw2").unwrap());
+        assert_eq!(it.count(), 0);
+
+        let it = graph.direct_dependencies(&test_assets().join("dir2/raw0").unwrap());
+        assert_eq!(it.count(), 0);
+
+
+        let it = graph.direct_dependants(&test_assets().join("dir1/proj1").unwrap());
+        assert_eq!(it.count(), 0);
+
+        let mut it = graph.direct_dependants(&test_assets().join("dir1/proj2").unwrap());
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/proj3").unwrap());
+
+        let it = graph.direct_dependants(&test_assets().join("dir1/nested/proj3").unwrap());
+        assert_eq!(it.count(), 0);
+
+        let mut it = graph.direct_dependants(&test_assets().join("dir1/nested/raw2").unwrap());
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/proj3").unwrap());
+
+        let it = graph.direct_dependants(&test_assets().join("dir2/raw0").unwrap());
+        assert_eq!(it.clone().count(), 2);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj1").unwrap()));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
+
+
+        let mut it = graph.walk_dependencies(&test_assets().join("dir1/proj1").unwrap());
+        // `walk` iterators always start from the parameter content
+        it.next();
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/raw0").unwrap());
+
+        let mut it = graph.walk_dependencies(&test_assets().join("dir1/proj2").unwrap());
+        it.next();
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/raw0").unwrap());
+
+        let mut it = graph.walk_dependencies(&test_assets().join("dir1/nested/proj3").unwrap());
+        it.next();
+        assert_eq!(it.clone().count(), 3);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/raw2").unwrap()));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/raw0").unwrap()));
+
+        let mut it = graph.walk_dependencies(&test_assets().join("dir1/nested/raw2").unwrap());
+        it.next();
+        assert_eq!(it.count(), 0);
+
+        let mut it = graph.direct_dependencies(&test_assets().join("dir2/raw0").unwrap());
+        it.next();
+        assert_eq!(it.count(), 0);
+
+
+        let mut it = graph.walk_dependants(&test_assets().join("dir1/proj1").unwrap());
+        it.next();
+        assert_eq!(it.count(), 0);
+
+        let mut it = graph.walk_dependants(&test_assets().join("dir1/proj2").unwrap());
+        it.next();
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/proj3").unwrap());
+
+        let mut it = graph.walk_dependants(&test_assets().join("dir1/nested/proj3").unwrap());
+        it.next();
+        assert_eq!(it.count(), 0);
+
+        let mut it = graph.walk_dependants(&test_assets().join("dir1/nested/raw2").unwrap());
+        it.next();
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/proj3").unwrap());
+
+        let mut it = graph.walk_dependants(&test_assets().join("dir2/raw0").unwrap());
+        it.next();
+        assert_eq!(it.clone().count(), 3);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj1").unwrap()));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/proj3").unwrap()));
     }
 }
