@@ -42,9 +42,9 @@ jobs:
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
-        with:
-          name: ${{ matrix.target }}
-          path: "*.vsix"
+      with:
+        name: ${{ matrix.target }}
+        path: "*.vsix"
 
 
   publish:
