@@ -2,8 +2,11 @@ use anyhow::{Context, bail};
 use xshell::{Shell, cmd};
 
 
-const EXT_DIR: &str = "editors/vscode";
-const VSIX_NAME: &str = "witcherscript-ide.vsix";
+const EXT_DIR: &'static str = "editors/vscode";
+const VSIX_NAME: &'static str = "witcherscript-ide.vsix";
+const NPM: &'static str = if cfg!(windows) { "npm.cmd" } else { "npm" };
+const NPX: &'static str = if cfg!(windows) { "npx.cmd" } else { "npx" };
+const CODE: &'static str = if cfg!(windows) { "code.cmd" } else { "code" };
 
 pub fn install() -> anyhow::Result<()> {
     let sh = Shell::new()?;
@@ -12,28 +15,14 @@ pub fn install() -> anyhow::Result<()> {
     let ext_dir = root.join(EXT_DIR);
     sh.change_dir(ext_dir);
 
-    if cfg!(unix) {
-        cmd!(sh, "npm --version").run().with_context(|| "npm is required")?;
-        cmd!(sh, "code --version").run().with_context(|| "Visual Studio Code is required")?;
-    
-        cmd!(sh, "npm ci").run()?;
-        cmd!(sh, "npm run package").run()?;
+    cmd!(sh, "{NPM} --version").run().with_context(|| "npm is required")?;
+    cmd!(sh, "{CODE} --version").run().with_context(|| "Visual Studio Code is required")?;
 
-    } else {
-        cmd!(sh, "cmd.exe /c npm --version").run().with_context(|| "npm is required")?;
-        cmd!(sh, "cmd.exe /c code --version").run().with_context(|| "Visual Studio Code is required")?;
-    
-        cmd!(sh, "cmd.exe /c npm ci").run()?;
-        cmd!(sh, "cmd.exe /c npm run package").run()?;
-    }
+    cmd!(sh, "{NPM} ci").run()?;
+    cmd!(sh, "{NPX} vsce package -o {VSIX_NAME}").run()?;
 
-    let installed_extensions = if cfg!(unix) {
-        cmd!(sh, "code --install-extension {VSIX_NAME} --force").run()?;
-        cmd!(sh, "code --list-extensions").read()?
-    } else {
-        cmd!(sh, "cmd.exe /c code --install-extension {VSIX_NAME} --force").run()?;
-        cmd!(sh, "cmd.exe /c code --list-extensions").read()?
-    };
+    cmd!(sh, "{CODE} --install-extension {VSIX_NAME} --force").run()?;
+    let installed_extensions = cmd!(sh, "{CODE} --list-extensions").read()?;
 
     if !installed_extensions.contains("witcherscript-ide") {
         bail!("Could not install the Visual Studio Code extension.");

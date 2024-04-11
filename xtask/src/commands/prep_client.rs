@@ -2,7 +2,8 @@ use anyhow::Context;
 use xshell::{Shell, cmd};
 
 
-const EXT_DIR: &str = "./editors/vscode";
+const EXT_DIR: &'static str = "editors/vscode";
+const NPM: &'static str = if cfg!(windows) { "npm.cmd" } else { "npm" };
 
 pub fn prep_client(watch: bool) -> anyhow::Result<()> {
     let sh = Shell::new()?;
@@ -13,17 +14,9 @@ pub fn prep_client(watch: bool) -> anyhow::Result<()> {
 
     let command = if watch { "watch" } else { "build" };
 
-    if cfg!(unix) {
-        cmd!(sh, "npm --version").run().with_context(|| "npm is required")?;
-    
-        cmd!(sh, "npm ci").run()?;
-        cmd!(sh, "npm run {command}").run()?;
-    } else {
-        cmd!(sh, "cmd.exe /c npm --version").run().with_context(|| "npm is required")?;
-    
-        cmd!(sh, "cmd.exe /c npm ci").run()?;
-        cmd!(sh, "cmd.exe /c npm run {command}").run()?;
-    }
+    cmd!(sh, "{NPM} --version").run().with_context(|| "npm is required")?;
+    cmd!(sh, "{NPM} ci").run()?;
+    cmd!(sh, "{NPM} run {command}").run()?;
 
     Ok(())
 }

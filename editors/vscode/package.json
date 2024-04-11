@@ -102,7 +102,6 @@
   "icon": "icon.png",
 
   "scripts": {
-    "package": "vsce package -o witcherscript-ide.vsix",
     "vscode:prepublish": "npm run build-base -- --minify",
     "build": "npm run build-base -- --sourcemap",
     "watch": "npm run build-base -- --sourcemap --watch=forever",
