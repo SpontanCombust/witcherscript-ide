@@ -4,10 +4,12 @@ Here you will find the information you need if you want to contribute to this pr
 
 
 ## Project structure
+- `.cargo` - Cargo configuration to enable xtasks
 - `.vscode` - VSCode specific files with debugging configurations 
 - `crates` - server Rust code. The main crate is `lsp`, which contains language server implementation
 - `docs` - project documentation from which this website is built
 - `editors` - contains implementations of WitcherScript language client, currently just `vscode` client written in TypeScript
+- `test_assets` - file assets used by tests
 - `xtask` - code for build commands to speed up development
 
 
@@ -20,12 +22,12 @@ Currently available xtask commands:
 
 - `prep-server` - build and copy LSP server executable into VSCode's extension directory
     - `--release` - should LSP be built with optimised release profile
-    - `--target` - compilation target triple
+    - `--target` - compilation target triple, e.g. x86_64-pc-windows-msvc
 - `prep-client` - build VSCode client
     - `--watch` - whether client should be continuously watched for changes made to it and rebuilt 
 - `package` - build and package VSCode extension into a .vsix file
-    - `--out-dir` - output directory for the .vsix file; default is the current working directory
-    - `--out-name` - name of the output file without the extension; default is "witcherscript-ide"
+    - `--out` - output path for the .vsix file; default is "./witcherscript-ide.vsix"
+    - `--target` - VSCode extension target, e.g. win32-x64
 - `install` - build, package and install the VSCode extension
 
 
@@ -35,6 +37,21 @@ Use VSCode to debug the client and server. The project provides launch configura
 - `Launch Client` - launches the extension host session of the client. Client needs to be built first!
 - `Attach to Server` - attaches to the currently running server process created by the client. You need the [CodeLLDB extension](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) for this.
 
+
+## Building docs
+Documentation of the project is generated using MKDocs. To locally serve and test the website:
+1. Make sure you have [python3 with pip](https://www.python.org/downloads/) installed
+2. Install MKDocs and dependencies
+```sh
+pip install mkdocs
+pip install mkdocs-material
+```
+3. Serve the website
+```sh
+mkdocs serve
+```
+
+To learn more about MKDocs check out their website at <https://www.mkdocs.org/>.
 
 ## The project board
 You can access the [project board](https://github.com/users/SpontanCombust/projects/2/views/1) conveniently detailing what has been done and future plans.
