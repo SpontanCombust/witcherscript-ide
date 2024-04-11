@@ -1,6 +1,7 @@
-# WitcherScript
+# WitcherScript IDE
 
-VSCode client for WitcherScript language server.
+Provides support for Witcher 3's scripting language WitcherScript.
+
 
 ## Features
 - syntax highlighting
@@ -8,9 +9,10 @@ VSCode client for WitcherScript language server.
 - initializing or creating new script projects
 - importing and comparing scripts with their vanilla counterparts
 
-<br>
 
-**To know more about this project and the capabilities on this extension head onto the [user manual](https://spontancombust.github.io/witcherscript-ide/user-manual)**.
+## Documentation
+
+To know more about this project and the capabilities on this extension head onto the [user manual](https://spontancombust.github.io/witcherscript-ide/user-manual).
 
 
 ## Known Issues

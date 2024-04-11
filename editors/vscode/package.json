@@ -2,11 +2,12 @@
   "name": "witcherscript-ide",
   "displayName": "WitcherScript IDE",
   "publisher": "SpontanCombust",
-  "description": "Language support for Witcher 3's scripting language WitcherScript",
+  "description": "WitcherScript language support for Visual Studio Code",
   "repository": {
     "type": "git",
     "url": "https://github.com/SpontanCombust/witcherscript-ide"
   },
+  "homepage": "https://spontancombust.github.io/witcherscript-ide",
   "license": "MIT OR Apache-2.0",
   "version": "0.1.0",
   "engines": {
@@ -14,6 +15,13 @@
   },
   "categories": [
     "Programming Languages"
+  ],
+  "keywords": [
+    "witcher",
+    "script",
+    "modding",
+    "redkit",
+    "wolvenkit"
   ],
   "activationEvents": [
     "workspaceContains:**/witcherscript.toml",
