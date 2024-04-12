@@ -2,8 +2,8 @@ name: update-ext-docs
 
 on:
   push:
-    paths:
-      - docs/user-manual/changelog.md
+    branches: '!gh-pages'
+    paths: 'docs/user-manual/changelog.md'
 
 permissions:
   contents: write
