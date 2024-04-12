@@ -106,7 +106,7 @@ function commandCreateProject(context: vscode.ExtensionContext): Cmd {
 
 // Returns undefined if the input is valid, error message otherwise
 function validateProjectName(input: string): string | undefined {
-    if (input.match(/[_a-zA-Z][_a-zA-Z0-9]*/)) {
+    if (/^[_a-zA-Z][_a-zA-Z0-9]*$/.test(input)) {
         return undefined;
     } else {
         return "Project name is invalid. Please refer to the user manual for more information"
