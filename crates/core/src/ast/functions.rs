@@ -1,12 +1,23 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, NamedSyntaxNode, tokens::IdentifierNode, attribs::*, AnyNode, DebugMaybeAlternate};
+use crate::{attribs::*, tokens::IdentifierNode, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
-#[derive(Debug, Clone)]
-pub struct EventDeclaration;
+mod tags {
+    pub struct EventDeclaration;
+    pub struct GlobalFunctionDeclaration;
+    pub struct MemberFunctionDeclaration;
+    pub struct FunctionParameters;
+    pub struct FunctionParameterGroup;
+    pub struct FunctionBlock;
+    pub struct BreakStatement;
+    pub struct ContinueStatement;
+    pub struct ReturnStatement;
+    pub struct DeleteStatement;
+}
 
-pub type EventDeclarationNode<'script> = SyntaxNode<'script, EventDeclaration>;
+
+pub type EventDeclarationNode<'script> = SyntaxNode<'script, tags::EventDeclaration>;
 
 impl NamedSyntaxNode for EventDeclarationNode<'_> {
     const NODE_KIND: &'static str = "event_decl_stmt";
@@ -17,8 +28,12 @@ impl EventDeclarationNode<'_> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
-        self.field_children("params").map(|n| n.into())
+    pub fn params(&self) -> FunctionParametersNode {
+        self.field_child("params").unwrap().into()
+    }
+
+    pub fn return_type(&self) -> Option<TypeAnnotationNode> {
+        self.field_child("return_type").map(|n| n.into())
     }
 
     pub fn definition(&self) -> FunctionDefinitionNode {
@@ -28,9 +43,10 @@ impl EventDeclarationNode<'_> {
 
 impl Debug for EventDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("EventDeclaration")
+        f.debug_struct(&format!("EventDeclaration {}", self.range().debug()))
             .field("name", &self.name())
-            .field("params", &self.params().collect::<Vec<_>>())
+            .field("params", &self.params())
+            .field("return_type", &self.return_type())
             .field("definition", &self.definition())
             .finish()
     }
@@ -50,8 +66,11 @@ impl<'script> TryFrom<AnyNode<'script>> for EventDeclarationNode<'script> {
 
 impl StatementTraversal for EventDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_event_decl(self) {
-            self.params().for_each(|p| p.accept(visitor));
+        let (trav_params, trav_body) = visitor.visit_event_decl(self);
+        if trav_params {
+            self.params().accept(visitor);
+        }
+        if trav_body {
             self.definition().accept(visitor);
         }
         visitor.exit_event_decl(self);
@@ -60,10 +79,7 @@ impl StatementTraversal for EventDeclarationNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct GlobalFunctionDeclaration;
-
-pub type GlobalFunctionDeclarationNode<'script> = SyntaxNode<'script, GlobalFunctionDeclaration>;
+pub type GlobalFunctionDeclarationNode<'script> = SyntaxNode<'script, tags::GlobalFunctionDeclaration>;
 
 impl NamedSyntaxNode for GlobalFunctionDeclarationNode<'_> {
     const NODE_KIND: &'static str = "global_func_decl_stmt";
@@ -82,8 +98,8 @@ impl GlobalFunctionDeclarationNode<'_> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
-        self.field_children("params").map(|n| n.into())
+    pub fn params(&self) -> FunctionParametersNode {
+        self.field_child("params").unwrap().into()
     }
 
     pub fn return_type(&self) -> Option<TypeAnnotationNode> {
@@ -97,11 +113,11 @@ impl GlobalFunctionDeclarationNode<'_> {
 
 impl Debug for GlobalFunctionDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("GlobalFunctionDeclaration")
+        f.debug_struct(&format!("GlobalFunctionDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("flavour", &self.flavour())
             .field("name", &self.name())
-            .field("params", &self.params().collect::<Vec<_>>())
+            .field("params", &self.params())
             .field("return_type", &self.return_type())
             .field("definition", &self.definition())
             .finish()
@@ -122,8 +138,11 @@ impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionDeclarationNode<'scrip
 
 impl StatementTraversal for GlobalFunctionDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_global_func_decl(self) {
-            self.params().for_each(|p| p.accept(visitor));
+        let (trav_params, trav_body) = visitor.visit_global_func_decl(self);
+        if trav_params {
+            self.params().accept(visitor);
+        }
+        if trav_body {
             self.definition().accept(visitor);
         }
         visitor.exit_global_func_decl(self);
@@ -132,10 +151,7 @@ impl StatementTraversal for GlobalFunctionDeclarationNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct MemberFunctionDeclaration;
-
-pub type MemberFunctionDeclarationNode<'script> = SyntaxNode<'script, MemberFunctionDeclaration>;
+pub type MemberFunctionDeclarationNode<'script> = SyntaxNode<'script, tags::MemberFunctionDeclaration>;
 
 impl NamedSyntaxNode for MemberFunctionDeclarationNode<'_> {
     const NODE_KIND: &'static str = "member_func_decl_stmt";
@@ -154,8 +170,8 @@ impl MemberFunctionDeclarationNode<'_> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
-        self.field_children("params").map(|n| n.into())
+    pub fn params(&self) -> FunctionParametersNode {
+        self.field_child("params").unwrap().into()
     }
 
     pub fn return_type(&self) -> Option<TypeAnnotationNode> {
@@ -169,11 +185,11 @@ impl MemberFunctionDeclarationNode<'_> {
 
 impl Debug for MemberFunctionDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MemberFunctionDeclaration")
+        f.debug_struct(&format!("MemberFunctionDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("flavour", &self.flavour())
             .field("name", &self.name())
-            .field("params", &self.params().collect::<Vec<_>>())
+            .field("params", &self.params())
             .field("return_type", &self.return_type())
             .field("definition", &self.definition())
             .finish()
@@ -194,8 +210,11 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionDeclarationNode<'scrip
 
 impl StatementTraversal for MemberFunctionDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_member_func_decl(self) {
-            self.params().for_each(|p| p.accept(visitor));
+        let (trav_params, trav_body) = visitor.visit_member_func_decl(self);
+        if trav_params {
+            self.params().accept(visitor);
+        }
+        if trav_body {
             self.definition().accept(visitor);
         }
         visitor.exit_member_func_decl(self);
@@ -226,7 +245,7 @@ impl<'script> FunctionDefinitionNode<'script> {
         match self.tree_node.kind() {
             FunctionBlockNode::NODE_KIND => FunctionDefinition::Some(self.into()),
             NopNode::NODE_KIND => FunctionDefinition::None(self.into()),
-            _ => panic!("Unknown function definition node: {}", self.tree_node.kind())
+            _ => panic!("Unknown function definition node: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
@@ -263,10 +282,48 @@ impl StatementTraversal for FunctionDefinitionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct FunctionParameterGroup;
+pub type FunctionParametersNode<'script> = SyntaxNode<'script, tags::FunctionParameters>;
 
-pub type FunctionParameterGroupNode<'script> = SyntaxNode<'script, FunctionParameterGroup>;
+impl NamedSyntaxNode for FunctionParametersNode<'_> {
+    const NODE_KIND: &'static str = "func_params";
+}
+
+impl FunctionParametersNode<'_> {
+    pub fn iter(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
+        self.named_children().map(|n| n.into())
+    }
+}
+
+impl Debug for FunctionParametersNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate_named(
+            &format!("FunctionParameters {}", self.range().debug()), 
+            &self.iter().collect::<Vec<_>>()
+        )
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for FunctionParametersNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl StatementTraversal for FunctionParametersNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+        self.iter().for_each(|s| s.accept(visitor));
+    }
+}
+
+
+
+pub type FunctionParameterGroupNode<'script> = SyntaxNode<'script, tags::FunctionParameterGroup>;
 
 impl NamedSyntaxNode for FunctionParameterGroupNode<'_> {
     const NODE_KIND: &'static str = "func_param_group";
@@ -288,7 +345,7 @@ impl FunctionParameterGroupNode<'_> {
 
 impl Debug for FunctionParameterGroupNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FunctionParameterGroup")
+        f.debug_struct(&format!("FunctionParameterGroup {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("names", &self.names().collect::<Vec<_>>())
             .field("param_type", &self.param_type())
@@ -371,7 +428,7 @@ impl<'script> FunctionStatementNode<'script> {
             DeleteStatementNode::NODE_KIND => FunctionStatement::Delete(self.into()),
             FunctionBlockNode::NODE_KIND => FunctionStatement::Block(self.into()),
             NopNode::NODE_KIND => FunctionStatement::Nop(self.into()),
-            _ => panic!("Unknown function statement type: {}", self.tree_node.kind())
+            _ => panic!("Unknown function statement type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
@@ -430,24 +487,24 @@ impl StatementTraversal for FunctionStatementNode<'_> {
 }
 
 
-#[derive(Debug, Clone)]
-pub struct FunctionBlock;
-
-pub type FunctionBlockNode<'script> = SyntaxNode<'script, FunctionBlock>;
+pub type FunctionBlockNode<'script> = SyntaxNode<'script, tags::FunctionBlock>;
 
 impl NamedSyntaxNode for FunctionBlockNode<'_> {
     const NODE_KIND: &'static str = "func_block";
 }
 
 impl FunctionBlockNode<'_> {
-    pub fn statements(&self) -> impl Iterator<Item = FunctionStatementNode> {
+    pub fn iter(&self) -> impl Iterator<Item = FunctionStatementNode> {
         self.named_children().map(|n| n.into())
     }
 }
 
 impl Debug for FunctionBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named("FunctionBlock", &self.statements().collect::<Vec<_>>())
+        f.debug_maybe_alternate_named(
+            &format!("FunctionBlock {}", self.range().debug()), 
+            &self.iter().collect::<Vec<_>>()
+        )
     }
 }
 
@@ -466,16 +523,13 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionBlockNode<'script> {
 impl StatementTraversal for FunctionBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_block_stmt(self);
-        self.statements().for_each(|s| s.accept(visitor));
+        self.iter().for_each(|s| s.accept(visitor));
     }
 }
 
 
 
-#[derive(Debug, Clone)]
-pub struct BreakStatement;
-
-pub type BreakStatementNode<'script> = SyntaxNode<'script, BreakStatement>;
+pub type BreakStatementNode<'script> = SyntaxNode<'script, tags::BreakStatement>;
 
 impl NamedSyntaxNode for BreakStatementNode<'_> {
     const NODE_KIND: &'static str = "break_stmt";
@@ -485,7 +539,7 @@ impl BreakStatementNode<'_> {}
 
 impl Debug for BreakStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "BreakStatement")
+        write!(f, "BreakStatement {}", self.range().debug())
     }
 }
 
@@ -509,10 +563,7 @@ impl StatementTraversal for BreakStatementNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct ContinueStatement;
-
-pub type ContinueStatementNode<'script> = SyntaxNode<'script, ContinueStatement>;
+pub type ContinueStatementNode<'script> = SyntaxNode<'script, tags::ContinueStatement>;
 
 impl NamedSyntaxNode for ContinueStatementNode<'_> {
     const NODE_KIND: &'static str = "continue_stmt";
@@ -522,7 +573,7 @@ impl ContinueStatementNode<'_> {}
 
 impl Debug for ContinueStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ContinueStatement")
+        write!(f, "ContinueStatement {}", self.range().debug())
     }
 }
 
@@ -546,10 +597,7 @@ impl StatementTraversal for ContinueStatementNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct ReturnStatement;
-
-pub type ReturnStatementNode<'script> = SyntaxNode<'script, ReturnStatement>;
+pub type ReturnStatementNode<'script> = SyntaxNode<'script, tags::ReturnStatement>;
 
 impl NamedSyntaxNode for ReturnStatementNode<'_> {
     const NODE_KIND: &'static str = "return_stmt";
@@ -563,7 +611,7 @@ impl ReturnStatementNode<'_> {
 
 impl Debug for ReturnStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("ReturnStatement")
+        f.debug_tuple(&format!("ReturnStatement {}", self.range().debug()))
             .field(&self.value())
             .finish()
     }
@@ -589,10 +637,7 @@ impl StatementTraversal for ReturnStatementNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct DeleteStatement;
-
-pub type DeleteStatementNode<'script> = SyntaxNode<'script, DeleteStatement>;
+pub type DeleteStatementNode<'script> = SyntaxNode<'script, tags::DeleteStatement>;
 
 impl NamedSyntaxNode for DeleteStatementNode<'_> {
     const NODE_KIND: &'static str = "delete_stmt";
@@ -606,7 +651,7 @@ impl DeleteStatementNode<'_> {
 
 impl Debug for DeleteStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("DeleteStatement")
+        f.debug_tuple(&format!("DeleteStatement {}", self.range().debug()))
             .field(&self.value())
             .finish()
     }

@@ -1,12 +1,16 @@
 use std::fmt::Debug;
-use crate::{NamedSyntaxNode, SyntaxNode, AnyNode};
+use crate::{AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
 
 
-#[derive(Debug, Clone)]
-pub struct ForLoop;
+mod tags {
+    pub struct ForLoop;
+    pub struct WhileLoop;
+    pub struct DoWhileLoop;
+}
 
-pub type ForLoopNode<'script> = SyntaxNode<'script, ForLoop>;
+
+pub type ForLoopNode<'script> = SyntaxNode<'script, tags::ForLoop>;
 
 impl NamedSyntaxNode for ForLoopNode<'_> {
     const NODE_KIND: &'static str = "for_stmt";
@@ -32,7 +36,7 @@ impl ForLoopNode<'_> {
 
 impl Debug for ForLoopNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ForLoop")
+        f.debug_struct(&format!("ForLoop {}", self.range().debug()))
             .field("init", &self.init())
             .field("cond", &self.cond())
             .field("iter", &self.iter())
@@ -63,10 +67,7 @@ impl StatementTraversal for ForLoopNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct WhileLoop;
-
-pub type WhileLoopNode<'script> = SyntaxNode<'script, WhileLoop>;
+pub type WhileLoopNode<'script> = SyntaxNode<'script, tags::WhileLoop>;
 
 impl NamedSyntaxNode for WhileLoopNode<'_> {
     const NODE_KIND: &'static str = "while_stmt";
@@ -84,7 +85,7 @@ impl WhileLoopNode<'_> {
 
 impl Debug for WhileLoopNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("WhileLoop")
+        f.debug_struct(&format!("WhileLoop {}", self.range().debug()))
             .field("cond", &self.cond())
             .field("body", &self.body())
             .finish()
@@ -113,10 +114,7 @@ impl StatementTraversal for WhileLoopNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct DoWhileLoop;
-
-pub type DoWhileLoopNode<'script> = SyntaxNode<'script, DoWhileLoop>;
+pub type DoWhileLoopNode<'script> = SyntaxNode<'script, tags::DoWhileLoop>;
 
 impl NamedSyntaxNode for DoWhileLoopNode<'_> {
     const NODE_KIND: &'static str = "do_while_stmt";
@@ -134,7 +132,7 @@ impl DoWhileLoopNode<'_> {
 
 impl Debug for DoWhileLoopNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("DoWhileLoop")
+        f.debug_struct(&format!("DoWhileLoop {}", self.range().debug()))
             .field("cond", &self.cond())
             .field("body", &self.body())
             .finish()

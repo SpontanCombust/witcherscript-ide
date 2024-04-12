@@ -1,12 +1,16 @@
 use std::fmt::Debug;
-use crate::{tokens::IdentifierNode, SyntaxNode, NamedSyntaxNode, attribs::MemberVarSpecifierNode, AnyNode};
+use crate::{attribs::MemberVarSpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor, ExpressionNode};
 
 
-#[derive(Debug, Clone)]
-pub struct TypeAnnotation;
+mod tags {
+    pub struct TypeAnnotation;
+    pub struct VarDeclaration;
+    pub struct MemberVarDeclaration;
+}
 
-pub type TypeAnnotationNode<'script> = SyntaxNode<'script, TypeAnnotation>;
+
+pub type TypeAnnotationNode<'script> = SyntaxNode<'script, tags::TypeAnnotation>;
 
 impl NamedSyntaxNode for TypeAnnotationNode<'_> {
     const NODE_KIND: &'static str = "type_annot";
@@ -24,7 +28,7 @@ impl TypeAnnotationNode<'_> {
 
 impl Debug for TypeAnnotationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TypeAnnotation")
+        f.debug_struct(&format!("TypeAnnotation {}", self.range().debug()))
             .field("type_name", &self.type_name())
             .field("type_arg", &self.type_arg())
             .finish()
@@ -45,10 +49,7 @@ impl<'script> TryFrom<AnyNode<'script>> for TypeAnnotationNode<'script> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct VarDeclaration;
-
-pub type VarDeclarationNode<'script> = SyntaxNode<'script, VarDeclaration>;
+pub type VarDeclarationNode<'script> = SyntaxNode<'script, tags::VarDeclaration>;
 
 impl NamedSyntaxNode for VarDeclarationNode<'_> {
     const NODE_KIND: &'static str = "var_decl_stmt";
@@ -70,7 +71,7 @@ impl VarDeclarationNode<'_> {
 
 impl Debug for VarDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("VarDeclaration")
+        f.debug_struct(&format!("VarDeclaration {}", self.range().debug()))
             .field("names", &self.names().collect::<Vec<_>>())
             .field("var_type", &self.var_type())
             .field("init_value", &self.init_value())
@@ -97,10 +98,8 @@ impl StatementTraversal for VarDeclarationNode<'_> {
 }
 
 
-#[derive(Debug, Clone)]
-pub struct MemberVarDeclaration;
 
-pub type MemberVarDeclarationNode<'script> = SyntaxNode<'script, MemberVarDeclaration>;
+pub type MemberVarDeclarationNode<'script> = SyntaxNode<'script, tags::MemberVarDeclaration>;
 
 impl NamedSyntaxNode for MemberVarDeclarationNode<'_> {
     const NODE_KIND: &'static str = "member_var_decl_stmt";
@@ -122,7 +121,7 @@ impl MemberVarDeclarationNode<'_> {
 
 impl Debug for MemberVarDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MemberVarDeclaration")
+        f.debug_struct(&format!("MemberVarDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("names", &self.names().collect::<Vec<_>>())
             .field("var_type", &self.var_type())

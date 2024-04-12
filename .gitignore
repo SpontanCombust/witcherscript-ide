@@ -1,6 +1,10 @@
+.vscode/settings.json
+
 /target
 
 /editors/vscode/node_modules
 /editors/vscode/out
 /editors/vscode/server
 *.vsix
+
+/site

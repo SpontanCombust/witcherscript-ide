@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use std::str::FromStr;
-use crate::{NamedSyntaxNode, SyntaxNode, tokens::Keyword, AnyNode, DebugMaybeAlternate};
+use crate::{tokens::Keyword, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -24,13 +24,13 @@ impl StructSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown struct specifier: {}", s)
+        panic!("Unknown struct specifier: {} {}", s, self.range().debug())
     }
 }
 
 impl Debug for StructSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 

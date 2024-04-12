@@ -1,12 +1,17 @@
 use std::fmt::Debug;
-use crate::{NamedSyntaxNode, SyntaxNode, tokens::*, attribs::*, AnyNode, DebugMaybeAlternate};
+use crate::{attribs::*, tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
-#[derive(Debug, Clone)]
-pub struct ClassDeclaration;
+mod tags {
+    pub struct ClassDeclaration;
+    pub struct ClassBlock;
+    pub struct AutobindDeclaration;
+    pub struct AutobindValueSingle;
+}
 
-pub type ClassDeclarationNode<'script> = SyntaxNode<'script, ClassDeclaration>;
+
+pub type ClassDeclarationNode<'script> = SyntaxNode<'script, tags::ClassDeclaration>;
 
 impl NamedSyntaxNode for ClassDeclarationNode<'_> {
     const NODE_KIND: &'static str = "class_decl_stmt";
@@ -32,7 +37,7 @@ impl ClassDeclarationNode<'_> {
 
 impl Debug for ClassDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ClassDeclaration")
+        f.debug_struct(&format!("ClassDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("name", &self.name())
             .field("base", &self.base())
@@ -64,24 +69,24 @@ impl StatementTraversal for ClassDeclarationNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct ClassBlock;
-
-pub type ClassBlockNode<'script> = SyntaxNode<'script, ClassBlock>;
+pub type ClassBlockNode<'script> = SyntaxNode<'script, tags::ClassBlock>;
 
 impl NamedSyntaxNode for ClassBlockNode<'_> {
     const NODE_KIND: &'static str = "class_block";
 }
 
 impl ClassBlockNode<'_> {
-    pub fn statements(&self) -> impl Iterator<Item = ClassStatementNode> {
+    pub fn iter(&self) -> impl Iterator<Item = ClassStatementNode> {
         self.named_children().map(|n| n.into())
     }
 }
 
 impl Debug for ClassBlockNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named("ClassBlock", &self.statements().collect::<Vec<_>>())
+        f.debug_maybe_alternate_named(
+            &format!("ClassBlock {}", self.range().debug()), 
+            &self.iter().collect::<Vec<_>>()
+        )
     }
 }
 
@@ -99,7 +104,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassBlockNode<'script> {
 
 impl StatementTraversal for ClassBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.statements().for_each(|s| s.accept(visitor));
+        self.iter().for_each(|s| s.accept(visitor));
     }
 }
 
@@ -108,6 +113,7 @@ impl StatementTraversal for ClassBlockNode<'_> {
 pub enum ClassStatement<'script> {
     Var(MemberVarDeclarationNode<'script>),
     Default(MemberDefaultValueNode<'script>),
+    DefaultsBlock(MemberDefaultsBlockNode<'script>),
     Hint(MemberHintNode<'script>),
     Autobind(AutobindDeclarationNode<'script>),
     Method(MemberFunctionDeclarationNode<'script>),
@@ -120,6 +126,7 @@ impl Debug for ClassStatement<'_> {
         match self {
             Self::Var(n) => f.debug_maybe_alternate(n),
             Self::Default(n) => f.debug_maybe_alternate(n),
+            Self::DefaultsBlock(n) => f.debug_maybe_alternate(n),
             Self::Hint(n) => f.debug_maybe_alternate(n),
             Self::Autobind(n) => f.debug_maybe_alternate(n),
             Self::Method(n) => f.debug_maybe_alternate(n),
@@ -136,12 +143,13 @@ impl<'script> ClassStatementNode<'script> {
         match self.tree_node.kind() {
             MemberVarDeclarationNode::NODE_KIND => ClassStatement::Var(self.into()),
             MemberDefaultValueNode::NODE_KIND => ClassStatement::Default(self.into()),
+            MemberDefaultsBlockNode::NODE_KIND => ClassStatement::DefaultsBlock(self.into()),
             MemberHintNode::NODE_KIND => ClassStatement::Hint(self.into()),
             AutobindDeclarationNode::NODE_KIND => ClassStatement::Autobind(self.into()),
             MemberFunctionDeclarationNode::NODE_KIND => ClassStatement::Method(self.into()),
             EventDeclarationNode::NODE_KIND => ClassStatement::Event(self.into()),
             NopNode::NODE_KIND => ClassStatement::Nop(self.into()),
-            _ => panic!("Unknown class statement type: {}", self.tree_node.kind())
+            _ => panic!("Unknown class statement type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
@@ -159,6 +167,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassStatementNode<'script> {
         match value.tree_node.kind() {
             MemberVarDeclarationNode::NODE_KIND         |
             MemberDefaultValueNode::NODE_KIND           |
+            MemberDefaultsBlockNode::NODE_KIND          |
             MemberHintNode::NODE_KIND                   |
             AutobindDeclarationNode::NODE_KIND          |
             MemberFunctionDeclarationNode::NODE_KIND    |
@@ -174,6 +183,7 @@ impl StatementTraversal for ClassStatementNode<'_> {
         match self.clone().value() {
             ClassStatement::Var(s) => s.accept(visitor),
             ClassStatement::Default(s) => s.accept(visitor),
+            ClassStatement::DefaultsBlock(s) => s.accept(visitor),
             ClassStatement::Hint(s) => s.accept(visitor),
             ClassStatement::Autobind(s) => s.accept(visitor),
             ClassStatement::Method(s) => s.accept(visitor),
@@ -185,13 +195,10 @@ impl StatementTraversal for ClassStatementNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct AutobindDeclaration;
-
-pub type AutobindDeclarationNode<'script> = SyntaxNode<'script, AutobindDeclaration>;
+pub type AutobindDeclarationNode<'script> = SyntaxNode<'script, tags::AutobindDeclaration>;
 
 impl NamedSyntaxNode for AutobindDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "class_autobind_stmt";
+    const NODE_KIND: &'static str = "autobind_stmt";
 }
 
 impl AutobindDeclarationNode<'_> {
@@ -207,14 +214,20 @@ impl AutobindDeclarationNode<'_> {
         self.field_child("autobind_type").unwrap().into()
     }
 
-    pub fn value(&self) -> AutobindValueNode {
-        self.field_child("value").unwrap().into()
+    pub fn value(&self) -> AutobindValue {
+        let n = self.field_child("value").unwrap();
+        let kind = n.tree_node.kind();
+        match kind {
+            AutobindValueSingleNode::NODE_KIND => AutobindValue::Single(n.into()),
+            LiteralStringNode::NODE_KIND => AutobindValue::Concrete(n.into()),
+            _ => panic!("Unknown autobind value kind: {} {}", kind, self.range().debug())
+        }
     }
 }
 
 impl Debug for AutobindDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AutobindDeclaration")
+        f.debug_struct(&format!("AutobindDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("name", &self.name())
             .field("autobind_type", &self.autobind_type())
@@ -242,40 +255,44 @@ impl StatementTraversal for AutobindDeclarationNode<'_> {
 }
 
 
-
 #[derive(Clone)]
 pub enum AutobindValue<'script> {
-    Single,
+    Single(AutobindValueSingleNode<'script>),
     Concrete(LiteralStringNode<'script>)
 }
 
 impl Debug for AutobindValue<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Single => write!(f, "Single"),
-            Self::Concrete(n) => f.debug_tuple("Concrete").field(n).finish(),
+            Self::Single(n) => f.debug_maybe_alternate(n),
+            Self::Concrete(n) => f.debug_maybe_alternate(n)
         }
     }
 }
 
-pub type AutobindValueNode<'script> = SyntaxNode<'script, AutobindValue<'script>>;
 
-impl AutobindValueNode<'_> {
-    pub fn value(&self) -> AutobindValue {
-        let child = self.first_child(false).unwrap();
-        let s = child.tree_node.kind();
-        if s == LiteralStringNode::NODE_KIND {
-            return AutobindValue::Concrete(child.into());
-        } else if s == Keyword::Single.as_ref() {
-            return AutobindValue::Single;
+pub type AutobindValueSingleNode<'script> = SyntaxNode<'script, tags::AutobindValueSingle>;
+
+impl NamedSyntaxNode for AutobindValueSingleNode<'_> {
+    const NODE_KIND: &'static str = "autobind_single";
+}
+
+impl AutobindValueSingleNode<'_> {}
+
+impl Debug for AutobindValueSingleNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Single {}", self.range().debug())
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for AutobindValueSingleNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
         } else {
-            panic!("Unknown autobind value type: {}", s);
+            Err(())
         }
     }
-} 
-
-impl Debug for AutobindValueNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
-    }
-} 
+}

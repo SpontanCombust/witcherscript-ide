@@ -1,6 +1,6 @@
 use std::str::FromStr;
 use std::fmt::Debug;
-use crate::{tokens::Keyword, SyntaxNode, AnyNode, DebugMaybeAlternate};
+use crate::{tokens::Keyword, AnyNode, DebugMaybeAlternate, DebugRange, SyntaxNode};
 
 
 #[derive(Debug, Clone)]
@@ -24,7 +24,8 @@ impl UnnamedNode<'_> {
 
 impl Debug for UnnamedNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        f.debug_maybe_alternate(&self.value())?;
+        write!(f, " {}", self.range().debug())
     }
 }
 

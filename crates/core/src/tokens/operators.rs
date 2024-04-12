@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, AnyNode, DebugMaybeAlternate};
+use crate::{AnyNode, DebugMaybeAlternate, DebugRange, SyntaxNode};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -19,14 +19,15 @@ impl UnaryOperatorNode<'_> {
             "unary_op_not" => UnaryOperator::Not,
             "unary_op_bitnot" => UnaryOperator::BitNot,
             "unary_op_plus" => UnaryOperator::Plus,
-            _ => panic!("Unknown unary operator: {}", self.tree_node.kind())
+            _ => panic!("Unknown unary operator: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
 
 impl Debug for UnaryOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        f.debug_maybe_alternate(&self.value())?;
+        write!(f, " {}", self.range().debug())
     }
 }
 
@@ -89,14 +90,15 @@ impl BinaryOperatorNode<'_> {
             "binary_op_mod" => BinaryOperator::Mod,
             "binary_op_div" => BinaryOperator::Div,
             "binary_op_mult" => BinaryOperator::Mult,
-            _ => panic!("Unknown binary operator: {}", self.tree_node.kind())
+            _ => panic!("Unknown binary operator: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
 
 impl Debug for BinaryOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        f.debug_maybe_alternate(&self.value())?;
+        write!(f, " {}", self.range().debug())
     }
 }
 
@@ -152,14 +154,15 @@ impl AssignmentOperatorNode<'_> {
             "assign_op_mult" => AssignmentOperator::Mult,
             "assign_op_div" => AssignmentOperator::Div,
             "assign_op_mod" => AssignmentOperator::Mod,
-            _ => panic!("Unknown assignment operator: {}", self.tree_node.kind())
+            _ => panic!("Unknown assignment operator: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
 
 impl Debug for AssignmentOperatorNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        f.debug_maybe_alternate(&self.value())?;
+        write!(f, " {}", self.range().debug())
     }
 }
 

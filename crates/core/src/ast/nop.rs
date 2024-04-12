@@ -1,13 +1,15 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, NamedSyntaxNode, AnyNode};
+use crate::{AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::StatementTraversal;
 
 
-// Empty type essentially representing an orphaned/trailing semicolon
-#[derive(Debug, Clone)]
-pub struct Nop;
+mod tags {
+    // Empty type essentially representing an orphaned/trailing semicolon
+    pub struct Nop;
+}
 
-pub type NopNode<'script> = SyntaxNode<'script, Nop>;
+
+pub type NopNode<'script> = SyntaxNode<'script, tags::Nop>;
 
 impl NamedSyntaxNode for NopNode<'_> {
     const NODE_KIND: &'static str = "nop";
@@ -17,7 +19,7 @@ impl NopNode<'_> {}
 
 impl Debug for NopNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Nop")
+        write!(f, "Nop {}", self.range().debug())
     }
 }
 

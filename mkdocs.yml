@@ -1,0 +1,57 @@
+site_name: WitcherScript IDE  
+site_description: WitcherScript-IDE - Witcher 3 scripting tooling
+site_author: Przemysław Cedro (SpontanCombust)
+site_url: https://spontancombust.github.io/witcherscript-ide/
+repo_url: https://github.com/SpontanCombust/witcherscript-ide
+
+nav:
+  - 'Home': 'index.md'
+  - 'User Manual':
+    - 'user-manual/index.md'
+    - 'Editor': 'user-manual/editor.md'
+    - 'Project System': 'user-manual/project-system.md' 
+    - 'Changelog': 'user-manual/changelog.md'
+  - 'Developer Manual': 'dev-manual.md'
+  - 'About':
+    - 'about/index.md'
+    - 'Copyright': 'about/copyright.md'
+
+theme:
+  name: material
+  favicon: assets/favicon.ico
+  logo: assets/logo.svg
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - scheme: default
+      primary: wolven-red
+      toggle:
+        icon: octicons/sun-16
+        name: Switch to dark mode
+    - scheme: slate
+      primary: wolven-red
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  features:
+    - navigation.indexes
+    - navigation.expand
+    - content.code.copy
+    - toc.follow
+  locale: en
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.superfences:
+  - toc:
+      permalink: true
+  - attr_list:
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg

@@ -21,7 +21,7 @@ impl Symbol for ArrayTypeSymbol {
 }
 
 impl ArrayTypeSymbol {
-    pub const TYPE_NAME: &str = "array";
+    pub const TYPE_NAME: &'static str = "array";
 
     pub fn new(path: ArrayTypeSymbolPath) -> Self {
         Self {

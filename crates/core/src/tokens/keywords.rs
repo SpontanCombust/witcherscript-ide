@@ -12,6 +12,7 @@ pub enum Keyword {
     Const,
     Continue,
     Default,
+    Defaults,
     Delete,
     Do,
     Editable,

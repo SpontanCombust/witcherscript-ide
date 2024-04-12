@@ -1,3 +1,7 @@
 mod inject_native_symbols;
-pub mod scan_symbols;
-pub mod syntax_analysis;
+
+mod scan_symbols;
+pub use scan_symbols::scan_symbols;
+
+mod syntax_analysis;
+pub use syntax_analysis::syntax_analysis;

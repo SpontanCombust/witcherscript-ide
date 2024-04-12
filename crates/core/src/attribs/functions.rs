@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use std::str::FromStr;
-use crate::{NamedSyntaxNode, tokens::Keyword, SyntaxNode, AnyNode, DebugMaybeAlternate};
+use crate::{tokens::Keyword, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::AccessModifier;
 
 
@@ -27,13 +27,13 @@ impl FunctionParameterSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown function parameter specifier: {}", s)
+        panic!("Unknown function parameter specifier: {} {}", s, self.range().debug())
     }
 }
 
 impl Debug for FunctionParameterSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 
@@ -75,13 +75,13 @@ impl GlobalFunctionSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown global function specifier: {}", s)
+        panic!("Unknown global function specifier: {} {}", s, self.range().debug())
     }
 }
 
 impl Debug for GlobalFunctionSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 
@@ -125,13 +125,13 @@ impl GlobalFunctionFlavourNode<'_> {
             }
         }
 
-        panic!("Unknown global function flavour: {}", s)
+        panic!("Unknown global function flavour: {} {}", s, self.range().debug())
     }
 }
 
 impl Debug for GlobalFunctionFlavourNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 
@@ -179,13 +179,13 @@ impl MemberFunctionSpecifierNode<'_> {
             }
         }
 
-        panic!("Unknown member function specifier: {}", s)
+        panic!("Unknown member function specifier: {} {}", s, self.range().debug())
     }
 }
 
 impl Debug for MemberFunctionSpecifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 
@@ -227,13 +227,13 @@ impl MemberFunctionFlavourNode<'_> {
             }
         }
 
-        panic!("Unknown member function flavour: {}", s)
+        panic!("Unknown member function flavour: {} {}", s, self.range().debug())
     }
 }
 
 impl Debug for MemberFunctionFlavourNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate(&self.value())
+        write!(f, "{:?} {}", self.value(), self.range().debug())
     }
 }
 

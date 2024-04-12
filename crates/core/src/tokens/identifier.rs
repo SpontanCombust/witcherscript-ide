@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use shrinkwraprs::Shrinkwrap;
-use crate::{NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}, AnyNode, script_document::ScriptDocument};
+use crate::{ast::{ExpressionTraversal, ExpressionVisitor}, script_document::ScriptDocument, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 
 
 #[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -27,7 +27,7 @@ impl IdentifierNode<'_> {
 
 impl Debug for IdentifierNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Identifier {:?}", self.range()) //TODO print range for all nodes
+        write!(f, "Identifier {}", self.range().debug())
     }
 }
 

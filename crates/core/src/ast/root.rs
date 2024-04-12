@@ -1,6 +1,11 @@
 use core::fmt::Debug;
-use crate::{DebugMaybeAlternate, SyntaxNode, AnyNode, NamedSyntaxNode};
+use crate::{AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
+
+
+mod tags {
+    pub struct Root;
+}
 
 
 #[derive(Clone)]
@@ -38,7 +43,7 @@ impl<'script> RootStatementNode<'script> {
             StructDeclarationNode::NODE_KIND => RootStatement::Struct(self.into()),
             EnumDeclarationNode::NODE_KIND => RootStatement::Enum(self.into()),
             NopNode::NODE_KIND => RootStatement::Nop(self.into()),
-            _ => panic!("Unknown script statement: {}", s)
+            _ => panic!("Unknown script statement: {} {}", s, self.range().debug())
         }
     }
 }
@@ -83,24 +88,25 @@ impl StatementTraversal for RootStatementNode<'_> {
 }
 
 
-#[derive(Debug, Clone)]
-pub struct Root;
 
-pub type RootNode<'script> = SyntaxNode<'script, Root>;
+pub type RootNode<'script> = SyntaxNode<'script, tags::Root>;
 
 impl NamedSyntaxNode for RootNode<'_> {
     const NODE_KIND: &'static str = "script";
 }
 
 impl RootNode<'_> {
-    pub fn statements(&self) -> impl Iterator<Item = RootStatementNode> {
+    pub fn iter(&self) -> impl Iterator<Item = RootStatementNode> {
         self.named_children().map(|n| n.into())
     }
 }
 
 impl Debug for RootNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named("Script", &self.statements().collect::<Vec<_>>())
+        f.debug_maybe_alternate_named(
+            &format!("Script {}", self.range().debug()), 
+            &self.iter().collect::<Vec<_>>()
+        )
     }
 }
 
@@ -119,7 +125,7 @@ impl<'script> TryFrom<AnyNode<'script>> for RootNode<'script> {
 impl StatementTraversal for RootNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if visitor.visit_root(self) {
-            self.statements().for_each(|s| s.accept(visitor));
+            self.iter().for_each(|s| s.accept(visitor));
         }
     }
 }

@@ -6,18 +6,26 @@
 	"version": "0.2.0",
     "configurations": [
         {
-            "name": "VSCode Extension",
+            "name": "Launch Client",
             "type": "extensionHost",
             "request": "launch",
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}/editors/vscode"
-            ]
+            ],
+            "outFiles": [
+                "${workspaceFolder}/editors/vscode/out/main.js.map",
+            ],
         },
         {
-            "name": "Debug extension LSP",
+            "name": "Attach to Server",
             "type": "lldb",
             "request": "attach",
-            "program": "${workspaceFolder}/server/bin/witcherscript-lsp.exe"
+            "windows": {
+                "program": "${workspaceFolder}/server/bin/witcherscript-lsp.exe",
+            },
+            "linux": {
+                "program": "${workspaceFolder}/server/bin/witcherscript-lsp"
+            }
         }
     ]
 }

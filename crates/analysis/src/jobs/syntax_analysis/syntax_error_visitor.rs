@@ -51,16 +51,6 @@ impl SyntaxErrorVisitor<'_> {
         self.check_errors(&n);
     }
 
-    /// Returns true if the literal is present, false otherwise
-    fn check_literal_int(&mut self, n: &LiteralIntNode) -> bool {
-        self.check_missing(n, "integer number")
-    }
-
-    /// Returns true if the literal is present, false otherwise
-    fn check_literal_string(&mut self, n: &LiteralStringNode) -> bool {
-        self.check_missing(n, "string")
-    }
-
     fn check_expression(&mut self, n: &ExpressionNode) {
         if self.check_missing(n, "expression") {
             if n.has_errors() {
@@ -98,10 +88,10 @@ impl SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn check_errors<T>(&mut self, n: &SyntaxNode<'_, T>) -> bool {
+    fn check_errors<T>(&mut self, n: &SyntaxNode<'_, T>) {
         let errors = n.errors();
         if errors.is_empty() {
-            return false;
+            return;
         }
 
         for err in n.errors() {
@@ -128,8 +118,6 @@ impl SyntaxErrorVisitor<'_> {
                 }
             }
         }
-
-        true
     }
 }
 
@@ -218,11 +206,14 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         false
     }
 
-    fn visit_enum_member_decl(&mut self, n: &EnumMemberDeclarationNode) {
+    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
         if n.has_errors() {
             self.check_identifier(&n.name());
     
-            n.value().map(|n| self.check_literal_int(&n));
+            n.value().map(|v| match v {
+                EnumVariantValue::Int(n) => self.check_missing(&n, "variant integer value"),
+                EnumVariantValue::Hex(n) => self.check_missing(&n, "variant integer value"),
+            });
         }
     }
 
@@ -247,7 +238,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     fn visit_member_hint(&mut self, n: &MemberHintNode) {
         if n.has_errors() {
             self.check_identifier(&n.member());
-            self.check_literal_string(&n.value());
+            self.check_missing(&n.value(), "hint string");
     
             self.check_errors(n);
         }
@@ -271,24 +262,28 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> bool {
+    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> (bool, bool) {
         if n.has_errors() {
             self.check_identifier(&n.name());
             n.return_type().map(|n| self.check_type_annot(&n));
     
             self.check_errors(n);
         
-            if !self.check_function_def(&n.definition()) {
-                return true;
+            let params = n.params();
+            let errors_in_params = params.has_errors();
+            if errors_in_params {
+                self.check_errors(&params);
             }
+
+            let errors_in_def = !self.check_function_def(&n.definition());
+
+            return (errors_in_params, errors_in_def);
         }
-        
-        //FIXME check for errors in params - maybe grammar should have a named node for the entirety of params? Apply this thinking to other repeating rules.
-        // false
-        true
+
+        (false, false)
     }
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> bool {
+    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> (bool ,bool) {
         if n.has_errors() {
             self.check_identifier(&n.name());
     
@@ -298,30 +293,42 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     
             self.check_errors(n);
     
-            if !self.check_function_def(&n.definition()) {
-                return true;
+            let params = n.params();
+            let errors_in_params = params.has_errors();
+            if errors_in_params {
+                self.check_errors(&params);
             }
+
+            let errors_in_def = !self.check_function_def(&n.definition());
+
+            return (errors_in_params, errors_in_def);
         }
         
-        //FIXME check for errors in params
-        // false
-        true
+        (false, false)
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> bool {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> (bool ,bool) {
         if n.has_errors() {
             self.check_identifier(&n.name());
+
+            if let Some(ret) = n.return_type() {
+                self.check_type_annot(&ret);
+            }
     
             self.check_errors(n);
 
-            if !self.check_function_def(&n.definition()) {
-                return true;
+            let params = n.params();
+            let errors_in_params = params.has_errors();
+            if errors_in_params {
+                self.check_errors(&params);
             }
+
+            let errors_in_def = !self.check_function_def(&n.definition());
+
+            return (errors_in_params, errors_in_def);
         }
         
-        //FIXME check for errors in params
-        // false
-        true
+        (false, false)
     }
 
     fn visit_block_stmt(&mut self, n: &FunctionBlockNode) -> bool {
@@ -433,18 +440,21 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode) -> bool {
         if n.has_errors() {
-            self.check_expression(&n.matched_expr());
+            self.check_expression(&n.cond());
     
             self.check_errors(n);
     
-    
-            return n.has_errors();
+            let body = n.body();
+            if body.has_errors() {
+                self.check_errors(&body);
+                return true;
+            }
         }
 
         false
     }
 
-    fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseNode) {
+    fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) {
         if n.has_errors() {
             self.check_expression(&n.value());
     
@@ -452,7 +462,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultNode) {
+    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode) {
         if n.has_errors() {
             self.check_errors(n);
         }
@@ -488,14 +498,18 @@ impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
     }
 
     fn visit_func_call_expr(&mut self, n: &FunctionCallExpressionNode) {
-        self.check_identifier(&n.func());
+        self.check_missing(&n.func(), "function");
+
+        if let Some(args) = n.args() {
+            self.check_errors(&args);
+        }
 
         self.check_errors(n);
     }
 
-    fn visit_instantiation_expr(&mut self, n: &InstantiationExpressionNode) {
+    fn visit_new_expr(&mut self, n: &NewExpressionNode) {
         self.check_identifier(&n.class());
-        self.check_expression(&n.lifetime_obj());
+        n.lifetime_obj().map(|n| self.check_expression(&n));
 
         self.check_errors(n);
     }
@@ -507,15 +521,8 @@ impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
         self.check_errors(n);
     }
 
-    fn visit_method_call_expr(&mut self, n: &MethodCallExpressionNode) {
-        self.check_expression(&n.accessor());
-        self.check_identifier(&n.func());
-
-        self.check_errors(n);
-    }
-
     fn visit_nested_expr(&mut self, n: &NestedExpressionNode) {
-        self.check_expression(&n.value());
+        self.check_expression(&n.inner());
 
         self.check_errors(n);
     }
@@ -534,6 +541,6 @@ impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
 
         self.check_errors(n);
     }
-
+    
     // No point in checking single token expressions
 }

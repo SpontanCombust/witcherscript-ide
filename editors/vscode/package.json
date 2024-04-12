@@ -2,11 +2,13 @@
   "name": "witcherscript-ide",
   "displayName": "WitcherScript IDE",
   "publisher": "SpontanCombust",
-  "description": "Language support for Witcher 3's scripting language WitcherScript",
+  "description": "WitcherScript language support for Visual Studio Code",
   "repository": {
     "type": "git",
     "url": "https://github.com/SpontanCombust/witcherscript-ide"
   },
+  "homepage": "https://spontancombust.github.io/witcherscript-ide",
+  "license": "MIT OR Apache-2.0",
   "version": "0.1.0",
   "engines": {
     "vscode": "^1.85.0"
@@ -14,8 +16,16 @@
   "categories": [
     "Programming Languages"
   ],
+  "keywords": [
+    "witcher",
+    "script",
+    "modding",
+    "redkit",
+    "wolvenkit"
+  ],
   "activationEvents": [
-    
+    "workspaceContains:**/witcherscript.toml",
+    "workspaceContains:**/*.ws"
   ],
   "main": "./out/main",
   "contributes": {
@@ -37,6 +47,58 @@
         }
       }
     ],
+    "configuration": {
+      "title": "WitcherScript IDE",
+      "properties": {
+        "witcherscript-ide.gameDirectory": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to Witcher 3's root game directory (containing bin, content, Mods folders etc.). This will effectively add `content` and `Mods` folders to content repositories."
+        },
+        "witcherscript-ide.contentRepositories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Paths to custom directories containing WitcherScript contents"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "witcherscript-ide.projects.init",
+        "title": "Initialize a WitcherScript project in existing directory...",
+        "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.projects.create",
+        "title": "Create a new WitcherScript project...",
+        "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.scripts.importVanilla",
+        "title": "Import scripts from vanilla...",
+        "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.scripts.diffVanilla",
+        "title": "Compare this script with vanilla counterpart",
+        "category": "WitcherScript-IDE",
+        "enablement": "editorLangId == 'witcherscript'"
+      },
+      {
+        "command": "witcherscript-ide.debug.showScriptAst",
+        "title": "Show script AST",
+        "category": "WitcherScript-IDE (debug)",
+        "enablement": "editorLangId == 'witcherscript'"
+      },
+      {
+        "command": "witcherscript-ide.debug.contentGraphDot",
+        "title": "Show content graph",
+        "category": "WitcherScript-IDE (debug)"
+      }
+    ],
     "grammars": [
       {
         "language": "witcherscript",
@@ -48,21 +110,20 @@
   "icon": "icon.png",
 
   "scripts": {
-    "package": "vsce package -o witcherscript-ide.vsix",
     "vscode:prepublish": "npm run build-base -- --minify",
     "build": "npm run build-base -- --sourcemap",
-    "watch": "npm run build-base -- --sourcemap --watch",
+    "watch": "npm run build-base -- --sourcemap --watch=forever",
     "build-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node"
   },
   "dependencies": {
-    "path": "^0.12.7",
-    "vscode-languageclient": "^9.0.0"
+    "vscode-languageclient": "^9.0.0",
+    "vscode-languageserver-protocol": "^3.17.0"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "@types/vscode": "^1.75.1",
     "@vscode/vsce": "^2.19.0",
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "esbuild": "^0.18.12"
+    "esbuild": "^0.18.12",
+    "typescript": "^5.0.0"
   }
 }

@@ -1,27 +1,44 @@
 use std::fmt::Debug;
-use crate::{SyntaxNode, NamedSyntaxNode, tokens::*, AnyNode, DebugMaybeAlternate};
+use crate::{tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, ExpressionVisitor, ExpressionTraversal, StatementVisitor};
 
 
-#[derive(Debug, Clone)]
-pub struct NestedExpression;
+mod tags {
+    pub struct NestedExpression;
+    pub struct ThisExpression;
+    pub struct SuperExpression;
+    pub struct ParentExpression;
+    pub struct VirtualParentExpression;
+    pub struct FunctionCallExpression;
+    pub struct FunctionCallArguments;
+    pub struct ArrayExpression;
+    pub struct MemberFieldExpression;
+    pub struct NewExpression;
+    pub struct TypeCastExpression;
+    pub struct UnaryOperationExpression;
+    pub struct BinaryOperationExpression;
+    pub struct AssignmentOperationExpression;
+    pub struct TernaryConditionalExpression;
+    pub struct ExpressionStatement;
+}
 
-pub type NestedExpressionNode<'script> = SyntaxNode<'script, NestedExpression>;
+
+pub type NestedExpressionNode<'script> = SyntaxNode<'script, tags::NestedExpression>;
 
 impl NamedSyntaxNode for NestedExpressionNode<'_> {
     const NODE_KIND: &'static str = "nested_expr";
 }
 
 impl NestedExpressionNode<'_> {
-    pub fn value(&self) -> ExpressionNode {
+    pub fn inner(&self) -> ExpressionNode {
         self.first_child(true).unwrap().into()
     }
 }
 
 impl Debug for NestedExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("NestedExpression")
-            .field(&self.value())
+        f.debug_tuple(&format!("NestedExpression {}", self.range().debug()))
+            .field(&self.inner())
             .finish()
     }
 }
@@ -40,17 +57,14 @@ impl<'script> TryFrom<AnyNode<'script>> for NestedExpressionNode<'script> {
 
 impl ExpressionTraversal for NestedExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.value().accept(visitor);
+        self.inner().accept(visitor);
         visitor.visit_nested_expr(self);
     }
 }
 
 
 
-#[derive(Debug, Clone)]
-pub struct ThisExpression;
-
-pub type ThisExpressionNode<'script> = SyntaxNode<'script, ThisExpression>;
+pub type ThisExpressionNode<'script> = SyntaxNode<'script, tags::ThisExpression>;
 
 impl NamedSyntaxNode for ThisExpressionNode<'_> {
     const NODE_KIND: &'static str = "this_expr";
@@ -60,7 +74,7 @@ impl ThisExpressionNode<'_> {}
 
 impl Debug for ThisExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ThisExpression")
+        write!(f, "ThisExpression {}", self.range().debug())
     }
 }
 
@@ -84,10 +98,7 @@ impl ExpressionTraversal for ThisExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct SuperExpression;
-
-pub type SuperExpressionNode<'script> = SyntaxNode<'script, SuperExpression>;
+pub type SuperExpressionNode<'script> = SyntaxNode<'script, tags::SuperExpression>;
 
 impl NamedSyntaxNode for SuperExpressionNode<'_> {
     const NODE_KIND: &'static str = "super_expr";
@@ -97,7 +108,7 @@ impl SuperExpressionNode<'_> {}
 
 impl Debug for SuperExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SuperExpression")
+        write!(f, "SuperExpression {}", self.range().debug())
     }
 }
 
@@ -121,10 +132,7 @@ impl ExpressionTraversal for SuperExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct ParentExpression;
-
-pub type ParentExpressionNode<'script> = SyntaxNode<'script, ParentExpression>;
+pub type ParentExpressionNode<'script> = SyntaxNode<'script, tags::ParentExpression>;
 
 impl NamedSyntaxNode for ParentExpressionNode<'_> {
     const NODE_KIND: &'static str = "parent_expr";
@@ -134,7 +142,7 @@ impl ParentExpressionNode<'_> {}
 
 impl Debug for ParentExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ParentExpression")
+        write!(f, "ParentExpression {}", self.range().debug())
     }
 }
 
@@ -158,10 +166,7 @@ impl ExpressionTraversal for ParentExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct VirtualParentExpression;
-
-pub type VirtualParentExpressionNode<'script> = SyntaxNode<'script, VirtualParentExpression>;
+pub type VirtualParentExpressionNode<'script> = SyntaxNode<'script, tags::VirtualParentExpression>;
 
 impl NamedSyntaxNode for VirtualParentExpressionNode<'_> {
     const NODE_KIND: &'static str = "virtual_parent_expr";
@@ -171,7 +176,7 @@ impl VirtualParentExpressionNode<'_> {}
 
 impl Debug for VirtualParentExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "VirtualParentExpression")
+        write!(f, "VirtualParentExpression {}", self.range().debug())
     }
 }
 
@@ -195,31 +200,27 @@ impl ExpressionTraversal for VirtualParentExpressionNode<'_> {
 
 
 
-
-#[derive(Debug, Clone)]
-pub struct FunctionCallExpression;
-
-pub type FunctionCallExpressionNode<'script> = SyntaxNode<'script, FunctionCallExpression>;
+pub type FunctionCallExpressionNode<'script> = SyntaxNode<'script, tags::FunctionCallExpression>;
 
 impl NamedSyntaxNode for FunctionCallExpressionNode<'_> {
     const NODE_KIND: &'static str = "func_call_expr";
 }
 
 impl FunctionCallExpressionNode<'_> {
-    pub fn func(&self) -> IdentifierNode {
+    pub fn func(&self) -> ExpressionNode {
         self.field_child("func").unwrap().into()
     }
 
-    pub fn args(&self) -> impl Iterator<Item = FuncCallArg> {
-        func_args(self)
+    pub fn args(&self) -> Option<FunctionCallArgumentsNode> {
+        self.field_child("args").map(|n| n.into())
     }
 }
 
 impl Debug for FunctionCallExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FunctionCallExpression")
+        f.debug_struct(&format!("FunctionCallExpression {}", self.range().debug()))
             .field("func", &self.func())
-            .field("args", &self.args().collect::<Vec<_>>())
+            .field("args", &self.args())
             .finish()
     }
 }
@@ -238,74 +239,101 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionCallExpressionNode<'script> 
 
 impl ExpressionTraversal for FunctionCallExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.args().for_each(|arg| arg.accept(visitor));
+        self.func().accept(visitor);
+        self.args().map(|n| n.accept(visitor));
         visitor.visit_func_call_expr(self);
     }
 }
 
 
-type FuncCallArg<'script> = Option<ExpressionNode<'script>>;
 
-impl ExpressionTraversal for FuncCallArg<'_> {
+pub type FunctionCallArgumentsNode<'script> = SyntaxNode<'script, tags::FunctionCallArguments>;
+
+impl NamedSyntaxNode for FunctionCallArgumentsNode<'_> {
+    const NODE_KIND: &'static str = "func_call_args";
+}
+
+impl FunctionCallArgumentsNode<'_> {
+    pub fn iter(&self) -> impl Iterator<Item = FunctionCallArgument> {
+        let children = self.children();
+
+        let mut args = Vec::new();
+        let mut previous_was_comma = true;
+        for n in children {
+            if n.tree_node.is_named() {
+                args.push(FunctionCallArgument::Some(n.into()));
+                previous_was_comma = false;
+            } else {
+                if previous_was_comma {
+                    let range = n.range();
+                    args.push(FunctionCallArgument::Omitted(lsp_types::Position { 
+                        line: range.start.line, 
+                        character: range.start.character - 1 // -1 because the arg would be before the comma
+                    }));
+                }
+                previous_was_comma = true;
+            }
+        }
+
+        args.into_iter()
+    }
+}
+
+impl Debug for FunctionCallArgumentsNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate_named(
+            &format!("FunctionCallArguments {}", self.range().debug()), 
+            &self.iter().collect::<Vec<_>>()
+        )
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for FunctionCallArgumentsNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl ExpressionTraversal for FunctionCallArgumentsNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        if let Some(expr) = self {
-            expr.accept(visitor);
+        self.iter().for_each(|n| n.accept(visitor))
+    }
+}
+
+
+#[derive(Clone)]
+pub enum FunctionCallArgument<'script> {
+    Some(ExpressionNode<'script>),
+    Omitted(lsp_types::Position)
+}
+
+impl Debug for FunctionCallArgument<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Some(n) => f.debug_maybe_alternate(n),
+            Self::Omitted(pos) => write!(f, "Omitted {}", pos.debug()),
+        }
+    }
+}
+
+impl ExpressionTraversal for FunctionCallArgument<'_> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
+        if let FunctionCallArgument::Some(n) = self {
+            n.accept(visitor);
         }
         visitor.visit_func_call_arg(self);
     }
 }
 
-fn func_args<'script, T: Clone>(func_node: &'script SyntaxNode<'_, T>) -> impl Iterator<Item = FuncCallArg<'script>> {
-    if let Some(args_node) = func_node.tree_node.child_by_field_name("args") {
-        let mut cursor = args_node.walk();
-        cursor.goto_first_child();
-        
-        let mut v = vec![];
-        let mut previous_was_comma = true;
-        
-        loop {
-            let n = cursor.node();
-            // Because of how default parameters in WitcherScript work we can't simply do a delimited list, 
-            // because the values in that list can be empty space or no space at all. We need to put 
-            // special care into handling commas.
-            // If a node is named, some argument was passed. If a node is anonymous it is a comma.
-            // If we encounter a comma right after a previous comma, we have a defaulted argument.
-            if !n.is_error() {
-                if n.is_named() {
-                    v.push(Some(SyntaxNode::new(n)));
-                    previous_was_comma = false;
-                } else {
-                    if previous_was_comma {
-                        v.push(None);
-                    }
-                    previous_was_comma = true;
-                }
-            }
-
-            if !cursor.goto_next_sibling() {
-                break;
-            }
-        }
-
-        if previous_was_comma {
-            v.push(None);
-        }
-        
-        v.into_iter()
-    } else {
-        // If the argument list is empty we don't know whether it actually takes no arguments
-        // or all the arguments it takes are optional. It is difficult to figure that out
-        // without looking at this function's declaration.
-        vec![].into_iter()
-    }
-}
 
 
-
-#[derive(Debug, Clone)]
-pub struct ArrayExpression;
-
-pub type ArrayExpressionNode<'script> = SyntaxNode<'script, ArrayExpression>;
+pub type ArrayExpressionNode<'script> = SyntaxNode<'script, tags::ArrayExpression>;
 
 impl NamedSyntaxNode for ArrayExpressionNode<'_> {
     const NODE_KIND: &'static str = "array_expr";
@@ -323,7 +351,7 @@ impl ArrayExpressionNode<'_> {
 
 impl Debug for ArrayExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ArrayExpression")
+        f.debug_struct(&format!("ArrayExpression {}", self.range().debug()))
             .field("accessor", &self.accessor())
             .field("index", &self.index())
             .finish()
@@ -352,10 +380,7 @@ impl ExpressionTraversal for ArrayExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct MemberFieldExpression;
-
-pub type MemberFieldExpressionNode<'script> = SyntaxNode<'script, MemberFieldExpression>;
+pub type MemberFieldExpressionNode<'script> = SyntaxNode<'script, tags::MemberFieldExpression>;
 
 impl NamedSyntaxNode for MemberFieldExpressionNode<'_> {
     const NODE_KIND: &'static str = "member_field_expr";
@@ -373,7 +398,7 @@ impl MemberFieldExpressionNode<'_> {
 
 impl Debug for MemberFieldExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MemberFieldExpression")
+        f.debug_struct(&format!("MemberFieldExpression {}", self.range().debug()))
             .field("accessor", &self.accessor())
             .field("member", &self.member())
             .finish()
@@ -401,90 +426,32 @@ impl ExpressionTraversal for MemberFieldExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct MethodCallExpression;
+pub type NewExpressionNode<'script> = SyntaxNode<'script, tags::NewExpression>;
 
-pub type MethodCallExpressionNode<'script> = SyntaxNode<'script, MethodCallExpression>;
-
-impl NamedSyntaxNode for MethodCallExpressionNode<'_> {
-    const NODE_KIND: &'static str = "member_func_call_expr";
-}
-
-impl MethodCallExpressionNode<'_> {
-    pub fn accessor(&self) -> ExpressionNode {
-        self.field_child("accessor").unwrap().into()
-    }
-
-    pub fn func(&self) -> IdentifierNode {
-        self.field_child("func").unwrap().into()
-    }
-
-    pub fn args(&self) -> impl Iterator<Item = FuncCallArg> {
-        func_args(self)
-    }
-}
-
-impl Debug for MethodCallExpressionNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FunctionCallExpression")
-            .field("accessor", &self.accessor())
-            .field("func", &self.func())
-            .field("args", &self.args().collect::<Vec<_>>())
-            .finish()
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for MethodCallExpressionNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
-    }
-}
-
-impl ExpressionTraversal for MethodCallExpressionNode<'_> {
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.accessor().accept(visitor);
-        self.args().for_each(|arg| arg.accept(visitor));
-        visitor.visit_method_call_expr(self);
-    }
-}
-
-
-
-#[derive(Debug, Clone)]
-pub struct InstantiationExpression;
-
-pub type InstantiationExpressionNode<'script> = SyntaxNode<'script, InstantiationExpression>;
-
-impl NamedSyntaxNode for InstantiationExpressionNode<'_> {
+impl NamedSyntaxNode for NewExpressionNode<'_> {
     const NODE_KIND: &'static str = "new_expr";
 }
 
-impl InstantiationExpressionNode<'_> {
+impl NewExpressionNode<'_> {
     pub fn class(&self) -> IdentifierNode {
         self.field_child("class").unwrap().into()
     }
 
-    pub fn lifetime_obj(&self) -> ExpressionNode {
-        self.field_child("lifetime_obj").unwrap().into()
+    pub fn lifetime_obj(&self) -> Option<ExpressionNode> {
+        self.field_child("lifetime_obj").map(|n| n.into())
     }
 }
 
-impl Debug for InstantiationExpressionNode<'_> {
+impl Debug for NewExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("InstantiationExpression")
+        f.debug_struct(&format!("NewExpression {}", self.range().debug()))
             .field("class", &self.class())
             .field("lifetime_obj", &self.lifetime_obj())
             .finish()
     }
 }
 
-impl<'script> TryFrom<AnyNode<'script>> for InstantiationExpressionNode<'script> {
+impl<'script> TryFrom<AnyNode<'script>> for NewExpressionNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
@@ -496,19 +463,16 @@ impl<'script> TryFrom<AnyNode<'script>> for InstantiationExpressionNode<'script>
     }
 }
 
-impl ExpressionTraversal for InstantiationExpressionNode<'_> {
+impl ExpressionTraversal for NewExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.lifetime_obj().accept(visitor);
-        visitor.visit_instantiation_expr(self);
+        self.lifetime_obj().map(|n| n.accept(visitor));
+        visitor.visit_new_expr(self);
     }
 }
 
 
 
-#[derive(Debug, Clone)]
-pub struct TypeCastExpression;
-
-pub type TypeCastExpressionNode<'script> = SyntaxNode<'script, TypeCastExpression>;
+pub type TypeCastExpressionNode<'script> = SyntaxNode<'script, tags::TypeCastExpression>;
 
 impl NamedSyntaxNode for TypeCastExpressionNode<'_> {
     const NODE_KIND: &'static str = "cast_expr";
@@ -526,7 +490,7 @@ impl TypeCastExpressionNode<'_> {
 
 impl Debug for TypeCastExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TypeCastExpression")
+        f.debug_struct(&format!("TypeCastExpression {}", self.range().debug()))
             .field("type", &self.target_type())
             .field("value", &self.value())
             .finish()
@@ -554,10 +518,7 @@ impl ExpressionTraversal for TypeCastExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct UnaryOperationExpression;
-
-pub type UnaryOperationExpressionNode<'script> = SyntaxNode<'script, UnaryOperationExpression>;
+pub type UnaryOperationExpressionNode<'script> = SyntaxNode<'script, tags::UnaryOperationExpression>;
 
 impl NamedSyntaxNode for UnaryOperationExpressionNode<'_> {
     const NODE_KIND: &'static str = "unary_op_expr";
@@ -575,7 +536,7 @@ impl UnaryOperationExpressionNode<'_> {
 
 impl Debug for UnaryOperationExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("UnaryOperationExpression")
+        f.debug_struct(&format!("UnaryOperationExpression {}", self.range().debug()))
             .field("op", &self.op())
             .field("right", &self.right())
             .finish()
@@ -603,10 +564,7 @@ impl ExpressionTraversal for UnaryOperationExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct BinaryOperationExpression;
-
-pub type BinaryOperationExpressionNode<'script> = SyntaxNode<'script, BinaryOperationExpression>;
+pub type BinaryOperationExpressionNode<'script> = SyntaxNode<'script, tags::BinaryOperationExpression>;
 
 impl NamedSyntaxNode for BinaryOperationExpressionNode<'_> {
     const NODE_KIND: &'static str = "binary_op_expr";
@@ -628,7 +586,7 @@ impl BinaryOperationExpressionNode<'_> {
 
 impl Debug for BinaryOperationExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("BinaryOperationExpression")
+        f.debug_struct(&format!("BinaryOperationExpression {}", self.range().debug()))
             .field("op", &self.op())
             .field("left", &self.left())
             .field("right", &self.right())
@@ -658,10 +616,7 @@ impl ExpressionTraversal for BinaryOperationExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct AssignmentOperationExpression;
-
-pub type AssignmentOperationExpressionNode<'script> = SyntaxNode<'script, AssignmentOperationExpression>;
+pub type AssignmentOperationExpressionNode<'script> = SyntaxNode<'script, tags::AssignmentOperationExpression>;
 
 impl NamedSyntaxNode for AssignmentOperationExpressionNode<'_> {
     const NODE_KIND: &'static str = "assign_op_expr";
@@ -683,7 +638,7 @@ impl AssignmentOperationExpressionNode<'_> {
 
 impl Debug for AssignmentOperationExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AssignmentOperationExpression")
+        f.debug_struct(&format!("AssignmentOperationExpression {}", self.range().debug()))
             .field("op", &self.op())
             .field("left", &self.left())
             .field("right", &self.right())
@@ -713,10 +668,7 @@ impl ExpressionTraversal for AssignmentOperationExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct TernaryConditionalExpression;
-
-pub type TernaryConditionalExpressionNode<'script> = SyntaxNode<'script, TernaryConditionalExpression>;
+pub type TernaryConditionalExpressionNode<'script> = SyntaxNode<'script, tags::TernaryConditionalExpression>;
 
 impl NamedSyntaxNode for TernaryConditionalExpressionNode<'_> {
     const NODE_KIND: &'static str = "ternary_cond_expr";
@@ -738,7 +690,7 @@ impl TernaryConditionalExpressionNode<'_> {
 
 impl Debug for TernaryConditionalExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TernaryConditionalExpression")
+        f.debug_struct(&format!("TernaryConditionalExpression {}", self.range().debug()))
             .field("cond", &self.cond())
             .field("conseq", &self.conseq())
             .field("alt", &self.alt())
@@ -782,8 +734,7 @@ pub enum Expression<'script> {
     FunctionCall(FunctionCallExpressionNode<'script>),
     Array(ArrayExpressionNode<'script>),
     MemberField(MemberFieldExpressionNode<'script>),
-    MethodCall(MethodCallExpressionNode<'script>),
-    Instantiation(InstantiationExpressionNode<'script>),
+    New(NewExpressionNode<'script>),
     TypeCast(TypeCastExpressionNode<'script>),
     UnaryOperation(UnaryOperationExpressionNode<'script>),
     BinaryOperation(BinaryOperationExpressionNode<'script>),
@@ -804,8 +755,7 @@ impl Debug for Expression<'_> {
             Self::FunctionCall(n) => f.debug_maybe_alternate(n),
             Self::Array(n) => f.debug_maybe_alternate(n),
             Self::MemberField(n) => f.debug_maybe_alternate(n),
-            Self::MethodCall(n) => f.debug_maybe_alternate(n),
-            Self::Instantiation(n) => f.debug_maybe_alternate(n),
+            Self::New(n) => f.debug_maybe_alternate(n),
             Self::TypeCast(n) => f.debug_maybe_alternate(n),
             Self::UnaryOperation(n) => f.debug_maybe_alternate(n),
             Self::BinaryOperation(n) => f.debug_maybe_alternate(n),
@@ -823,10 +773,9 @@ impl<'script> ExpressionNode<'script> {
             AssignmentOperationExpressionNode::NODE_KIND => Expression::AssignmentOperation(self.into()),
             TernaryConditionalExpressionNode::NODE_KIND => Expression::TernaryConditional(self.into()),
             BinaryOperationExpressionNode::NODE_KIND => Expression::BinaryOperation(self.into()),
-            InstantiationExpressionNode::NODE_KIND => Expression::Instantiation(self.into()),
+            NewExpressionNode::NODE_KIND => Expression::New(self.into()),
             UnaryOperationExpressionNode::NODE_KIND => Expression::UnaryOperation(self.into()),
             TypeCastExpressionNode::NODE_KIND => Expression::TypeCast(self.into()),
-            MethodCallExpressionNode::NODE_KIND => Expression::MethodCall(self.into()),
             MemberFieldExpressionNode::NODE_KIND => Expression::MemberField(self.into()),
             FunctionCallExpressionNode::NODE_KIND => Expression::FunctionCall(self.into()),
             ArrayExpressionNode::NODE_KIND => Expression::Array(self.into()),
@@ -837,12 +786,13 @@ impl<'script> ExpressionNode<'script> {
             VirtualParentExpressionNode::NODE_KIND => Expression::VirtualParent(self.into()),
             IdentifierNode::NODE_KIND => Expression::Identifier(self.into()),
             LiteralIntNode::NODE_KIND       |
+            LiteralHexNode::NODE_KIND       |
             LiteralFloatNode::NODE_KIND     |
             LiteralBoolNode::NODE_KIND      |
             LiteralStringNode::NODE_KIND    |
             LiteralNameNode::NODE_KIND      |
             LiteralNullNode::NODE_KIND      => Expression::Literal(self.into()),
-            _ => panic!("Unknown expression type: {}", self.tree_node.kind())
+            _ => panic!("Unknown expression type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
@@ -865,10 +815,9 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
             AssignmentOperationExpressionNode::NODE_KIND    |
             TernaryConditionalExpressionNode::NODE_KIND     |
             BinaryOperationExpressionNode::NODE_KIND        |
-            InstantiationExpressionNode::NODE_KIND          |
+            NewExpressionNode::NODE_KIND          |
             UnaryOperationExpressionNode::NODE_KIND         |
             TypeCastExpressionNode::NODE_KIND               |
-            MethodCallExpressionNode::NODE_KIND             |
             MemberFieldExpressionNode::NODE_KIND            |
             FunctionCallExpressionNode::NODE_KIND           |
             ArrayExpressionNode::NODE_KIND                  |
@@ -879,6 +828,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
             VirtualParentExpressionNode::NODE_KIND          |
             IdentifierNode::NODE_KIND                       |
             LiteralIntNode::NODE_KIND                       |
+            LiteralHexNode::NODE_KIND                       |
             LiteralFloatNode::NODE_KIND                     |
             LiteralBoolNode::NODE_KIND                      |
             LiteralStringNode::NODE_KIND                    |
@@ -902,8 +852,7 @@ impl ExpressionTraversal for ExpressionNode<'_> {
             Expression::FunctionCall(n) => n.accept(visitor),
             Expression::Array(n) => n.accept(visitor),
             Expression::MemberField(n) => n.accept(visitor),
-            Expression::MethodCall(n) => n.accept(visitor),
-            Expression::Instantiation(n) => n.accept(visitor),
+            Expression::New(n) => n.accept(visitor),
             Expression::TypeCast(n) => n.accept(visitor),
             Expression::UnaryOperation(n) => n.accept(visitor),
             Expression::BinaryOperation(n) => n.accept(visitor),
@@ -915,10 +864,7 @@ impl ExpressionTraversal for ExpressionNode<'_> {
 
 
 
-#[derive(Debug, Clone)]
-pub struct ExpressionStatement;
-
-pub type ExpressionStatementNode<'script> = SyntaxNode<'script, ExpressionStatement>;
+pub type ExpressionStatementNode<'script> = SyntaxNode<'script, tags::ExpressionStatement>;
 
 impl NamedSyntaxNode for ExpressionStatementNode<'_> {
     const NODE_KIND: &'static str = "expr_stmt";
@@ -932,7 +878,7 @@ impl ExpressionStatementNode<'_> {
 
 impl Debug for ExpressionStatementNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("ExpressionStatement")
+        f.debug_tuple(&format!("ExpressionStatement {}", self.range().debug()))
             .field(&self.expr())
             .finish()
     }

@@ -1,12 +1,14 @@
 use std::fmt::Debug;
-use crate::{tokens::IdentifierNode, NamedSyntaxNode, SyntaxNode, attribs::StateSpecifierNode, AnyNode};
+use crate::{attribs::StateSpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{StatementTraversal, StatementVisitor, ClassBlockNode};
 
 
-#[derive(Debug, Clone)]
-pub struct StateDeclaration;
+mod tags {
+    pub struct StateDeclaration;
+}
 
-pub type StateDeclarationNode<'script> = SyntaxNode<'script, StateDeclaration>;
+
+pub type StateDeclarationNode<'script> = SyntaxNode<'script, tags::StateDeclaration>;
 
 impl NamedSyntaxNode for StateDeclarationNode<'_> {
     const NODE_KIND: &'static str = "state_decl_stmt";
@@ -36,7 +38,7 @@ impl StateDeclarationNode<'_> {
 
 impl Debug for StateDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("StateDeclaration")
+        f.debug_struct(&format!("StateDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("name", &self.name())
             .field("parent", &self.parent())

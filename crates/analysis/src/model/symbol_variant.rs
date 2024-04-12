@@ -5,7 +5,7 @@ use super::symbols::*;
 pub enum SymbolVariant {
     Primitive(PrimitiveTypeSymbol),
     Enum(EnumSymbol),
-    EnumMember(EnumMemberSymbol),
+    EnumVariant(EnumVariantSymbol),
     Struct(StructSymbol),
     Class(ClassSymbol),
     State(StateSymbol),
@@ -25,7 +25,7 @@ impl SymbolVariant {
         match self {
             SymbolVariant::Primitive(v) => v,
             SymbolVariant::Enum(v) => v,
-            SymbolVariant::EnumMember(v) => v,
+            SymbolVariant::EnumVariant(v) => v,
             SymbolVariant::Struct(v) => v,
             SymbolVariant::Class(v) => v,
             SymbolVariant::State(v) => v,
@@ -92,24 +92,24 @@ impl SymbolVariant {
     }
 
 
-    pub fn into_enum_member(self) -> Option<EnumMemberSymbol> {
-        if let SymbolVariant::EnumMember(v) = self {
+    pub fn into_enum_variant(self) -> Option<EnumVariantSymbol> {
+        if let SymbolVariant::EnumVariant(v) = self {
             Some(v)
         } else {
             None
         }
     }
 
-    pub fn as_enum_member(&self) -> Option<&EnumMemberSymbol> {
-        if let SymbolVariant::EnumMember(v) = self {
+    pub fn as_enum_variant(&self) -> Option<&EnumVariantSymbol> {
+        if let SymbolVariant::EnumVariant(v) = self {
             Some(v)
         } else {
             None
         }
     }
 
-    pub fn as_enum_member_mut(&mut self) -> Option<&mut EnumMemberSymbol> {
-        if let SymbolVariant::EnumMember(v) = self {
+    pub fn as_enum_variant_mut(&mut self) -> Option<&mut EnumVariantSymbol> {
+        if let SymbolVariant::EnumVariant(v) = self {
             Some(v)
         } else {
             None
@@ -430,9 +430,9 @@ impl From<EnumSymbol> for SymbolVariant {
     }
 }
 
-impl From<EnumMemberSymbol> for SymbolVariant {
-    fn from(value: EnumMemberSymbol) -> Self {
-        Self::EnumMember(value)
+impl From<EnumVariantSymbol> for SymbolVariant {
+    fn from(value: EnumVariantSymbol) -> Self {
+        Self::EnumVariant(value)
     }
 }
 

@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::str::ParseBoolError;
 use shrinkwraprs::Shrinkwrap;
 use thiserror::Error;
-use crate::DebugMaybeAlternate;
+use crate::{DebugMaybeAlternate, DebugRange};
 use crate::script_document::ScriptDocument;
 use crate::{AnyNode, NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}};
 
@@ -18,10 +18,12 @@ pub enum LiteralValueError {
     ParseFloatError(#[from] ParseFloatError),
     #[error("failed to parse bool: {0}")]
     ParseBoolError(#[from] ParseBoolError),
+    #[error("failed to parse hex: {0}")]
+    ParseHexError(ParseIntError),
 }
 
 
-#[derive(Shrinkwrap, Debug, Clone, PartialEq)]
+#[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LiteralInt(i32);
 
 pub type LiteralIntNode<'script> = SyntaxNode<'script, LiteralInt>;
@@ -40,7 +42,7 @@ impl LiteralIntNode<'_> {
 
 impl Debug for LiteralIntNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralInt")
+        write!(f, "LiteralInt {}", self.range().debug())
     }
 }
 
@@ -57,7 +59,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralIntNode<'script> {
 }
 
 
-#[derive(Shrinkwrap, Debug, Clone, PartialEq)]
+#[derive(Shrinkwrap, Debug, Clone, PartialEq, PartialOrd)]
 pub struct LiteralFloat(f32);
 
 pub type LiteralFloatNode<'script> = SyntaxNode<'script, LiteralFloat>;
@@ -84,7 +86,7 @@ impl LiteralFloatNode<'_> {
 
 impl Debug for LiteralFloatNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralFloat")
+        write!(f, "LiteralFloat {}", self.range().debug())
     }
 }
 
@@ -101,7 +103,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralFloatNode<'script> {
 }
 
 
-#[derive(Shrinkwrap, Debug, Clone, PartialEq)]
+#[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LiteralBool(bool);
 
 pub type LiteralBoolNode<'script> = SyntaxNode<'script, LiteralBool>;
@@ -120,7 +122,7 @@ impl LiteralBoolNode<'_> {
 
 impl Debug for LiteralBoolNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralBool")
+        write!(f, "LiteralBool {}", self.range().debug())
     }
 }
 
@@ -137,7 +139,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralBoolNode<'script> {
 }
 
 
-#[derive(Shrinkwrap, Debug, Clone, PartialEq)]
+#[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LiteralString(String);
 
 pub type LiteralStringNode<'script> = SyntaxNode<'script, LiteralString>;
@@ -159,7 +161,7 @@ impl LiteralStringNode<'_> {
 
 impl Debug for LiteralStringNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralString")
+        write!(f, "LiteralString {}", self.range().debug())
     }
 }
 
@@ -176,7 +178,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralStringNode<'script> {
 }
 
 
-#[derive(Shrinkwrap, Debug, Clone, PartialEq)]
+#[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LiteralName(String);
 
 pub type LiteralNameNode<'script> = SyntaxNode<'script, LiteralName>;
@@ -200,7 +202,7 @@ impl LiteralNameNode<'_> {
 
 impl Debug for LiteralNameNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralName")
+        write!(f, "LiteralName {}", self.range().debug())
     }
 }
 
@@ -217,7 +219,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralNameNode<'script> {
 }
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct LiteralNull;
 
 pub type LiteralNullNode<'script> = SyntaxNode<'script, LiteralNull>;
@@ -230,7 +232,7 @@ impl LiteralNullNode<'_> {}
 
 impl Debug for LiteralNullNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "LiteralNull")
+        write!(f, "LiteralNull {}", self.range().debug())
     }
 }
 
@@ -247,10 +249,47 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralNullNode<'script> {
 }
 
 
+#[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq)]
+pub struct LiteralHex(u32);
+
+pub type LiteralHexNode<'script> = SyntaxNode<'script, LiteralHex>;
+
+impl NamedSyntaxNode for LiteralHexNode<'_> {
+    const NODE_KIND: &'static str = "literal_hex";
+}
+
+impl LiteralHexNode<'_> {
+    pub fn value(&self, doc: &ScriptDocument) -> Result<LiteralHex, LiteralValueError> {
+        let s = self.text(doc).ok_or(LiteralValueError::NodeMissing)?;
+        let i = u32::from_str_radix(&s[2..], 16).map_err(|err| LiteralValueError::ParseHexError(err))?;
+        Ok(LiteralHex(i))
+    }
+}
+
+impl Debug for LiteralHexNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "LiteralHex {}", self.range().debug())
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for LiteralHexNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+
 // Represents the unnamed $._literal node
 #[derive(Clone, PartialEq)]
 pub enum Literal<'script> {
     Int(LiteralIntNode<'script>),
+    Hex(LiteralHexNode<'script>),
     Float(LiteralFloatNode<'script>),
     Bool(LiteralBoolNode<'script>),
     String(LiteralStringNode<'script>),
@@ -262,6 +301,7 @@ impl Debug for Literal<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Int(n) => f.debug_maybe_alternate(n),
+            Self::Hex(n) => f.debug_maybe_alternate(n),
             Self::Float(n) => f.debug_maybe_alternate(n),
             Self::Bool(n) => f.debug_maybe_alternate(n),
             Self::String(n) => f.debug_maybe_alternate(n),
@@ -277,12 +317,13 @@ impl<'script> LiteralNode<'script> {
     pub fn value(self) -> Literal<'script> {
         match self.tree_node.kind() {
             LiteralIntNode::NODE_KIND => Literal::Int(self.into()),
+            LiteralHexNode::NODE_KIND => Literal::Hex(self.into()),
             LiteralFloatNode::NODE_KIND => Literal::Float(self.into()),
             LiteralBoolNode::NODE_KIND => Literal::Bool(self.into()),
             LiteralStringNode::NODE_KIND => Literal::String(self.into()),
             LiteralNameNode::NODE_KIND => Literal::Name(self.into()),
             LiteralNullNode::NODE_KIND => Literal::Null(self.into()),
-            _ => panic!("Unknown literal type: {}", self.tree_node.kind())
+            _ => panic!("Unknown literal type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
@@ -303,6 +344,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralNode<'script> {
 
         match value.tree_node.kind() {
             LiteralIntNode::NODE_KIND       |
+            LiteralHexNode::NODE_KIND       |
             LiteralFloatNode::NODE_KIND     |
             LiteralBoolNode::NODE_KIND      |
             LiteralStringNode::NODE_KIND    |
