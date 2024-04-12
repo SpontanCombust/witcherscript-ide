@@ -11,6 +11,8 @@ A WitcherScript project that WitcherScript IDE establishes is comprised of two t
 The manifest is a TOML file by convention called `witcherscript.toml`. It contains basic information about the project like its name and what are its dependencies. 
 The scripts directory is a subfolder literally called *"scripts"*, which contains all of project's WitcherScript files. The location of that folder can be configured in the manifest.
 
+Creating a manifest for your script mod is mandatory if you want to use more advanced code features like go to definition (available soon<!--TODO remove when ready-->). Without a manifest you are limited to syntax highlighting and syntax analysis.
+
 
 ## Manifest format
 
@@ -60,7 +62,7 @@ The key `dependency_name` specifies the name of the foreign content. This name c
 
 `value` specifies where the content should be looked for. It appears in multiple forms:
 
-- boolean `true`/`false` - content should be searched for in repositories based upon its name. If the value is `false` the dependency will be ignored. Example:
+- boolean `true`/`false` - content should be searched for in [repositories](#content-repositories) based upon its name. If the value is `false` the dependency will be ignored. Example:
 ```toml
 repoDependency = true
 ```
@@ -134,4 +136,4 @@ Name of raw content is derived from the name of its root directory.
 
 ## Content repositories
 
-"Content repositories" are directories that can contain script contents, either raw or projects. Common repositories are *"Witcher 3/content"* and *"Witcher 3/Mods"*. Repositories are configurable in the editor.
+"Content repositories" are directories that can contain script contents, either raw or projects. Commonly used repositories are *"Witcher 3/content"* and *"Witcher 3/Mods"*. Repositories can be configured via editor's settings.
