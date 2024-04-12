@@ -23,11 +23,17 @@
     "redkit",
     "wolvenkit"
   ],
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#494853",
+    "theme": "dark"
+  },
+
+  "main": "./out/main",
   "activationEvents": [
     "workspaceContains:**/witcherscript.toml",
     "workspaceContains:**/*.ws"
   ],
-  "main": "./out/main",
   "contributes": {
     "languages": [
       {
@@ -107,7 +113,6 @@
       }
     ]
   },
-  "icon": "icon.png",
 
   "scripts": {
     "vscode:prepublish": "npm run build-base -- --minify",
