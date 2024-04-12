@@ -57,10 +57,12 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v2
 
+    - name: Prepare artifact list for release action
+      run: echo "ARTIFACTS=$(echo $(find . -iname "*.vsix") | sed "s/ /,/g")" >> $GITHUB_ENV
     - name: Create draft release on GitHub
       uses: ncipollo/release-action@v1
       with:
-        artifacts: "*.vsix"
+        artifacts: "${{ env.ARTIFACTS }}"
         draft: true
         allowUpdates: true
         generateReleaseNotes: true
