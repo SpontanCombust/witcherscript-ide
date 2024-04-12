@@ -27,4 +27,4 @@ jobs:
       run: |
         git config user.name 'github-actions[bot]'
         git config user.email 'github-actions[bot]@users.noreply.github.com'
-        mkdocs gh-deploy -m "ci: update github pages"
+        mkdocs gh-deploy --force -m "ci: update github pages"
