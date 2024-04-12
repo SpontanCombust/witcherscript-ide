@@ -38,13 +38,14 @@ jobs:
     - name: Prepare and pack the client
       run: |
         cargo xtask prep-server --target ${{ matrix.target }} --release
-        cargo xtask package -o "witcherscript-ide-${{ github.ref_name }}-${{ matrix.target }}.vsix --target ${{ matrix.code_target }}"
+        cargo xtask package -o "witcherscript-ide-${{ github.ref_name }}-${{ matrix.target }}.vsix" --target ${{ matrix.code_target }}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.target }}
         path: "*.vsix"
+        if-no-files-found: error
 
 
   publish:
