@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use abs_path::AbsPath;
 use witcherscript::attribs::{ClassSpecifier, AutobindSpecifier};
 use crate::model::symbol_path::SymbolPath;
 use super::*;
@@ -7,6 +8,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct ClassSymbol {
     path: BasicTypeSymbolPath,
+    decl_file_path: AbsPath,
     pub specifiers: HashSet<ClassSpecifier>,
     pub base_path: Option<TypeSymbolPath>
 }
@@ -22,12 +24,18 @@ impl Symbol for ClassSymbol {
 }
 
 impl ClassSymbol {
-    pub fn new(path: BasicTypeSymbolPath) -> Self {
+    pub fn new(path: BasicTypeSymbolPath, decl_file_path: AbsPath) -> Self {
         Self {
             path,
+            decl_file_path,
             specifiers: HashSet::new(),
             base_path: None
         }
+    }
+
+    
+    pub fn decl_file_path(&self) -> &AbsPath {
+        &self.decl_file_path
     }
 }
 

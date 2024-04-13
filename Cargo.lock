@@ -1290,6 +1290,7 @@ dependencies = [
 name = "witcherscript-analysis"
 version = "0.2.0"
 dependencies = [
+ "abs-path",
  "lsp-types",
  "shrinkwraprs",
  "thiserror",

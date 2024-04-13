@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use abs_path::AbsPath;
 use lsp_types::Range;
 use witcherscript::attribs::AutobindSpecifier;
 use witcherscript::attribs::MemberVarSpecifier;
@@ -12,10 +13,11 @@ use crate::model::symbols::*;
 use crate::diagnostics::*;
 
 
-pub fn scan_symbols(script_root: RootNode, doc: &ScriptDocument, symtab: &mut SymbolTable, diagnostics: &mut Vec<Diagnostic>) {
+pub fn scan_symbols(script_root: RootNode, doc: &ScriptDocument, doc_path: &AbsPath, symtab: &mut SymbolTable, diagnostics: &mut Vec<Diagnostic>) {
     let mut visitor = SymbolScannerVisitor {
         symtab,
         doc,
+        doc_path: doc_path.to_owned(),
         diagnostics,
         current_path: SymbolPath::empty()
     };
@@ -27,6 +29,7 @@ pub fn scan_symbols(script_root: RootNode, doc: &ScriptDocument, symtab: &mut Sy
 struct SymbolScannerVisitor<'a> {
     symtab: &'a mut SymbolTable,
     doc: &'a ScriptDocument,
+    doc_path: AbsPath,
     diagnostics: &'a mut Vec<Diagnostic>,
 
     current_path: SymbolPath
@@ -105,7 +108,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> bool {
         if let Some(class_name) = n.name().value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&class_name);
-            let mut sym = ClassSymbol::new(path);
+            let mut sym = ClassSymbol::new(path, self.doc_path.clone());
 
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
@@ -138,7 +141,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         let parent_name = n.parent().value(&self.doc);
         if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
             let path = StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name));
-            let mut sym = StateSymbol::new(path);
+            let mut sym = StateSymbol::new(path, self.doc_path.clone());
 
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
@@ -169,7 +172,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
         if let Some(struct_name) = n.name().value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&struct_name);
-            let mut sym = StructSymbol::new(path);
+            let mut sym = StructSymbol::new(path, self.doc_path.clone());
 
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
@@ -198,7 +201,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> bool {
         if let Some(enum_name) = n.name().value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&enum_name);
-            let sym = EnumSymbol::new(path);
+            let sym = EnumSymbol::new(path, self.doc_path.clone());
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
@@ -227,7 +230,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> (bool, bool) {
         if let Some(func_name) = n.name().value(&self.doc) {
             let path = GlobalCallableSymbolPath::new(&func_name);
-            let mut sym = GlobalFunctionSymbol::new(path);
+            let mut sym = GlobalFunctionSymbol::new(path, self.doc_path.clone());
 
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
