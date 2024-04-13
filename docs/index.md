@@ -1,4 +1,4 @@
-# About
+# Home
 
 WitcherScript IDE is a project aiming to improve the developer experience of Witcher 3 modders by supplying them with powerful code analysis tools in form of an editor extension.
 

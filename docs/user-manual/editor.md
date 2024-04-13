@@ -41,6 +41,7 @@ Shows a difference view between the original vanilla script and the imported, mo
 ### `witcherscript-ide.debug.showScriptAst`
 *"Show script AST"*  
 A debugging command. Shows the Abstract Syntax Tree  of the currently focused on script as it is uderstood by the language server.
+Warning: if document's identation is done with tabs instead of spaces it may not show accurate symbol span data.  
 
 ### `witcherscript-ide.debug.contentGraphDot`
 *"Show content graph"*  
