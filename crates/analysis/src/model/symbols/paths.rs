@@ -14,63 +14,63 @@
 
 use std::{ops::Deref, borrow::Borrow};
 use shrinkwraprs::Shrinkwrap;
-use crate::model::symbol_path::SymbolPath;
+use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::SymbolCategory;
 
 
 #[derive(Debug, Clone, Shrinkwrap)]
-pub struct DataSymbolPath(SymbolPath);
+pub struct DataSymbolPath(SymbolPathBuf);
 
 impl DataSymbolPath {
     /// Data is always a child of some data structure or function (except globals)
     pub fn new(parent_path: &SymbolPath, name: &str) -> Self {
-        Self(parent_path.clone() + &SymbolPath::new(name, SymbolCategory::Data))
+        Self(parent_path.join(&SymbolPathBuf::new(name, SymbolCategory::Data)))
     }
 
     pub fn empty() -> Self {
-        Self(SymbolPath::empty())
+        Self(SymbolPathBuf::empty())
     }
 }
 
 
 #[derive(Debug, Clone, Shrinkwrap)]
-pub struct GlobalCallableSymbolPath(SymbolPath);
+pub struct GlobalCallableSymbolPath(SymbolPathBuf);
 
 impl GlobalCallableSymbolPath {
     pub fn new(name: &str) -> Self {
-        Self(SymbolPath::new(name, SymbolCategory::Callable))
+        Self(SymbolPathBuf::new(name, SymbolCategory::Callable))
     }
 
     pub fn empty() -> Self {
-        Self(SymbolPath::empty())
+        Self(SymbolPathBuf::empty())
     }
 }
 
 
 #[derive(Debug, Clone, Shrinkwrap)]
-pub struct MemberCallableSymbolPath(SymbolPath);
+pub struct MemberCallableSymbolPath(SymbolPathBuf);
 
 impl MemberCallableSymbolPath {
     pub fn new(parent_path: &SymbolPath, name: &str) -> Self {
-        Self(parent_path.clone() + &SymbolPath::new(name, SymbolCategory::Callable))
+        Self(parent_path.join(&SymbolPathBuf::new(name, SymbolCategory::Callable)))
     }
 
     pub fn empty() -> Self {
-        Self(SymbolPath::empty())
+        Self(SymbolPathBuf::empty())
     }
 }
 
 
 #[derive(Debug, Clone, Shrinkwrap)]
-pub struct BasicTypeSymbolPath(SymbolPath);
+pub struct BasicTypeSymbolPath(SymbolPathBuf);
 
 impl BasicTypeSymbolPath {
     pub fn new(name: &str) -> Self {
-        Self(SymbolPath::new(name, SymbolCategory::Type))
+        Self(SymbolPathBuf::new(name, SymbolCategory::Type))
     }
 
     pub fn empty() -> Self {
-        Self(SymbolPath::empty())
+        Self(SymbolPathBuf::empty())
     }
 }
 
@@ -81,7 +81,7 @@ impl BasicTypeSymbolPath {
 #[derive(Debug, Clone, Shrinkwrap)]
 pub struct StateSymbolPath {
     #[shrinkwrap(main_field)]
-    path: SymbolPath,
+    path: SymbolPathBuf,
     pub state_name: String,
     pub parent_class_path: BasicTypeSymbolPath
 }
@@ -89,7 +89,7 @@ pub struct StateSymbolPath {
 impl StateSymbolPath {
     pub fn new(state_name: &str, parent_class_path: BasicTypeSymbolPath) -> Self {
         Self {
-            path: SymbolPath::new(&format!("{}State{}", parent_class_path.to_string(), state_name), SymbolCategory::Type),
+            path: SymbolPathBuf::new(&format!("{}State{}", parent_class_path.to_string(), state_name), SymbolCategory::Type),
             state_name: state_name.to_string(),
             parent_class_path
         }
@@ -97,7 +97,7 @@ impl StateSymbolPath {
 
     pub fn empty() -> Self {
         Self {
-            path: SymbolPath::empty(),
+            path: SymbolPathBuf::empty(),
             state_name: String::new(),
             parent_class_path: BasicTypeSymbolPath::empty()
         }
@@ -108,21 +108,21 @@ impl StateSymbolPath {
 #[derive(Debug, Clone, Shrinkwrap)]
 pub struct ArrayTypeSymbolPath {
     #[shrinkwrap(main_field)]
-    path: SymbolPath,
+    path: SymbolPathBuf,
     pub type_arg_path: Box<TypeSymbolPath>
 }
 
 impl ArrayTypeSymbolPath {
     pub fn new(type_arg_path: TypeSymbolPath) -> Self {
         Self {
-            path: SymbolPath::new(&format!("array<{}>", type_arg_path.to_string()), SymbolCategory::Type),
+            path: SymbolPathBuf::new(&format!("array<{}>", type_arg_path.to_string()), SymbolCategory::Type),
             type_arg_path: Box::new(type_arg_path)
         }
     }
 
     pub fn empty() -> Self {
         Self {
-            path: SymbolPath::empty(),
+            path: SymbolPathBuf::empty(),
             type_arg_path: Box::new(TypeSymbolPath::empty())
         }
     }
@@ -143,8 +143,8 @@ impl TypeSymbolPath {
     }
 }
 
-impl Borrow<SymbolPath> for TypeSymbolPath {
-    fn borrow(&self) -> &SymbolPath {
+impl Borrow<SymbolPathBuf> for TypeSymbolPath {
+    fn borrow(&self) -> &SymbolPathBuf {
         match self {
             TypeSymbolPath::Basic(basic) => &basic.0,
             TypeSymbolPath::Array(array) => &array.path,
@@ -153,7 +153,7 @@ impl Borrow<SymbolPath> for TypeSymbolPath {
 }
 
 impl Deref for TypeSymbolPath {
-    type Target = SymbolPath;
+    type Target = SymbolPathBuf;
 
     fn deref(&self) -> &Self::Target {
         match self {

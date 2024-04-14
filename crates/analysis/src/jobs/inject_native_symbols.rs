@@ -1,4 +1,3 @@
-use crate::model::symbol_path::SymbolPath;
 use crate::model::symbols::*;
 use crate::model::collections::symbol_table::SymbolTable;
 
@@ -55,7 +54,7 @@ pub fn inject_globals(symtab: &mut SymbolTable) {
 
     ].into_iter()
     .for_each(|(var_name, class_name)| { 
-        let gv = GlobalVarSymbol::new(var_name, SymbolPath::new(class_name, SymbolCategory::Type));
+        let gv = GlobalVarSymbol::new(var_name, BasicTypeSymbolPath::new(class_name));
         symtab.insert(gv).unwrap(); 
     });
 }

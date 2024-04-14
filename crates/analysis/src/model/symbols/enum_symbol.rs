@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use abs_path::AbsPath;
-use crate::model::symbol_path::SymbolPath;
+use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::*;
 
 
@@ -8,7 +8,7 @@ use super::*;
 pub struct EnumSymbol {
     path: BasicTypeSymbolPath,
     decl_file_path: AbsPath,
-    pub variants: HashMap<SymbolPath, EnumVariantSymbol>
+    pub variants: HashMap<SymbolPathBuf, EnumVariantSymbol>
 }
 
 impl Symbol for EnumSymbol {

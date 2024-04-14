@@ -7,7 +7,7 @@ use witcherscript::script_document::ScriptDocument;
 use witcherscript::tokens::*;
 use witcherscript::ast::*;
 use crate::model::collections::symbol_table::SymbolTable;
-use crate::model::symbol_path::SymbolPath;
+use crate::model::symbol_path::SymbolPathBuf;
 use crate::model::symbol_variant::SymbolVariant;
 use crate::model::symbols::*;
 use crate::diagnostics::*;
@@ -19,7 +19,7 @@ pub fn scan_symbols(script_root: RootNode, doc: &ScriptDocument, doc_path: &AbsP
         doc,
         doc_path: doc_path.to_owned(),
         diagnostics,
-        current_path: SymbolPath::empty()
+        current_path: SymbolPathBuf::empty()
     };
 
     script_root.accept(&mut visitor);
@@ -32,7 +32,7 @@ struct SymbolScannerVisitor<'a> {
     doc_path: AbsPath,
     diagnostics: &'a mut Vec<Diagnostic>,
 
-    current_path: SymbolPath
+    current_path: SymbolPathBuf
 }
 
 impl SymbolScannerVisitor<'_> {
