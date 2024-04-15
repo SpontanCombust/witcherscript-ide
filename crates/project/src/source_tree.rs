@@ -23,6 +23,10 @@ impl SourceTreeFile {
         &self.abs_path
     }
 
+    pub fn into_absolute_path(self) -> AbsPath {
+        self.abs_path
+    }
+
     /// Path relative tp the root
     pub fn local_path(&self) -> &Path {
         self.abs_path.strip_prefix(self.script_root.as_ref()).unwrap()
@@ -41,12 +45,6 @@ impl SourceTreeFile {
 impl Borrow<AbsPath> for SourceTreeFile {
     fn borrow(&self) -> &AbsPath {
         &self.abs_path
-    }
-}
-
-impl Into<AbsPath> for SourceTreeFile {
-    fn into(self) -> AbsPath {
-        self.abs_path
     }
 }
 

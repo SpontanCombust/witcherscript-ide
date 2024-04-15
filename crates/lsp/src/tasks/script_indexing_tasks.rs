@@ -77,7 +77,7 @@ impl Backend {
         }
 
         if run_diagnostics {
-            let script_paths: Vec<_> = added_files.into_iter().map(|f| f.into()).collect();
+            let script_paths: Vec<_> = added_files.into_iter().map(|f| f.into_absolute_path()).collect();
             self.run_script_analysis(script_paths).await;
         }
     }
@@ -106,7 +106,7 @@ impl Backend {
         if run_diagnostics {
             let script_paths = modified_files
                 .into_iter()
-                .map(|f| f.into())
+                .map(|f| f.into_absolute_path())
                 .par_bridge();
 
             self.run_script_analysis(script_paths).await;
