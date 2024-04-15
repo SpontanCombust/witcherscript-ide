@@ -51,29 +51,6 @@ impl Backend {
         }
     }
 
-    pub async fn run_script_analysis_for_single(&self, script_path: &AbsPath) {
-        if let Some(kv) = self.scripts.get(script_path) {
-            let script_state = kv.value();
-            let script = &script_state.script;
-            let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
-
-            let diagnostics = diagnose_script(script, analysis_kinds)
-                .into_iter()
-                .map(|d| d.into_lsp_diagnostic());
-            
-            self.reporter.clear_diagnostics(script_path);
-            self.reporter.push_diagnostics(script_path, diagnostics);
-        }
-    }
-
-    pub async fn run_script_analysis_for_content(&self, content_path: &AbsPath) {
-        if let Some(kv) = self.source_trees.get(content_path) {
-            let tree = kv.value();
-            let script_paths: Vec<_> = tree.iter().map(|p| p.absolute_path().to_owned()).collect();
-            self.run_script_analysis(script_paths).await;
-        }
-    }
-
     pub async fn run_script_analysis_for_all(&self) {
         let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
 

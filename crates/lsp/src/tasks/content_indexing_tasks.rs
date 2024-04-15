@@ -89,7 +89,7 @@ impl Backend {
         self.run_script_analysis_for_all().await;
     }
 
-    pub async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {
+    async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {
         let (added_node_count, removed_node_count) = (diff.added_nodes.len(), diff.removed_nodes.len());
         self.reporter.log_info(format!("Changes to the content graph: {} content(s) discovered, {} to be deprecated", added_node_count, removed_node_count)).await;
 
