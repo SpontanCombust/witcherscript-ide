@@ -16,6 +16,11 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
 
     if params.text_document.language_id == Backend::LANGUAGE_ID {
         if !backend.scripts.contains_key(&doc_path) {
+            // Scripts that are not a part of a workspace projects or their dependencies
+            // are not included in content source trees and thus knowledge about them is limited.
+            // Only a limited processing can be performed on them, such that only requires the context 
+            // of a given isolated script.
+
             backend.reporter.log_info("Opened script file unknown to the content graph").await;
             
             let doc_buff = ScriptDocument::from_str(&params.text_document.text);
@@ -27,7 +32,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
                 is_foreign: true
             });
 
-            backend.run_script_analysis_for_single(&doc_path).await;
+            backend.on_scripts_modified([doc_path], true).await;
         }
     } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
         let project_is_known = backend
@@ -66,10 +71,13 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
         script_state.modified_timestamp = FileTime::now();
     }
 
-    backend.run_script_analysis_for_single(&doc_path).await;
+    backend.on_scripts_modified([doc_path.clone()], true).await;
     backend.reporter.commit_diagnostics(&doc_path).await;
 }
 
+// Not all circumstances can be easily handled or even detected.
+// For such cases the act of saving a script file or manifest is used as a trigger
+// for refreshing source trees or even entire graphs to make sure the IDE is up-to-date.
 pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams) {
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
 
@@ -81,7 +89,6 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
 
     
     if doc_path.extension().map(|ext| ext == "ws").unwrap_or(false) {
-        // let mut analysis_to_run = None;
         if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
             let script_state = entry.value_mut();
 
@@ -97,7 +104,7 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
         }
 
         if let Some(containing_content_path) = backend.source_trees.containing_content_path(&doc_path) {
-            // will also run analysis on this script
+            // will handle `on_scripts_modified` for this script
             backend.scan_source_tree(&containing_content_path).await;
         }
     } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {

@@ -76,10 +76,11 @@ impl Backend {
             });
         }
 
-        if run_diagnostics {
-            let script_paths: Vec<_> = added_files.into_iter().map(|f| f.into_absolute_path()).collect();
-            self.run_script_analysis(script_paths).await;
-        }
+        let script_paths = added_files.into_iter()
+            .map(|f| f.into_absolute_path())
+            .par_bridge();
+        
+        self.on_scripts_modified(script_paths, run_diagnostics).await;
     }
 
     async fn on_source_tree_files_removed(&self, removed_files: Vec<SourceTreeFile>) {
@@ -103,13 +104,20 @@ impl Backend {
             }
         }
 
-        if run_diagnostics {
-            let script_paths = modified_files
-                .into_iter()
-                .map(|f| f.into_absolute_path())
-                .par_bridge();
+        let modified_script_paths = modified_files.into_iter()
+            .map(|f| f.into_absolute_path())
+            .par_bridge();
 
-            self.run_script_analysis(script_paths).await;
+        self.on_scripts_modified(modified_script_paths, run_diagnostics).await;
+    }
+
+    
+    pub async fn on_scripts_modified<It>(&self, modified_script_paths: It, run_diagnostics: bool) 
+    where It: IntoParallelIterator<Item = AbsPath> + Send + 'static {
+        //TODO symbol scanning here
+
+        if run_diagnostics {
+            self.run_script_analysis(modified_script_paths).await;
         }
     }
 }
