@@ -64,7 +64,6 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
         }
 
         script_state.modified_timestamp = FileTime::now();
-
     }
 
     backend.run_script_analysis_for_single(&doc_path).await;
@@ -98,6 +97,7 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
         }
 
         if let Some(containing_content_path) = backend.source_trees.containing_content_path(&doc_path) {
+            // will also run analysis on this script
             backend.scan_source_tree(&containing_content_path).await;
         }
     } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
