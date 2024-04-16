@@ -1329,6 +1329,7 @@ dependencies = [
  "ropey",
  "semver",
  "serde",
+ "serde_json",
  "shrinkwraprs",
  "thiserror",
  "toml",

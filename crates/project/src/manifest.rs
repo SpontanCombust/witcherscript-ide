@@ -20,6 +20,7 @@ pub struct Manifest {
 pub struct Content {
     /// Name of this project, for example SharedUtils
     pub name: Ranged<String>,
+    //TODO optional description field 
     /// Version of this project, has to abide to semantic versioning
     pub version: Version,
     /// Version(s) of the game this project is compatible with 
