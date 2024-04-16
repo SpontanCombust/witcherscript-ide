@@ -217,7 +217,10 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockNode<'script> {
 
 impl StatementTraversal for MemberDefaultsBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.iter().for_each(|n| n.accept(visitor))
+        if visitor.visit_member_defaults_block(self) {
+            self.iter().for_each(|n| n.accept(visitor))
+        }
+        visitor.exit_member_defaults_block(self);
     }
 }
 

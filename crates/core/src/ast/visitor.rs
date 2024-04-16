@@ -148,7 +148,12 @@ pub trait StatementVisitor {
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode) {}
     /// Called when visiting a statement assigning a default value to a field.
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode) {}
-    /// Called when visiting an default value assignment inside a `defaults` block.
+    /// Called when visiting a `defaults` block.
+    /// Should return whether to traverse into its [assignment][MemberDefaultsBlockNode::iter] nodes.
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode) -> bool { true }
+    /// Called after visitng a `defaults` block and possibly also its assignment nodes.
+    fn exit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode) {}
+    /// Called when visiting a default value assignment inside a `defaults` block.
     fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) {}
     /// Called when visiting a statement noting some information about a perticular type field.
     fn visit_member_hint(&mut self, n: &MemberHintNode) {}

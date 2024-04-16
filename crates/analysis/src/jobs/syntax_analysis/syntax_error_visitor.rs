@@ -65,14 +65,10 @@ impl SyntaxErrorVisitor<'_> {
     fn check_function_def(&mut self, n: &FunctionDefinitionNode) -> bool {
         if self.check_missing(n, "{ or ;") {
             if let FunctionDefinition::Some(block) = n.clone().value() {
-                if block.has_errors() {
-                    //FIXME causes error duplication
-                    self.check_errors(&block);
-                    return false;
-                }
+                !block.has_errors()
+            } else {
+                true
             }
-
-            true
         } else {
             false
         }
@@ -219,8 +215,11 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode) {
         if n.has_errors() {
             self.check_identifier(&n.member());
-            self.check_expression(&n.value());
-            n.value().accept(self);
+
+            let value = n.value();
+            if !self.check_expression(&value) {
+                value.accept(self);
+            }
     
             self.check_errors(n);
         }
@@ -343,8 +342,10 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode) {
         if n.has_errors() {
-            self.check_expression(&n.expr());
-            n.expr().accept(self);
+            let expr = n.expr();
+            if !self.check_expression(&expr) {
+                expr.accept(self);
+            }
     
             self.check_errors(n);
         }
@@ -375,8 +376,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     fn visit_delete_stmt(&mut self, n: &DeleteStatementNode) {
         if n.has_errors() {
             let value = n.value();
-            self.check_expression(&value);
-            value.accept(self);
+            if !self.check_expression(&value) {
+                value.accept(self);
+            }
     
             self.check_errors(n);
         }
@@ -405,8 +407,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     fn visit_while_stmt(&mut self, n: &WhileLoopNode) -> bool {
         if n.has_errors() {
             let cond = n.cond();
-            self.check_expression(&cond);
-            cond.accept(self);
+            if !self.check_expression(&cond) {
+                cond.accept(self);
+            }
     
             self.check_errors(n);
     
@@ -419,8 +422,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     fn visit_do_while_stmt(&mut self, n: &DoWhileLoopNode) -> bool {
         if n.has_errors() {
             let cond = n.cond();
-            self.check_expression(&cond);
-            cond.accept(self);
+            if !self.check_expression(&cond) {
+                cond.accept(self);
+            }
     
             self.check_errors(n);
     
@@ -433,8 +437,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     fn visit_if_stmt(&mut self, n: &IfConditionalNode) -> bool {
         if n.has_errors() {
             let cond = n.cond();
-            self.check_expression(&cond);
-            cond.accept(self);
+            if !self.check_expression(&cond) {
+                cond.accept(self);
+            }
     
             self.check_errors(n);
             
@@ -449,8 +454,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode) -> bool {
         if n.has_errors() {
             let cond = n.cond();
-            self.check_expression(&cond);
-            cond.accept(self);
+            if !self.check_expression(&cond) {
+                cond.accept(self);
+            }
     
             self.check_errors(n);
     
@@ -467,8 +473,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) {
         if n.has_errors() {
             let value = n.value();
-            self.check_expression(&value);
-            value.accept(self);
+            if !self.check_expression(&value) {
+                value.accept(self);
+            }
     
             self.check_errors(n);
         }
@@ -480,7 +487,27 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    //FIXME missing defaults block handling
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode) -> bool {
+        if n.has_errors() {
+            self.check_errors(n);
+            return true;
+        }
+
+        false
+    }
+
+    fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) {
+        if n.has_errors() {
+            self.check_identifier(&n.member());
+
+            let value = n.value();
+            if !self.check_expression(&value) {
+                value.accept(self);
+            }
+    
+            self.check_errors(n);
+        }
+    }
 }
 
 impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
