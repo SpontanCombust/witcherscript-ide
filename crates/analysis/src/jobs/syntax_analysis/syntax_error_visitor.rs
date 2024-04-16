@@ -51,25 +51,14 @@ impl SyntaxErrorVisitor<'_> {
         self.check_errors(&n);
     }
 
-    fn check_expression(&mut self, n: &ExpressionNode) {
-        if self.check_missing(n, "expression") {
-            if n.has_errors() {
-                n.accept(self);
-            }
-        }
+    /// Returns true if the expression is present and contains no errors, false otherwise
+    fn check_expression(&mut self, n: &ExpressionNode) -> bool {
+        self.check_missing(n, "expression") && !n.has_errors()
     }
 
     /// Returns true if the statement is present and contains no errors, false otherwise
     fn check_function_stmt(&mut self, n: &FunctionStatementNode) -> bool {
-        if self.check_missing(n, "statement") {
-            if n.has_errors() {
-                return false;
-            }
-
-            true
-        } else {
-            false
-        }
+        self.check_missing(n, "statement") && !n.has_errors()
     }
 
     /// Returns whether the definition contains no errors
@@ -77,6 +66,7 @@ impl SyntaxErrorVisitor<'_> {
         if self.check_missing(n, "{ or ;") {
             if let FunctionDefinition::Some(block) = n.clone().value() {
                 if block.has_errors() {
+                    //FIXME causes error duplication
                     self.check_errors(&block);
                     return false;
                 }
@@ -230,6 +220,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         if n.has_errors() {
             self.check_identifier(&n.member());
             self.check_expression(&n.value());
+            n.value().accept(self);
     
             self.check_errors(n);
         }
@@ -353,6 +344,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode) {
         if n.has_errors() {
             self.check_expression(&n.expr());
+            n.expr().accept(self);
     
             self.check_errors(n);
         }
@@ -360,7 +352,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_return_stmt(&mut self, n: &ReturnStatementNode) {
         if n.has_errors() {
-            n.value().map(|n| self.check_expression(&n));
+            if let Some(value) = n.value() {
+                value.accept(self);
+            }
     
             self.check_errors(n);
         }
@@ -380,7 +374,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_delete_stmt(&mut self, n: &DeleteStatementNode) {
         if n.has_errors() {
-            self.check_expression(&n.value());
+            let value = n.value();
+            self.check_expression(&value);
+            value.accept(self);
     
             self.check_errors(n);
         }
@@ -388,9 +384,15 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_for_stmt(&mut self, n: &ForLoopNode) -> bool {
         if n.has_errors() {
-            n.init().map(|n| self.check_expression(&n));
-            n.cond().map(|n| self.check_expression(&n));
-            n.iter().map(|n| self.check_expression(&n));
+            if let Some(init) = n.init() {
+                init.accept(self);
+            }
+            if let Some(cond) = n.cond() {
+                cond.accept(self)
+            }
+            if let Some(iter) = n.iter() {
+                iter.accept(self);
+            }
 
             self.check_errors(n);
     
@@ -402,7 +404,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_while_stmt(&mut self, n: &WhileLoopNode) -> bool {
         if n.has_errors() {
-            self.check_expression(&n.cond());
+            let cond = n.cond();
+            self.check_expression(&cond);
+            cond.accept(self);
     
             self.check_errors(n);
     
@@ -414,7 +418,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_do_while_stmt(&mut self, n: &DoWhileLoopNode) -> bool {
         if n.has_errors() {
-            self.check_expression(&n.cond());
+            let cond = n.cond();
+            self.check_expression(&cond);
+            cond.accept(self);
     
             self.check_errors(n);
     
@@ -426,7 +432,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_if_stmt(&mut self, n: &IfConditionalNode) -> bool {
         if n.has_errors() {
-            self.check_expression(&n.cond());
+            let cond = n.cond();
+            self.check_expression(&cond);
+            cond.accept(self);
     
             self.check_errors(n);
             
@@ -440,7 +448,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode) -> bool {
         if n.has_errors() {
-            self.check_expression(&n.cond());
+            let cond = n.cond();
+            self.check_expression(&cond);
+            cond.accept(self);
     
             self.check_errors(n);
     
@@ -456,7 +466,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) {
         if n.has_errors() {
-            self.check_expression(&n.value());
+            let value = n.value();
+            self.check_expression(&value);
+            value.accept(self);
     
             self.check_errors(n);
         }
@@ -467,79 +479,104 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             self.check_errors(n);
         }
     }
+
+    //FIXME missing defaults block handling
 }
 
 impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
-    fn visit_array_expr(&mut self, n: &ArrayExpressionNode) {
-        self.check_expression(&n.accessor());
-        self.check_expression(&n.index());
+    fn visit_array_expr(&mut self, n: &ArrayExpressionNode) -> (bool, bool) {
+        let trav_accessor = !self.check_expression(&n.accessor());
+        let trav_index = !self.check_expression(&n.index());
 
         self.check_errors(n);
+        (trav_accessor, trav_index)
     }
 
-    fn visit_assign_op_expr(&mut self, n: &AssignmentOperationExpressionNode) {
-        self.check_expression(&n.left());
-        self.check_expression(&n.right());
+    fn visit_assign_op_expr(&mut self, n: &AssignmentOperationExpressionNode) -> (bool, bool) {
+        let trav_left = !self.check_expression(&n.left());
+        let trav_right = !self.check_expression(&n.right());
 
         self.check_errors(n);
+        (trav_left, trav_right)
     }
 
-    fn visit_binary_op_expr(&mut self, n: &BinaryOperationExpressionNode) {
-        self.check_expression(&n.left());
-        self.check_expression(&n.right());
+    fn visit_binary_op_expr(&mut self, n: &BinaryOperationExpressionNode) -> (bool, bool) {
+        let trav_left = !self.check_expression(&n.left());
+        let trav_right = !self.check_expression(&n.right());
 
         self.check_errors(n);
+        (trav_left, trav_right)
     }
 
-    fn visit_unary_op_expr(&mut self, n: &UnaryOperationExpressionNode) {
-        self.check_expression(&n.right());
+    fn visit_unary_op_expr(&mut self, n: &UnaryOperationExpressionNode) -> bool {
+        let trav_right = !self.check_expression(&n.right());
 
         self.check_errors(n);
+        trav_right
     }
 
-    fn visit_func_call_expr(&mut self, n: &FunctionCallExpressionNode) {
-        self.check_missing(&n.func(), "function");
+    fn visit_func_call_expr(&mut self, n: &FunctionCallExpressionNode) -> (bool, bool) {
+        let func = n.func();
+        let trav_func = !self.check_missing(&func, "function") || func.has_errors();
 
+        let mut trav_args = false;
         if let Some(args) = n.args() {
-            self.check_errors(&args);
+            if args.has_errors() {
+                self.check_errors(&args);
+                trav_args = true;
+            }
         }
 
         self.check_errors(n);
+        (trav_func, trav_args)
     }
 
-    fn visit_new_expr(&mut self, n: &NewExpressionNode) {
+    fn visit_new_expr(&mut self, n: &NewExpressionNode) -> bool {
         self.check_identifier(&n.class());
-        n.lifetime_obj().map(|n| self.check_expression(&n));
+
+        let mut trav_lifetime_obj = false;
+        if let Some(lifetime_obj) = n.lifetime_obj() {
+            trav_lifetime_obj = lifetime_obj.has_errors();
+        }
 
         self.check_errors(n);
+        trav_lifetime_obj
     }
 
-    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode) {
-        self.check_expression(&n.accessor());
+    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode) -> bool {
+        let trav_accessor = !self.check_expression(&n.accessor());
         self.check_identifier(&n.member());
 
         self.check_errors(n);
+        trav_accessor
     }
 
-    fn visit_nested_expr(&mut self, n: &NestedExpressionNode) {
-        self.check_expression(&n.inner());
+    fn visit_nested_expr(&mut self, n: &NestedExpressionNode) -> bool {
+        let trav_inner = !self.check_expression(&n.inner());
 
         self.check_errors(n);
+        trav_inner
     }
 
-    fn visit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode) {
-        self.check_expression(&n.cond());
-        self.check_expression(&n.conseq());
-        self.check_expression(&n.alt());
+    fn visit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode) -> (bool, bool, bool) {
+        let trav_cond = !self.check_expression(&n.cond());
+        let trav_conseq = !self.check_expression(&n.conseq());
+        let trav_alt = !self.check_expression(&n.alt());
 
         self.check_errors(n);
+        (trav_cond, trav_conseq, trav_alt)
     }
 
-    fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode) {
+    fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode) -> bool {
         self.check_identifier(&n.target_type());
-        self.check_expression(&n.value());
+        let trav_value = !self.check_expression(&n.value());
 
         self.check_errors(n);
+        trav_value
+    }
+
+    fn visit_func_call_arg(&mut self, _: &FunctionCallArgument) -> bool {
+        true
     }
     
     // No point in checking single token expressions

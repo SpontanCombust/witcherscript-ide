@@ -57,8 +57,10 @@ impl<'script> TryFrom<AnyNode<'script>> for NestedExpressionNode<'script> {
 
 impl ExpressionTraversal for NestedExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.inner().accept(visitor);
-        visitor.visit_nested_expr(self);
+        if visitor.visit_nested_expr(self) {
+            self.inner().accept(visitor);
+        }
+        visitor.exit_nested_expr(self);
     }
 }
 
@@ -239,9 +241,14 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionCallExpressionNode<'script> 
 
 impl ExpressionTraversal for FunctionCallExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.func().accept(visitor);
-        self.args().map(|n| n.accept(visitor));
-        visitor.visit_func_call_expr(self);
+        let (trav_func, trav_args) = visitor.visit_func_call_expr(self);
+        if trav_func {
+            self.func().accept(visitor);
+        }
+        if trav_args {
+            self.args().map(|n| n.accept(visitor));
+        }
+        visitor.exit_func_call_expr(self);
     }
 }
 
@@ -324,10 +331,12 @@ impl Debug for FunctionCallArgument<'_> {
 
 impl ExpressionTraversal for FunctionCallArgument<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        if let FunctionCallArgument::Some(n) = self {
-            n.accept(visitor);
+        if visitor.visit_func_call_arg(self) {
+            if let FunctionCallArgument::Some(n) = self {
+                n.accept(visitor);
+            }
         }
-        visitor.visit_func_call_arg(self);
+        visitor.exit_func_call_arg(self);
     }
 }
 
@@ -372,9 +381,14 @@ impl<'script> TryFrom<AnyNode<'script>> for ArrayExpressionNode<'script> {
 
 impl ExpressionTraversal for ArrayExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.accessor().accept(visitor);
-        self.index().accept(visitor);
-        visitor.visit_array_expr(self);
+        let (trav_accessor, trav_index) = visitor.visit_array_expr(self);
+        if trav_accessor {
+            self.accessor().accept(visitor);
+        }
+        if trav_index {
+            self.index().accept(visitor);
+        }
+        visitor.exit_array_expr(self);
     }
 }
 
@@ -419,8 +433,10 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberFieldExpressionNode<'script> {
 
 impl ExpressionTraversal for MemberFieldExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.accessor().accept(visitor);
-        visitor.visit_member_field_expr(self);
+        if visitor.visit_member_field_expr(self) {
+            self.accessor().accept(visitor);
+        }
+        visitor.exit_member_field_expr(self);
     }
 }
 
@@ -465,8 +481,10 @@ impl<'script> TryFrom<AnyNode<'script>> for NewExpressionNode<'script> {
 
 impl ExpressionTraversal for NewExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.lifetime_obj().map(|n| n.accept(visitor));
-        visitor.visit_new_expr(self);
+        if visitor.visit_new_expr(self) {
+            self.lifetime_obj().map(|n| n.accept(visitor));
+        }
+        visitor.exit_new_expr(self);
     }
 }
 
@@ -511,8 +529,10 @@ impl<'script> TryFrom<AnyNode<'script>> for TypeCastExpressionNode<'script> {
 
 impl ExpressionTraversal for TypeCastExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.value().accept(visitor);
-        visitor.visit_type_cast_expr(self);
+        if visitor.visit_type_cast_expr(self) {
+            self.value().accept(visitor);
+        }
+        visitor.exit_type_cast_expr(self);
     }
 }
 
@@ -557,8 +577,10 @@ impl<'script> TryFrom<AnyNode<'script>> for UnaryOperationExpressionNode<'script
 
 impl ExpressionTraversal for UnaryOperationExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.right().accept(visitor);
-        visitor.visit_unary_op_expr(self);
+        if visitor.visit_unary_op_expr(self) {
+            self.right().accept(visitor);
+        }
+        visitor.exit_unary_op_expr(self);
     }
 }
 
@@ -608,9 +630,14 @@ impl<'script> TryFrom<AnyNode<'script>> for BinaryOperationExpressionNode<'scrip
 
 impl ExpressionTraversal for BinaryOperationExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.left().accept(visitor);
-        self.right().accept(visitor);
-        visitor.visit_binary_op_expr(self);
+        let (trav_left, trav_right) = visitor.visit_binary_op_expr(self);
+        if trav_left {
+            self.left().accept(visitor);
+        }
+        if trav_right {
+            self.right().accept(visitor);
+        }
+        visitor.exit_binary_op_expr(self);
     }
 }
 
@@ -660,9 +687,14 @@ impl<'script> TryFrom<AnyNode<'script>> for AssignmentOperationExpressionNode<'s
 
 impl ExpressionTraversal for AssignmentOperationExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.left().accept(visitor);
-        self.right().accept(visitor);
-        visitor.visit_assign_op_expr(self);
+        let (trav_left, trav_right) = visitor.visit_assign_op_expr(self);
+        if trav_left {
+            self.left().accept(visitor);
+        }
+        if trav_right {
+            self.right().accept(visitor);
+        }
+        visitor.exit_assign_op_expr(self);
     }
 }
 
@@ -712,10 +744,16 @@ impl<'script> TryFrom<AnyNode<'script>> for TernaryConditionalExpressionNode<'sc
 
 impl ExpressionTraversal for TernaryConditionalExpressionNode<'_> {
     fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        self.cond().accept(visitor);
-        self.conseq().accept(visitor);
-        self.alt().accept(visitor);
-        visitor.visit_ternary_cond_expr(self);
+        let (trav_cond, trav_conseq, trav_alt) = visitor.visit_ternary_cond_expr(self);
+        if trav_cond {
+            self.cond().accept(visitor);
+        }
+        if trav_conseq {
+            self.conseq().accept(visitor);
+        }
+        if trav_alt {
+            self.alt().accept(visitor);
+        }
     }
 }
 
