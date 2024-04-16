@@ -3,7 +3,8 @@
 Welcome to the User Manual. Here you fill find all sorts of useful information and instructions on how to use WitcherScript IDE.
 
 ## Sections
-- [Editor](editor.md) - instructions and showcase of extension capabilities,
+- [Getting Started](getting-started.md) - how to get the tool up and running
+- [Editor](editor.md) - showcase of extension capabilities,
 - [Project System](project-system.md) - explanation on the project management system established by WitcherScript IDE,
 - [Changelog](changelog.md)
 
