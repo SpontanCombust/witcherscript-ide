@@ -33,7 +33,7 @@ pub struct Content {
 
 /// A list of dependency entries
 #[derive(Debug, Clone, Shrinkwrap, PartialEq, Eq)]
-pub struct Dependencies(Vec<DependencyEntry>);
+pub struct Dependencies(pub Vec<DependencyEntry>);
 
 // Dependency item as a key-value pair of dependency name and dependency source specifier
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -106,7 +106,7 @@ impl FromStr for Manifest {
 }
 
 #[derive(Debug, Clone, Error)]
-pub enum ManifestParseError {
+pub enum ManifestParseError { //todo rename to just Error
     #[error("file access error: {}", .0)]
     Io(#[from] Arc<io::Error>),
     #[error("TOML file parsing error: {msg}")]
@@ -205,7 +205,7 @@ pub struct Ranged<T> {
 }
 
 impl<T> Ranged<T> {
-    fn new(val: T, range: lsp::Range) -> Self {
+    pub fn new(val: T, range: lsp::Range) -> Self {
         Self {
             value: val,
             range

@@ -2,7 +2,7 @@ use filetime::FileTime;
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
-use witcherscript_project::{content::ProjectDirectory, Manifest};
+use witcherscript_project::{content::ProjectDirectory, redkit, Manifest};
 use crate::{Backend, ScriptState};
 
 
@@ -35,6 +35,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
             backend.on_scripts_modified([doc_path], true).await;
         }
     } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
+        //TODO remove this and let projects be loaded with did_save
         let project_is_known = backend
             .content_graph
             .read().await
@@ -56,6 +57,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
 }
 
 pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentParams) {
+    //FIXME not checked if it's a script
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
     if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
         let script_state = entry.value_mut();
@@ -107,7 +109,7 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
             // will handle `on_scripts_modified` for this script
             backend.scan_source_tree(&containing_content_path).await;
         }
-    } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
+    } else if (doc_path.file_name().unwrap() == Manifest::FILE_NAME || doc_path.extension().unwrap() == redkit::RedkitManifest::EXTENSION) && belongs_to_workspace {
         // try rebuilding the graph but only if it's not already being rebuilt
         if let Ok(mut content_graph) = backend.content_graph.try_write() {
             backend.build_content_graph(&mut content_graph).await;

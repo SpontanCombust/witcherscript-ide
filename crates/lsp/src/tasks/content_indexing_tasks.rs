@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use tokio::time::Instant;
 use abs_path::AbsPath;
-use witcherscript_project::content::{ContentScanError, ProjectDirectory};
+use witcherscript_project::content::{ContentScanError, ProjectDirectory, RedkitProjectDirectory};
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{ContentGraph, ContentScanner, FileError};
 use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphEdgeWithContent, GraphNode};
@@ -152,9 +152,11 @@ impl Backend {
                     modified: vec![]
                 });
             }
-
+            //FIXME should be done only if those manifests are deleted or outside of workspace
             if let Some(project) = removed_content.as_any().downcast_ref::<ProjectDirectory>() {
                 self.reporter.purge_diagnostics(project.manifest_path());
+            } else if let Some(redkit_proj) = removed_content.as_any().downcast_ref::<RedkitProjectDirectory>() {
+                self.reporter.purge_diagnostics(redkit_proj.manifest_path());
             }
         }
 
@@ -192,6 +194,9 @@ impl Backend {
             ContentScanError::ManifestParse(err) => {
                 self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
             },
+            ContentScanError::RedkitManifestRead(err) => {
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
+            },
             ContentScanError::NotContent => {},
         }
     }
@@ -203,6 +208,9 @@ impl Backend {
                 self.reporter.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
             },
             ContentGraphError::ManifestParse(err) => {
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
+            },
+            ContentGraphError::RedkitManifestRead(err) => {
                 self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
             },
             ContentGraphError::DependencyPathNotFound { content_path: _, manifest_path, manifest_range } => {

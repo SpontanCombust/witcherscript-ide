@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use crate::manifest::{Manifest, ManifestParseError};
 use crate::source_tree::SourceTree;
-use crate::FileError;
+use crate::{redkit, FileError};
 
 
 /// Characteristics of a directory that contains a "scripts" folder.
@@ -143,13 +143,89 @@ impl Content for ProjectDirectory {
 }
 
 
+#[derive(Debug, Clone)]
+pub struct RedkitProjectDirectory {
+    path: AbsPath,
+    manifest_path: AbsPath,
+    script_root: AbsPath,
+    manifest: redkit::RedkitManifest
+}
+
+impl RedkitProjectDirectory {
+    fn find_manifest_file(dir: &AbsPath) -> Option<AbsPath> {
+        if let Ok(iter) = std::fs::read_dir(dir) {
+            iter.filter_map(|entry| entry.ok())
+                .map(|entry| entry.path())
+                .find(|path| path.extension().filter(|ext| ext.to_string_lossy() == redkit::RedkitManifest::EXTENSION).is_some())
+                .map(|path| AbsPath::resolve(path, None).unwrap())
+        } else {
+            None
+        }
+    }
+
+    pub fn manifest_path(&self) -> &AbsPath {
+        &self.manifest_path
+    }
+
+    pub fn manifest(&self) -> &redkit::RedkitManifest {
+        &self.manifest
+    }
+}
+
+impl Content for RedkitProjectDirectory {
+    fn try_from_dir(dir: &AbsPath) -> Result<Self, ContentScanError> where Self: Sized {
+        if let Some(manifest_path) = Self::find_manifest_file(dir) {
+            match redkit::RedkitManifest::from_file(&manifest_path) {
+                Ok(manifest) => {
+                    let script_root = dir.join("workspace/scripts").unwrap();
+                    
+                    Ok(Self {
+                        path: dir.to_owned(),
+                        manifest_path,
+                        manifest,
+                        script_root
+                    })
+                },
+                Err(err) => {
+                    Err(FileError::new(manifest_path, err).into())
+                },
+            }
+        } else {
+            Err(ContentScanError::NotContent)
+        }
+    }
+
+
+    fn path(&self) -> &AbsPath {
+        &self.path
+    }
+
+    fn content_name(&self) -> &str {
+        &self.manifest.name
+    }
+
+    fn source_tree_root(&self) -> &AbsPath {
+        &self.script_root
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
+    }
+}
+
 
 #[derive(Debug, Clone, Error)]
 pub enum ContentScanError {
     #[error(transparent)]
     Io(#[from] FileError<std::io::Error>),
     #[error(transparent)]
-    ManifestParse(#[from] FileError<ManifestParseError>),
+    ManifestParse(#[from] FileError<ManifestParseError>), //todo rename to ManifestRead
+    #[error(transparent)]
+    RedkitManifestRead(#[from] FileError<redkit::manifest::Error>),
     #[error("this is not content directory")]
     NotContent,
 }
@@ -163,6 +239,9 @@ pub fn try_make_content(path: &AbsPath) -> Result<Box<dyn Content>, ContentScanE
 
     if let Some(proj) = try_make_specific_content::<ProjectDirectory>(path) {
         return proj;
+    }
+    if let Some(redkit_proj) = try_make_specific_content::<RedkitProjectDirectory>(path) {
+        return redkit_proj;
     }
     if let Some(raw) = try_make_specific_content::<RawContentDirectory>(path) {
         return raw;
@@ -252,5 +331,13 @@ mod test {
         assert_eq!(raw.path(), &path);
         assert_eq!(raw.content_name(), "raw2");
         assert_eq!(raw.source_tree_root(), &path.join("content/scripts").unwrap());
+
+        let path = test_assets().join("dir1/redkit").unwrap();
+        let content = try_make_content(&path).unwrap();
+        let proj = content.as_any().downcast_ref::<RedkitProjectDirectory>().unwrap();
+        assert_eq!(proj.path(), &path);
+        assert_eq!(proj.manifest_path(), &path.join("redkit_proj.w3edit").unwrap());
+        assert_eq!(proj.content_name(), "redkit_proj");
+        assert_eq!(proj.source_tree_root(), &path.join("workspace/scripts").unwrap());
     }   
 }

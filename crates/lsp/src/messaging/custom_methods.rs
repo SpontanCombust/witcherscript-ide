@@ -37,6 +37,7 @@ impl Backend {
 
 
         let scripts_path = project_dir.join("scripts").unwrap();
+        //TODO try content/scripts and workspace/scripts
         if !scripts_path.exists() {
             if let Err(err) = std::fs::create_dir(scripts_path) {
                 return Err(jsonrpc::Error { 

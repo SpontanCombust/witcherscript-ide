@@ -4,9 +4,9 @@ use std::sync::Arc;
 use thiserror::Error;
 use lsp_types as lsp;
 use abs_path::AbsPath;
-use crate::content::{try_make_content, ContentScanError, ProjectDirectory};
-use crate::{Content, FileError, ContentScanner};
-use crate::manifest::{DependencyValue, ManifestParseError};
+use crate::content::{try_make_content, ContentScanError, ProjectDirectory, RedkitProjectDirectory};
+use crate::{redkit, Content, ContentScanner, FileError};
+use crate::manifest::{Dependencies, DependencyEntry, DependencyValue, ManifestParseError, Ranged};
 
 
 #[derive(Debug, Clone, Error)]
@@ -14,7 +14,9 @@ pub enum ContentGraphError {
     #[error(transparent)]
     Io(#[from] FileError<std::io::Error>),
     #[error(transparent)]
-    ManifestParse(#[from] FileError<ManifestParseError>),
+    ManifestParse(#[from] FileError<ManifestParseError>), //todo rename to ManifestRead
+    #[error(transparent)]
+    RedkitManifestRead(#[from] FileError<redkit::manifest::Error>),
     #[error("project dependency could not be found in this path")]
     DependencyPathNotFound {
         content_path: PathBuf,
@@ -223,6 +225,9 @@ impl ContentGraph {
                     ContentScanError::ManifestParse(err) => {
                         self.errors.push(ContentGraphError::ManifestParse(err))
                     },
+                    ContentScanError::RedkitManifestRead(err) => {
+                        self.errors.push(ContentGraphError::RedkitManifestRead(err))
+                    }
                     // NotContent only occurs when trying to make content manually and not when scanning
                     ContentScanError::NotContent => {},
                 }
@@ -253,6 +258,9 @@ impl ContentGraph {
                     ContentScanError::ManifestParse(err) => {
                         self.errors.push(ContentGraphError::ManifestParse(err))
                     },
+                    ContentScanError::RedkitManifestRead(err) => {
+                        self.errors.push(ContentGraphError::RedkitManifestRead(err))
+                    }
                     // NotContent only occurs when trying to make content manually and not when scanning
                     ContentScanError::NotContent => {},
                 }
@@ -285,10 +293,17 @@ impl ContentGraph {
 
         visited.insert(node_idx);
 
-        let manifest_path_and_deps = self.nodes[node_idx]
-            .content.as_any()
-            .downcast_ref::<ProjectDirectory>()
-            .map(|proj| (proj.manifest_path().to_owned(), proj.manifest().dependencies.clone()));
+        let mut manifest_path_and_deps = None;
+        if let Some(proj) = self.nodes[node_idx].content.as_any().downcast_ref::<ProjectDirectory>() {
+            manifest_path_and_deps = Some((proj.manifest_path().to_owned(), proj.manifest().dependencies.clone()));
+        } else if let Some(redkit_proj) = self.nodes[node_idx].content.as_any().downcast_ref::<RedkitProjectDirectory>() {
+            //TODO this looks ugly, make some more overall "Dependency" type seperate from manifest::Dependency
+            let deps = Dependencies(vec![DependencyEntry {
+                name: Ranged::new("content0".into(), lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1))),
+                value:  Ranged::new(DependencyValue::FromRepo(true), lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1))),
+            }]);
+            manifest_path_and_deps = Some((redkit_proj.manifest_path().to_owned(), deps));
+        }
 
         if let Some((manifest_path, dependencies)) = manifest_path_and_deps {
             for entry in dependencies.into_iter() {
@@ -441,6 +456,9 @@ impl ContentGraph {
                         ContentScanError::ManifestParse(err) => {
                             self.errors.push(ContentGraphError::ManifestParse(err));
                         },
+                        ContentScanError::RedkitManifestRead(err) => {
+                            self.errors.push(ContentGraphError::RedkitManifestRead(err))
+                        }
                         ContentScanError::NotContent => {
                             self.errors.push(ContentGraphError::DependencyPathNotFound { 
                                 content_path: dep_path.into(), 
@@ -509,6 +527,7 @@ impl ContentGraph {
             })
     }
 
+    //TODO change it to not include the starting node
     /// Get a vec of all node indices related to the given node in a given direction. The starting node is included in the vec.
     fn relatives_indices_in_direction(&self, starting_idx: usize, direction: GraphEdgeDirection) -> Vec<usize> {
         let mut indices = Vec::with_capacity(self.nodes.capacity());
@@ -706,16 +725,20 @@ mod test {
         assert!(graph.get_node_by_path(&test_assets().join("dir1/proj2").unwrap()).is_some());
         assert!(graph.get_node_by_path(&test_assets().join("dir1/nested/proj3").unwrap()).is_some());
         assert!(graph.get_node_by_path(&test_assets().join("dir1/nested/raw2").unwrap()).is_some());
+        assert!(graph.get_node_by_path(&test_assets().join("dir1/redkit").unwrap()).is_some());
         assert!(graph.get_node_by_path(&test_assets().join("dir2/raw0").unwrap()).is_some());
+        assert!(graph.get_node_by_path(&test_assets().join("dir2/content0").unwrap()).is_some());
 
 
         let it = graph.nodes();
-        assert_eq!(it.clone().count(), 5);
+        assert_eq!(it.clone().count(), 7);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj1").unwrap() && n.in_workspace && !n.in_repository));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap() && n.in_workspace && !n.in_repository));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/proj3").unwrap() && n.in_workspace && !n.in_repository));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/raw2").unwrap() && !n.in_workspace && !n.in_repository));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap() && n.in_workspace && !n.in_repository));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/raw0").unwrap() && !n.in_workspace && n.in_repository));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap() && !n.in_workspace && n.in_repository));
 
 
         let mut it = graph.direct_dependencies(&test_assets().join("dir1/proj1").unwrap());
@@ -734,8 +757,16 @@ mod test {
         let it = graph.direct_dependencies(&test_assets().join("dir1/nested/raw2").unwrap());
         assert_eq!(it.count(), 0);
 
+        let it = graph.direct_dependencies(&test_assets().join("dir1/redkit").unwrap());
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
+
         let it = graph.direct_dependencies(&test_assets().join("dir2/raw0").unwrap());
         assert_eq!(it.count(), 0);
+
+        let it = graph.direct_dependencies(&test_assets().join("dir2/content0").unwrap());
+        assert_eq!(it.count(), 0);
+
 
 
         let it = graph.direct_dependants(&test_assets().join("dir1/proj1").unwrap());
@@ -752,10 +783,17 @@ mod test {
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/proj3").unwrap());
 
+        let it = graph.direct_dependants(&test_assets().join("dir1/redkit").unwrap());
+        assert_eq!(it.count(), 0);
+
         let it = graph.direct_dependants(&test_assets().join("dir2/raw0").unwrap());
         assert_eq!(it.clone().count(), 2);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj1").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
+
+        let it = graph.direct_dependants(&test_assets().join("dir2/content0").unwrap());
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap()));
 
 
         let mut it = graph.walk_dependencies(&test_assets().join("dir1/proj1").unwrap());
@@ -780,7 +818,16 @@ mod test {
         it.next();
         assert_eq!(it.count(), 0);
 
+        let mut it = graph.walk_dependencies(&test_assets().join("dir1/redkit").unwrap());
+        it.next();
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
+
         let mut it = graph.direct_dependencies(&test_assets().join("dir2/raw0").unwrap());
+        it.next();
+        assert_eq!(it.count(), 0);
+
+        let mut it = graph.direct_dependencies(&test_assets().join("dir2/content0").unwrap());
         it.next();
         assert_eq!(it.count(), 0);
 
@@ -803,11 +850,20 @@ mod test {
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/proj3").unwrap());
 
+        let mut it = graph.walk_dependants(&test_assets().join("dir1/redkit").unwrap());
+        it.next();
+        assert_eq!(it.count(), 0);
+
         let mut it = graph.walk_dependants(&test_assets().join("dir2/raw0").unwrap());
         it.next();
         assert_eq!(it.clone().count(), 3);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj1").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/proj3").unwrap()));
+
+        let mut it = graph.walk_dependants(&test_assets().join("dir2/content0").unwrap());
+        it.next();
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap()));
     }
 }

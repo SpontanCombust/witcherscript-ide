@@ -1,12 +1,13 @@
 use std::{fs::File, io::Read, str::FromStr, sync::Arc};
 use serde::Deserialize;
 use thiserror::Error;
+use lsp_types as lsp;
 use abs_path::AbsPath;
 
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RedkitProjectManifest {
+pub struct RedkitManifest {
     pub name: String,
     pub version: String,
     pub game_version: String,
@@ -14,7 +15,7 @@ pub struct RedkitProjectManifest {
     pub description: String
 }
 
-impl RedkitProjectManifest {
+impl RedkitManifest {
     pub const EXTENSION: &'static str = "w3edit";
 
     pub fn from_file(path: &AbsPath) -> Result<Self, Error> {
@@ -27,12 +28,22 @@ impl RedkitProjectManifest {
     }
 }
 
-impl FromStr for RedkitProjectManifest {
+impl FromStr for RedkitManifest {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let manifest = serde_json::from_str(s).map_err(|err| Arc::new(err))?;
-        Ok(manifest)
+        match serde_json::from_str::<Self>(s) {
+            Ok(manifest) => {
+                Ok(manifest)
+            },
+            Err(err) => {
+                let position = lsp::Position::new(err.line().max(1) as u32 - 1, err.column().max(1) as u32 - 1);
+                Err(Error::Json { 
+                    position, 
+                    msg: err.to_string() 
+                })
+            },
+        }
     }
 }
 
@@ -40,8 +51,11 @@ impl FromStr for RedkitProjectManifest {
 pub enum Error {
     #[error("file access error: {}", .0)]
     Io(#[from] Arc<std::io::Error>),
-    #[error("json parsing error: {}", .0)]
-    Json(#[from] Arc<serde_json::Error>)
+    #[error("JSON parsing error: {msg}")]
+    Json {
+        position: lsp::Position,
+        msg: String
+    }
 }
 
 #[cfg(test)]
@@ -60,8 +74,8 @@ mod test {
 
     #[test]
     fn test() {
-        let path = test_assets().join("redkit/redkit_proj.w3edit").unwrap();
-        let manifest = RedkitProjectManifest::from_file(&path).unwrap();
+        let path = test_assets().join("dir1/redkit/redkit_proj.w3edit").unwrap();
+        let manifest = RedkitManifest::from_file(&path).unwrap();
 
         assert_eq!(manifest.name, "redkit_proj");
         assert_eq!(manifest.version, "1.0.0");
