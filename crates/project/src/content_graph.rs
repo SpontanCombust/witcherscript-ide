@@ -1,12 +1,13 @@
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
+use lsp::Range;
 use thiserror::Error;
 use lsp_types as lsp;
 use abs_path::AbsPath;
 use crate::content::{try_make_content, ContentScanError, ProjectDirectory, RedkitProjectDirectory};
 use crate::{redkit, Content, ContentScanner, FileError};
-use crate::manifest::{Dependencies, DependencyEntry, DependencyValue, ManifestParseError, Ranged};
+use crate::manifest::{Dependencies, DependencyEntry, DependencyValue, ManifestParseError};
 
 
 #[derive(Debug, Clone, Error)]
@@ -14,10 +15,10 @@ pub enum ContentGraphError {
     #[error(transparent)]
     Io(#[from] FileError<std::io::Error>),
     #[error(transparent)]
-    ManifestParse(#[from] FileError<ManifestParseError>), //todo rename to ManifestRead
+    ManifestParse(#[from] FileError<ManifestParseError>), //TODO rename to ManifestRead
     #[error(transparent)]
     RedkitManifestRead(#[from] FileError<redkit::manifest::Error>),
-    #[error("project dependency could not be found in this path")]
+    #[error("project dependency at path \"{}\" could not be found", .content_path.display())]
     DependencyPathNotFound {
         content_path: PathBuf,
         /// Manifest from which this error originated
@@ -25,7 +26,7 @@ pub enum ContentGraphError {
         // Location in the manifest where the path is present
         manifest_range: lsp::Range
     },
-    #[error("project dependency could not be found with this name")]
+    #[error("project dependency with name \"{}\" could not be found", .content_name)]
     DependencyNameNotFound {
         content_name: String,
         /// Manifest from which this error originated
@@ -33,7 +34,7 @@ pub enum ContentGraphError {
         // Location in the manifest where the name is present
         manifest_range: lsp::Range
     },
-    #[error("project dependency with this name could not be found at specified path")]
+    #[error("project dependency with name \"{}\" could not be found at specified path", .content_name)]
     DependencyNameNotFoundAtPath {
         content_name: String,
         /// Manifest from which this error originated
@@ -41,7 +42,7 @@ pub enum ContentGraphError {
         // Location in the manifest where the name is present
         manifest_range: lsp::Range
     },
-    #[error("there are multiple matching dependencies with this name for this project")]
+    #[error("there are multiple matching dependencies with name \"{}\" for this project", .content_name)]
     MultipleMatchingDependencies {
         content_name: String,
         /// Manifest from which this error originated
@@ -301,20 +302,22 @@ impl ContentGraph {
         } else if let Some(redkit_proj) = self.nodes[node_idx].content.as_any().downcast_ref::<RedkitProjectDirectory>() {
             //TODO this looks ugly, make some more overall "Dependency" type seperate from manifest::Dependency
             let deps = Dependencies(vec![DependencyEntry {
-                name: Ranged::new("content0".into(), lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1))),
-                value:  Ranged::new(DependencyValue::FromRepo(true), lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1))),
+                name: "content0".into(),
+                name_range: Range::default(),
+                value: DependencyValue::FromRepo(true),
+                value_range: Range::default()
             }]);
             manifest_path_and_deps = Some((redkit_proj.manifest_path().to_owned(), deps));
         }
 
         if let Some((manifest_path, dependencies)) = manifest_path_and_deps {
             for entry in dependencies.into_iter() {
-                match entry.value.inner() {
+                match entry.value {
                     DependencyValue::FromRepo(active) => {
-                        self.link_dependencies_value_from_repo(node_idx, repo_nodes, &manifest_path, &entry.name, entry.name.range(), *active);
+                        self.link_dependencies_value_from_repo(node_idx, repo_nodes, &manifest_path, entry.name, entry.name_range, active);
                     },
                     DependencyValue::FromPath { path } => {
-                        self.link_dependencies_value_from_path(node_idx, repo_nodes, &manifest_path, &entry.name, entry.name.range(), path, entry.value.range());
+                        self.link_dependencies_value_from_path(node_idx, repo_nodes, &manifest_path, entry.name, entry.name_range, path, entry.value_range);
                     },
                 }
             }
@@ -325,8 +328,8 @@ impl ContentGraph {
         node_idx: usize,
         repo_nodes: &mut Vec<GraphNode>,
         manifest_path: &AbsPath,
-        dependency_name: &str,
-        dependency_name_range: &lsp::Range,
+        dependency_name: String,
+        dependency_name_range: lsp::Range,
         active: bool
     ) {
         if !active {
@@ -340,15 +343,15 @@ impl ContentGraph {
             Err(dep_count) => {
                 if dep_count == 0 {
                     self.errors.push(ContentGraphError::DependencyNameNotFound { 
-                        content_name: dependency_name.to_string(), 
+                        content_name: dependency_name, 
                         manifest_path: manifest_path.to_owned(),
-                        manifest_range: dependency_name_range.clone()
+                        manifest_range: dependency_name_range
                     });
                 } else {
                     self.errors.push(ContentGraphError::MultipleMatchingDependencies { 
-                        content_name: dependency_name.to_string(), 
+                        content_name: dependency_name, 
                         manifest_path: manifest_path.to_owned(), 
-                        manifest_range: dependency_name_range.clone()
+                        manifest_range: dependency_name_range
                     });
                 }
             }
@@ -395,19 +398,19 @@ impl ContentGraph {
         node_idx: usize, 
         repo_nodes: &mut Vec<GraphNode>,
         manifest_path: &AbsPath,
-        dependency_name: &str,
-        dependency_name_range: &lsp::Range,
-        dependency_path: &Path,
-        dependency_path_range: &lsp::Range
+        dependency_name: String,
+        dependency_name_range: lsp::Range,
+        dependency_path: PathBuf,
+        dependency_path_range: lsp::Range
     ) {
         let dependant_path = self.nodes[node_idx].content.path();
-        let abs_dependency_path = AbsPath::resolve(dependency_path, Some(dependant_path));
+        let abs_dependency_path = AbsPath::resolve(&dependency_path, Some(dependant_path));
 
         if abs_dependency_path.is_err() {
             self.errors.push(ContentGraphError::DependencyPathNotFound { 
-                content_path: dependency_path.to_path_buf(), 
+                content_path: dependency_path, 
                 manifest_path: manifest_path.to_owned(),
-                manifest_range: dependency_path_range.clone()
+                manifest_range: dependency_path_range
             });
 
             return;
@@ -423,9 +426,9 @@ impl ContentGraph {
                 });
             } else {
                 self.errors.push(ContentGraphError::DependencyNameNotFoundAtPath { 
-                    content_name: dependency_name.into(), 
+                    content_name: dependency_name, 
                     manifest_path: manifest_path.to_owned(), 
-                    manifest_range: dependency_name_range.to_owned()
+                    manifest_range: dependency_name_range
                 });
             }
         } else {
@@ -444,9 +447,9 @@ impl ContentGraph {
                         });
                     } else {
                         self.errors.push(ContentGraphError::DependencyNameNotFoundAtPath { 
-                            content_name: dependency_name.into(), 
+                            content_name: dependency_name, 
                             manifest_path: manifest_path.to_owned(), 
-                            manifest_range: dependency_name_range.to_owned()
+                            manifest_range: dependency_name_range
                         });
                     }
                 },
@@ -465,7 +468,7 @@ impl ContentGraph {
                             self.errors.push(ContentGraphError::DependencyPathNotFound { 
                                 content_path: dep_path.into(), 
                                 manifest_path: manifest_path.to_owned(),
-                                manifest_range: dependency_path_range.clone()
+                                manifest_range: dependency_path_range
                             })
                         },
                     }
