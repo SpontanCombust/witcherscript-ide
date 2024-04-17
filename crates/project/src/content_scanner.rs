@@ -43,11 +43,18 @@ impl ContentScanner {
     pub fn scan(&self) -> (Vec<Box<dyn Content>>, Vec<ContentScanError>) {
         let mut contents = Vec::new();
         let mut errors = Vec::new();
-        //FIXME Error not handled!
-        if let Ok(content) = try_make_content(&self.scan_root) {
-            contents.push(content);
-        } else {
-            self.find_content_in_directory(&self.scan_root, &mut contents, &mut errors);
+        
+        match try_make_content(&self.scan_root) {
+            Ok(content) => {
+                contents.push(content)
+            },
+            Err(err) => {
+                if matches!(err, ContentScanError::NotContent) {
+                    self.find_content_in_directory(&self.scan_root, &mut contents, &mut errors);
+                } else {
+                    errors.push(err);
+                }
+            },
         }
 
         if self.only_projects {

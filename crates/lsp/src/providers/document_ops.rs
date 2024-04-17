@@ -32,7 +32,8 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
                 is_foreign: true
             });
 
-            backend.on_scripts_modified([doc_path], true).await;
+            backend.on_scripts_modified([doc_path.clone()], true).await;
+            backend.reporter.commit_diagnostics(&doc_path).await;
         }
     } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
         //TODO remove this and let projects be loaded with did_save
@@ -49,15 +50,13 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
             // try rebuilding the graph but only if it's not already being rebuilt
             if let Ok(mut content_graph) = backend.content_graph.try_write() {
                 backend.build_content_graph(&mut content_graph).await;
+                backend.reporter.commit_all_diagnostics().await;
             }
         }
     }
-
-    backend.reporter.commit_all_diagnostics().await;
 }
 
 pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentParams) {
-    //FIXME not checked if it's a script
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
     if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
         let script_state = entry.value_mut();
@@ -71,10 +70,10 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
         }
 
         script_state.modified_timestamp = FileTime::now();
-    }
 
-    backend.on_scripts_modified([doc_path.clone()], true).await;
-    backend.reporter.commit_diagnostics(&doc_path).await;
+        backend.on_scripts_modified([doc_path.clone()], true).await;
+        backend.reporter.commit_diagnostics(&doc_path).await;
+    } 
 }
 
 // Not all circumstances can be easily handled or even detected.

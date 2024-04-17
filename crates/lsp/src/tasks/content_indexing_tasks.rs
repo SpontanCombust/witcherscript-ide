@@ -152,11 +152,13 @@ impl Backend {
                     modified: vec![]
                 });
             }
-            //FIXME should be done only if those manifests are deleted or outside of workspace
-            if let Some(project) = removed_content.as_any().downcast_ref::<ProjectDirectory>() {
-                self.reporter.purge_diagnostics(project.manifest_path());
-            } else if let Some(redkit_proj) = removed_content.as_any().downcast_ref::<RedkitProjectDirectory>() {
-                self.reporter.purge_diagnostics(redkit_proj.manifest_path());
+            
+            if !removed_content_path.exists() || !removed_node.in_workspace {
+                if let Some(project) = removed_content.as_any().downcast_ref::<ProjectDirectory>() {
+                    self.reporter.purge_diagnostics(project.manifest_path());
+                } else if let Some(redkit_proj) = removed_content.as_any().downcast_ref::<RedkitProjectDirectory>() {
+                    self.reporter.purge_diagnostics(redkit_proj.manifest_path());
+                }
             }
         }
 
