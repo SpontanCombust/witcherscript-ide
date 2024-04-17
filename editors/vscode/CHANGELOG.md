@@ -3,10 +3,35 @@
 # Changelog
 
 
+## v0.2.1
+REDKit project support & fixes
+
+### Features
+- Added support for REDKit projects
+
+### Fixes
+- Fixed script analysis not being reloaded when file was saved
+- Fixed duplicated syntax errors for code inside functions
+- Fixed `defaults` blocks not having syntax analysis
+- Fixed diagnostics not displaying immediately when a manifest file was changed and saved
+- Fixed content not being detected if it resided in the root of a repository directory
+
+### Documentation
+- Moved copyright information directly into the "About" page
+- Made a dedicated page for "Getting started" which is available from the main page of user manual
+- Updated "Project System" with REDKit project information
+
+### Other
+- Opening a new/unknown manifest file now doesn't trigger content graph rebuild and a manual file save action is required to trigger it
+- More descriptive errors diagnostics when linking content dependencies
+- The extension now also gets published to Eclipse's Open VSX Registry at   
+<https://open-vsx.org/extension/SpontanCombust/witcherscript-ide>
+
+
 ## v0.2.0
 Project system update
 
-### Editor
+### Features
 - Added a project system for WitcherScript, check the user manual for details
 - Added workspace-wide analysis thanks to the project system
 - Improved syntax highlighting 
