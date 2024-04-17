@@ -7,6 +7,8 @@
 - initializing or creating new script projects
 - importing and comparing scripts with their vanilla counterparts
 
+**More coming soon!**
+
 
 ## Commands
 
