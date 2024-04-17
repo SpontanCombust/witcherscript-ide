@@ -129,7 +129,7 @@ async function initializeProjectInDirectory(projectDirUri: vscode.Uri, projectNa
         return;
     }
 
-    if (vscode.workspace.workspaceFolders?.some(wf => manifestUri.fsPath.startsWith(wf.uri.fsPath))) {
+    if (vscode.workspace.workspaceFolders?.some(wf => isSubpathOf(manifestUri.fsPath, wf.uri.fsPath))) {
         const showOptions: vscode.TextDocumentShowOptions = {
             preview: false
         };
@@ -506,4 +506,14 @@ class ContentQuickPickItem implements vscode.QuickPickItem {
         this.alwaysShow = true;
         this.buttons = undefined;
     }
+}
+
+
+function isSubpathOf(dir: string, parent: string): boolean {
+    if (dir === parent) return false;
+
+    let parentComps = parent.split(path.sep).filter(i => i.length);
+    let dirComps = dir.split(path.sep).filter(i => i.length);
+
+    return parentComps.every((comp, i) => dirComps[i] === comp);
 }
