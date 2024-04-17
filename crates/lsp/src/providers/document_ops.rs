@@ -2,18 +2,12 @@ use filetime::FileTime;
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
-use witcherscript_project::{content::ProjectDirectory, redkit, Manifest};
+use witcherscript_project::{redkit, Manifest};
 use crate::{Backend, ScriptState};
 
 
 pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams) {
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
-    let belongs_to_workspace = backend
-        .workspace_roots
-        .read().await
-        .iter()
-        .any(|root| doc_path.starts_with(root));
-
     if params.text_document.language_id == Backend::LANGUAGE_ID {
         if !backend.scripts.contains_key(&doc_path) {
             // Scripts that are not a part of a workspace projects or their dependencies
@@ -34,24 +28,6 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
 
             backend.on_scripts_modified([doc_path.clone()], true).await;
             backend.reporter.commit_diagnostics(&doc_path).await;
-        }
-    } else if doc_path.file_name().unwrap() == Manifest::FILE_NAME && belongs_to_workspace {
-        //TODO remove this and let projects be loaded with did_save
-        let project_is_known = backend
-            .content_graph
-            .read().await
-            .nodes()
-            .filter_map(|n| n.content.as_any().downcast_ref::<ProjectDirectory>())
-            .any(|p| p.manifest_path() == &doc_path);
-
-        if !project_is_known {
-            backend.reporter.log_info("Opened unknown manifest file").await;
-
-            // try rebuilding the graph but only if it's not already being rebuilt
-            if let Ok(mut content_graph) = backend.content_graph.try_write() {
-                backend.build_content_graph(&mut content_graph).await;
-                backend.reporter.commit_all_diagnostics().await;
-            }
         }
     }
 }
