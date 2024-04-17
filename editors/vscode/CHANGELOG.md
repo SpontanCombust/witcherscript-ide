@@ -22,6 +22,7 @@ REDKit project support & fixes
 - Updated "Project System" with REDKit project information
 
 ### Other
+- Importing a script file now automatically opens it in the editor
 - Opening a new/unknown manifest file now doesn't trigger content graph rebuild and a manual file save action is required to trigger it
 - More descriptive errors diagnostics when linking content dependencies
 - The extension now also gets published to Eclipse's Open VSX Registry at   
