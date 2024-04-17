@@ -75,4 +75,4 @@ jobs:
     - name: Upload extension to Open VSX Registry
       run: npx ovsx publish --packagePath $(find . -iname *.vsix)
       env:
-        VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        OVSX_PAT: ${{ secrets.OVSX_PAT }}
