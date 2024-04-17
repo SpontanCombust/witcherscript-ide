@@ -24,7 +24,7 @@ REDKit project support & fixes
 ### Other
 - Opening a new/unknown manifest file now doesn't trigger content graph rebuild and a manual file save action is required to trigger it
 - More descriptive errors diagnostics when linking content dependencies
-- The extension now also gets published to Eclipse's Open VSX Registry at  
+- The extension now also gets published to Eclipse's Open VSX Registry at   
 <https://open-vsx.org/extension/SpontanCombust/witcherscript-ide>
 
 
