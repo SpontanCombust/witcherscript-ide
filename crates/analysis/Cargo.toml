@@ -6,6 +6,7 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
+abs-path = { path = "../abs-path" }
 witcherscript = { path = "../core" }
 uuid.workspace = true
 thiserror.workspace = true

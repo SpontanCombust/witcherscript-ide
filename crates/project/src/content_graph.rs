@@ -1,12 +1,11 @@
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use thiserror::Error;
 use lsp_types as lsp;
 use abs_path::AbsPath;
-use crate::content::{try_make_content, ContentScanError, ProjectDirectory};
-use crate::{Content, FileError, ContentScanner};
-use crate::manifest::{DependencyValue, ManifestParseError};
+use crate::content::{try_make_content, ContentScanError, ProjectDirectory, RedkitProjectDirectory};
+use crate::{manifest, redkit, Content, ContentScanner, FileError};
 
 
 #[derive(Debug, Clone, Error)]
@@ -14,8 +13,10 @@ pub enum ContentGraphError {
     #[error(transparent)]
     Io(#[from] FileError<std::io::Error>),
     #[error(transparent)]
-    ManifestParse(#[from] FileError<ManifestParseError>),
-    #[error("project dependency could not be found in this path")]
+    ManifestRead(#[from] FileError<manifest::Error>),
+    #[error(transparent)]
+    RedkitManifestRead(#[from] FileError<redkit::manifest::Error>),
+    #[error("project dependency at path \"{}\" could not be found", .content_path.display())]
     DependencyPathNotFound {
         content_path: PathBuf,
         /// Manifest from which this error originated
@@ -23,7 +24,7 @@ pub enum ContentGraphError {
         // Location in the manifest where the path is present
         manifest_range: lsp::Range
     },
-    #[error("project dependency could not be found with this name")]
+    #[error("project dependency with name \"{}\" could not be found", .content_name)]
     DependencyNameNotFound {
         content_name: String,
         /// Manifest from which this error originated
@@ -31,7 +32,7 @@ pub enum ContentGraphError {
         // Location in the manifest where the name is present
         manifest_range: lsp::Range
     },
-    #[error("project dependency with this name could not be found at specified path")]
+    #[error("project dependency with name \"{}\" could not be found at specified path", .content_name)]
     DependencyNameNotFoundAtPath {
         content_name: String,
         /// Manifest from which this error originated
@@ -39,7 +40,7 @@ pub enum ContentGraphError {
         // Location in the manifest where the name is present
         manifest_range: lsp::Range
     },
-    #[error("there are multiple matching dependencies with this name for this project")]
+    #[error("there are multiple matching dependencies with name \"{}\" for this project", .content_name)]
     MultipleMatchingDependencies {
         content_name: String,
         /// Manifest from which this error originated
@@ -157,6 +158,7 @@ impl ContentGraph {
 
 
     /// Iterate over direct dependencies of specified content
+    /// Iterator will be empty when either the specified content doesn't exist or it has no dependencies.
     pub fn direct_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependencies).collect();
@@ -167,6 +169,7 @@ impl ContentGraph {
     }
 
     /// Iterate over direct dependants of specified content
+    /// Iterator will be empty when either the specified content doesn't exist or it has no dependants.
     pub fn direct_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependants).collect();
@@ -178,7 +181,7 @@ impl ContentGraph {
 
 
     /// Iterate over all content nodes that are direct or indirect dependencies to the specified content.
-    /// Iterator always starts with the specified content if it exists in the graph.
+    /// Iterator will be empty when either the specified content doesn't exist or it has no dependencies.
     pub fn walk_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependencies);
@@ -189,7 +192,7 @@ impl ContentGraph {
     }
 
     /// Iterate over all content nodes that are direct or indirect dependants of the specified content.
-    /// Iterator always starts with the specified content if it exists in the graph.
+    /// Iterator will be empty when either the specified content doesn't exist or it has no dependants.
     pub fn walk_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependants);
@@ -221,8 +224,11 @@ impl ContentGraph {
                         self.errors.push(ContentGraphError::Io(err));
                     },
                     ContentScanError::ManifestParse(err) => {
-                        self.errors.push(ContentGraphError::ManifestParse(err))
+                        self.errors.push(ContentGraphError::ManifestRead(err))
                     },
+                    ContentScanError::RedkitManifestRead(err) => {
+                        self.errors.push(ContentGraphError::RedkitManifestRead(err))
+                    }
                     // NotContent only occurs when trying to make content manually and not when scanning
                     ContentScanError::NotContent => {},
                 }
@@ -251,8 +257,11 @@ impl ContentGraph {
                         self.errors.push(ContentGraphError::Io(err));
                     },
                     ContentScanError::ManifestParse(err) => {
-                        self.errors.push(ContentGraphError::ManifestParse(err))
+                        self.errors.push(ContentGraphError::ManifestRead(err))
                     },
+                    ContentScanError::RedkitManifestRead(err) => {
+                        self.errors.push(ContentGraphError::RedkitManifestRead(err))
+                    }
                     // NotContent only occurs when trying to make content manually and not when scanning
                     ContentScanError::NotContent => {},
                 }
@@ -285,22 +294,22 @@ impl ContentGraph {
 
         visited.insert(node_idx);
 
-        let manifest_path_and_deps = self.nodes[node_idx]
-            .content.as_any()
-            .downcast_ref::<ProjectDirectory>()
-            .map(|proj| (proj.manifest_path().to_owned(), proj.manifest().dependencies.clone()));
-
-        if let Some((manifest_path, dependencies)) = manifest_path_and_deps {
-            for entry in dependencies.into_iter() {
-                match entry.value.inner() {
-                    DependencyValue::FromRepo(active) => {
-                        self.link_dependencies_value_from_repo(node_idx, repo_nodes, &manifest_path, &entry.name, entry.name.range(), *active);
+        let content = Arc::clone(&self.nodes[node_idx].content);
+        if let Some(proj) = content.as_any().downcast_ref::<ProjectDirectory>() {
+            for entry in proj.manifest().dependencies.iter() {
+                match &entry.value {
+                    manifest::DependencyValue::FromRepo(active) => {
+                        if *active {
+                            self.link_dependencies_value_from_repo(node_idx, repo_nodes, proj.manifest_path(), &entry.name, &entry.name_range);
+                        }
                     },
-                    DependencyValue::FromPath { path } => {
-                        self.link_dependencies_value_from_path(node_idx, repo_nodes, &manifest_path, &entry.name, entry.name.range(), path, entry.value.range());
+                    manifest::DependencyValue::FromPath { path } => {
+                        self.link_dependencies_value_from_path(node_idx, repo_nodes, proj.manifest_path(), &entry.name, &entry.name_range, path, &entry.value_range);
                     },
                 }
             }
+        } else if let Some(redkit_proj) = content.as_any().downcast_ref::<RedkitProjectDirectory>() {
+            self.link_dependencies_value_from_repo(node_idx, repo_nodes, redkit_proj.manifest_path(), "content0".into(), &lsp::Range::default());
         }
     }
 
@@ -309,13 +318,8 @@ impl ContentGraph {
         repo_nodes: &mut Vec<GraphNode>,
         manifest_path: &AbsPath,
         dependency_name: &str,
-        dependency_name_range: &lsp::Range,
-        active: bool
+        dependency_name_range: &lsp::Range
     ) {
-        if !active {
-            return;
-        }
-
         match self.get_dependency_node_index_by_name(&dependency_name, repo_nodes) {
             Ok(dep_idx) => {
                 self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
@@ -323,15 +327,15 @@ impl ContentGraph {
             Err(dep_count) => {
                 if dep_count == 0 {
                     self.errors.push(ContentGraphError::DependencyNameNotFound { 
-                        content_name: dependency_name.to_string(), 
+                        content_name: dependency_name.to_owned(), 
                         manifest_path: manifest_path.to_owned(),
-                        manifest_range: dependency_name_range.clone()
+                        manifest_range: dependency_name_range.to_owned()
                     });
                 } else {
                     self.errors.push(ContentGraphError::MultipleMatchingDependencies { 
-                        content_name: dependency_name.to_string(), 
+                        content_name: dependency_name.to_owned(), 
                         manifest_path: manifest_path.to_owned(), 
-                        manifest_range: dependency_name_range.clone()
+                        manifest_range: dependency_name_range.to_owned()
                     });
                 }
             }
@@ -380,17 +384,17 @@ impl ContentGraph {
         manifest_path: &AbsPath,
         dependency_name: &str,
         dependency_name_range: &lsp::Range,
-        dependency_path: &Path,
+        dependency_path: &PathBuf,
         dependency_path_range: &lsp::Range
     ) {
         let dependant_path = self.nodes[node_idx].content.path();
-        let abs_dependency_path = AbsPath::resolve(dependency_path, Some(dependant_path));
+        let abs_dependency_path = AbsPath::resolve(&dependency_path, Some(dependant_path));
 
         if abs_dependency_path.is_err() {
             self.errors.push(ContentGraphError::DependencyPathNotFound { 
-                content_path: dependency_path.to_path_buf(), 
+                content_path: dependency_path.to_owned(), 
                 manifest_path: manifest_path.to_owned(),
-                manifest_range: dependency_path_range.clone()
+                manifest_range: dependency_path_range.to_owned()
             });
 
             return;
@@ -406,7 +410,7 @@ impl ContentGraph {
                 });
             } else {
                 self.errors.push(ContentGraphError::DependencyNameNotFoundAtPath { 
-                    content_name: dependency_name.into(), 
+                    content_name: dependency_name.to_owned(), 
                     manifest_path: manifest_path.to_owned(), 
                     manifest_range: dependency_name_range.to_owned()
                 });
@@ -427,7 +431,7 @@ impl ContentGraph {
                         });
                     } else {
                         self.errors.push(ContentGraphError::DependencyNameNotFoundAtPath { 
-                            content_name: dependency_name.into(), 
+                            content_name: dependency_name.to_owned(), 
                             manifest_path: manifest_path.to_owned(), 
                             manifest_range: dependency_name_range.to_owned()
                         });
@@ -439,13 +443,16 @@ impl ContentGraph {
                             self.errors.push(ContentGraphError::Io(err));
                         },
                         ContentScanError::ManifestParse(err) => {
-                            self.errors.push(ContentGraphError::ManifestParse(err));
+                            self.errors.push(ContentGraphError::ManifestRead(err));
                         },
+                        ContentScanError::RedkitManifestRead(err) => {
+                            self.errors.push(ContentGraphError::RedkitManifestRead(err))
+                        }
                         ContentScanError::NotContent => {
                             self.errors.push(ContentGraphError::DependencyPathNotFound { 
                                 content_path: dep_path.into(), 
                                 manifest_path: manifest_path.to_owned(),
-                                manifest_range: dependency_path_range.clone()
+                                manifest_range: dependency_path_range.to_owned()
                             })
                         },
                     }
@@ -509,11 +516,13 @@ impl ContentGraph {
             })
     }
 
-    /// Get a vec of all node indices related to the given node in a given direction. The starting node is included in the vec.
+    /// Get a vec of all node indices related to the given node in a given direction
     fn relatives_indices_in_direction(&self, starting_idx: usize, direction: GraphEdgeDirection) -> Vec<usize> {
         let mut indices = Vec::with_capacity(self.nodes.capacity());
 
-        indices.push(starting_idx);
+        for neighbour in self.neighbour_indices_in_direction(starting_idx, direction) {
+            indices.push(neighbour);
+        }
 
         let mut i = 0;
         while i < indices.len() {
@@ -706,16 +715,20 @@ mod test {
         assert!(graph.get_node_by_path(&test_assets().join("dir1/proj2").unwrap()).is_some());
         assert!(graph.get_node_by_path(&test_assets().join("dir1/nested/proj3").unwrap()).is_some());
         assert!(graph.get_node_by_path(&test_assets().join("dir1/nested/raw2").unwrap()).is_some());
+        assert!(graph.get_node_by_path(&test_assets().join("dir1/redkit").unwrap()).is_some());
         assert!(graph.get_node_by_path(&test_assets().join("dir2/raw0").unwrap()).is_some());
+        assert!(graph.get_node_by_path(&test_assets().join("dir2/content0").unwrap()).is_some());
 
 
         let it = graph.nodes();
-        assert_eq!(it.clone().count(), 5);
+        assert_eq!(it.clone().count(), 7);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj1").unwrap() && n.in_workspace && !n.in_repository));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap() && n.in_workspace && !n.in_repository));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/proj3").unwrap() && n.in_workspace && !n.in_repository));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/raw2").unwrap() && !n.in_workspace && !n.in_repository));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap() && n.in_workspace && !n.in_repository));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/raw0").unwrap() && !n.in_workspace && n.in_repository));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap() && !n.in_workspace && n.in_repository));
 
 
         let mut it = graph.direct_dependencies(&test_assets().join("dir1/proj1").unwrap());
@@ -734,8 +747,16 @@ mod test {
         let it = graph.direct_dependencies(&test_assets().join("dir1/nested/raw2").unwrap());
         assert_eq!(it.count(), 0);
 
+        let it = graph.direct_dependencies(&test_assets().join("dir1/redkit").unwrap());
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
+
         let it = graph.direct_dependencies(&test_assets().join("dir2/raw0").unwrap());
         assert_eq!(it.count(), 0);
+
+        let it = graph.direct_dependencies(&test_assets().join("dir2/content0").unwrap());
+        assert_eq!(it.count(), 0);
+
 
 
         let it = graph.direct_dependants(&test_assets().join("dir1/proj1").unwrap());
@@ -752,62 +773,72 @@ mod test {
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/proj3").unwrap());
 
+        let it = graph.direct_dependants(&test_assets().join("dir1/redkit").unwrap());
+        assert_eq!(it.count(), 0);
+
         let it = graph.direct_dependants(&test_assets().join("dir2/raw0").unwrap());
         assert_eq!(it.clone().count(), 2);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj1").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
 
+        let it = graph.direct_dependants(&test_assets().join("dir2/content0").unwrap());
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap()));
+
 
         let mut it = graph.walk_dependencies(&test_assets().join("dir1/proj1").unwrap());
-        // `walk` iterators always start from the parameter content
-        it.next();
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/raw0").unwrap());
 
         let mut it = graph.walk_dependencies(&test_assets().join("dir1/proj2").unwrap());
-        it.next();
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/raw0").unwrap());
 
-        let mut it = graph.walk_dependencies(&test_assets().join("dir1/nested/proj3").unwrap());
-        it.next();
+        let it = graph.walk_dependencies(&test_assets().join("dir1/nested/proj3").unwrap());
         assert_eq!(it.clone().count(), 3);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/raw2").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/raw0").unwrap()));
 
-        let mut it = graph.walk_dependencies(&test_assets().join("dir1/nested/raw2").unwrap());
-        it.next();
+        let it = graph.walk_dependencies(&test_assets().join("dir1/nested/raw2").unwrap());
         assert_eq!(it.count(), 0);
 
-        let mut it = graph.direct_dependencies(&test_assets().join("dir2/raw0").unwrap());
-        it.next();
+        let it = graph.walk_dependencies(&test_assets().join("dir1/redkit").unwrap());
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
+
+        let it = graph.direct_dependencies(&test_assets().join("dir2/raw0").unwrap());
+        assert_eq!(it.count(), 0);
+
+        let it = graph.direct_dependencies(&test_assets().join("dir2/content0").unwrap());
         assert_eq!(it.count(), 0);
 
 
-        let mut it = graph.walk_dependants(&test_assets().join("dir1/proj1").unwrap());
-        it.next();
+        let it = graph.walk_dependants(&test_assets().join("dir1/proj1").unwrap());
         assert_eq!(it.count(), 0);
 
         let mut it = graph.walk_dependants(&test_assets().join("dir1/proj2").unwrap());
-        it.next();
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/proj3").unwrap());
 
-        let mut it = graph.walk_dependants(&test_assets().join("dir1/nested/proj3").unwrap());
-        it.next();
+        let it = graph.walk_dependants(&test_assets().join("dir1/nested/proj3").unwrap());
         assert_eq!(it.count(), 0);
 
         let mut it = graph.walk_dependants(&test_assets().join("dir1/nested/raw2").unwrap());
-        it.next();
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/proj3").unwrap());
 
-        let mut it = graph.walk_dependants(&test_assets().join("dir2/raw0").unwrap());
-        it.next();
+        let it = graph.walk_dependants(&test_assets().join("dir1/redkit").unwrap());
+        assert_eq!(it.count(), 0);
+
+        let it = graph.walk_dependants(&test_assets().join("dir2/raw0").unwrap());
         assert_eq!(it.clone().count(), 3);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj1").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/proj3").unwrap()));
+
+        let it = graph.walk_dependants(&test_assets().join("dir2/content0").unwrap());
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap()));
     }
 }

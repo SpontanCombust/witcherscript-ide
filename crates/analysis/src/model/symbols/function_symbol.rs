@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use abs_path::AbsPath;
 use witcherscript::attribs::*;
 use crate::model::symbol_path::SymbolPath;
 use super::*;
@@ -7,6 +8,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct GlobalFunctionSymbol {
     path: GlobalCallableSymbolPath,
+    decl_file_path: AbsPath,
     pub specifiers: HashSet<GlobalFunctionSpecifier>,
     pub flavour: Option<GlobalFunctionFlavour>,
     pub return_type_path: TypeSymbolPath
@@ -23,13 +25,19 @@ impl Symbol for GlobalFunctionSymbol {
 }
 
 impl GlobalFunctionSymbol {
-    pub fn new(path: GlobalCallableSymbolPath) -> Self {
+    pub fn new(path: GlobalCallableSymbolPath, decl_file_path: AbsPath) -> Self {
         Self {
             path,
+            decl_file_path,
             specifiers: HashSet::new(),
             flavour: None,
             return_type_path: TypeSymbolPath::empty()
         }
+    }
+
+    
+    pub fn decl_file_path(&self) -> &AbsPath {
+        &self.decl_file_path
     }
 }
 

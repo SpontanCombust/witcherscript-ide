@@ -1,7 +1,7 @@
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript_analysis::diagnostics::{Diagnostic, DiagnosticBody};
-use witcherscript_project::{manifest::ManifestParseError, FileError};
+use witcherscript_project::{manifest, redkit, FileError};
 use crate::Backend;
 use super::Reporter;
 
@@ -38,14 +38,35 @@ impl IntoLspDiagnostic for FileError<std::io::Error> {
     }
 }
 
-impl IntoLspDiagnostic for FileError<ManifestParseError> {
+impl IntoLspDiagnostic for FileError<manifest::Error> {
     fn into_lsp_diagnostic(self) -> lsp::Diagnostic {
         let error = self.error.as_ref();
         
         let range = match error {
-            ManifestParseError::Io(_) => lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1)),
-            ManifestParseError::Toml { range, msg: _ } => range.clone(),
-            ManifestParseError::InvalidNameField { range } => range.clone(),
+            manifest::Error::Io(_) => lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1)),
+            manifest::Error::Toml { range, msg: _ } => range.clone(),
+            manifest::Error::InvalidNameField { range } => range.clone(),
+        };
+
+        let message = error.to_string();
+
+        lsp::Diagnostic {
+            range,
+            severity: Some(lsp::DiagnosticSeverity::ERROR),
+            source: Some(Backend::SERVER_NAME.to_string()),
+            message,
+            ..Default::default()
+        }
+    }
+}
+
+impl IntoLspDiagnostic for FileError<redkit::manifest::Error> {
+    fn into_lsp_diagnostic(self) -> lsp::Diagnostic {
+        let error = self.error.as_ref();
+
+        let range = match error {
+            redkit::manifest::Error::Io(_) => lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1)),
+            redkit::manifest::Error::Json { position, msg: _ } => lsp::Range::new(position.to_owned(), lsp::Position::new(position.line, position.character + 1)),
         };
 
         let message = error.to_string();

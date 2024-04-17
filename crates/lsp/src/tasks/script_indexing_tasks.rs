@@ -1,4 +1,4 @@
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 use tokio::{sync::mpsc, time::Instant};
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
@@ -76,10 +76,11 @@ impl Backend {
             });
         }
 
-        if run_diagnostics {
-            let script_paths: Vec<_> = added_files.into_iter().map(|f| f.into()).collect();
-            self.run_script_analysis(script_paths).await;
-        }
+        let script_paths = added_files.into_iter()
+            .map(|f| f.into_absolute_path())
+            .par_bridge();
+        
+        self.on_scripts_modified(script_paths, run_diagnostics).await;
     }
 
     async fn on_source_tree_files_removed(&self, removed_files: Vec<SourceTreeFile>) {
@@ -89,10 +90,9 @@ impl Backend {
             self.reporter.purge_diagnostics(removed_file.absolute_path());
         }
     }
-
+    
     async fn on_source_tree_files_modified(&self, modified_files: Vec<SourceTreeFile>, run_diagnostics: bool) {
-        let mut script_paths = Vec::new();
-        for modified_file in modified_files {
+        for modified_file in &modified_files {
             if let Some(mut script_state) = self.scripts.get_mut(modified_file.absolute_path()) {
                 // for cases when files have been updated outside of of LSP client's knowledge
                 if modified_file.modified_timestamp() > script_state.modified_timestamp {
@@ -100,14 +100,24 @@ impl Backend {
                     script_state.script.refresh(&doc).unwrap();
                     script_state.buffer = doc;
                     script_state.modified_timestamp = modified_file.modified_timestamp();
-
-                    script_paths.push(modified_file.absolute_path().to_owned());
                 }
             }
         }
 
-        if run_diagnostics && !script_paths.is_empty() {
-            self.run_script_analysis(script_paths).await;
+        let modified_script_paths = modified_files.into_iter()
+            .map(|f| f.into_absolute_path())
+            .par_bridge();
+
+        self.on_scripts_modified(modified_script_paths, run_diagnostics).await;
+    }
+
+    
+    pub async fn on_scripts_modified<It>(&self, modified_script_paths: It, run_diagnostics: bool) 
+    where It: IntoParallelIterator<Item = AbsPath> + Send + 'static {
+        //TODO symbol scanning here
+
+        if run_diagnostics {
+            self.run_script_analysis(modified_script_paths).await;
         }
     }
 }

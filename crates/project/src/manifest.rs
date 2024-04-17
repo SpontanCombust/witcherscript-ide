@@ -19,7 +19,9 @@ pub struct Manifest {
 #[derive(Debug, Clone)]
 pub struct Content {
     /// Name of this project, for example SharedUtils
-    pub name: Ranged<String>,
+    pub name: String,
+    pub name_range: lsp::Range,
+    //TODO optional description field 
     /// Version of this project, has to abide to semantic versioning
     pub version: Version,
     /// Version(s) of the game this project is compatible with 
@@ -37,8 +39,10 @@ pub struct Dependencies(Vec<DependencyEntry>);
 // Dependency item as a key-value pair of dependency name and dependency source specifier
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DependencyEntry {
-    pub name: Ranged<String>,
-    pub value: Ranged<DependencyValue>
+    pub name: String,
+    pub name_range: lsp::Range,
+    pub value: DependencyValue,
+    pub value_range: lsp::Range
 }
 
 /// Value of the dependency entry
@@ -57,7 +61,7 @@ pub enum DependencyValue {
 impl Manifest {
     pub const FILE_NAME: &'static str = "witcherscript.toml";
 
-    pub fn from_file(path: &AbsPath) -> Result<Self, ManifestParseError> {
+    pub fn from_file(path: &AbsPath) -> Result<Self, Error> {
         let mut f = File::open(path).map_err(|err| Arc::new(err))?;
 
         let mut buff = String::new();
@@ -78,15 +82,15 @@ impl Manifest {
 }
 
 impl FromStr for Manifest {
-    type Err = ManifestParseError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let rope = Rope::from_str(s);
         let raw: Result<raw::Manifest, toml::de::Error> = toml::from_str(s);
 
         if let Err(err) = raw {
-            return Err(ManifestParseError::Toml {
-                range: span_to_range(err.span().unwrap_or_default(), &rope),
+            return Err(Error::Toml {
+                range: lsp::Range::from_raw(err.span().unwrap_or_default(), &rope),
                 msg: err.to_string()
             });
         }
@@ -95,8 +99,8 @@ impl FromStr for Manifest {
 
         // validate content name
         if !Self::validate_content_name(&manifest.content.name) {
-            return Err(ManifestParseError::InvalidNameField {
-                range: manifest.content.name.range.clone()
+            return Err(Error::InvalidNameField {
+                range: manifest.content.name_range.clone()
             })
         }
 
@@ -105,7 +109,7 @@ impl FromStr for Manifest {
 }
 
 #[derive(Debug, Clone, Error)]
-pub enum ManifestParseError {
+pub enum Error {
     #[error("file access error: {}", .0)]
     Io(#[from] Arc<io::Error>),
     #[error("TOML file parsing error: {msg}")]
@@ -131,13 +135,13 @@ impl FromRaw for Manifest {
     }
 }
 
-
 impl FromRaw for Content {
     type RawType = raw::Content;
 
     fn from_raw(raw: Self::RawType, rope: &Rope) -> Self {
         Self {
-           name: Ranged::from_raw(raw.name, rope),
+           name: raw.name.get_ref().to_owned(),
+           name_range: lsp::Range::from_raw(raw.name.span(), rope),
            version: raw.version,
            authors: raw.authors,
            game_version: raw.game_version,
@@ -146,18 +150,21 @@ impl FromRaw for Content {
     }
 }
 
-
 impl FromRaw for Dependencies {
     type RawType = raw::Dependencies;
 
     fn from_raw(raw: Self::RawType, rope: &Rope) -> Self {
         let mut entries = Vec::new();
         for (k, v) in raw {
-            let dep_name = Ranged::from_raw(k, rope);
-            let dep_val = Ranged::from_raw(v, rope);
+            let dep_name = String::from_raw(k.get_ref().to_owned(), rope);
+            let dep_name_range = lsp::Range::from_raw(k.span(), rope);
+            let dep_val = DependencyValue::from_raw(v.get_ref().to_owned(), rope);
+            let dep_val_range = lsp::Range::from_raw(v.span(), rope);
             entries.push(DependencyEntry { 
                 name: dep_name, 
-                value: dep_val 
+                value: dep_val,
+                name_range: dep_name_range,
+                value_range: dep_val_range
             });
         }
 
@@ -186,7 +193,6 @@ impl FromRaw for DependencyValue {
     }
 }
 
-
 impl FromRaw for String {
     type RawType = String;
 
@@ -195,68 +201,25 @@ impl FromRaw for String {
     }
 }
 
-
-#[derive(Debug, Clone, Shrinkwrap)]
-pub struct Ranged<T> {
-    #[shrinkwrap(main_field)]
-    value: T,
-    range: lsp::Range
-}
-
-impl<T> Ranged<T> {
-    fn new(val: T, range: lsp::Range) -> Self {
-        Self {
-            value: val,
-            range
-        }
-    }
-
-    pub fn inner(&self) -> &T {
-        &self.value
-    }
-
-    pub fn range(&self) -> &lsp::Range {
-        &self.range
-    }
-
-    pub fn into_tuple(self) -> (T, lsp::Range) {
-        (self.value, self.range)
-    }
-}
-
-impl<T: PartialEq> PartialEq for Ranged<T> {
-    fn eq(&self, other: &Self) -> bool {
-        // only value is taken as the comparison subject
-        self.value == other.value
-    }
-}
-
-impl<T: Eq> Eq for Ranged<T> {}
-
-fn span_to_range(span: std::ops::Range<usize>, rope: &Rope) -> lsp::Range {
-    let start_line = rope.char_to_line(span.start);
-    let start_char = span.start - rope.line_to_char(start_line);
-    let end_line = rope.char_to_line(span.end);
-    let end_char = span.end - rope.line_to_char(end_line);
-
-    lsp::Range { 
-        start: lsp::Position { 
-            line: start_line as u32, 
-            character: start_char as u32
-        }, 
-        end: lsp::Position { 
-            line: end_line as u32, 
-            character: end_char as u32 
-        }
-    }
-}
-
-impl<T: FromRaw> FromRaw for Ranged<T> {
-    type RawType = toml::Spanned<T::RawType>;
+impl FromRaw for lsp::Range {
+    type RawType = std::ops::Range<usize>;
 
     fn from_raw(raw: Self::RawType, rope: &Rope) -> Self {
-        let span = span_to_range(raw.span(), rope);
-        Self::new(T::from_raw(raw.into_inner(), rope), span)
+        let start_line = rope.char_to_line(raw.start);
+        let start_char = raw.start - rope.line_to_char(start_line);
+        let end_line = rope.char_to_line(raw.end);
+        let end_char = raw.end - rope.line_to_char(end_line);
+
+        lsp::Range { 
+            start: lsp::Position { 
+                line: start_line as u32, 
+                character: start_char as u32
+            }, 
+            end: lsp::Position { 
+                line: end_line as u32, 
+                character: end_char as u32 
+            }
+        }
     }
 }
 
@@ -329,7 +292,7 @@ shared_utils = true
     
         let manifest = Manifest::from_str(s).unwrap();
     
-        assert_eq!(manifest.content.name.value, "ExampleMod");
+        assert_eq!(manifest.content.name, "ExampleMod");
         assert_eq!(manifest.content.version, Version::from_str("0.9.0").unwrap());
         assert_eq!(manifest.content.authors, Some(vec!["Rip Van Winkle".into()]));
         assert_eq!(manifest.content.game_version, String::from("4.04"));
@@ -339,16 +302,16 @@ shared_utils = true
         assert_eq!(manifest.dependencies.len(), 2);
 
         let content0 = manifest.dependencies[0].clone();
-        assert_eq!(content0.name.value, "content0".to_string());
-        assert_eq!(content0.name.range, lsp::Range::new(lsp::Position::new(9, 0), lsp::Position::new(9, 8)));
-        assert_eq!(content0.value.value, DependencyValue::FromPath { path: PathBuf::from("../Witcher 3/content/content0") });
-        assert_eq!(content0.value.range, lsp::Range::new(lsp::Position::new(9, 11), lsp::Position::new(9, 53)));
+        assert_eq!(content0.name, "content0".to_string());
+        assert_eq!(content0.name_range, lsp::Range::new(lsp::Position::new(9, 0), lsp::Position::new(9, 8)));
+        assert_eq!(content0.value, DependencyValue::FromPath { path: PathBuf::from("../Witcher 3/content/content0") });
+        assert_eq!(content0.value_range, lsp::Range::new(lsp::Position::new(9, 11), lsp::Position::new(9, 53)));
 
         let shared_utils = manifest.dependencies[1].clone();
-        assert_eq!(shared_utils.name.value, "shared_utils".to_string());
-        assert_eq!(shared_utils.name.range, lsp::Range::new(lsp::Position::new(10, 0), lsp::Position::new(10, 12)));
-        assert_eq!(shared_utils.value.value, DependencyValue::FromRepo(true));
-        assert_eq!(shared_utils.value.range, lsp::Range::new(lsp::Position::new(10, 15), lsp::Position::new(10, 19)));
+        assert_eq!(shared_utils.name, "shared_utils".to_string());
+        assert_eq!(shared_utils.name_range, lsp::Range::new(lsp::Position::new(10, 0), lsp::Position::new(10, 12)));
+        assert_eq!(shared_utils.value, DependencyValue::FromRepo(true));
+        assert_eq!(shared_utils.value_range, lsp::Range::new(lsp::Position::new(10, 15), lsp::Position::new(10, 19)));
     }
 
     #[test]

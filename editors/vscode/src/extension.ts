@@ -38,13 +38,15 @@ export function activate(context: vscode.ExtensionContext) {
 		// Register the server for WitcherScript documents
 		documentSelector: [
 			{ scheme: 'file', language: 'witcherscript' },
+			{ scheme: 'file', pattern: '**/*.w3edit' },
 			{ scheme: 'file', pattern: '**/witcherscript.toml' }
 		],
 		synchronize: {
-			// Notify the server about file changes to *.ws files contained in the workspace
+			// Notify the server about file changes to files we care about
 			fileEvents: [
 				vscode.workspace.createFileSystemWatcher('**/*.ws'),
-				vscode.workspace.createFileSystemWatcher('**/witcherscript.toml')
+				vscode.workspace.createFileSystemWatcher('**/witcherscript.toml', false, true),
+				vscode.workspace.createFileSystemWatcher('**/*.w3edit', false, true)
 			]
 		},
 		initializationOptions: initializationOptions

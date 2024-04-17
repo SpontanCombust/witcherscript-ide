@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use abs_path::AbsPath;
 use witcherscript::attribs::StructSpecifier;
 use crate::model::symbol_path::SymbolPath;
 use super::*;
@@ -7,6 +8,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct StructSymbol {
     path: BasicTypeSymbolPath,
+    decl_file_path: AbsPath,
     pub specifiers: HashSet<StructSpecifier>
 }
 
@@ -21,10 +23,16 @@ impl Symbol for StructSymbol {
 }
 
 impl StructSymbol {
-    pub fn new(path: BasicTypeSymbolPath) -> Self {
+    pub fn new(path: BasicTypeSymbolPath, decl_file_path: AbsPath) -> Self {
         Self {
             path,
+            decl_file_path,
             specifiers: HashSet::new()
         }
+    }
+
+
+    pub fn decl_file_path(&self) -> &AbsPath {
+        &self.decl_file_path
     }
 }

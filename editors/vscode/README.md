@@ -8,11 +8,15 @@ Provides support for Witcher 3's scripting language WitcherScript.
 - basic syntactical analysis
 - initializing or creating new script projects
 - importing and comparing scripts with their vanilla counterparts
+- support for REDKit projects
+
+**More coming soon!**
 
 
-## Documentation
+## Getting started and documentation
 
-To know more about this project and the capabilities on this extension head onto the [user manual](https://spontancombust.github.io/witcherscript-ide/user-manual).
+This extension requires a few initial steps in order to have access to everything that it has to offer.
+For this and more head onto the [user manual](https://spontancombust.github.io/witcherscript-ide/user-manual).
 
 
 ## Known Issues

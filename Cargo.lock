@@ -1290,6 +1290,7 @@ dependencies = [
 name = "witcherscript-analysis"
 version = "0.2.0"
 dependencies = [
+ "abs-path",
  "lsp-types",
  "shrinkwraprs",
  "thiserror",
@@ -1328,6 +1329,7 @@ dependencies = [
  "ropey",
  "semver",
  "serde",
+ "serde_json",
  "shrinkwraprs",
  "thiserror",
  "toml",

@@ -67,7 +67,12 @@ jobs:
         allowUpdates: true
         generateReleaseNotes: true
 
-    - name: Upload extension to the Marketplace
+    - name: Upload extension to VSCode Marketplace
       run: npx vsce publish --packagePath $(find . -iname *.vsix)
+      env:
+        VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+    - name: Upload extension to Open VSX Registry
+      run: npx ovsx publish --packagePath $(find . -iname *.vsix)
       env:
         VSCE_PAT: ${{ secrets.VSCE_PAT }}

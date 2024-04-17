@@ -1,22 +1,14 @@
 # Editor
 
-## Getting started
-
-1. Install the extension from the [marketplace](https://marketplace.visualstudio.com/items?itemName=SpontanCombust.witcherscript-ide) or grab a .vsix file for your OS from the [releases](https://github.com/SpontanCombust/witcherscript-ide/releases) page.
-2. Configure paths to existing vanilla and mod scripts by going to settings (File > Preferences > Settings). Start typeing "witcherscript" and look for "Game Directory" and "Content Repositories" settings.
-3. Open the command prompt using Ctrl + Shift + P and start typeing "witcherscript". Choose a command to create or initialize a WitcherScript project.
-
-<video controls muted>
-  <source src="../../assets/videos/getting-started.mp4" type="video/mp4">
-</video>
-
-
 ## Features
 
 - syntax highlighting
 - basic syntactical analysis
 - initializing or creating new script projects
 - importing and comparing scripts with their vanilla counterparts
+- support for REDKit projects
+
+**More coming soon!**
 
 
 ## Commands

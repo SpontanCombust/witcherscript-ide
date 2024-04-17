@@ -57,6 +57,14 @@ impl AbsPath {
         }
     }
 
+    pub fn parent(&self) -> Option<Self> {
+        if self.components().any(|c| matches!(c, Component::Normal(_))) {
+            Some(Self { inner: self.inner.parent().unwrap().to_path_buf() })
+        } else {
+            None
+        }
+    }
+
     pub fn to_uri(&self) -> lsp_types::Url {
         lsp_types::Url::from_file_path(self).unwrap()
     }
@@ -324,6 +332,31 @@ mod test {
             let p = Path::new(r"\\?\c:\i\hate\windows\paths");
             let abs = AbsPath::resolve(p, None).unwrap();
             assert_eq!(abs.inner, Path::new(r"C:\i\hate\windows\paths"));
+        }
+    }
+
+    #[test]
+    fn parent() {
+        if cfg!(windows) {
+            let p = AbsPath::resolve(r"C:\Windows\Users", None).unwrap();
+
+            let p = p.parent().unwrap();
+            assert_eq!(p.inner, Path::new(r"C:\Windows"));
+
+            let p = p.parent().unwrap();
+            assert_eq!(p.inner, Path::new(r"C:\"));
+
+            assert_eq!(p.parent(), None);
+        } else {
+            let p = AbsPath::resolve(r"/home/user", None).unwrap();
+
+            let p = p.parent().unwrap();
+            assert_eq!(p.inner, Path::new(r"/home"));
+
+            let p = p.parent().unwrap();
+            assert_eq!(p.inner, Path::new(r"/"));
+
+            assert_eq!(p.parent(), None);
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use witcherscript::attribs::MemberVarSpecifier;
-use crate::model::symbol_path::SymbolPath;
+use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::*;
 
 
@@ -62,8 +62,8 @@ impl LocalVarSymbol {
 
 #[derive(Debug, Clone)]
 pub struct GlobalVarSymbol {
-    path: SymbolPath,
-    type_path: SymbolPath
+    path: SymbolPathBuf,
+    type_path: BasicTypeSymbolPath
 }
 
 impl Symbol for GlobalVarSymbol {
@@ -78,14 +78,14 @@ impl Symbol for GlobalVarSymbol {
 
 impl GlobalVarSymbol {
     // there is a fixed amount of predefined globals, so a standard 'new' is not required
-    pub fn new(name: &str, type_path: SymbolPath) -> Self {
+    pub fn new(name: &str, type_path: BasicTypeSymbolPath) -> Self {
         Self {
-            path: SymbolPath::new(name, SymbolCategory::Data),
+            path: SymbolPathBuf::new(name, SymbolCategory::Data),
             type_path
         }
     }
 
-    pub fn type_path(&self) -> &SymbolPath {
+    pub fn type_path(&self) -> &SymbolPathBuf {
         &self.type_path
     }
 }

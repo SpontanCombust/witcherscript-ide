@@ -1,5 +1,5 @@
 use std::{collections::HashMap, borrow::Borrow, hash::Hash};
-use crate::model::{symbols::*, symbol_path::SymbolPath};
+use crate::model::{symbols::*, symbol_path::SymbolPathBuf};
 
 
 // All of this just to not have to allocate String on every map lookup and to not use lifetime annotations on the type
@@ -76,14 +76,14 @@ impl Hash for (dyn AsBorrowedKey + '_) {
 
 #[derive(Debug, Clone)]
 pub struct SymbolPointer {
-    /// Symbol Uuid
-    pub path: SymbolPath,
+    /// Symbol path
+    pub path: SymbolPathBuf,
     /// Type of the symbol
     pub typ: SymbolType,
 }
 
 impl SymbolPointer {
-    pub fn new(path: SymbolPath, typ: SymbolType) -> Self {
+    pub fn new(path: SymbolPathBuf, typ: SymbolType) -> Self {
         Self {
             path, typ
         }
@@ -149,15 +149,15 @@ impl SymbolContext {
     pub fn insert(&mut self, sym: &impl Symbol) {
         self.stack.last_mut().unwrap().insert(
             Key::new(sym.name().to_string(), sym.typ().category()), 
-            SymbolPointer::new(sym.path().clone(), sym.typ())
+            SymbolPointer::new(sym.path().to_sympath_buf(), sym.typ())
         );
     }
 
     /// Inserts a name alias for a symbol. Used for primitive type aliases.
-    pub fn insert_alias(&mut self, sym: &impl Symbol, alias: SymbolPath) {
+    pub fn insert_alias(&mut self, sym: &impl Symbol, alias: SymbolPathBuf) {
         self.stack.last_mut().unwrap().insert(
             Key::new(alias.to_string(), sym.typ().category()), 
-            SymbolPointer::new(sym.path().clone(), sym.typ())
+            SymbolPointer::new(sym.path().to_sympath_buf(), sym.typ())
         );
     }
 }

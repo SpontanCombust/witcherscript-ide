@@ -1,5 +1,5 @@
 use abs_path::AbsPath;
-use crate::{content::{try_make_content, ContentScanError, ProjectDirectory}, Content, FileError};
+use crate::{content::{try_make_content, ContentScanError, ProjectDirectory, RedkitProjectDirectory}, Content, FileError};
 
 
 #[derive(Debug, Clone)]
@@ -43,15 +43,22 @@ impl ContentScanner {
     pub fn scan(&self) -> (Vec<Box<dyn Content>>, Vec<ContentScanError>) {
         let mut contents = Vec::new();
         let mut errors = Vec::new();
-
-        if let Ok(content) = try_make_content(&self.scan_root) {
-            contents.push(content);
-        } else {
-            self.find_content_in_directory(&self.scan_root, &mut contents, &mut errors);
+        
+        match try_make_content(&self.scan_root) {
+            Ok(content) => {
+                contents.push(content)
+            },
+            Err(err) => {
+                if matches!(err, ContentScanError::NotContent) {
+                    self.find_content_in_directory(&self.scan_root, &mut contents, &mut errors);
+                } else {
+                    errors.push(err);
+                }
+            },
         }
 
         if self.only_projects {
-            contents.retain(|c| c.as_any().is::<ProjectDirectory>());
+            contents.retain(|c| c.as_any().is::<ProjectDirectory>() || c.as_any().is::<RedkitProjectDirectory>());
         }
 
         (contents, errors)
@@ -122,10 +129,11 @@ mod test {
         let (contents, errors) = scanner.scan();
 
         assert!(errors.is_empty());
-        assert_eq!(contents.len(), 3);
+        assert_eq!(contents.len(), 4);
         assert!(contents.iter().any(|c| c.path() == &scan_dir.join("proj1").unwrap()));
         assert!(contents.iter().any(|c| c.path() == &scan_dir.join("proj2").unwrap()));
         assert!(contents.iter().any(|c| c.path() == &scan_dir.join("raw1").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &scan_dir.join("redkit").unwrap()));
     }
 
     #[test]
@@ -138,9 +146,10 @@ mod test {
         let (contents, errors) = scanner.scan();
 
         assert!(errors.is_empty());
-        assert_eq!(contents.len(), 3);
+        assert_eq!(contents.len(), 4);
         assert!(contents.iter().any(|c| c.path() == &scan_dir.join("proj1").unwrap()));
         assert!(contents.iter().any(|c| c.path() == &scan_dir.join("proj2").unwrap()));
         assert!(contents.iter().any(|c| c.path() == &scan_dir.join("nested/proj3").unwrap()));
+        assert!(contents.iter().any(|c| c.path() == &scan_dir.join("redkit").unwrap()));
     }
 }

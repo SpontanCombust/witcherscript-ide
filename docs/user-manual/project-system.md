@@ -2,7 +2,12 @@
 
 The game during script compilation needs to think only about assembling one big blob of code that will be then compiled. Places where it looks for said code are predefined and limited. Aside from the testing stage, developing a script mod often means working in a completely unrelated workspace directory, which can additionally be stored remotely using a version control system like Git. WitcherScript IDE bridges the gap between those workspaces and scripts in the game directory by introducing a project system.
 
-Projects organize WitcherScript code into seperable packages which can depend on other packages in the form of other [projects](#project) or raw [content directories](#content-directory).
+Projects organize WitcherScript code into seperable packages which can link with each other.
+Recognized content structures are:
+
+ - [`witcherscript.toml` projects](#project)
+ - [Redkit projects](#redkit-project)
+ - [raw content directories](#raw-content-directory)
 
 
 ## Project
@@ -105,9 +110,17 @@ Note that you do not have to create a manifest or even an entire project by hand
 
 
 
-## Content directory
+## REDKit project
 
-"Content" is the term by which the IDE refers to directories containing packaged game files, among which are scripts residing in *"scripts"* directory.
+WitcherScript IDE is able to detect projects created using the REDKit modding tool. These projects contain a `.w3edit`, which acts as a solution file for the whole project.
+Working with REDKit projects still requires to set the path to the game in extension's settings.
+
+REDKit project naturally can't use any scripts that are not part of it or the vanilla game (*content0*). If you want to use other mods as dependencies for the project consider creating a `witcherscript.toml` manifest and filling the `[dependencies]` table instead.
+
+
+## Raw content directory
+
+"Raw content" is the term by which the IDE refers to directories containing game files, among which are scripts residing in *"scripts"* directory.
 Examples of such directories in Witcher&nbsp;3's game directory include *"content0"*, which contains all vanilla scripts, and any mods in the *"Mods"* directory that contain WitcherScript.
 
 Recognized folder patterns are:

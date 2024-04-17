@@ -129,7 +129,7 @@ async function initializeProjectInDirectory(projectDirUri: vscode.Uri, projectNa
         return;
     }
 
-    if (vscode.workspace.workspaceFolders?.some(wf => manifestUri.fsPath.startsWith(wf.uri.fsPath))) {
+    if (vscode.workspace.workspaceFolders?.some(wf => isSubpathOf(manifestUri.fsPath, wf.uri.fsPath))) {
         const showOptions: vscode.TextDocumentShowOptions = {
             preview: false
         };
@@ -324,6 +324,7 @@ function commandImportVanillaScripts(): Cmd {
                 const content0ScriptPath = content0ScriptUri.fsPath;
                 const relativePath = path.relative(content0ScriptsRootPath, content0ScriptPath);
                 const projectScriptPath = path.join(projectScriptsRootPath, relativePath);
+                const projectScriptUri = vscode.Uri.file(projectScriptPath);
 
                 let fileAlreadyExists = true;
                 try {
@@ -341,6 +342,7 @@ function commandImportVanillaScripts(): Cmd {
                         // make sure that all the intermediary path components exist
                         await fs.mkdir(projectScriptDir, { recursive: true });
                         await fs.copyFile(content0ScriptPath, projectScriptPath);
+                        await vscode.window.showTextDocument(projectScriptUri, { preview: false });
                         client.info(`Successfully imported ${relativePath} into the project`);
                     } catch (err) {
                         client.error(`Failed to import script ${relativePath}: ${err}`);
@@ -506,4 +508,14 @@ class ContentQuickPickItem implements vscode.QuickPickItem {
         this.alwaysShow = true;
         this.buttons = undefined;
     }
+}
+
+
+function isSubpathOf(dir: string, parent: string): boolean {
+    if (dir === parent) return false;
+
+    let parentComps = parent.split(path.sep).filter(i => i.length);
+    let dirComps = dir.split(path.sep).filter(i => i.length);
+
+    return parentComps.every((comp, i) => dirComps[i] === comp);
 }

@@ -8,13 +8,13 @@ nav:
   - 'Home': 'index.md'
   - 'User Manual':
     - 'user-manual/index.md'
+    - 'Getting Started': 'user-manual/getting-started.md'
     - 'Editor': 'user-manual/editor.md'
     - 'Project System': 'user-manual/project-system.md' 
     - 'Changelog': 'user-manual/changelog.md'
   - 'Developer Manual': 'dev-manual.md'
   - 'About':
     - 'about/index.md'
-    - 'Copyright': 'about/copyright.md'
 
 theme:
   name: material

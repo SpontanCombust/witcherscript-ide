@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use tokio::time::Instant;
 use abs_path::AbsPath;
-use witcherscript_project::content::{ContentScanError, ProjectDirectory};
+use witcherscript_project::content::{ContentScanError, ProjectDirectory, RedkitProjectDirectory};
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{ContentGraph, ContentScanner, FileError};
 use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphEdgeWithContent, GraphNode};
@@ -38,12 +38,12 @@ impl Backend {
             repo_paths.push(config.game_directory.join("Mods"));
         }
 
+        content_graph.clear_repository_scanners();
+
         if repo_paths.is_empty() {
             self.reporter.show_warning_notification("No WitcherScript content repository paths have have been configured").await;
             return;
         }
-
-        content_graph.clear_repository_scanners();
 
         for repo in repo_paths {
             if !repo.as_os_str().is_empty() {
@@ -89,7 +89,7 @@ impl Backend {
         self.run_script_analysis_for_all().await;
     }
 
-    pub async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {
+    async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {
         let (added_node_count, removed_node_count) = (diff.added_nodes.len(), diff.removed_nodes.len());
         self.reporter.log_info(format!("Changes to the content graph: {} content(s) discovered, {} to be deprecated", added_node_count, removed_node_count)).await;
 
@@ -152,9 +152,13 @@ impl Backend {
                     modified: vec![]
                 });
             }
-
-            if let Some(project) = removed_content.as_any().downcast_ref::<ProjectDirectory>() {
-                self.reporter.purge_diagnostics(project.manifest_path());
+            
+            if !removed_content_path.exists() || !removed_node.in_workspace {
+                if let Some(project) = removed_content.as_any().downcast_ref::<ProjectDirectory>() {
+                    self.reporter.purge_diagnostics(project.manifest_path());
+                } else if let Some(redkit_proj) = removed_content.as_any().downcast_ref::<RedkitProjectDirectory>() {
+                    self.reporter.purge_diagnostics(redkit_proj.manifest_path());
+                }
             }
         }
 
@@ -192,6 +196,9 @@ impl Backend {
             ContentScanError::ManifestParse(err) => {
                 self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
             },
+            ContentScanError::RedkitManifestRead(err) => {
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
+            },
             ContentScanError::NotContent => {},
         }
     }
@@ -202,7 +209,10 @@ impl Backend {
             ContentGraphError::Io(err) => {
                 self.reporter.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
             },
-            ContentGraphError::ManifestParse(err) => {
+            ContentGraphError::ManifestRead(err) => {
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
+            },
+            ContentGraphError::RedkitManifestRead(err) => {
                 self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
             },
             ContentGraphError::DependencyPathNotFound { content_path: _, manifest_path, manifest_range } => {
