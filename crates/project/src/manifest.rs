@@ -34,7 +34,7 @@ pub struct Content {
 
 /// A list of dependency entries
 #[derive(Debug, Clone, Shrinkwrap, PartialEq, Eq)]
-pub struct Dependencies(pub Vec<DependencyEntry>);
+pub struct Dependencies(Vec<DependencyEntry>);
 
 // Dependency item as a key-value pair of dependency name and dependency source specifier
 #[derive(Debug, Clone, PartialEq, Eq)]
