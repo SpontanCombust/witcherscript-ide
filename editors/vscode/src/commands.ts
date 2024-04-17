@@ -324,6 +324,7 @@ function commandImportVanillaScripts(): Cmd {
                 const content0ScriptPath = content0ScriptUri.fsPath;
                 const relativePath = path.relative(content0ScriptsRootPath, content0ScriptPath);
                 const projectScriptPath = path.join(projectScriptsRootPath, relativePath);
+                const projectScriptUri = vscode.Uri.file(projectScriptPath);
 
                 let fileAlreadyExists = true;
                 try {
@@ -341,6 +342,7 @@ function commandImportVanillaScripts(): Cmd {
                         // make sure that all the intermediary path components exist
                         await fs.mkdir(projectScriptDir, { recursive: true });
                         await fs.copyFile(content0ScriptPath, projectScriptPath);
+                        await vscode.window.showTextDocument(projectScriptUri, { preview: false });
                         client.info(`Successfully imported ${relativePath} into the project`);
                     } catch (err) {
                         client.error(`Failed to import script ${relativePath}: ${err}`);
