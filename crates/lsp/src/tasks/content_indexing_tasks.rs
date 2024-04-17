@@ -209,7 +209,7 @@ impl Backend {
             ContentGraphError::Io(err) => {
                 self.reporter.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
             },
-            ContentGraphError::ManifestParse(err) => {
+            ContentGraphError::ManifestRead(err) => {
                 self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
             },
             ContentGraphError::RedkitManifestRead(err) => {

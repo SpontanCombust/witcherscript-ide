@@ -5,8 +5,7 @@ use thiserror::Error;
 use lsp_types as lsp;
 use abs_path::AbsPath;
 use crate::content::{try_make_content, ContentScanError, ProjectDirectory, RedkitProjectDirectory};
-use crate::{redkit, Content, ContentScanner, FileError};
-use crate::manifest::{DependencyValue, ManifestParseError};
+use crate::{manifest, redkit, Content, ContentScanner, FileError};
 
 
 #[derive(Debug, Clone, Error)]
@@ -14,7 +13,7 @@ pub enum ContentGraphError {
     #[error(transparent)]
     Io(#[from] FileError<std::io::Error>),
     #[error(transparent)]
-    ManifestParse(#[from] FileError<ManifestParseError>), //TODO rename to ManifestRead
+    ManifestRead(#[from] FileError<manifest::Error>),
     #[error(transparent)]
     RedkitManifestRead(#[from] FileError<redkit::manifest::Error>),
     #[error("project dependency at path \"{}\" could not be found", .content_path.display())]
@@ -225,7 +224,7 @@ impl ContentGraph {
                         self.errors.push(ContentGraphError::Io(err));
                     },
                     ContentScanError::ManifestParse(err) => {
-                        self.errors.push(ContentGraphError::ManifestParse(err))
+                        self.errors.push(ContentGraphError::ManifestRead(err))
                     },
                     ContentScanError::RedkitManifestRead(err) => {
                         self.errors.push(ContentGraphError::RedkitManifestRead(err))
@@ -258,7 +257,7 @@ impl ContentGraph {
                         self.errors.push(ContentGraphError::Io(err));
                     },
                     ContentScanError::ManifestParse(err) => {
-                        self.errors.push(ContentGraphError::ManifestParse(err))
+                        self.errors.push(ContentGraphError::ManifestRead(err))
                     },
                     ContentScanError::RedkitManifestRead(err) => {
                         self.errors.push(ContentGraphError::RedkitManifestRead(err))
@@ -299,12 +298,12 @@ impl ContentGraph {
         if let Some(proj) = content.as_any().downcast_ref::<ProjectDirectory>() {
             for entry in proj.manifest().dependencies.iter() {
                 match &entry.value {
-                    DependencyValue::FromRepo(active) => {
+                    manifest::DependencyValue::FromRepo(active) => {
                         if *active {
                             self.link_dependencies_value_from_repo(node_idx, repo_nodes, proj.manifest_path(), &entry.name, &entry.name_range);
                         }
                     },
-                    DependencyValue::FromPath { path } => {
+                    manifest::DependencyValue::FromPath { path } => {
                         self.link_dependencies_value_from_path(node_idx, repo_nodes, proj.manifest_path(), &entry.name, &entry.name_range, path, &entry.value_range);
                     },
                 }
@@ -444,7 +443,7 @@ impl ContentGraph {
                             self.errors.push(ContentGraphError::Io(err));
                         },
                         ContentScanError::ManifestParse(err) => {
-                            self.errors.push(ContentGraphError::ManifestParse(err));
+                            self.errors.push(ContentGraphError::ManifestRead(err));
                         },
                         ContentScanError::RedkitManifestRead(err) => {
                             self.errors.push(ContentGraphError::RedkitManifestRead(err))

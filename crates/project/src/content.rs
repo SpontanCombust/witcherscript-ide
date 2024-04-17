@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use abs_path::AbsPath;
 use thiserror::Error;
 
-use crate::manifest::{Manifest, ManifestParseError};
+use crate::manifest::{self, Manifest};
 use crate::source_tree::SourceTree;
 use crate::{redkit, FileError};
 
@@ -223,7 +223,7 @@ pub enum ContentScanError {
     #[error(transparent)]
     Io(#[from] FileError<std::io::Error>),
     #[error(transparent)]
-    ManifestParse(#[from] FileError<ManifestParseError>), //todo rename to ManifestRead
+    ManifestParse(#[from] FileError<manifest::Error>), //todo rename to ManifestRead
     #[error(transparent)]
     RedkitManifestRead(#[from] FileError<redkit::manifest::Error>),
     #[error("this is not content directory")]

@@ -61,7 +61,7 @@ pub enum DependencyValue {
 impl Manifest {
     pub const FILE_NAME: &'static str = "witcherscript.toml";
 
-    pub fn from_file(path: &AbsPath) -> Result<Self, ManifestParseError> {
+    pub fn from_file(path: &AbsPath) -> Result<Self, Error> {
         let mut f = File::open(path).map_err(|err| Arc::new(err))?;
 
         let mut buff = String::new();
@@ -82,14 +82,14 @@ impl Manifest {
 }
 
 impl FromStr for Manifest {
-    type Err = ManifestParseError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let rope = Rope::from_str(s);
         let raw: Result<raw::Manifest, toml::de::Error> = toml::from_str(s);
 
         if let Err(err) = raw {
-            return Err(ManifestParseError::Toml {
+            return Err(Error::Toml {
                 range: lsp::Range::from_raw(err.span().unwrap_or_default(), &rope),
                 msg: err.to_string()
             });
@@ -99,7 +99,7 @@ impl FromStr for Manifest {
 
         // validate content name
         if !Self::validate_content_name(&manifest.content.name) {
-            return Err(ManifestParseError::InvalidNameField {
+            return Err(Error::InvalidNameField {
                 range: manifest.content.name_range.clone()
             })
         }
@@ -109,7 +109,7 @@ impl FromStr for Manifest {
 }
 
 #[derive(Debug, Clone, Error)]
-pub enum ManifestParseError { //TODO rename to just Error
+pub enum Error {
     #[error("file access error: {}", .0)]
     Io(#[from] Arc<io::Error>),
     #[error("TOML file parsing error: {msg}")]
