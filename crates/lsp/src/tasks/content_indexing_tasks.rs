@@ -38,12 +38,12 @@ impl Backend {
             repo_paths.push(config.game_directory.join("Mods"));
         }
 
+        content_graph.clear_repository_scanners();
+
         if repo_paths.is_empty() {
             self.reporter.show_warning_notification("No WitcherScript content repository paths have have been configured").await;
             return;
         }
-
-        content_graph.clear_repository_scanners();
 
         for repo in repo_paths {
             if !repo.as_os_str().is_empty() {
