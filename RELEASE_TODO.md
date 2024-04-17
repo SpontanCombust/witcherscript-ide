@@ -5,18 +5,19 @@ Just a list of all the tasks that are to be done before the release, so I don't 
 1. Check TODOs
 2. Update extension README
 3. Update documentation
+4. Update changelog
 
-4. Verify Linux version
-5. Verify README in extensions tab
+5. Verify Linux version
+6. Verify README in extensions tab
 
-6. Merge to master
+7. Merge to master
 
-7. Verify the website
-8. Verify documentation/site links
+8. Verify the website
+9. Verify documentation/site links
 
-9.  Bump version in `Cargo.toml`
-10. Bump version in client `package.json`
-11. Create a version tag and the release 
+10. Bump version in `Cargo.toml`
+11. Bump version in client `package.json`
+12. Create a version tag and the release 
 
-12. Verify Marketplace
-13. Move tasks on the board to `Shipped`
+13. Verify Marketplace
+14. Move tasks on the board to `Shipped`

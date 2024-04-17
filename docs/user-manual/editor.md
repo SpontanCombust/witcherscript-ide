@@ -6,6 +6,7 @@
 - basic syntactical analysis
 - initializing or creating new script projects
 - importing and comparing scripts with their vanilla counterparts
+- support for REDKit projects
 
 **More coming soon!**
 
