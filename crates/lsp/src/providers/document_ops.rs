@@ -34,6 +34,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
 
 pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentParams) {
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
+    let mut should_notify = false;
     if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
         let script_state = entry.value_mut();
 
@@ -47,9 +48,13 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
 
         script_state.modified_timestamp = FileTime::now();
 
+        should_notify = true;
+    } 
+
+    if should_notify {
         backend.on_scripts_modified([doc_path.clone()], true).await;
         backend.reporter.commit_diagnostics(&doc_path).await;
-    } 
+    }
 }
 
 // Not all circumstances can be easily handled or even detected.
