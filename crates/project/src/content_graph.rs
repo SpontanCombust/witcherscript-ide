@@ -159,6 +159,7 @@ impl ContentGraph {
 
 
     /// Iterate over direct dependencies of specified content
+    /// Iterator will be empty when either the specified content doesn't exist or it has no dependencies.
     pub fn direct_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependencies).collect();
@@ -169,6 +170,7 @@ impl ContentGraph {
     }
 
     /// Iterate over direct dependants of specified content
+    /// Iterator will be empty when either the specified content doesn't exist or it has no dependants.
     pub fn direct_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependants).collect();
@@ -180,7 +182,7 @@ impl ContentGraph {
 
 
     /// Iterate over all content nodes that are direct or indirect dependencies to the specified content.
-    /// Iterator always starts with the specified content if it exists in the graph.
+    /// Iterator will be empty when either the specified content doesn't exist or it has no dependencies.
     pub fn walk_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependencies);
@@ -191,7 +193,7 @@ impl ContentGraph {
     }
 
     /// Iterate over all content nodes that are direct or indirect dependants of the specified content.
-    /// Iterator always starts with the specified content if it exists in the graph.
+    /// Iterator will be empty when either the specified content doesn't exist or it has no dependants.
     pub fn walk_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependants);
@@ -527,12 +529,13 @@ impl ContentGraph {
             })
     }
 
-    //TODO change it to not include the starting node
-    /// Get a vec of all node indices related to the given node in a given direction. The starting node is included in the vec.
+    /// Get a vec of all node indices related to the given node in a given direction
     fn relatives_indices_in_direction(&self, starting_idx: usize, direction: GraphEdgeDirection) -> Vec<usize> {
         let mut indices = Vec::with_capacity(self.nodes.capacity());
 
-        indices.push(starting_idx);
+        for neighbour in self.neighbour_indices_in_direction(starting_idx, direction) {
+            indices.push(neighbour);
+        }
 
         let mut i = 0;
         while i < indices.len() {
@@ -797,72 +800,57 @@ mod test {
 
 
         let mut it = graph.walk_dependencies(&test_assets().join("dir1/proj1").unwrap());
-        // `walk` iterators always start from the parameter content
-        it.next();
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/raw0").unwrap());
 
         let mut it = graph.walk_dependencies(&test_assets().join("dir1/proj2").unwrap());
-        it.next();
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/raw0").unwrap());
 
-        let mut it = graph.walk_dependencies(&test_assets().join("dir1/nested/proj3").unwrap());
-        it.next();
+        let it = graph.walk_dependencies(&test_assets().join("dir1/nested/proj3").unwrap());
         assert_eq!(it.clone().count(), 3);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/raw2").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/raw0").unwrap()));
 
-        let mut it = graph.walk_dependencies(&test_assets().join("dir1/nested/raw2").unwrap());
-        it.next();
+        let it = graph.walk_dependencies(&test_assets().join("dir1/nested/raw2").unwrap());
         assert_eq!(it.count(), 0);
 
-        let mut it = graph.walk_dependencies(&test_assets().join("dir1/redkit").unwrap());
-        it.next();
+        let it = graph.walk_dependencies(&test_assets().join("dir1/redkit").unwrap());
         assert_eq!(it.clone().count(), 1);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
 
-        let mut it = graph.direct_dependencies(&test_assets().join("dir2/raw0").unwrap());
-        it.next();
+        let it = graph.direct_dependencies(&test_assets().join("dir2/raw0").unwrap());
         assert_eq!(it.count(), 0);
 
-        let mut it = graph.direct_dependencies(&test_assets().join("dir2/content0").unwrap());
-        it.next();
+        let it = graph.direct_dependencies(&test_assets().join("dir2/content0").unwrap());
         assert_eq!(it.count(), 0);
 
 
-        let mut it = graph.walk_dependants(&test_assets().join("dir1/proj1").unwrap());
-        it.next();
+        let it = graph.walk_dependants(&test_assets().join("dir1/proj1").unwrap());
         assert_eq!(it.count(), 0);
 
         let mut it = graph.walk_dependants(&test_assets().join("dir1/proj2").unwrap());
-        it.next();
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/proj3").unwrap());
 
-        let mut it = graph.walk_dependants(&test_assets().join("dir1/nested/proj3").unwrap());
-        it.next();
+        let it = graph.walk_dependants(&test_assets().join("dir1/nested/proj3").unwrap());
         assert_eq!(it.count(), 0);
 
         let mut it = graph.walk_dependants(&test_assets().join("dir1/nested/raw2").unwrap());
-        it.next();
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/proj3").unwrap());
 
-        let mut it = graph.walk_dependants(&test_assets().join("dir1/redkit").unwrap());
-        it.next();
+        let it = graph.walk_dependants(&test_assets().join("dir1/redkit").unwrap());
         assert_eq!(it.count(), 0);
 
-        let mut it = graph.walk_dependants(&test_assets().join("dir2/raw0").unwrap());
-        it.next();
+        let it = graph.walk_dependants(&test_assets().join("dir2/raw0").unwrap());
         assert_eq!(it.clone().count(), 3);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj1").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/proj3").unwrap()));
 
-        let mut it = graph.walk_dependants(&test_assets().join("dir2/content0").unwrap());
-        it.next();
+        let it = graph.walk_dependants(&test_assets().join("dir2/content0").unwrap());
         assert_eq!(it.clone().count(), 1);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap()));
     }
