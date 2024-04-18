@@ -108,16 +108,21 @@ impl SyntaxErrorVisitor<'_> {
 }
 
 impl StatementVisitor for SyntaxErrorVisitor<'_> {
-    fn visit_root(&mut self, n: &RootNode) -> bool {
-        if n.has_errors() {
+    fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy {
+        let traverse = if n.has_errors() {
             self.check_errors(n);
             true
         } else {
             false
+        };
+
+        RootTraversalPolicy { 
+            traverse 
         }
     }
 
-    fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> bool {
+    fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
+        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
     
@@ -131,14 +136,17 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             let def = n.definition();
             if def.has_errors() {
                 self.check_errors(&def);
-                return true;
+                traverse_definition = true;
             }
         }
 
-        false
+        ClassDeclarationTraversalPolicy { 
+            traverse_definition 
+        }
     }
 
-    fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> bool {
+    fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> StateDeclarationTraversalPolicy {
+        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
     
@@ -153,14 +161,17 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             let def = n.definition();
             if def.has_errors() {
                 self.check_errors(&def);
-                return true;
+                traverse_definition = true;
             }
         }
 
-        false
+        StateDeclarationTraversalPolicy { 
+            traverse_definition 
+        }
     }
 
-    fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
+    fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> StructDeclarationTraversalPolicy {
+        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
     
@@ -169,14 +180,17 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             let def = n.definition();
             if def.has_errors() {
                 self.check_errors(&def);
-                return true;
+                traverse_definition = true;
             }
         }
 
-        false
+        StructDeclarationTraversalPolicy { 
+            traverse_definition: false 
+        }
     }
 
-    fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> bool {
+    fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> EnumDeclarationTraversalPolicy {
+        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
     
@@ -185,11 +199,13 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             let def = n.definition();
             if def.has_errors() {
                 self.check_errors(&def);
-                return true;
+                traverse_definition = true;
             }
         }
 
-        false
+        EnumDeclarationTraversalPolicy { 
+            traverse_definition
+        }
     }
 
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
@@ -252,7 +268,9 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> (bool, bool) {
+    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+        let mut traverse_params = false;
+        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
             n.return_type().map(|n| self.check_type_annot(&n));
@@ -260,20 +278,23 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             self.check_errors(n);
         
             let params = n.params();
-            let errors_in_params = params.has_errors();
-            if errors_in_params {
+            if params.has_errors() {
                 self.check_errors(&params);
+                traverse_params = true;
             }
 
-            let errors_in_def = !self.check_function_def(&n.definition());
-
-            return (errors_in_params, errors_in_def);
+            traverse_definition = !self.check_function_def(&n.definition());
         }
 
-        (false, false)
+        GlobalFunctionDeclarationTraversalPolicy { 
+            traverse_params, 
+            traverse_definition 
+        }
     }
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> (bool ,bool) {
+    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> MemberFunctionDeclarationTraversalPolicy {
+        let mut traverse_params = false;
+        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
     
@@ -284,20 +305,23 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             self.check_errors(n);
     
             let params = n.params();
-            let errors_in_params = params.has_errors();
-            if errors_in_params {
+            if params.has_errors() {
                 self.check_errors(&params);
+                traverse_params = true;
             }
 
-            let errors_in_def = !self.check_function_def(&n.definition());
-
-            return (errors_in_params, errors_in_def);
+            traverse_definition = !self.check_function_def(&n.definition());
         }
         
-        (false, false)
+        return MemberFunctionDeclarationTraversalPolicy { 
+            traverse_params, 
+            traverse_definition 
+        }
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> (bool ,bool) {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> EventDeclarationTraversalPolicy {
+        let mut traverse_params = false;
+        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
 
@@ -308,27 +332,30 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             self.check_errors(n);
 
             let params = n.params();
-            let errors_in_params = params.has_errors();
-            if errors_in_params {
+            if params.has_errors() {
                 self.check_errors(&params);
+                traverse_params = true;
             }
 
-            let errors_in_def = !self.check_function_def(&n.definition());
-
-            return (errors_in_params, errors_in_def);
+            traverse_definition = !self.check_function_def(&n.definition());
         }
         
-        (false, false)
+        EventDeclarationTraversalPolicy { 
+            traverse_params, 
+            traverse_definition 
+        }
     }
 
-    fn visit_block_stmt(&mut self, n: &FunctionBlockNode) -> bool {
+    fn visit_block_stmt(&mut self, n: &FunctionBlockNode) -> FunctionBlockTraversalPolicy {
+        let mut traverse = false;
         if n.has_errors() {
             self.check_errors(n);
-            
-            return true;
+            traverse = true;
         }
 
-        false
+        FunctionBlockTraversalPolicy { 
+            traverse 
+        }
     }
 
     fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode) {
@@ -384,7 +411,8 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_for_stmt(&mut self, n: &ForLoopNode) -> bool {
+    fn visit_for_stmt(&mut self, n: &ForLoopNode) -> ForLoopTraversalPolicy {
+        let mut traverse_body = false;
         if n.has_errors() {
             if let Some(init) = n.init() {
                 init.accept(self);
@@ -398,13 +426,16 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
             self.check_errors(n);
     
-            return !self.check_function_stmt(&n.body());
+            traverse_body = !self.check_function_stmt(&n.body());
         }
 
-        false
+        ForLoopTraversalPolicy { 
+            traverse_body 
+        }
     }
 
-    fn visit_while_stmt(&mut self, n: &WhileLoopNode) -> bool {
+    fn visit_while_stmt(&mut self, n: &WhileLoopNode) -> WhileLoopTraversalPolicy {
+        let mut traverse_body = false;
         if n.has_errors() {
             let cond = n.cond();
             if !self.check_expression(&cond) {
@@ -413,13 +444,16 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     
             self.check_errors(n);
     
-            return !self.check_function_stmt(&n.body());
+            traverse_body = !self.check_function_stmt(&n.body());
         }
 
-        false
+        WhileLoopTraversalPolicy { 
+            traverse_body 
+        }
     }
 
-    fn visit_do_while_stmt(&mut self, n: &DoWhileLoopNode) -> bool {
+    fn visit_do_while_stmt(&mut self, n: &DoWhileLoopNode) -> DoWhileLoopTraversalPolicy {
+        let mut traverse_body = false;
         if n.has_errors() {
             let cond = n.cond();
             if !self.check_expression(&cond) {
@@ -428,13 +462,17 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     
             self.check_errors(n);
     
-            return !self.check_function_stmt(&n.body());
+            traverse_body = !self.check_function_stmt(&n.body());
         }
 
-        false
+        DoWhileLoopTraversalPolicy { 
+            traverse_body 
+        }
     }
 
-    fn visit_if_stmt(&mut self, n: &IfConditionalNode) -> bool {
+    fn visit_if_stmt(&mut self, n: &IfConditionalNode) -> IfConditionalTraversalPolicy {
+        let mut traverse_body = false;
+        let mut traverse_else_body = false;
         if n.has_errors() {
             let cond = n.cond();
             if !self.check_expression(&cond) {
@@ -443,15 +481,18 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     
             self.check_errors(n);
             
-    
-            return !self.check_function_stmt(&n.body())
-                || n.else_body().map(|n| !self.check_function_stmt(&n)).unwrap_or(false)
+            traverse_body = !self.check_function_stmt(&n.body());
+            traverse_else_body = n.else_body().map(|n| !self.check_function_stmt(&n)).unwrap_or(false);
         }
 
-        false
+        IfConditionalTraversalPolicy { 
+            traverse_body, 
+            traverse_else_body
+        }
     }
 
-    fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode) -> bool {
+    fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode) -> SwitchConditionalTraversalPolicy {
+        let mut traverse_body = false;
         if n.has_errors() {
             let cond = n.cond();
             if !self.check_expression(&cond) {
@@ -463,11 +504,13 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             let body = n.body();
             if body.has_errors() {
                 self.check_errors(&body);
-                return true;
+                traverse_body = true;
             }
         }
 
-        false
+        SwitchConditionalTraversalPolicy { 
+            traverse_body 
+        }
     }
 
     fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) {
@@ -487,13 +530,16 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode) -> bool {
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode) -> MemberDefaultsBlockTraversalPolicy {
+        let mut traverse = false;
         if n.has_errors() {
             self.check_errors(n);
-            return true;
+            traverse = true;
         }
 
-        false
+        MemberDefaultsBlockTraversalPolicy { 
+            traverse 
+        }
     }
 
     fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) {
@@ -511,99 +557,137 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 }
 
 impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
-    fn visit_array_expr(&mut self, n: &ArrayExpressionNode) -> (bool, bool) {
-        let trav_accessor = !self.check_expression(&n.accessor());
-        let trav_index = !self.check_expression(&n.index());
+    fn visit_array_expr(&mut self, n: &ArrayExpressionNode) -> ArrayExpressionTraversalPolicy {
+        let traverse_accessor = !self.check_expression(&n.accessor());
+        let traverse_index = !self.check_expression(&n.index());
 
         self.check_errors(n);
-        (trav_accessor, trav_index)
+
+        ArrayExpressionTraversalPolicy {
+            traverse_accessor,
+            traverse_index
+        }
     }
 
-    fn visit_assign_op_expr(&mut self, n: &AssignmentOperationExpressionNode) -> (bool, bool) {
-        let trav_left = !self.check_expression(&n.left());
-        let trav_right = !self.check_expression(&n.right());
+    fn visit_assign_op_expr(&mut self, n: &AssignmentOperationExpressionNode) -> AssignmentOperationExpressionTraversalPolicy {
+        let traverse_left = !self.check_expression(&n.left());
+        let traverse_right = !self.check_expression(&n.right());
 
         self.check_errors(n);
-        (trav_left, trav_right)
+
+        AssignmentOperationExpressionTraversalPolicy {
+            traverse_left,
+            traverse_right
+        }
     }
 
-    fn visit_binary_op_expr(&mut self, n: &BinaryOperationExpressionNode) -> (bool, bool) {
-        let trav_left = !self.check_expression(&n.left());
-        let trav_right = !self.check_expression(&n.right());
+    fn visit_binary_op_expr(&mut self, n: &BinaryOperationExpressionNode) -> BinaryOperationExpressionTraversalPolicy {
+        let traverse_left = !self.check_expression(&n.left());
+        let traverse_right = !self.check_expression(&n.right());
 
         self.check_errors(n);
-        (trav_left, trav_right)
+
+        BinaryOperationExpressionTraversalPolicy { 
+            traverse_left, 
+            traverse_right 
+        }
     }
 
-    fn visit_unary_op_expr(&mut self, n: &UnaryOperationExpressionNode) -> bool {
-        let trav_right = !self.check_expression(&n.right());
+    fn visit_unary_op_expr(&mut self, n: &UnaryOperationExpressionNode) -> UnaryOperationExpressionTraversalPolicy {
+        let traverse_right = !self.check_expression(&n.right());
 
         self.check_errors(n);
-        trav_right
+
+        UnaryOperationExpressionTraversalPolicy { 
+            traverse_right 
+        }
     }
 
-    fn visit_func_call_expr(&mut self, n: &FunctionCallExpressionNode) -> (bool, bool) {
+    fn visit_func_call_expr(&mut self, n: &FunctionCallExpressionNode) -> FunctionCallExpressionTraversalPolicy {
         let func = n.func();
-        let trav_func = !self.check_missing(&func, "function") || func.has_errors();
+        let traverse_func = !self.check_missing(&func, "function") || func.has_errors();
 
-        let mut trav_args = false;
+        let mut traverse_args = false;
         if let Some(args) = n.args() {
             if args.has_errors() {
                 self.check_errors(&args);
-                trav_args = true;
+                traverse_args = true;
             }
         }
 
         self.check_errors(n);
-        (trav_func, trav_args)
+
+        FunctionCallExpressionTraversalPolicy { 
+            traverse_func, 
+            traverse_args
+        }
     }
 
-    fn visit_new_expr(&mut self, n: &NewExpressionNode) -> bool {
+    fn visit_new_expr(&mut self, n: &NewExpressionNode) -> NewExpressionTraversalPolicy {
         self.check_identifier(&n.class());
 
-        let mut trav_lifetime_obj = false;
+        let mut traverse_lifetime_obj = false;
         if let Some(lifetime_obj) = n.lifetime_obj() {
-            trav_lifetime_obj = lifetime_obj.has_errors();
+            traverse_lifetime_obj = lifetime_obj.has_errors();
         }
 
         self.check_errors(n);
-        trav_lifetime_obj
+
+        NewExpressionTraversalPolicy { 
+            traverse_lifetime_obj 
+        }
     }
 
-    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode) -> bool {
-        let trav_accessor = !self.check_expression(&n.accessor());
+    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode) -> MemberFieldExpressionTraversalPolicy {
+        let traverse_accessor = !self.check_expression(&n.accessor());
         self.check_identifier(&n.member());
 
         self.check_errors(n);
-        trav_accessor
+
+        MemberFieldExpressionTraversalPolicy { 
+            traverse_accessor 
+        }
     }
 
-    fn visit_nested_expr(&mut self, n: &NestedExpressionNode) -> bool {
-        let trav_inner = !self.check_expression(&n.inner());
+    fn visit_nested_expr(&mut self, n: &NestedExpressionNode) -> NestedExpressionTraversalPolicy {
+        let traverse_inner = !self.check_expression(&n.inner());
 
         self.check_errors(n);
-        trav_inner
+
+        NestedExpressionTraversalPolicy { 
+            traverse_inner
+        }
     }
 
-    fn visit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode) -> (bool, bool, bool) {
-        let trav_cond = !self.check_expression(&n.cond());
-        let trav_conseq = !self.check_expression(&n.conseq());
-        let trav_alt = !self.check_expression(&n.alt());
+    fn visit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode) -> TernaryConditionalExpressionTraversalPolicy {
+        let traverse_cond = !self.check_expression(&n.cond());
+        let traverse_conseq = !self.check_expression(&n.conseq());
+        let traverse_alt = !self.check_expression(&n.alt());
 
         self.check_errors(n);
-        (trav_cond, trav_conseq, trav_alt)
+
+        TernaryConditionalExpressionTraversalPolicy { 
+            traverse_cond, 
+            traverse_conseq, 
+            traverse_alt 
+        }
     }
 
-    fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode) -> bool {
+    fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode) -> TypeCastExpressionTraversalPolicy {
         self.check_identifier(&n.target_type());
-        let trav_value = !self.check_expression(&n.value());
+        let traverse_value = !self.check_expression(&n.value());
 
         self.check_errors(n);
-        trav_value
+
+        TypeCastExpressionTraversalPolicy { 
+            traverse_value
+        }
     }
 
-    fn visit_func_call_arg(&mut self, _: &FunctionCallArgument) -> bool {
-        true
+    fn visit_func_call_arg(&mut self, _: &FunctionCallArgument) -> FunctionCallArgumentTraversalPolicy {
+        FunctionCallArgumentTraversalPolicy { 
+            traverse_expr: true 
+        }
     }
     
     // No point in checking single token expressions

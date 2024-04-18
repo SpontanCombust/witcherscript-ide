@@ -6,6 +6,7 @@ use witcherscript::attribs::MemberVarSpecifier;
 use witcherscript::script_document::ScriptDocument;
 use witcherscript::tokens::*;
 use witcherscript::ast::*;
+use witcherscript::Script;
 use crate::model::collections::symbol_table::SymbolTable;
 use crate::model::symbol_path::SymbolPathBuf;
 use crate::model::symbol_variant::SymbolVariant;
@@ -13,7 +14,7 @@ use crate::model::symbols::*;
 use crate::diagnostics::*;
 
 
-pub fn scan_symbols(script_root: RootNode, doc: &ScriptDocument, doc_path: &AbsPath, symtab: &mut SymbolTable, diagnostics: &mut Vec<Diagnostic>) {
+pub fn scan_symbols(script: &Script, doc: &ScriptDocument, doc_path: &AbsPath, symtab: &mut SymbolTable, diagnostics: &mut Vec<Diagnostic>) {
     let mut visitor = SymbolScannerVisitor {
         symtab,
         doc,
@@ -22,7 +23,7 @@ pub fn scan_symbols(script_root: RootNode, doc: &ScriptDocument, doc_path: &AbsP
         current_path: SymbolPathBuf::empty()
     };
 
-    script_root.accept(&mut visitor);
+    script.root_node().accept(&mut visitor);
 }
 
 
@@ -105,7 +106,8 @@ impl SymbolScannerVisitor<'_> {
 
 
 impl StatementVisitor for SymbolScannerVisitor<'_> {
-    fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> bool {
+    fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
+        let mut traverse_definition = false;
         if let Some(class_name) = n.name().value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&class_name);
             let mut sym = ClassSymbol::new(path, self.doc_path.clone());
@@ -123,11 +125,13 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                return true;
+                traverse_definition = true;
             }
         }
 
-        false
+        ClassDeclarationTraversalPolicy { 
+            traverse_definition 
+        }
     }
 
     fn exit_class_decl(&mut self, _: &ClassDeclarationNode) {
@@ -136,7 +140,8 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> bool {
+    fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> StateDeclarationTraversalPolicy {
+        let mut traverse_definition = false;
         let state_name = n.name().value(&self.doc);
         let parent_name = n.parent().value(&self.doc);
         if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
@@ -156,11 +161,13 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                return true;
+                traverse_definition = true;
             }
         }
 
-        false            
+        StateDeclarationTraversalPolicy { 
+            traverse_definition 
+        }       
     }
 
     fn exit_state_decl(&mut self, _: &StateDeclarationNode) {
@@ -169,7 +176,8 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> bool {
+    fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> StructDeclarationTraversalPolicy {
+        let mut traverse_definition = false;
         if let Some(struct_name) = n.name().value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&struct_name);
             let mut sym = StructSymbol::new(path, self.doc_path.clone());
@@ -185,11 +193,13 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                return true;
+                traverse_definition = true;
             }
         }
 
-        false
+        StructDeclarationTraversalPolicy { 
+            traverse_definition 
+        }
     }
 
     fn exit_struct_decl(&mut self, _: &StructDeclarationNode) {
@@ -198,18 +208,21 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> bool {
+    fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> EnumDeclarationTraversalPolicy {
+        let mut traverse_definition = false;
         if let Some(enum_name) = n.name().value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&enum_name);
             let sym = EnumSymbol::new(path, self.doc_path.clone());
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                return true;
+                traverse_definition = true;
             }
         }
 
-        false
+        EnumDeclarationTraversalPolicy { 
+            traverse_definition 
+        }
     }
 
     fn exit_enum_decl(&mut self, _: &EnumDeclarationNode) {
@@ -227,7 +240,8 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> (bool, bool) {
+    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+        let mut traverse = false;
         if let Some(func_name) = n.name().value(&self.doc) {
             let path = GlobalCallableSymbolPath::new(&func_name);
             let mut sym = GlobalFunctionSymbol::new(path, self.doc_path.clone());
@@ -251,11 +265,14 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                return (true, true);
+                traverse = true;
             }
         }
 
-        (false, false)
+        GlobalFunctionDeclarationTraversalPolicy { 
+            traverse_params: traverse, 
+            traverse_definition: traverse
+        }
     }
 
     fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
@@ -264,7 +281,8 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> (bool, bool) {
+    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> MemberFunctionDeclarationTraversalPolicy {
+        let mut traverse = false;
         if let Some(func_name) = n.name().value(&self.doc) {
             let path = MemberCallableSymbolPath::new(&self.current_path, &func_name);
             let mut sym = MemberFunctionSymbol::new(path);
@@ -288,11 +306,14 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                return (true, true);
+                traverse = true;
             }
         }
 
-        (false, false)
+        MemberFunctionDeclarationTraversalPolicy {
+            traverse_params: traverse,
+            traverse_definition: traverse
+        }
     }
 
     fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) {
@@ -302,18 +323,22 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> (bool, bool) {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> EventDeclarationTraversalPolicy {
+        let mut traverse = false;
         if let Some(event_name) = n.name().value(&self.doc) {
             let path = MemberCallableSymbolPath::new(&self.current_path, &event_name);
             let sym = EventSymbol::new(path);
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                return (true, true);
+                traverse = true;
             }
         }
 
-        (false, false)
+        EventDeclarationTraversalPolicy { 
+            traverse_params: traverse, 
+            traverse_definition: traverse 
+        }
     }
 
     fn exit_event_decl(&mut self, _: &EventDeclarationNode) {
