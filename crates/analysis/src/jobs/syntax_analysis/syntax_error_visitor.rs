@@ -107,7 +107,7 @@ impl SyntaxErrorVisitor<'_> {
     }
 }
 
-impl StatementVisitor for SyntaxErrorVisitor<'_> {
+impl SyntaxVisitor for SyntaxErrorVisitor<'_> {
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy {
         let traverse = if n.has_errors() {
             self.check_errors(n);
@@ -556,9 +556,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             self.check_errors(n);
         }
     }
-}
 
-impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
     fn visit_array_expr(&mut self, n: &ArrayExpressionNode) -> ArrayExpressionTraversalPolicy {
         let traverse_accessor = !self.check_expression(&n.accessor());
         let traverse_index = !self.check_expression(&n.index());

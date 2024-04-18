@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
+use super::{SyntaxTraversal, SyntaxVisitor, ExpressionNode, FunctionStatementNode};
 
 
 mod tags {
@@ -57,8 +57,8 @@ impl<'script> TryFrom<AnyNode<'script>> for ForLoopNode<'script> {
     }
 }
 
-impl StatementTraversal for ForLoopNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for ForLoopNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_for_stmt(self);
         if tp.traverse_body {
             self.body().accept(visitor);
@@ -105,8 +105,8 @@ impl<'script> TryFrom<AnyNode<'script>> for WhileLoopNode<'script> {
     }
 }
 
-impl StatementTraversal for WhileLoopNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for WhileLoopNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_while_stmt(self);
         if tp.traverse_body {
             self.body().accept(visitor);
@@ -153,8 +153,8 @@ impl<'script> TryFrom<AnyNode<'script>> for DoWhileLoopNode<'script> {
     }
 }
 
-impl StatementTraversal for DoWhileLoopNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for DoWhileLoopNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_do_while_stmt(self);
         if tp.traverse_body {
             self.body().accept(visitor);

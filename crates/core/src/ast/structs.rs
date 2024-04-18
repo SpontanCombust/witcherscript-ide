@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{attribs::StructSpecifierNode, tokens::{IdentifierNode, LiteralStringNode}, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{StatementTraversal, StatementVisitor, ExpressionNode, MemberVarDeclarationNode, NopNode};
+use super::{SyntaxTraversal, SyntaxVisitor, ExpressionNode, MemberVarDeclarationNode, NopNode};
 
 
 mod tags {
@@ -55,8 +55,8 @@ impl<'script> TryFrom<AnyNode<'script>> for StructDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for StructDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for StructDeclarationNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_struct_decl(self);
         if tp.traverse_definition {
             self.definition().accept(visitor);
@@ -100,8 +100,8 @@ impl<'script> TryFrom<AnyNode<'script>> for StructBlockNode<'script> {
     }
 }
 
-impl StatementTraversal for StructBlockNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for StructBlockNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         self.iter().for_each(|s| s.accept(visitor));
     }
 }
@@ -169,8 +169,8 @@ impl<'script> TryFrom<AnyNode<'script>> for StructStatementNode<'script> {
     }
 }
 
-impl StatementTraversal for StructStatementNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for StructStatementNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         match self.clone().value() {
             StructStatement::Var(s) => s.accept(visitor),
             StructStatement::Default(s) => s.accept(visitor),
@@ -216,8 +216,8 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockNode<'script> {
     }
 }
 
-impl StatementTraversal for MemberDefaultsBlockNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for MemberDefaultsBlockNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_member_defaults_block(self);
         if tp.traverse {
             self.iter().for_each(|n| n.accept(visitor))
@@ -265,8 +265,8 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockAssignmentNode<'s
     }
 }
 
-impl StatementTraversal for MemberDefaultsBlockAssignmentNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for MemberDefaultsBlockAssignmentNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         visitor.visit_member_defaults_block_assignment(self);
     }
 }
@@ -310,8 +310,8 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultValueNode<'script> {
     }
 }
 
-impl StatementTraversal for MemberDefaultValueNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for MemberDefaultValueNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         visitor.visit_member_default_val(self);
     }
 }
@@ -355,8 +355,8 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberHintNode<'script> {
     }
 }
 
-impl StatementTraversal for MemberHintNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for MemberHintNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         visitor.visit_member_hint(self);
     }
 }

@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{attribs::StateSpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{StatementTraversal, StatementVisitor, ClassBlockNode};
+use super::{SyntaxTraversal, SyntaxVisitor, ClassBlockNode};
 
 
 mod tags {
@@ -60,8 +60,8 @@ impl<'script> TryFrom<AnyNode<'script>> for StateDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for StateDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for StateDeclarationNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_state_decl(self);
         if tp.traverse_definition {
             self.definition().accept(visitor);

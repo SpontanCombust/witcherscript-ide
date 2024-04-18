@@ -58,8 +58,8 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for ClassDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for ClassDeclarationNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_class_decl(self);
         if tp.traverse_definition {
             self.definition().accept(visitor);
@@ -103,8 +103,8 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassBlockNode<'script> {
     }
 }
 
-impl StatementTraversal for ClassBlockNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for ClassBlockNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         self.iter().for_each(|s| s.accept(visitor));
     }
 }
@@ -179,8 +179,8 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassStatementNode<'script> {
     }
 }
 
-impl StatementTraversal for ClassStatementNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for ClassStatementNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         match self.clone().value() {
             ClassStatement::Var(s) => s.accept(visitor),
             ClassStatement::Default(s) => s.accept(visitor),
@@ -249,8 +249,8 @@ impl<'script> TryFrom<AnyNode<'script>> for AutobindDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for AutobindDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for AutobindDeclarationNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         visitor.visit_autobind_decl(self);
     }
 }

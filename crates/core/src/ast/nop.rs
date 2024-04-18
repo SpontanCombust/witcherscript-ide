@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::StatementTraversal;
+use super::SyntaxTraversal;
 
 
 mod tags {
@@ -35,8 +35,8 @@ impl<'script> TryFrom<AnyNode<'script>> for NopNode<'script> {
     }
 }
 
-impl StatementTraversal for NopNode<'_> {
-    fn accept<V: super::StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for NopNode<'_> {
+    fn accept<V: super::SyntaxVisitor>(&self, visitor: &mut V) {
         visitor.visit_nop_stmt(self);
     }
 }

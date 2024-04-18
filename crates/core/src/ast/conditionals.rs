@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
+use super::{SyntaxTraversal, SyntaxVisitor, ExpressionNode, FunctionStatementNode};
 
 
 mod tags {
@@ -54,8 +54,8 @@ impl<'script> TryFrom<AnyNode<'script>> for IfConditionalNode<'script> {
     }
 }
 
-impl StatementTraversal for IfConditionalNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for IfConditionalNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_if_stmt(self);
         if tp.traverse_body {
             self.body().accept(visitor);
@@ -105,8 +105,8 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalNode<'script> {
     }
 }
 
-impl StatementTraversal for SwitchConditionalNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for SwitchConditionalNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_switch_stmt(self);
         if tp.traverse_body {
             self.body().accept(visitor);
@@ -149,8 +149,8 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalBlockNode<'script> 
     }
 }
 
-impl StatementTraversal for SwitchConditionalBlockNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for SwitchConditionalBlockNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         self.sections().for_each(|s| s.accept(visitor));
     }
 }
@@ -218,8 +218,8 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalSectionNode<'script
     }
 }
 
-impl StatementTraversal for SwitchConditionalSectionNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for SwitchConditionalSectionNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         match self.clone().value() {
             SwitchConditionalSection::Statement(n) => n.accept(visitor),
             SwitchConditionalSection::Case(n) => n.accept(visitor),
@@ -262,8 +262,8 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalCaseLabelNode<'scri
     }
 }
 
-impl StatementTraversal for SwitchConditionalCaseLabelNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for SwitchConditionalCaseLabelNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt_case(self);
     }
 }
@@ -293,8 +293,8 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalDefaultLabelNode<'s
     }
 }
 
-impl StatementTraversal for SwitchConditionalDefaultLabelNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxTraversal for SwitchConditionalDefaultLabelNode<'_> {
+    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
         visitor.visit_switch_stmt_default(self);
     }
 }
