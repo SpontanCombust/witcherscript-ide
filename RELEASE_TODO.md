@@ -19,5 +19,6 @@ Just a list of all the tasks that are to be done before the release, so I don't 
 11. Bump version in client `package.json`
 12. Create a version tag and the release 
 
-13. Verify Marketplace
+13. Verify VS Marketplace and Open VSX Registry
 14. Move tasks on the board to `Shipped`
+15. Close tasks and milestone
