@@ -1,5 +1,6 @@
 use crate::tokens::*;
-use super::*;
+use crate::ast::*;
+use super::policies::*;
 
 
 /// Handle visitations to expression nodes.
@@ -106,10 +107,6 @@ pub trait ExpressionVisitor {
     fn exit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode) {}
 }
 
-/// Traverse an expression node using left-recursion.
-pub trait ExpressionTraversal {
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V);
-}
 
 
 /// Handle visitations to statement nodes.
@@ -225,9 +222,4 @@ pub trait StatementVisitor {
     /// 2. Indicating absence of action, e.g. `while(!AreWeThereYet());`
     /// 3. Signaling that a function does not have a definition
     fn visit_nop_stmt(&mut self, n: &NopNode) {}
-}
-
-/// Traverse a statement node using left-recursion.
-pub trait StatementTraversal {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V);
 }
