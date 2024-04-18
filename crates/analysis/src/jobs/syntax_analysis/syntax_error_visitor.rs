@@ -185,7 +185,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         }
 
         StructDeclarationTraversalPolicy { 
-            traverse_definition: false 
+            traverse_definition
         }
     }
 
@@ -347,11 +347,12 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     }
 
     fn visit_block_stmt(&mut self, n: &FunctionBlockNode) -> FunctionBlockTraversalPolicy {
-        let mut traverse = false;
-        if n.has_errors() {
+         let traverse = if n.has_errors() {
             self.check_errors(n);
-            traverse = true;
-        }
+            true
+        } else {
+            false
+        };
 
         FunctionBlockTraversalPolicy { 
             traverse 
@@ -531,11 +532,12 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
     }
 
     fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode) -> MemberDefaultsBlockTraversalPolicy {
-        let mut traverse = false;
-        if n.has_errors() {
+        let traverse = if n.has_errors() {
             self.check_errors(n);
-            traverse = true;
-        }
+            true
+        } else {
+            false
+        };
 
         MemberDefaultsBlockTraversalPolicy { 
             traverse 
