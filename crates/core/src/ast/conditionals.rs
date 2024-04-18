@@ -56,8 +56,11 @@ impl<'script> TryFrom<AnyNode<'script>> for IfConditionalNode<'script> {
 
 impl StatementTraversal for IfConditionalNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_if_stmt(self) {
+        let tp = visitor.visit_if_stmt(self);
+        if tp.traverse_body {
             self.body().accept(visitor);
+        }
+        if tp.traverse_else_body {
             self.else_body().map(|s| { s.accept(visitor) });
         }
     }
@@ -104,7 +107,8 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalNode<'script> {
 
 impl StatementTraversal for SwitchConditionalNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_switch_stmt(self) {
+        let tp = visitor.visit_switch_stmt(self);
+        if tp.traverse_body {
             self.body().accept(visitor);
         }
     }

@@ -57,7 +57,8 @@ impl<'script> TryFrom<AnyNode<'script>> for StructDeclarationNode<'script> {
 
 impl StatementTraversal for StructDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_struct_decl(self) {
+        let tp = visitor.visit_struct_decl(self);
+        if tp.traverse_definition {
             self.definition().accept(visitor);
         }
         visitor.exit_struct_decl(self);
@@ -217,7 +218,8 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockNode<'script> {
 
 impl StatementTraversal for MemberDefaultsBlockNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_member_defaults_block(self) {
+        let tp = visitor.visit_member_defaults_block(self);
+        if tp.traverse {
             self.iter().for_each(|n| n.accept(visitor))
         }
         visitor.exit_member_defaults_block(self);

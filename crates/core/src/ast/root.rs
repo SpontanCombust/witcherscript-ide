@@ -124,7 +124,8 @@ impl<'script> TryFrom<AnyNode<'script>> for RootNode<'script> {
 
 impl StatementTraversal for RootNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_root(self) {
+        let tp = visitor.visit_root(self);
+        if tp.traverse {
             self.iter().for_each(|s| s.accept(visitor));
         }
     }

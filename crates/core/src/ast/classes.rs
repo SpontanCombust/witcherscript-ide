@@ -60,7 +60,8 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassDeclarationNode<'script> {
 
 impl StatementTraversal for ClassDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_class_decl(self) {
+        let tp = visitor.visit_class_decl(self);
+        if tp.traverse_definition {
             self.definition().accept(visitor);
         }
         visitor.exit_class_decl(self);

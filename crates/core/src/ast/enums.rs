@@ -49,7 +49,8 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumDeclarationNode<'script> {
 
 impl StatementTraversal for EnumDeclarationNode<'_> {
     fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_enum_decl(self) {
+        let tp = visitor.visit_enum_decl(self);
+        if tp.traverse_definition {
             self.definition().accept(visitor);
         }
         visitor.exit_enum_decl(self);
