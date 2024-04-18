@@ -18,16 +18,16 @@ impl NamedSyntaxNode for IfConditionalNode<'_> {
     const NODE_KIND: &'static str = "if_stmt";
 }
 
-impl IfConditionalNode<'_> {
-    pub fn cond(&self) -> ExpressionNode {
+impl<'script> IfConditionalNode<'script> {
+    pub fn cond(&self) -> ExpressionNode<'script> {
         self.field_child("cond").unwrap().into()
     }
 
-    pub fn body(&self) -> FunctionStatementNode {
+    pub fn body(&self) -> FunctionStatementNode<'script> {
         self.field_child("body").unwrap().into()
     }
 
-    pub fn else_body(&self) -> Option<FunctionStatementNode> {
+    pub fn else_body(&self) -> Option<FunctionStatementNode<'script>> {
         self.field_child("else").map(|n| n.into())
     }
 }
@@ -74,12 +74,12 @@ impl NamedSyntaxNode for SwitchConditionalNode<'_> {
     const NODE_KIND: &'static str = "switch_stmt";
 }
 
-impl SwitchConditionalNode<'_> {
-    pub fn cond(&self) -> ExpressionNode {
+impl<'script> SwitchConditionalNode<'script> {
+    pub fn cond(&self) -> ExpressionNode<'script> {
         self.field_child("cond").unwrap().into()
     }
 
-    pub fn body(&self) -> SwitchConditionalBlockNode {
+    pub fn body(&self) -> SwitchConditionalBlockNode<'script> {
         self.field_child("body").unwrap().into()
     }
 }
@@ -122,8 +122,8 @@ impl NamedSyntaxNode for SwitchConditionalBlockNode<'_> {
     const NODE_KIND: &'static str = "switch_block";
 }
 
-impl SwitchConditionalBlockNode<'_> {
-    pub fn sections(&self) -> impl Iterator<Item = SwitchConditionalSectionNode> {
+impl<'script> SwitchConditionalBlockNode<'script> {
+    pub fn sections(&self) -> impl Iterator<Item = SwitchConditionalSectionNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -236,8 +236,8 @@ impl NamedSyntaxNode for SwitchConditionalCaseLabelNode<'_> {
     const NODE_KIND: &'static str = "switch_case_label";
 }
 
-impl SwitchConditionalCaseLabelNode<'_> {
-    pub fn value(&self) -> ExpressionNode {
+impl<'script> SwitchConditionalCaseLabelNode<'script> {
+    pub fn value(&self) -> ExpressionNode<'script> {
         self.field_child("value").unwrap().into()
     }
 }
@@ -267,6 +267,7 @@ impl SyntaxTraversal for SwitchConditionalCaseLabelNode<'_> {
         visitor.visit_switch_stmt_case(self);
     }
 }
+
 
 
 pub type SwitchConditionalDefaultLabelNode<'script> = SyntaxNode<'script, tags::SwitchConditionalDefaultLabel>;

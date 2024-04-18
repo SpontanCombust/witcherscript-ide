@@ -95,7 +95,7 @@ impl NamedSyntaxNode for RootNode<'_> {
     const NODE_KIND: &'static str = "script";
 }
 
-impl RootNode<'_> {
+impl<'script> RootNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = RootStatementNode> {
         self.named_children().map(|n| n.into())
     }

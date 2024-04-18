@@ -29,8 +29,8 @@ impl NamedSyntaxNode for NestedExpressionNode<'_> {
     const NODE_KIND: &'static str = "nested_expr";
 }
 
-impl NestedExpressionNode<'_> {
-    pub fn inner(&self) -> ExpressionNode {
+impl<'script> NestedExpressionNode<'script> {
+    pub fn inner(&self) -> ExpressionNode<'script> {
         self.first_child(true).unwrap().into()
     }
 }
@@ -209,12 +209,12 @@ impl NamedSyntaxNode for FunctionCallExpressionNode<'_> {
     const NODE_KIND: &'static str = "func_call_expr";
 }
 
-impl FunctionCallExpressionNode<'_> {
-    pub fn func(&self) -> ExpressionNode {
+impl<'script> FunctionCallExpressionNode<'script> {
+    pub fn func(&self) -> ExpressionNode<'script> {
         self.field_child("func").unwrap().into()
     }
 
-    pub fn args(&self) -> Option<FunctionCallArgumentsNode> {
+    pub fn args(&self) -> Option<FunctionCallArgumentsNode<'script>> {
         self.field_child("args").map(|n| n.into())
     }
 }
@@ -261,8 +261,8 @@ impl NamedSyntaxNode for FunctionCallArgumentsNode<'_> {
     const NODE_KIND: &'static str = "func_call_args";
 }
 
-impl FunctionCallArgumentsNode<'_> {
-    pub fn iter(&self) -> impl Iterator<Item = FunctionCallArgument> {
+impl<'script> FunctionCallArgumentsNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = FunctionCallArgument<'script>> {
         let children = self.children();
 
         let mut args = Vec::new();
@@ -318,7 +318,7 @@ impl SyntaxTraversal for FunctionCallArgumentsNode<'_> {
 #[derive(Clone)]
 pub enum FunctionCallArgument<'script> {
     Some(ExpressionNode<'script>),
-    Omitted(lsp_types::Position)
+    Omitted(lsp_types::Position) //TODO range instead of Position
 }
 
 impl Debug for FunctionCallArgument<'_> {
@@ -350,12 +350,12 @@ impl NamedSyntaxNode for ArrayExpressionNode<'_> {
     const NODE_KIND: &'static str = "array_expr";
 }
 
-impl ArrayExpressionNode<'_> {
-    pub fn accessor(&self) -> ExpressionNode {
+impl<'script> ArrayExpressionNode<'script> {
+    pub fn accessor(&self) -> ExpressionNode<'script> {
         self.field_child("accessor").unwrap().into()
     }
 
-    pub fn index(&self) -> ExpressionNode {
+    pub fn index(&self) -> ExpressionNode<'script> {
         self.field_child("index").unwrap().into()
     }
 }
@@ -402,12 +402,12 @@ impl NamedSyntaxNode for MemberFieldExpressionNode<'_> {
     const NODE_KIND: &'static str = "member_field_expr";
 }
 
-impl MemberFieldExpressionNode<'_> {
-    pub fn accessor(&self) -> ExpressionNode {
+impl<'script> MemberFieldExpressionNode<'script> {
+    pub fn accessor(&self) -> ExpressionNode<'script> {
         self.field_child("accessor").unwrap().into()
     }
 
-    pub fn member(&self) -> IdentifierNode {
+    pub fn member(&self) -> IdentifierNode<'script> {
         self.field_child("member").unwrap().into()
     }
 }
@@ -451,12 +451,12 @@ impl NamedSyntaxNode for NewExpressionNode<'_> {
     const NODE_KIND: &'static str = "new_expr";
 }
 
-impl NewExpressionNode<'_> {
-    pub fn class(&self) -> IdentifierNode {
+impl<'script> NewExpressionNode<'script> {
+    pub fn class(&self) -> IdentifierNode<'script> {
         self.field_child("class").unwrap().into()
     }
 
-    pub fn lifetime_obj(&self) -> Option<ExpressionNode> {
+    pub fn lifetime_obj(&self) -> Option<ExpressionNode<'script>> {
         self.field_child("lifetime_obj").map(|n| n.into())
     }
 }
@@ -500,12 +500,12 @@ impl NamedSyntaxNode for TypeCastExpressionNode<'_> {
     const NODE_KIND: &'static str = "cast_expr";
 }
 
-impl TypeCastExpressionNode<'_> {
-    pub fn target_type(&self) -> IdentifierNode {
+impl<'script> TypeCastExpressionNode<'script> {
+    pub fn target_type(&self) -> IdentifierNode<'script> {
         self.field_child("type").unwrap().into()
     }
 
-    pub fn value(&self) -> ExpressionNode {
+    pub fn value(&self) -> ExpressionNode<'script> {
         self.field_child("value").unwrap().into()
     }
 }
@@ -549,12 +549,12 @@ impl NamedSyntaxNode for UnaryOperationExpressionNode<'_> {
     const NODE_KIND: &'static str = "unary_op_expr";
 }
 
-impl UnaryOperationExpressionNode<'_> {
-    pub fn op(&self) -> UnaryOperatorNode {
+impl<'script> UnaryOperationExpressionNode<'script> {
+    pub fn op(&self) -> UnaryOperatorNode<'script> {
         self.field_child("op").unwrap().into()
     }
 
-    pub fn right(&self) -> ExpressionNode {
+    pub fn right(&self) -> ExpressionNode<'script> {
         self.field_child("right").unwrap().into()
     }
 }
@@ -598,16 +598,16 @@ impl NamedSyntaxNode for BinaryOperationExpressionNode<'_> {
     const NODE_KIND: &'static str = "binary_op_expr";
 }
 
-impl BinaryOperationExpressionNode<'_> {
-    pub fn op(&self) -> BinaryOperatorNode {
+impl<'script> BinaryOperationExpressionNode<'script> {
+    pub fn op(&self) -> BinaryOperatorNode<'script> {
         self.field_child("op").unwrap().into()
     }
 
-    pub fn left(&self) -> ExpressionNode {
+    pub fn left(&self) -> ExpressionNode<'script> {
         self.field_child("left").unwrap().into()
     }
 
-    pub fn right(&self) -> ExpressionNode {
+    pub fn right(&self) -> ExpressionNode<'script> {
         self.field_child("right").unwrap().into()
     }
 }
@@ -655,16 +655,16 @@ impl NamedSyntaxNode for AssignmentOperationExpressionNode<'_> {
     const NODE_KIND: &'static str = "assign_op_expr";
 }
 
-impl AssignmentOperationExpressionNode<'_> {
-    pub fn op(&self) -> AssignmentOperatorNode {
+impl<'script> AssignmentOperationExpressionNode<'script> {
+    pub fn op(&self) -> AssignmentOperatorNode<'script> {
         self.field_child("op").unwrap().into()
     }
 
-    pub fn left(&self) -> ExpressionNode {
+    pub fn left(&self) -> ExpressionNode<'script> {
         self.field_child("left").unwrap().into()
     }
 
-    pub fn right(&self) -> ExpressionNode {
+    pub fn right(&self) -> ExpressionNode<'script> {
         self.field_child("right").unwrap().into()
     }
 }
@@ -712,16 +712,16 @@ impl NamedSyntaxNode for TernaryConditionalExpressionNode<'_> {
     const NODE_KIND: &'static str = "ternary_cond_expr";
 }
 
-impl TernaryConditionalExpressionNode<'_> {
-    pub fn cond(&self) -> ExpressionNode {
+impl<'script> TernaryConditionalExpressionNode<'script> {
+    pub fn cond(&self) -> ExpressionNode<'script> {
         self.field_child("cond").unwrap().into()
     }
 
-    pub fn conseq(&self) -> ExpressionNode {
+    pub fn conseq(&self) -> ExpressionNode<'script> {
         self.field_child("conseq").unwrap().into()
     }
 
-    pub fn alt(&self) -> ExpressionNode {
+    pub fn alt(&self) -> ExpressionNode<'script> {
         self.field_child("alt").unwrap().into()
     }
 }
@@ -914,8 +914,8 @@ impl NamedSyntaxNode for ExpressionStatementNode<'_> {
     const NODE_KIND: &'static str = "expr_stmt";
 }
 
-impl ExpressionStatementNode<'_> {
-    pub fn expr(&self) -> ExpressionNode {
+impl<'script> ExpressionStatementNode<'script> {
+    pub fn expr(&self) -> ExpressionNode<'script> {
         self.first_child(true).unwrap().into()
     }
 }

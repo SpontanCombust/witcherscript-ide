@@ -23,20 +23,20 @@ impl NamedSyntaxNode for EventDeclarationNode<'_> {
     const NODE_KIND: &'static str = "event_decl_stmt";
 }
 
-impl EventDeclarationNode<'_> {
-    pub fn name(&self) -> IdentifierNode {
+impl<'script> EventDeclarationNode<'script> {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> FunctionParametersNode {
+    pub fn params(&self) -> FunctionParametersNode<'script> {
         self.field_child("params").unwrap().into()
     }
 
-    pub fn return_type(&self) -> Option<TypeAnnotationNode> {
+    pub fn return_type(&self) -> Option<TypeAnnotationNode<'script>> {
         self.field_child("return_type").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> FunctionDefinitionNode {
+    pub fn definition(&self) -> FunctionDefinitionNode<'script> {
         self.field_child("definition").unwrap().into()
     }
 }
@@ -85,28 +85,28 @@ impl NamedSyntaxNode for GlobalFunctionDeclarationNode<'_> {
     const NODE_KIND: &'static str = "global_func_decl_stmt";
 }
 
-impl GlobalFunctionDeclarationNode<'_> {
-    pub fn specifiers(&self) -> impl Iterator<Item = GlobalFunctionSpecifierNode> {
+impl<'script> GlobalFunctionDeclarationNode<'script> {
+    pub fn specifiers(&self) -> impl Iterator<Item = GlobalFunctionSpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn flavour(&self) -> Option<GlobalFunctionFlavourNode> {
+    pub fn flavour(&self) -> Option<GlobalFunctionFlavourNode<'script>> {
         self.field_child("flavour").map(|n| n.into())
     }
 
-    pub fn name(&self) -> IdentifierNode {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> FunctionParametersNode {
+    pub fn params(&self) -> FunctionParametersNode<'script> {
         self.field_child("params").unwrap().into()
     }
 
-    pub fn return_type(&self) -> Option<TypeAnnotationNode> {
+    pub fn return_type(&self) -> Option<TypeAnnotationNode<'script>> {
         self.field_child("return_type").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> FunctionDefinitionNode {
+    pub fn definition(&self) -> FunctionDefinitionNode<'script> {
         self.field_child("definition").unwrap().into()
     }
 }
@@ -157,28 +157,28 @@ impl NamedSyntaxNode for MemberFunctionDeclarationNode<'_> {
     const NODE_KIND: &'static str = "member_func_decl_stmt";
 }
 
-impl MemberFunctionDeclarationNode<'_> {
-    pub fn specifiers(&self) -> impl Iterator<Item = MemberFunctionSpecifierNode> {
+impl<'script> MemberFunctionDeclarationNode<'script> {
+    pub fn specifiers(&self) -> impl Iterator<Item = MemberFunctionSpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn flavour(&self) -> Option<MemberFunctionFlavourNode> {
+    pub fn flavour(&self) -> Option<MemberFunctionFlavourNode<'script>> {
         self.field_child("flavour").map(|n| n.into())
     }
 
-    pub fn name(&self) -> IdentifierNode {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn params(&self) -> FunctionParametersNode {
+    pub fn params(&self) -> FunctionParametersNode<'script> {
         self.field_child("params").unwrap().into()
     }
 
-    pub fn return_type(&self) -> Option<TypeAnnotationNode> {
+    pub fn return_type(&self) -> Option<TypeAnnotationNode<'script>> {
         self.field_child("return_type").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> FunctionDefinitionNode {
+    pub fn definition(&self) -> FunctionDefinitionNode<'script> {
         self.field_child("definition").unwrap().into()
     }
 }
@@ -288,8 +288,8 @@ impl NamedSyntaxNode for FunctionParametersNode<'_> {
     const NODE_KIND: &'static str = "func_params";
 }
 
-impl FunctionParametersNode<'_> {
-    pub fn iter(&self) -> impl Iterator<Item = FunctionParameterGroupNode> {
+impl<'script> FunctionParametersNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = FunctionParameterGroupNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -329,16 +329,16 @@ impl NamedSyntaxNode for FunctionParameterGroupNode<'_> {
     const NODE_KIND: &'static str = "func_param_group";
 }
 
-impl FunctionParameterGroupNode<'_> {
-    pub fn specifiers(&self) -> impl Iterator<Item = FunctionParameterSpecifierNode> {
+impl<'script> FunctionParameterGroupNode<'script> {
+    pub fn specifiers(&self) -> impl Iterator<Item = FunctionParameterSpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn names(&self) -> impl Iterator<Item = IdentifierNode> {
+    pub fn names(&self) -> impl Iterator<Item = IdentifierNode<'script>> {
         self.field_children("names").map(|n| n.into())
     }
 
-    pub fn param_type(&self) -> TypeAnnotationNode {
+    pub fn param_type(&self) -> TypeAnnotationNode<'script> {
         self.field_child("param_type").unwrap().into()
     }
 }
@@ -493,8 +493,8 @@ impl NamedSyntaxNode for FunctionBlockNode<'_> {
     const NODE_KIND: &'static str = "func_block";
 }
 
-impl FunctionBlockNode<'_> {
-    pub fn iter(&self) -> impl Iterator<Item = FunctionStatementNode> {
+impl<'script> FunctionBlockNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = FunctionStatementNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -603,8 +603,8 @@ impl NamedSyntaxNode for ReturnStatementNode<'_> {
     const NODE_KIND: &'static str = "return_stmt";
 }
 
-impl ReturnStatementNode<'_> {
-    pub fn value(&self) -> Option<ExpressionNode> {
+impl<'script> ReturnStatementNode<'script> {
+    pub fn value(&self) -> Option<ExpressionNode<'script>> {
         self.first_child(true).map(|n| n.into())
     }
 }
@@ -643,8 +643,8 @@ impl NamedSyntaxNode for DeleteStatementNode<'_> {
     const NODE_KIND: &'static str = "delete_stmt";
 }
 
-impl DeleteStatementNode<'_> {
-    pub fn value(&self) -> ExpressionNode {
+impl<'script> DeleteStatementNode<'script> {
+    pub fn value(&self) -> ExpressionNode<'script> {
         self.first_child(true).unwrap().into()
     }
 }

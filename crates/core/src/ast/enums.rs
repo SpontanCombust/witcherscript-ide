@@ -16,12 +16,12 @@ impl NamedSyntaxNode for EnumDeclarationNode<'_> {
     const NODE_KIND: &'static str = "enum_decl_stmt";
 }
 
-impl EnumDeclarationNode<'_> {
-    pub fn name(&self) -> IdentifierNode {
+impl<'script> EnumDeclarationNode<'script> {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn definition(&self) -> EnumBlockNode {
+    pub fn definition(&self) -> EnumBlockNode<'script> {
         self.field_child("definition").unwrap().into()
     }
 }
@@ -65,8 +65,8 @@ impl NamedSyntaxNode for EnumBlockNode<'_> {
     const NODE_KIND: &'static str = "enum_block";
 }
 
-impl EnumBlockNode<'_> {
-    pub fn iter(&self) -> impl Iterator<Item = EnumVariantDeclarationNode> {
+impl<'script> EnumBlockNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = EnumVariantDeclarationNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -105,12 +105,12 @@ impl NamedSyntaxNode for EnumVariantDeclarationNode<'_> {
     const NODE_KIND: &'static str = "enum_decl_variant";
 }
 
-impl EnumVariantDeclarationNode<'_> {
-    pub fn name(&self) -> IdentifierNode {
+impl<'script> EnumVariantDeclarationNode<'script> {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn value(&self) -> Option<EnumVariantValue> {
+    pub fn value(&self) -> Option<EnumVariantValue<'script>> {
         self.field_child("value").map(|n| {
             let kind = n.tree_node.kind();
             match kind {

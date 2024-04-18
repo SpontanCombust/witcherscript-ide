@@ -14,24 +14,24 @@ impl NamedSyntaxNode for StateDeclarationNode<'_> {
     const NODE_KIND: &'static str = "state_decl_stmt";
 }
 
-impl StateDeclarationNode<'_> {
-    pub fn specifiers(&self) -> impl Iterator<Item = StateSpecifierNode> {
+impl<'script> StateDeclarationNode<'script> {
+    pub fn specifiers(&self) -> impl Iterator<Item = StateSpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn name(&self) -> IdentifierNode {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn parent(&self) -> IdentifierNode {
+    pub fn parent(&self) -> IdentifierNode<'script> {
         self.field_child("parent").unwrap().into()
     }
 
-    pub fn base(&self) -> Option<IdentifierNode> {
+    pub fn base(&self) -> Option<IdentifierNode<'script>> {
         self.field_child("base").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> ClassBlockNode {
+    pub fn definition(&self) -> ClassBlockNode<'script> {
         self.field_child("definition").unwrap().into()
     }
 }

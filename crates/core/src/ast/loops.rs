@@ -16,20 +16,20 @@ impl NamedSyntaxNode for ForLoopNode<'_> {
     const NODE_KIND: &'static str = "for_stmt";
 }
 
-impl ForLoopNode<'_> {
-    pub fn init(&self) -> Option<ExpressionNode> {
+impl<'script> ForLoopNode<'script> {
+    pub fn init(&self) -> Option<ExpressionNode<'script>> {
         self.field_child("init").map(|n| n.into())
     }
 
-    pub fn cond(&self) -> Option<ExpressionNode> {
+    pub fn cond(&self) -> Option<ExpressionNode<'script>> {
         self.field_child("cond").map(|n| n.into())
     }
 
-    pub fn iter(&self) -> Option<ExpressionNode> {
+    pub fn iter(&self) -> Option<ExpressionNode<'script>> {
         self.field_child("iter").map(|n| n.into())
     }
 
-    pub fn body(&self) -> FunctionStatementNode {
+    pub fn body(&self) -> FunctionStatementNode<'script> {
         self.field_child("body").unwrap().into()
     }
 }
@@ -74,12 +74,12 @@ impl NamedSyntaxNode for WhileLoopNode<'_> {
     const NODE_KIND: &'static str = "while_stmt";
 }
 
-impl WhileLoopNode<'_> {
-    pub fn cond(&self) -> ExpressionNode {
+impl<'script> WhileLoopNode<'script> {
+    pub fn cond(&self) -> ExpressionNode<'script> {
         self.field_child("cond").unwrap().into()
     }
 
-    pub fn body(&self) -> FunctionStatementNode {
+    pub fn body(&self) -> FunctionStatementNode<'script> {
         self.field_child("body").unwrap().into()
     }
 }
@@ -122,12 +122,12 @@ impl NamedSyntaxNode for DoWhileLoopNode<'_> {
     const NODE_KIND: &'static str = "do_while_stmt";
 }
 
-impl DoWhileLoopNode<'_> {
-    pub fn cond(&self) -> ExpressionNode {
+impl<'script> DoWhileLoopNode<'script> {
+    pub fn cond(&self) -> ExpressionNode<'script> {
         self.field_child("cond").unwrap().into()
     }
 
-    pub fn body(&self) -> FunctionStatementNode {
+    pub fn body(&self) -> FunctionStatementNode<'script> {
         self.field_child("body").unwrap().into()
     }
 }

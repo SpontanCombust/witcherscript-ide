@@ -19,16 +19,16 @@ impl NamedSyntaxNode for StructDeclarationNode<'_> {
     const NODE_KIND: &'static str = "struct_decl_stmt";
 }
 
-impl StructDeclarationNode<'_> {
-    pub fn specifiers(&self) -> impl Iterator<Item = StructSpecifierNode> {
+impl<'script> StructDeclarationNode<'script> {
+    pub fn specifiers(&self) -> impl Iterator<Item = StructSpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn name(&self) -> IdentifierNode {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn definition(&self) -> StructBlockNode {
+    pub fn definition(&self) -> StructBlockNode<'script> {
         self.field_child("definition").unwrap().into()
     }
 }
@@ -73,7 +73,7 @@ impl NamedSyntaxNode for StructBlockNode<'_> {
     const NODE_KIND: &'static str = "struct_block";
 }
 
-impl StructBlockNode<'_> {
+impl<'script> StructBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = StructStatementNode> {
         self.named_children().map(|n| n.into())
     }
@@ -189,8 +189,8 @@ impl NamedSyntaxNode for MemberDefaultsBlockNode<'_> {
     const NODE_KIND: &'static str = "member_defaults_block_stmt";
 }
 
-impl MemberDefaultsBlockNode<'_> {
-    pub fn iter(&self) -> impl Iterator<Item = MemberDefaultsBlockAssignmentNode> {
+impl<'script> MemberDefaultsBlockNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = MemberDefaultsBlockAssignmentNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -234,12 +234,12 @@ impl NamedSyntaxNode for MemberDefaultsBlockAssignmentNode<'_> {
     const NODE_KIND: &'static str = "member_defaults_block_assign";
 }
 
-impl MemberDefaultsBlockAssignmentNode<'_> {
-    pub fn member(&self) -> IdentifierNode {
+impl<'script> MemberDefaultsBlockAssignmentNode<'script> {
+    pub fn member(&self) -> IdentifierNode<'script> {
         self.field_child("member").unwrap().into()
     }
 
-    pub fn value(&self) -> ExpressionNode {
+    pub fn value(&self) -> ExpressionNode<'script> {
         self.field_child("value").unwrap().into()
     }
 }
@@ -279,12 +279,12 @@ impl NamedSyntaxNode for MemberDefaultValueNode<'_> {
     const NODE_KIND: &'static str = "member_default_val_stmt";
 }
 
-impl MemberDefaultValueNode<'_> {
-    pub fn member(&self) -> IdentifierNode {
+impl<'script> MemberDefaultValueNode<'script> {
+    pub fn member(&self) -> IdentifierNode<'script> {
         self.field_child("member").unwrap().into()
     }
 
-    pub fn value(&self) -> ExpressionNode {
+    pub fn value(&self) -> ExpressionNode<'script> {
         self.field_child("value").unwrap().into()
     }
 }
@@ -324,12 +324,12 @@ impl NamedSyntaxNode for MemberHintNode<'_> {
     const NODE_KIND: &'static str = "member_hint_stmt";
 }
 
-impl MemberHintNode<'_> {
-    pub fn member(&self) -> IdentifierNode {
+impl<'script> MemberHintNode<'script> {
+    pub fn member(&self) -> IdentifierNode<'script> {
         self.field_child("member").unwrap().into()
     }
 
-    pub fn value(&self) -> LiteralStringNode {
+    pub fn value(&self) -> LiteralStringNode<'script> {
         self.field_child("value").unwrap().into()
     }
 }

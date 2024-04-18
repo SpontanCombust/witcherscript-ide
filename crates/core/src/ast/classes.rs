@@ -17,20 +17,20 @@ impl NamedSyntaxNode for ClassDeclarationNode<'_> {
     const NODE_KIND: &'static str = "class_decl_stmt";
 }
 
-impl ClassDeclarationNode<'_> {
-    pub fn specifiers(&self) -> impl Iterator<Item = ClassSpecifierNode> {
+impl<'script> ClassDeclarationNode<'script> {
+    pub fn specifiers(&self) -> impl Iterator<Item = ClassSpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn name(&self) -> IdentifierNode {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn base(&self) -> Option<IdentifierNode> {
+    pub fn base(&self) -> Option<IdentifierNode<'script>> {
         self.field_child("base").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> ClassBlockNode {
+    pub fn definition(&self) -> ClassBlockNode<'script> {
         self.field_child("definition").unwrap().into()
     }
 }
@@ -76,8 +76,8 @@ impl NamedSyntaxNode for ClassBlockNode<'_> {
     const NODE_KIND: &'static str = "class_block";
 }
 
-impl ClassBlockNode<'_> {
-    pub fn iter(&self) -> impl Iterator<Item = ClassStatementNode> {
+impl<'script> ClassBlockNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = ClassStatementNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -202,20 +202,20 @@ impl NamedSyntaxNode for AutobindDeclarationNode<'_> {
     const NODE_KIND: &'static str = "autobind_stmt";
 }
 
-impl AutobindDeclarationNode<'_> {
+impl<'script> AutobindDeclarationNode<'script> {
     pub fn specifiers(&self) -> impl Iterator<Item = AutobindSpecifierNode> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn name(&self) -> IdentifierNode {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn autobind_type(&self) -> TypeAnnotationNode {
+    pub fn autobind_type(&self) -> TypeAnnotationNode<'script> {
         self.field_child("autobind_type").unwrap().into()
     }
 
-    pub fn value(&self) -> AutobindValue {
+    pub fn value(&self) -> AutobindValue<'script> {
         let n = self.field_child("value").unwrap();
         let kind = n.tree_node.kind();
         match kind {
