@@ -1293,6 +1293,8 @@ dependencies = [
  "abs-path",
  "lsp-types",
  "shrinkwraprs",
+ "strum",
+ "strum_macros",
  "thiserror",
  "uuid",
  "witcherscript",
