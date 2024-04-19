@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use shrinkwraprs::Shrinkwrap;
-use crate::{ast::{SyntaxTraversal, SyntaxVisitor}, script_document::ScriptDocument, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{ast::{ExpressionTraversal, ExpressionVisitor}, script_document::ScriptDocument, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 
 
 #[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -31,8 +31,8 @@ impl Debug for IdentifierNode<'_> {
     }
 }
 
-impl SyntaxTraversal for IdentifierNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl ExpressionTraversal for IdentifierNode<'_> {
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
         visitor.visit_identifier_expr(self);
     }
 }

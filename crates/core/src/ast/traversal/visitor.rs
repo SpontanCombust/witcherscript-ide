@@ -3,12 +3,11 @@ use crate::ast::*;
 use super::policies::*;
 
 
-/// Handle visitations syntax tree nodes.
+/// Handle visitations to expression nodes.
 /// Nodes that contain visitable children nodes inside them have a corresponding `exit_` function,
 /// which is run after the node itself and its children are visited.
-/// Traversal can be controlled using TraversalPolicy return values.
 #[allow(unused_variables)]
-pub trait SyntaxVisitor {
+pub trait ExpressionVisitor {
     /// Called when visiting a parenthesized expression node.
     /// Should return whether to traverse into the expression [nested][NestedExpressionNode::inner] inside it. True by default.
     fn visit_nested_expr(&mut self, n: &NestedExpressionNode) -> NestedExpressionTraversalPolicy { Default::default() }
@@ -106,10 +105,15 @@ pub trait SyntaxVisitor {
     /// [cond][TernaryConditionalExpressionNode::cond], [conseq][TernaryConditionalExpressionNode::conseq] 
     /// and [alt][TernaryConditionalExpressionNode::alt] nodes.
     fn exit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode) {}
+}
 
 
 
-
+/// Handle visitations to statement nodes.
+/// Nodes that contain visitable children nodes inside them have a corresponding `exit_` function,
+/// which is run after the node itself and its children are visited.
+#[allow(unused_variables)]
+pub trait StatementVisitor {
     /// Called when visiting the highest node in the hierarchy.
     /// Should return whether to traverse into the body of the script afterwards. True by default.
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy { Default::default() }

@@ -105,7 +105,7 @@ impl SymbolScannerVisitor<'_> {
 
 
 
-impl SyntaxVisitor for SymbolScannerVisitor<'_> {
+impl StatementVisitor for SymbolScannerVisitor<'_> {
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
         let mut traverse_definition = false;
         if let Some(class_name) = n.name().value(&self.doc) {

@@ -64,8 +64,8 @@ impl<'script> TryFrom<AnyNode<'script>> for EventDeclarationNode<'script> {
     }
 }
 
-impl SyntaxTraversal for EventDeclarationNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for EventDeclarationNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_event_decl(self);
         if tp.traverse_params {
             self.params().accept(visitor);
@@ -136,8 +136,8 @@ impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionDeclarationNode<'scrip
     }
 }
 
-impl SyntaxTraversal for GlobalFunctionDeclarationNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for GlobalFunctionDeclarationNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_global_func_decl(self);
         if tp.traverse_params {
             self.params().accept(visitor);
@@ -208,8 +208,8 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionDeclarationNode<'scrip
     }
 }
 
-impl SyntaxTraversal for MemberFunctionDeclarationNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for MemberFunctionDeclarationNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_member_func_decl(self);
         if tp.traverse_params {
             self.params().accept(visitor);
@@ -272,8 +272,8 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionDefinitionNode<'script> {
     }
 }
 
-impl SyntaxTraversal for FunctionDefinitionNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for FunctionDefinitionNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         if let FunctionDefinition::Some(block) = self.clone().value() {
             block.accept(visitor);
         }
@@ -315,8 +315,8 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionParametersNode<'script> {
     }
 }
 
-impl SyntaxTraversal for FunctionParametersNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for FunctionParametersNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         self.iter().for_each(|s| s.accept(visitor));
     }
 }
@@ -365,8 +365,8 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionParameterGroupNode<'script> 
     }
 }
 
-impl SyntaxTraversal for FunctionParameterGroupNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for FunctionParameterGroupNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_func_param_group(self);
     }
 }
@@ -466,8 +466,8 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionStatementNode<'script> {
     }
 }
 
-impl SyntaxTraversal for FunctionStatementNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for FunctionStatementNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         match self.clone().value() {
             FunctionStatement::Var(s) => s.accept(visitor),
             FunctionStatement::Expr(s) => s.accept(visitor),
@@ -520,8 +520,8 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionBlockNode<'script> {
     }
 }
 
-impl SyntaxTraversal for FunctionBlockNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for FunctionBlockNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_block_stmt(self);
         self.iter().for_each(|s| s.accept(visitor));
     }
@@ -555,8 +555,8 @@ impl<'script> TryFrom<AnyNode<'script>> for BreakStatementNode<'script> {
     }
 }
 
-impl SyntaxTraversal for BreakStatementNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for BreakStatementNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_break_stmt(self);
     }
 }
@@ -589,8 +589,8 @@ impl<'script> TryFrom<AnyNode<'script>> for ContinueStatementNode<'script> {
     }
 }
 
-impl SyntaxTraversal for ContinueStatementNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for ContinueStatementNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_continue_stmt(self);
     }
 }
@@ -629,8 +629,8 @@ impl<'script> TryFrom<AnyNode<'script>> for ReturnStatementNode<'script> {
     }
 }
 
-impl SyntaxTraversal for ReturnStatementNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for ReturnStatementNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_return_stmt(self);
     }
 }
@@ -669,8 +669,8 @@ impl<'script> TryFrom<AnyNode<'script>> for DeleteStatementNode<'script> {
     }
 }
 
-impl SyntaxTraversal for DeleteStatementNode<'_> {
-    fn accept<V: SyntaxVisitor>(&self, visitor: &mut V) {
+impl StatementTraversal for DeleteStatementNode<'_> {
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
         visitor.visit_delete_stmt(self);
     }
 }
