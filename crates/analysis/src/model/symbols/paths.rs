@@ -26,10 +26,6 @@ impl DataSymbolPath {
     pub fn new(parent_path: &SymbolPath, name: &str) -> Self {
         Self(parent_path.join(&SymbolPathBuf::new(name, SymbolCategory::Data)))
     }
-
-    pub fn empty() -> Self {
-        Self(SymbolPathBuf::empty())
-    }
 }
 
 
@@ -40,10 +36,6 @@ impl GlobalCallableSymbolPath {
     pub fn new(name: &str) -> Self {
         Self(SymbolPathBuf::new(name, SymbolCategory::Callable))
     }
-
-    pub fn empty() -> Self {
-        Self(SymbolPathBuf::empty())
-    }
 }
 
 
@@ -53,10 +45,6 @@ pub struct MemberCallableSymbolPath(SymbolPathBuf);
 impl MemberCallableSymbolPath {
     pub fn new(parent_path: &SymbolPath, name: &str) -> Self {
         Self(parent_path.join(&SymbolPathBuf::new(name, SymbolCategory::Callable)))
-    }
-
-    pub fn empty() -> Self {
-        Self(SymbolPathBuf::empty())
     }
 }
 
@@ -92,14 +80,6 @@ impl StateSymbolPath {
             path: SymbolPathBuf::new(&format!("{}State{}", parent_class_path.to_string(), state_name), SymbolCategory::Type),
             state_name: state_name.to_string(),
             parent_class_path
-        }
-    }
-
-    pub fn empty() -> Self {
-        Self {
-            path: SymbolPathBuf::empty(),
-            state_name: String::new(),
-            parent_class_path: BasicTypeSymbolPath::empty()
         }
     }
 }
