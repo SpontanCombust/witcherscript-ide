@@ -64,14 +64,11 @@ impl<'script> TryFrom<AnyNode<'script>> for EventDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for EventDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl DeclarationTraversal for EventDeclarationNode<'_> {
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_event_decl(self);
         if tp.traverse_params {
             self.params().accept(visitor);
-        }
-        if tp.traverse_definition {
-            self.definition().accept(visitor);
         }
         visitor.exit_event_decl(self);
     }
@@ -136,14 +133,11 @@ impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionDeclarationNode<'scrip
     }
 }
 
-impl StatementTraversal for GlobalFunctionDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl DeclarationTraversal for GlobalFunctionDeclarationNode<'_> {
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_global_func_decl(self);
         if tp.traverse_params {
             self.params().accept(visitor);
-        }
-        if tp.traverse_definition {
-            self.definition().accept(visitor);
         }
         visitor.exit_global_func_decl(self);
     }
@@ -208,14 +202,11 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionDeclarationNode<'scrip
     }
 }
 
-impl StatementTraversal for MemberFunctionDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl DeclarationTraversal for MemberFunctionDeclarationNode<'_> {
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_member_func_decl(self);
         if tp.traverse_params {
             self.params().accept(visitor);
-        }
-        if tp.traverse_definition {
-            self.definition().accept(visitor);
         }
         visitor.exit_member_func_decl(self);
     }
@@ -315,8 +306,8 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionParametersNode<'script> {
     }
 }
 
-impl StatementTraversal for FunctionParametersNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl DeclarationTraversal for FunctionParametersNode<'_> {
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
         self.iter().for_each(|s| s.accept(visitor));
     }
 }
@@ -365,8 +356,8 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionParameterGroupNode<'script> 
     }
 }
 
-impl StatementTraversal for FunctionParameterGroupNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl DeclarationTraversal for FunctionParameterGroupNode<'_> {
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
         visitor.visit_func_param_group(self);
     }
 }

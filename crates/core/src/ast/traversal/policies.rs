@@ -154,6 +154,8 @@ impl Default for TernaryConditionalExpressionTraversalPolicy {
 }
 
 
+
+
 #[derive(Debug, Clone)]
 pub struct RootTraversalPolicy {
     pub traverse: bool
@@ -234,48 +236,46 @@ impl Default for MemberDefaultsBlockTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct GlobalFunctionDeclarationTraversalPolicy {
-    pub traverse_params: bool,
-    pub traverse_definition: bool
+    pub traverse_params: bool
 }
 
 impl Default for GlobalFunctionDeclarationTraversalPolicy {
     fn default() -> Self {
         Self { 
-            traverse_params: true, 
-            traverse_definition: true 
+            traverse_params: true
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct MemberFunctionDeclarationTraversalPolicy {
-    pub traverse_params: bool,
-    pub traverse_definition: bool
+    pub traverse_params: bool
 }
 
 impl Default for MemberFunctionDeclarationTraversalPolicy {
     fn default() -> Self {
         Self { 
-            traverse_params: true, 
-            traverse_definition: true 
+            traverse_params: true
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct EventDeclarationTraversalPolicy {
-    pub traverse_params: bool,
-    pub traverse_definition: bool
+    pub traverse_params: bool
 }
 
 impl Default for EventDeclarationTraversalPolicy {
     fn default() -> Self {
         Self { 
-            traverse_params: true, 
-            traverse_definition: true 
+            traverse_params: true
         }
     }
 }
+
+
+
+
 
 #[derive(Debug, Clone)]
 pub struct ForLoopTraversalPolicy {

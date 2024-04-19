@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{tokens::{IdentifierNode, LiteralHexNode, LiteralIntNode}, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{StatementTraversal, StatementVisitor};
+use super::{DeclarationTraversal, DeclarationVisitor};
 
 
 mod tags {
@@ -47,8 +47,8 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for EnumDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl DeclarationTraversal for EnumDeclarationNode<'_> {
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_enum_decl(self);
         if tp.traverse_definition {
             self.definition().accept(visitor);
@@ -92,8 +92,8 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumBlockNode<'script> {
     }
 }
 
-impl StatementTraversal for EnumBlockNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl DeclarationTraversal for EnumBlockNode<'_> {
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
         self.iter().for_each(|s| s.accept(visitor));
     }
 }
@@ -143,8 +143,8 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumVariantDeclarationNode<'script> 
     }
 }
 
-impl StatementTraversal for EnumVariantDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl DeclarationTraversal for EnumVariantDeclarationNode<'_> {
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
         visitor.visit_enum_variant_decl(self);
     }
 }

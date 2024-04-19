@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{attribs::MemberVarSpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{StatementTraversal, StatementVisitor, ExpressionNode};
+use super::{DeclarationTraversal, DeclarationVisitor, ExpressionNode, StatementTraversal, StatementVisitor};
 
 
 mod tags {
@@ -141,8 +141,8 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberVarDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for MemberVarDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl DeclarationTraversal for MemberVarDeclarationNode<'_> {
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
         visitor.visit_member_var_decl(self);
     }
 }

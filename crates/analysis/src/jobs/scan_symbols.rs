@@ -105,7 +105,7 @@ impl SymbolScannerVisitor<'_> {
 
 
 
-impl StatementVisitor for SymbolScannerVisitor<'_> {
+impl DeclarationVisitor for SymbolScannerVisitor<'_> {
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
         let mut traverse_definition = false;
         if let Some(class_name) = n.name().value(&self.doc) {
@@ -241,7 +241,7 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
-        let mut traverse = false;
+        let mut traverse_params = false;
         if let Some(func_name) = n.name().value(&self.doc) {
             let path = GlobalCallableSymbolPath::new(&func_name);
             let mut sym = GlobalFunctionSymbol::new(path, self.doc_path.clone());
@@ -265,24 +265,24 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                traverse = true;
+                traverse_params = true;
             }
         }
 
         GlobalFunctionDeclarationTraversalPolicy { 
-            traverse_params: traverse, 
-            traverse_definition: traverse
+            traverse_params
         }
     }
 
-    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
+    fn exit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
+            n.definition().accept(self);
             self.current_path.pop();
         }
     }
 
     fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> MemberFunctionDeclarationTraversalPolicy {
-        let mut traverse = false;
+        let mut traverse_params = false;
         if let Some(func_name) = n.name().value(&self.doc) {
             let path = MemberCallableSymbolPath::new(&self.current_path, &func_name);
             let mut sym = MemberFunctionSymbol::new(path);
@@ -306,43 +306,43 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                traverse = true;
+                traverse_params = true;
             }
         }
 
         MemberFunctionDeclarationTraversalPolicy {
-            traverse_params: traverse,
-            traverse_definition: traverse
+            traverse_params
         }
     }
 
-    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode) {
+    fn exit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) {
         // pop only if visit managed to create the symbol
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
+            n.definition().accept(self);
             self.current_path.pop();
         }
     }
 
     fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> EventDeclarationTraversalPolicy {
-        let mut traverse = false;
+        let mut traverse_params = false;
         if let Some(event_name) = n.name().value(&self.doc) {
             let path = MemberCallableSymbolPath::new(&self.current_path, &event_name);
             let sym = EventSymbol::new(path);
 
             sym.path().clone_into(&mut self.current_path);
             if self.try_insert_with_duplicate_check(sym, n.name().range()) {
-                traverse = true;
+                traverse_params = true;
             }
         }
 
         EventDeclarationTraversalPolicy { 
-            traverse_params: traverse, 
-            traverse_definition: traverse 
+            traverse_params
         }
     }
 
-    fn exit_event_decl(&mut self, _: &EventDeclarationNode) {
+    fn exit_event_decl(&mut self, n: &EventDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
+            n.definition().accept(self);
             self.current_path.pop();
         }
     }
@@ -438,10 +438,12 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
             self.try_insert_with_duplicate_check(sym, n.name().range());
         }
     }
+}
 
+impl StatementVisitor for SymbolScannerVisitor<'_> {
     fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode) {
         let type_path = self.check_type_from_type_annot(n.var_type());
-
+    
         for name_node in n.names() {
             if let Some(var_name) = name_node.value(&self.doc) {
                 let path = DataSymbolPath::new(&self.current_path, &var_name);

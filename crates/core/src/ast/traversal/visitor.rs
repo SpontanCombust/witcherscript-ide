@@ -109,11 +109,11 @@ pub trait ExpressionVisitor {
 
 
 
-/// Handle visitations to statement nodes.
+/// Handle visitations to declaration nodes. Does not include local var declaration.
 /// Nodes that contain visitable children nodes inside them have a corresponding `exit_` function,
 /// which is run after the node itself and its children are visited.
 #[allow(unused_variables)]
-pub trait StatementVisitor {
+pub trait DeclarationVisitor {
     /// Called when visiting the highest node in the hierarchy.
     /// Should return whether to traverse into the body of the script afterwards. True by default.
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy { Default::default() }
@@ -181,7 +181,15 @@ pub trait StatementVisitor {
     /// Called after visiting member function declaration 
     /// and possibly also its [parameters][EventDeclarationNode::params] and [definition][EventDeclarationNode::definition].
     fn exit_event_decl(&mut self, n: &EventDeclarationNode) {}
-    
+}
+
+
+
+/// Handle visitations to statement nodes.
+/// Nodes that contain visitable children nodes inside them have a corresponding `exit_` function,
+/// which is run after the node itself and its children are visited.
+#[allow(unused_variables)]
+pub trait StatementVisitor {    
     /// Called when visiting a local variable declaration inside a function.
     fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode) {}
     /// Called when visiting an expression statement inside a function.

@@ -27,6 +27,7 @@ impl SyntaxErrorVisitor<'_> {
     }
 
     /// Returns true if the node is present, false otherwise
+    #[inline]
     fn check_missing<T>(&mut self, n: &SyntaxNode<'_, T>, expected: &str) -> bool {
         if n.is_missing() {
             self.missing_element(n.range(), expected.to_string());
@@ -37,6 +38,7 @@ impl SyntaxErrorVisitor<'_> {
     }
 
     /// Returns true if the identifier is present, false otherwise
+    #[inline]
     fn check_identifier(&mut self, n: &IdentifierNode) -> bool {
         self.check_missing(n, "identifier")
     }
@@ -52,16 +54,19 @@ impl SyntaxErrorVisitor<'_> {
     }
 
     /// Returns true if the expression is present and contains no errors, false otherwise
+    #[inline]
     fn check_expression(&mut self, n: &ExpressionNode) -> bool {
         self.check_missing(n, "expression") && !n.has_errors()
     }
 
     /// Returns true if the statement is present and contains no errors, false otherwise
+    #[inline]
     fn check_function_stmt(&mut self, n: &FunctionStatementNode) -> bool {
         self.check_missing(n, "statement") && !n.has_errors()
     }
 
     /// Returns whether the definition contains no errors
+    #[inline]
     fn check_function_def(&mut self, n: &FunctionDefinitionNode) -> bool {
         if self.check_missing(n, "{ or ;") {
             if let FunctionDefinition::Some(block) = n.clone().value() {
@@ -107,7 +112,7 @@ impl SyntaxErrorVisitor<'_> {
     }
 }
 
-impl StatementVisitor for SyntaxErrorVisitor<'_> {
+impl DeclarationVisitor for SyntaxErrorVisitor<'_> {
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy {
         let traverse = if n.has_errors() {
             self.check_errors(n);
@@ -270,7 +275,6 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
         let mut traverse_params = false;
-        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
             n.return_type().map(|n| self.check_type_annot(&n));
@@ -283,18 +287,19 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
                 traverse_params = true;
             }
 
-            traverse_definition = !self.check_function_def(&n.definition());
+            let def = n.definition();
+            if !self.check_function_def(&def) {
+                def.accept(self);
+            }
         }
 
         GlobalFunctionDeclarationTraversalPolicy { 
-            traverse_params, 
-            traverse_definition 
+            traverse_params
         }
     }
 
     fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> MemberFunctionDeclarationTraversalPolicy {
         let mut traverse_params = false;
-        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
     
@@ -310,18 +315,19 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
                 traverse_params = true;
             }
 
-            traverse_definition = !self.check_function_def(&n.definition());
+            let def = n.definition();
+            if !self.check_function_def(&def) {
+                def.accept(self);
+            }
         }
         
         return MemberFunctionDeclarationTraversalPolicy { 
-            traverse_params, 
-            traverse_definition 
+            traverse_params
         }
     }
 
     fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> EventDeclarationTraversalPolicy {
         let mut traverse_params = false;
-        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
 
@@ -337,15 +343,45 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
                 traverse_params = true;
             }
 
-            traverse_definition = !self.check_function_def(&n.definition());
+            let def = n.definition();
+            if !self.check_function_def(&def) {
+                def.accept(self);
+            }
         }
         
         EventDeclarationTraversalPolicy { 
-            traverse_params, 
-            traverse_definition 
+            traverse_params
         }
     }
 
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode) -> MemberDefaultsBlockTraversalPolicy {
+        let traverse = if n.has_errors() {
+            self.check_errors(n);
+            true
+        } else {
+            false
+        };
+
+        MemberDefaultsBlockTraversalPolicy { 
+            traverse 
+        }
+    }
+
+    fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) {
+        if n.has_errors() {
+            self.check_identifier(&n.member());
+
+            let value = n.value();
+            if !self.check_expression(&value) {
+                value.accept(self);
+            }
+    
+            self.check_errors(n);
+        }
+    }
+}
+
+impl StatementVisitor for SyntaxErrorVisitor<'_> {
     fn visit_block_stmt(&mut self, n: &FunctionBlockNode) -> FunctionBlockTraversalPolicy {
          let traverse = if n.has_errors() {
             self.check_errors(n);
@@ -527,32 +563,6 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode) {
         if n.has_errors() {
-            self.check_errors(n);
-        }
-    }
-
-    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode) -> MemberDefaultsBlockTraversalPolicy {
-        let traverse = if n.has_errors() {
-            self.check_errors(n);
-            true
-        } else {
-            false
-        };
-
-        MemberDefaultsBlockTraversalPolicy { 
-            traverse 
-        }
-    }
-
-    fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) {
-        if n.has_errors() {
-            self.check_identifier(&n.member());
-
-            let value = n.value();
-            if !self.check_expression(&value) {
-                value.accept(self);
-            }
-    
             self.check_errors(n);
         }
     }

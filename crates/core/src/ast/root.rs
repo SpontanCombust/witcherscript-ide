@@ -74,15 +74,15 @@ impl<'script> TryFrom<AnyNode<'script>> for RootStatementNode<'script> {
     }
 }
 
-impl StatementTraversal for RootStatementNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl DeclarationTraversal for RootStatementNode<'_> {
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
         match self.clone().value() {
             RootStatement::Function(s) => s.accept(visitor),
             RootStatement::Class(s) => s.accept(visitor),
             RootStatement::State(s) => s.accept(visitor),
             RootStatement::Struct(s) => s.accept(visitor),
             RootStatement::Enum(s) => s.accept(visitor),
-            RootStatement::Nop(s) => s.accept(visitor),
+            RootStatement::Nop(_) => {},
         }
     }
 }
@@ -122,8 +122,8 @@ impl<'script> TryFrom<AnyNode<'script>> for RootNode<'script> {
     }
 }
 
-impl StatementTraversal for RootNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl DeclarationTraversal for RootNode<'_> {
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
         let tp = visitor.visit_root(self);
         if tp.traverse {
             self.iter().for_each(|s| s.accept(visitor));
