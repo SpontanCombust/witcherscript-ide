@@ -3,10 +3,13 @@
 ![GitHub Release](https://img.shields.io/github/v/release/SpontanCombust/witcherscript-ide)
 ![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/SpontanCombust.witcherscript-ide)
 
-WitcherScript IDE is an unofficial Witcher 3 modding tool aimed at improving developer experience by supplying them with powerful code analysis tools in the form of an editor extension making use of a Language Server.  
+WitcherScript IDE is an unofficial Witcher 3 modding tool aimed at improving developer experience by supplying them with powerful code analysis tools in the form of an editor extension making use of a Language Server.
+
+The goal is to have a full set of features that will make [ScriptStudio](https://witcher-games.fandom.com/wiki/Script_Studio) obsolete and reduce the overhead of fixing compilation errors detected when launching the game.
+
 Currently the only supported client is Visual Studio Code.
 
-Website: <https://spontancombust.github.io/witcherscript-ide>
+<https://spontancombust.github.io/witcherscript-ide>
 
 
 ## For users
