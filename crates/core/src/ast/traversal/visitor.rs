@@ -11,19 +11,25 @@ pub trait ExpressionVisitor {
     /// Called when visiting a parenthesized expression node.
     /// Should return whether to traverse into the expression [nested][NestedExpressionNode::inner] inside it. True by default.
     fn visit_nested_expr(&mut self, n: &NestedExpressionNode) -> NestedExpressionTraversalPolicy { Default::default() }
+
     /// Called after visiting the nested expression node and possibly its [inner][NestedExpressionNode::inner] node.
     fn exit_nested_expr(&mut self, n: &NestedExpressionNode) {}
 
     /// Called when visiting a node representing any literal.
     fn visit_literal_expr(&mut self, n: &LiteralNode) {}
+
     /// Called when visiting a node representing a `this` expression.
     fn visit_this_expr(&mut self, n: &ThisExpressionNode) {}
+
     /// Called when visiting a node representing a `super` expression.
     fn visit_super_expr(&mut self, n: &SuperExpressionNode) {}
+
     /// Called when visiting a node representing a `parent` expression.
     fn visit_parent_expr(&mut self, n: &ParentExpressionNode) {}
+
     /// Called when visiting a node representing a `virtual_parent` expression.
     fn visit_virtual_parent_expr(&mut self, n: &VirtualParentExpressionNode) {}
+
     /// Called when visiting a node representing an identifier in code (not a keyword).
     fn visit_identifier_expr(&mut self, n: &IdentifierNode) {}
 
@@ -123,63 +129,67 @@ pub trait DeclarationVisitor {
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy { Default::default() }
     /// Called after visiting a class declaration and possibly its [definition][ClassDeclarationNode::definition].
     fn exit_class_decl(&mut self, n: &ClassDeclarationNode) {}
+
     /// Called when visiting a state declaration.
     /// Should return whether to traverse into the [definition][StateDeclarationNode::definition] of the state afterwards. True by default.
     fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> StateDeclarationTraversalPolicy { Default::default() }
     /// Called after visiting a state declaration and possibly its [definition][StateDeclarationNode::definition].
     fn exit_state_decl(&mut self, n: &StateDeclarationNode) {}
+
     /// Called when visiting a struct declaration.
     /// Should return whether to traverse into the [definition][StructDeclarationNode::definition] of the struct afterwards. True by default.
     fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> StructDeclarationTraversalPolicy { Default::default() }
     /// Called after visiting a struct declaration and possibly its [definition][StructDeclarationNode::definition].
     fn exit_struct_decl(&mut self, n: &StructDeclarationNode) {}
+
     /// Called when visiting an enum declaration.
     /// Should return whether to traverse into the [definition][EnumDeclarationNode::definition] of the enum afterwards. True by default.
     fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> EnumDeclarationTraversalPolicy { Default::default() }
     /// Called after visiting an enum declaration and possibly its [definition][EnumDeclarationNode::definition].
     fn exit_enum_decl(&mut self, n: &EnumDeclarationNode) {}
-
     /// Called when visiting enum variant's declaration.
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {}
 
     /// Called when visiting member variable (i.e. field) declaration.
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode) {}
+
     /// Called when visiting a statement assigning a default value to a field.
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode) {}
+
     /// Called when visiting a `defaults` block.
     /// Should return whether to traverse into its [assignment][MemberDefaultsBlockNode::iter] nodes.
     fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode) -> MemberDefaultsBlockTraversalPolicy { Default::default() }
     /// Called after visitng a `defaults` block and possibly also its assignment nodes.
     fn exit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode) {}
+
     /// Called when visiting a default value assignment inside a `defaults` block.
     fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) {}
+
     /// Called when visiting a statement noting some information about a perticular type field.
     fn visit_member_hint(&mut self, n: &MemberHintNode) {}
+    
     /// Called when visiting an autobind variable declaration.
     fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode) {}
     
     /// Called when visiting a group of function parameters. This may mean a single parameter or multiple delimited names with common specifiers and a type.
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode) {}
+
     /// Called when visiting a global function declaration.
-    /// Should return whether to traverse into [parameters][GlobalFunctionDeclarationNode::params] 
-    /// and [definition][GlobalFunctionDeclarationNode::definition] of the function. True and true by default.
+    /// Should return whether to traverse into [parameters][GlobalFunctionDeclarationNode::params] of the function. True by default.
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy { Default::default() }
-    /// Called after visiting global function declaration 
-    /// and possibly also its [parameters][GlobalFunctionDeclarationNode::params] and [definition][GlobalFunctionDeclarationNode::definition].
+    /// Called after visiting global function declaration and possibly also its [parameters][GlobalFunctionDeclarationNode::params].
     fn exit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) {}
+
     /// Called when visiting a member function declaration (i.e. a method).
-    /// Should return whether to traverse into [parameters][MemberFunctionDeclarationNode::params] 
-    /// and [definition][MemberFunctionDeclarationNode::definition] of the function. True and true by default.
+    /// Should return whether to traverse into [parameters][MemberFunctionDeclarationNode::params] of the function. True by default.
     fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) -> MemberFunctionDeclarationTraversalPolicy { Default::default() }
-    /// Called after visiting member function declaration 
-    /// and possibly also its [parameters][MemberFunctionDeclarationNode::params] and [definition][MemberFunctionDeclarationNode::definition].
+    /// Called after visiting member function declaration and possibly also its [parameters][MemberFunctionDeclarationNode::params].
     fn exit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode) {}
+
     /// Called when visiting an event function declaration.
-    /// Should return whether to traverse into [parameters][EventDeclarationNode::params] 
-    /// and [definition][EventDeclarationNode::definition] of the function. True and true by default.
+    /// Should return whether to traverse into [parameters][EventDeclarationNode::params] of the function. True by default.
     fn visit_event_decl(&mut self, n: &EventDeclarationNode) -> EventDeclarationTraversalPolicy { Default::default() }
-    /// Called after visiting member function declaration 
-    /// and possibly also its [parameters][EventDeclarationNode::params] and [definition][EventDeclarationNode::definition].
+    /// Called after visiting member function declaration and possibly also its [parameters][EventDeclarationNode::params].
     fn exit_event_decl(&mut self, n: &EventDeclarationNode) {}
 }
 
@@ -192,42 +202,55 @@ pub trait DeclarationVisitor {
 pub trait StatementVisitor {    
     /// Called when visiting a local variable declaration inside a function.
     fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode) {}
+
     /// Called when visiting an expression statement inside a function.
     fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode) {}
+
     /// Called when visiting a `for` loop.
     /// Should return whether to traverse into the [body][ForLoopNode::body] of the loop. True by default.
     fn visit_for_stmt(&mut self, n: &ForLoopNode) -> ForLoopTraversalPolicy { Default::default() }
+
     /// Called when visiting a `while` loop.
     /// Should return whether to traverse into the [body][WhileLoopNode::body] of the loop. True by default.
     fn visit_while_stmt(&mut self, n: &WhileLoopNode) -> WhileLoopTraversalPolicy { Default::default() }
+
     /// Called when visiting a `do-while` loop.
     /// Should return whether to traverse into the [body][DoWhileLoopNode::body] of the loop. True by default.
     fn visit_do_while_stmt(&mut self, n: &DoWhileLoopNode) -> DoWhileLoopTraversalPolicy { Default::default() }
+
     /// Called when visiting an `if` condition.
     /// Should return whether to traverse into the [body][IfConditionalNode::body] of the statement. True by default.
     fn visit_if_stmt(&mut self, n: &IfConditionalNode) -> IfConditionalTraversalPolicy { Default::default() }
+
     /// Called when visiting a `switch` statement.
     /// Should return whether to traverse into [body][SwitchConditionalNode::body] of the statement. True by default.
     fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode) -> SwitchConditionalTraversalPolicy { Default::default() }
+
     /// Called when visiting a `case` label inside a `switch` statement.
     fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) {}
+
     /// Called when visiting a `default` label inside a `switch` statement.
     fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode) {}
+
     /// Called when visiting a `break` statement.
     fn visit_break_stmt(&mut self, n: &BreakStatementNode) {}
+
     /// Called when visiting a `continue` statement.
     fn visit_continue_stmt(&mut self, n: &ContinueStatementNode) {}
+
     /// Called when visiting a `return` statement.
     fn visit_return_stmt(&mut self, n: &ReturnStatementNode) {}
+
     /// Called when visiting a `delete` statement.
     fn visit_delete_stmt(&mut self, n: &DeleteStatementNode) {}
+
     /// Called when visiting a function block. This may mean a function definition or a scope inside that function.
     /// Should return whether to traverse into [statements][FunctionBlockNode::iter] of the block. True by default.
     fn visit_block_stmt(&mut self, n: &FunctionBlockNode) -> FunctionBlockTraversalPolicy { Default::default() }
+
     /// Called when visiting a NOP statement. 
-    /// It can mean multiple things, but most notably:
+    /// It most notably means:
     /// 1. A trailing "orphan" semicolon somewhere in code
     /// 2. Indicating absence of action, e.g. `while(!AreWeThereYet());`
-    /// 3. Signaling that a function does not have a definition
     fn visit_nop_stmt(&mut self, n: &NopNode) {}
 }
