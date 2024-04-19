@@ -20,7 +20,7 @@ pub fn inject_primitives(symtab: &mut SymbolTable) {
 
     ].into_iter()
     .for_each(|sym| {
-        symtab.insert(sym).unwrap();
+        symtab.insert(sym);
     });
 }
 
@@ -55,7 +55,7 @@ pub fn inject_globals(symtab: &mut SymbolTable) {
     ].into_iter()
     .for_each(|(var_name, class_name)| { 
         let gv = GlobalVarSymbol::new(var_name, BasicTypeSymbolPath::new(class_name));
-        symtab.insert(gv).unwrap(); 
+        symtab.insert(gv); 
     });
 }
 
@@ -70,7 +70,7 @@ pub fn inject_array_type(symtab: &mut SymbolTable, data_type_path: ArrayTypeSymb
 
     let arr = ArrayTypeSymbol::new(data_type_path);
     let (funcs, params) = arr.make_functions(&void_path, &int_path, &bool_path);
-    symtab.insert(arr).unwrap();
-    funcs.into_iter().for_each(|f| { symtab.insert(f).unwrap(); } );
-    params.into_iter().for_each(|p| { symtab.insert(p).unwrap(); } );
+    symtab.insert(arr);
+    funcs.into_iter().for_each(|f| { symtab.insert(f); } );
+    params.into_iter().for_each(|p| { symtab.insert(p); } );
 }

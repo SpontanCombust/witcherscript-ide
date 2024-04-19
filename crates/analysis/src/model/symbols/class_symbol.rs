@@ -10,7 +10,7 @@ pub struct ClassSymbol {
     path: BasicTypeSymbolPath,
     decl_file_path: AbsPath,
     pub specifiers: HashSet<ClassSpecifier>,
-    pub base_path: Option<TypeSymbolPath>
+    pub base_path: Option<BasicTypeSymbolPath>
 }
 
 impl Symbol for ClassSymbol {

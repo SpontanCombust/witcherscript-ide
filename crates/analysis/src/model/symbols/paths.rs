@@ -142,3 +142,9 @@ impl Deref for TypeSymbolPath {
         }
     }
 }
+
+impl From<BasicTypeSymbolPath> for TypeSymbolPath {
+    fn from(value: BasicTypeSymbolPath) -> Self {
+        Self::Basic(value)
+    }
+}

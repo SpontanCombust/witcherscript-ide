@@ -26,16 +26,19 @@ impl SymbolTable {
     }
 
 
-    pub fn insert<S>(&mut self, sym: S) -> Result<(), PathOccupiedError> 
+    pub fn insert<S>(&mut self, sym: S)
     where S: Symbol + Into<SymbolVariant> {
-        if let Some(occupying) = self.map.get(sym.path()) {
+        self.map.insert(sym.path().to_sympath_buf(), sym.into());
+    }
+
+    pub fn contains(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
+        if let Some(occupying) = self.map.get(path) {
             let occupying_sym = occupying.as_dyn();
             Err(PathOccupiedError {
                 occupyed_type: occupying_sym.typ(),
                 occupied_path: occupying_sym.path().to_sympath_buf()
             })
         } else {
-            self.map.insert(sym.path().to_sympath_buf(), sym.into());
             Ok(())
         }
     }
