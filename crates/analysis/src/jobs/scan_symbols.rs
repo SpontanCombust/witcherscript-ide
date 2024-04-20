@@ -135,7 +135,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
 
 
                 path.as_ref().clone_into(&mut self.current_path);
-                self.symtab.insert(sym);
+                self.symtab.insert_primary(sym);
                 
                 traverse_definition = true;
             }
@@ -192,7 +192,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
     
     
                 path.as_ref().clone_into(&mut self.current_path);
-                self.symtab.insert(sym);
+                self.symtab.insert_primary(sym);
 
                 traverse_definition = true;
             }
@@ -229,7 +229,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                 }
     
                 sym.path().clone_into(&mut self.current_path);
-                self.symtab.insert(sym);
+                self.symtab.insert_primary(sym);
 
                 traverse_definition = true;
             }
@@ -257,7 +257,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                 let sym = EnumSymbol::new(path, self.doc_path.clone());
     
                 sym.path().clone_into(&mut self.current_path);
-                self.symtab.insert(sym);
+                self.symtab.insert_primary(sym);
 
                 traverse_definition = true;
             }
@@ -313,7 +313,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                 };
     
                 sym.path().clone_into(&mut self.current_path);
-                self.symtab.insert(sym);
+                self.symtab.insert_primary(sym);
 
                 traverse_params = true;
             }

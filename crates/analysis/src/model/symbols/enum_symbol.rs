@@ -21,6 +21,12 @@ impl Symbol for EnumSymbol {
     }
 }
 
+impl PrimarySymbol for EnumSymbol {
+    fn decl_file_path(&self) -> &AbsPath {
+        &self.decl_file_path
+    }
+}
+
 impl EnumSymbol {
     pub fn new(path: BasicTypeSymbolPath, decl_file_path: AbsPath) -> Self {
         Self {
@@ -28,11 +34,6 @@ impl EnumSymbol {
             decl_file_path,
             variants: HashMap::new()
         }
-    }
-
-    
-    pub fn decl_file_path(&self) -> &AbsPath {
-        &self.decl_file_path
     }
 }
 

@@ -22,6 +22,12 @@ impl Symbol for StructSymbol {
     }
 }
 
+impl PrimarySymbol for StructSymbol {
+    fn decl_file_path(&self) -> &AbsPath {
+        &self.decl_file_path
+    }
+}
+
 impl StructSymbol {
     pub fn new(path: BasicTypeSymbolPath, decl_file_path: AbsPath) -> Self {
         Self {
@@ -29,10 +35,5 @@ impl StructSymbol {
             decl_file_path,
             specifiers: HashSet::new()
         }
-    }
-
-
-    pub fn decl_file_path(&self) -> &AbsPath {
-        &self.decl_file_path
     }
 }

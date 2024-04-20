@@ -24,6 +24,12 @@ impl Symbol for GlobalFunctionSymbol {
     }
 }
 
+impl PrimarySymbol for GlobalFunctionSymbol {
+    fn decl_file_path(&self) -> &AbsPath {
+        &self.decl_file_path
+    }
+}
+
 impl GlobalFunctionSymbol {
     pub fn new(path: GlobalCallableSymbolPath, decl_file_path: AbsPath) -> Self {
         Self {
@@ -33,11 +39,6 @@ impl GlobalFunctionSymbol {
             flavour: None,
             return_type_path: TypeSymbolPath::empty()
         }
-    }
-
-    
-    pub fn decl_file_path(&self) -> &AbsPath {
-        &self.decl_file_path
     }
 }
 

@@ -27,6 +27,12 @@ impl Symbol for StateSymbol {
     }
 }
 
+impl PrimarySymbol for StateSymbol {
+    fn decl_file_path(&self) -> &AbsPath {
+        &self.decl_file_path
+    }
+}
+
 impl StateSymbol {
     pub fn new(path: StateSymbolPath, decl_file_path: AbsPath) -> Self {
         Self {
@@ -38,10 +44,6 @@ impl StateSymbol {
         }
     }
 
-
-    pub fn decl_file_path(&self) -> &AbsPath {
-        &self.decl_file_path
-    }
 
     pub fn state_name(&self) -> &str {
         &self.path.state_name

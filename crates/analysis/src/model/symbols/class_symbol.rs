@@ -23,6 +23,12 @@ impl Symbol for ClassSymbol {
     }
 }
 
+impl PrimarySymbol for ClassSymbol {
+    fn decl_file_path(&self) -> &AbsPath {
+        &self.decl_file_path
+    }
+}
+
 impl ClassSymbol {
     pub fn new(path: BasicTypeSymbolPath, decl_file_path: AbsPath) -> Self {
         Self {
@@ -31,11 +37,6 @@ impl ClassSymbol {
             specifiers: HashSet::new(),
             base_path: None
         }
-    }
-
-    
-    pub fn decl_file_path(&self) -> &AbsPath {
-        &self.decl_file_path
     }
 }
 
