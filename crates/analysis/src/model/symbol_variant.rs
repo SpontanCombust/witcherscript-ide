@@ -4,16 +4,21 @@ use super::symbols::*;
 
 #[derive(Debug, Clone, EnumIs, EnumTryAs)]
 pub enum SymbolVariant {
-    Primitive(PrimitiveTypeSymbol),
-    Enum(EnumSymbol),
-    EnumVariant(EnumVariantSymbol),
-    Struct(StructSymbol),
+    // types
     Class(ClassSymbol),
     State(StateSymbol),
+    Struct(StructSymbol),
+    Enum(EnumSymbol),
     Array(ArrayTypeSymbol),
+
+    // callables
     GlobalFunc(GlobalFunctionSymbol),
     MemberFunc(MemberFunctionSymbol),
     Event(EventSymbol),
+
+    // data
+    Primitive(PrimitiveTypeSymbol),
+    EnumVariant(EnumVariantSymbol),
     FuncParam(FunctionParameterSymbol),
     GlobalVar(GlobalVarSymbol),
     MemberVar(MemberVarSymbol),

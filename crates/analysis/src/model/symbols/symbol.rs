@@ -15,6 +15,7 @@ pub trait Symbol {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SymbolType {
+    // types
     Type,
     Enum,
     Struct,
@@ -22,14 +23,14 @@ pub enum SymbolType {
     State,
     Array,
     
-    EnumMember,
-
+    // callables
     GlobalFunction,
     MemberFunction,
     Event,
-
+    
+    // data
+    EnumMember,
     Parameter,
-
     GlobalVar,
     MemberVar,
     Autobind,
