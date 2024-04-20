@@ -9,6 +9,7 @@ pub struct MemberVarSymbol {
     path: DataSymbolPath,
     pub specifiers: HashSet<MemberVarSpecifier>,
     pub type_path: TypeSymbolPath,
+    pub ordinal: usize // used in the context of struct constructors
 }
 
 impl Symbol for MemberVarSymbol {
@@ -26,7 +27,8 @@ impl MemberVarSymbol {
         Self {
             path,
             specifiers: HashSet::new(),
-            type_path: TypeSymbolPath::empty()
+            type_path: TypeSymbolPath::empty(),
+            ordinal: 0
         }
     }
 }

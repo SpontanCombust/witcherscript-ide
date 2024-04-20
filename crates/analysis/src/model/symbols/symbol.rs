@@ -29,7 +29,7 @@ pub enum SymbolType {
     Event,
     
     // data
-    EnumMember,
+    EnumVariant,
     Parameter,
     GlobalVar,
     MemberVar,
@@ -50,7 +50,7 @@ impl SymbolType {
         use SymbolType::*;
         match self {
             Type | Enum | Struct | Class | State | Array => SymbolCategory::Type,
-            EnumMember | Parameter | GlobalVar | MemberVar | Autobind | LocalVar | SpecialVar => SymbolCategory::Data,
+            EnumVariant | Parameter | GlobalVar | MemberVar | Autobind | LocalVar | SpecialVar => SymbolCategory::Data,
             GlobalFunction | MemberFunction | Event => SymbolCategory::Callable,
         }
     }

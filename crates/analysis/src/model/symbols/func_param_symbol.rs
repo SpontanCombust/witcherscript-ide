@@ -9,6 +9,7 @@ pub struct FunctionParameterSymbol {
     path: DataSymbolPath,
     pub specifiers: HashSet<FunctionParameterSpecifier>,
     pub type_path: TypeSymbolPath,
+    pub ordinal: usize
 }
 
 impl Symbol for FunctionParameterSymbol {
@@ -26,7 +27,8 @@ impl FunctionParameterSymbol {
         Self {
             path,
             specifiers: HashSet::new(),
-            type_path: TypeSymbolPath::empty()
+            type_path: TypeSymbolPath::empty(),
+            ordinal: 0
         }
     }
 }

@@ -19,7 +19,8 @@ pub fn scan_symbols(script: &Script, doc: &ScriptDocument, doc_path: &AbsPath, s
         doc,
         doc_path: doc_path.to_owned(),
         diagnostics,
-        current_path: SymbolPathBuf::empty()
+        current_path: SymbolPathBuf::empty(),
+        current_ordinal: 0
     };
 
     script.root_node().accept(&mut visitor);
@@ -32,7 +33,8 @@ struct SymbolScannerVisitor<'a> {
     doc_path: AbsPath,
     diagnostics: &'a mut Vec<Diagnostic>,
 
-    current_path: SymbolPathBuf
+    current_path: SymbolPathBuf,
+    current_ordinal: usize // used for struct members and function parameters
 }
 
 impl SymbolScannerVisitor<'_> {
@@ -147,6 +149,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
     fn exit_class_decl(&mut self, _: &ClassDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Type).unwrap_or(false)  {
             self.current_path.pop();
+            self.current_ordinal = 0;
         }
     }
 
@@ -203,6 +206,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
     fn exit_state_decl(&mut self, _: &StateDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Type).unwrap_or(false)  {
             self.current_path.pop();
+            self.current_ordinal = 0;
         }
     }
 
@@ -239,6 +243,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
     fn exit_struct_decl(&mut self, _: &StructDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Type).unwrap_or(false)  {
             self.current_path.pop();
+            self.current_ordinal = 0;
         }
     }
 
@@ -273,7 +278,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
         let name_node = n.name();
         if let Some(enum_variant_name) = name_node.value(&self.doc) {
             let path = DataSymbolPath::new(&self.current_path, &enum_variant_name);
-            if self.check_contains(&path, SymbolType::EnumMember, name_node.range()) {
+            if self.check_contains(&path, SymbolType::EnumVariant, name_node.range()) {
                 let sym = EnumVariantSymbol::new(path);
     
                 self.symtab.insert(sym);
@@ -323,6 +328,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             // n.definition().accept(self);
             self.current_path.pop();
+            self.current_ordinal = 0;
         }
     }
 
@@ -369,6 +375,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             // n.definition().accept(self);
             self.current_path.pop();
+            self.current_ordinal = 0;
         }
     }
 
@@ -397,6 +404,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             // n.definition().accept(self);
             self.current_path.pop();
+            self.current_ordinal = 0;
         }
     }
 
@@ -421,10 +429,12 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                     let mut sym = FunctionParameterSymbol::new(path);
                     sym.specifiers = specifiers.clone();
                     sym.type_path = type_path.clone();
+                    sym.ordinal = self.current_ordinal;
 
                     self.symtab.insert(sym);
                 }
             }
+            self.current_ordinal += 1;
         }
     }
 
@@ -460,10 +470,12 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                     let mut sym = MemberVarSymbol::new(path);
                     sym.specifiers = specifiers.clone();
                     sym.type_path = type_path.clone();
+                    sym.ordinal = self.current_ordinal;
 
                     self.symtab.insert(sym);
                 }
             }
+            self.current_ordinal += 1;
         }
     }
 

@@ -45,7 +45,7 @@ pub struct EnumVariantSymbol {
 
 impl Symbol for EnumVariantSymbol {
     fn typ(&self) -> SymbolType {
-        SymbolType::EnumMember
+        SymbolType::EnumVariant
     }
 
     fn path(&self) -> &SymbolPath {
