@@ -14,8 +14,9 @@
 
 use std::{ops::Deref, borrow::Borrow};
 use shrinkwraprs::Shrinkwrap;
+use witcherscript::tokens::Keyword;
 use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
-use super::SymbolCategory;
+use super::{SpecialVarSymbolKind, SymbolCategory};
 
 
 #[derive(Debug, Clone, Shrinkwrap)]
@@ -84,6 +85,12 @@ impl StateSymbolPath {
     }
 }
 
+impl From<StateSymbolPath> for BasicTypeSymbolPath {
+    fn from(value: StateSymbolPath) -> Self {
+        BasicTypeSymbolPath(value.path)
+    }
+}
+
 
 #[derive(Debug, Clone, Shrinkwrap)]
 pub struct ArrayTypeSymbolPath {
@@ -111,7 +118,7 @@ impl ArrayTypeSymbolPath {
 
 #[derive(Debug, Clone)]
 pub enum TypeSymbolPath {
-    Basic(BasicTypeSymbolPath),
+    BasicOrState(BasicTypeSymbolPath),
     Array(ArrayTypeSymbolPath)
     // StateSymbolPath not included, because notation `state X in Y` 
     // is used only in state's declaration and not when its class is mentioned
@@ -119,14 +126,14 @@ pub enum TypeSymbolPath {
 
 impl TypeSymbolPath {
     pub fn empty() -> Self {
-        Self::Basic(BasicTypeSymbolPath::empty())
+        Self::BasicOrState(BasicTypeSymbolPath::empty())
     }
 }
 
 impl Borrow<SymbolPathBuf> for TypeSymbolPath {
     fn borrow(&self) -> &SymbolPathBuf {
         match self {
-            TypeSymbolPath::Basic(basic) => &basic.0,
+            TypeSymbolPath::BasicOrState(basic) => &basic.0,
             TypeSymbolPath::Array(array) => &array.path,
         }
     }
@@ -137,7 +144,7 @@ impl Deref for TypeSymbolPath {
 
     fn deref(&self) -> &Self::Target {
         match self {
-            TypeSymbolPath::Basic(basic) => &basic.0,
+            TypeSymbolPath::BasicOrState(basic) => &basic.0,
             TypeSymbolPath::Array(array) => &array.path,
         }
     }
@@ -145,6 +152,42 @@ impl Deref for TypeSymbolPath {
 
 impl From<BasicTypeSymbolPath> for TypeSymbolPath {
     fn from(value: BasicTypeSymbolPath) -> Self {
-        Self::Basic(value)
+        Self::BasicOrState(value)
+    }
+}
+
+impl From<StateSymbolPath> for TypeSymbolPath {
+    fn from(value: StateSymbolPath) -> Self {
+        Self::BasicOrState(value.into())
+    }
+}
+
+impl From<ArrayTypeSymbolPath> for TypeSymbolPath {
+    fn from(value: ArrayTypeSymbolPath) -> Self {
+        Self::Array(value)
+    }
+}
+
+
+#[derive(Debug, Clone, Shrinkwrap)]
+pub struct SpecialVarSymbolPath {
+    #[shrinkwrap(main_field)]
+    path: SymbolPathBuf,
+    pub kind: SpecialVarSymbolKind
+}
+
+impl SpecialVarSymbolPath {
+    pub fn new(parent_path: &SymbolPath, kind: SpecialVarSymbolKind) -> Self {
+        let name = match kind {
+            SpecialVarSymbolKind::This => Keyword::This.as_ref(),
+            SpecialVarSymbolKind::Super => Keyword::Super.as_ref(),
+            SpecialVarSymbolKind::Parent => Keyword::Parent.as_ref(),
+            SpecialVarSymbolKind::VirtualParent => Keyword::VirtualParent.as_ref(),
+        };
+
+        Self {
+            path: parent_path.join(&SymbolPathBuf::new(name, SymbolCategory::Data)),
+            kind
+        }
     }
 }

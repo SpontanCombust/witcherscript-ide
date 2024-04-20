@@ -19,6 +19,7 @@ pub enum SymbolVariant {
     MemberVar(MemberVarSymbol),
     Autobind(AutobindSymbol),
     LocalVar(LocalVarSymbol),
+    SpecialVar(SpecialVarSymbol)
 }
 
 impl SymbolVariant {
@@ -39,6 +40,7 @@ impl SymbolVariant {
             SymbolVariant::MemberVar(v) => v,
             SymbolVariant::Autobind(v) => v,
             SymbolVariant::LocalVar(v) => v,
+            SymbolVariant::SpecialVar(v) => v
         }
     }
 }
@@ -131,5 +133,11 @@ impl From<AutobindSymbol> for SymbolVariant {
 impl From<LocalVarSymbol> for SymbolVariant {
     fn from(value: LocalVarSymbol) -> Self {
         Self::LocalVar(value)
+    }
+}
+
+impl From<SpecialVarSymbol> for SymbolVariant {
+    fn from(value: SpecialVarSymbol) -> Self {
+        Self::SpecialVar(value)
     }
 }

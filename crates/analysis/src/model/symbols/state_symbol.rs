@@ -10,7 +10,11 @@ pub struct StateSymbol {
     path: StateSymbolPath,
     decl_file_path: AbsPath,
     pub specifiers: HashSet<StateSpecifier>,
-    pub base_state_name: Option<String>
+    pub base_state_name: Option<String>,
+    /*//TODO base_state_path can be known only after the class tree can be inspected 
+    the base state can belong to a super class of the statemachine class
+    and its name cannot be deduced from the context of state declaration itself*/
+    pub base_state_path: Option<StateSymbolPath> 
 }
 
 impl Symbol for StateSymbol {
@@ -29,7 +33,8 @@ impl StateSymbol {
             path,
             decl_file_path,
             specifiers: HashSet::new(),
-            base_state_name: None
+            base_state_name: None,
+            base_state_path: None
         }
     }
 

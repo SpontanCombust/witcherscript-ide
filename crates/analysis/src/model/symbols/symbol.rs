@@ -5,6 +5,7 @@ pub trait Symbol {
     fn typ(&self) -> SymbolType;
     fn path(&self) -> &SymbolPath;
 
+    // Will panic if Self::path() is empty
     fn name(&self) -> &str {
         self.path().components().last().unwrap().name
     }
@@ -33,6 +34,7 @@ pub enum SymbolType {
     MemberVar,
     Autobind,
     LocalVar,
+    SpecialVar
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -47,7 +49,7 @@ impl SymbolType {
         use SymbolType::*;
         match self {
             Type | Enum | Struct | Class | State | Array => SymbolCategory::Type,
-            EnumMember | Parameter | GlobalVar | MemberVar | Autobind | LocalVar => SymbolCategory::Data,
+            EnumMember | Parameter | GlobalVar | MemberVar | Autobind | LocalVar | SpecialVar => SymbolCategory::Data,
             GlobalFunction | MemberFunction | Event => SymbolCategory::Callable,
         }
     }

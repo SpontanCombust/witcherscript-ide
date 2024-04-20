@@ -64,9 +64,9 @@ pub fn inject_globals(symtab: &mut SymbolTable) {
 /// Assumes the data type is not some error type and corresponding array type does not yet exist in the symbol table.
 /// Use ArrayTypeSymbol::path_for to get the path to array's symbol.
 pub fn inject_array_type(symtab: &mut SymbolTable, data_type_path: ArrayTypeSymbolPath) {
-    let void_path = TypeSymbolPath::Basic(BasicTypeSymbolPath::new("void"));
-    let int_path = TypeSymbolPath::Basic(BasicTypeSymbolPath::new("int"));
-    let bool_path = TypeSymbolPath::Basic(BasicTypeSymbolPath::new("bool"));
+    let void_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"));
+    let int_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("int"));
+    let bool_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("bool"));
 
     let arr = ArrayTypeSymbol::new(data_type_path);
     let (funcs, params) = arr.make_functions(&void_path, &int_path, &bool_path);

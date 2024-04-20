@@ -89,3 +89,46 @@ impl GlobalVarSymbol {
         &self.type_path
     }
 }
+
+
+
+#[derive(Debug, Clone)]
+pub struct SpecialVarSymbol {
+    path: SpecialVarSymbolPath,
+    type_path: BasicTypeSymbolPath
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SpecialVarSymbolKind {
+    This,
+    Super,
+    Parent,
+    VirtualParent
+}
+
+impl Symbol for SpecialVarSymbol {
+    fn typ(&self) -> SymbolType {
+        SymbolType::GlobalVar
+    }
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
+
+impl SpecialVarSymbol {
+    pub fn new(path: SpecialVarSymbolPath, type_path: BasicTypeSymbolPath) -> Self {
+        Self {
+            path,
+            type_path
+        }
+    }
+
+    pub fn type_path(&self) -> &SymbolPathBuf {
+        &self.type_path
+    }
+
+    pub fn kind(&self) -> SpecialVarSymbolKind {
+        self.path.kind
+    }
+}

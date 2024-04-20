@@ -107,7 +107,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
         if let Some(class_name) = name_node.value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&class_name);
             if self.check_contains(&path, SymbolType::Class, name_node.range()) {
-                let mut sym = ClassSymbol::new(path, self.doc_path.clone());
+                let mut sym = ClassSymbol::new(path.clone(), self.doc_path.clone());
                 
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if !sym.specifiers.insert(spec) {
@@ -120,7 +120,19 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
     
                 sym.base_path = n.base().map(|base| self.check_type_from_identifier(base));
 
-                sym.path().clone_into(&mut self.current_path);
+
+                let this_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::This);
+                let this_sym = SpecialVarSymbol::new(this_path, path.clone());
+                self.symtab.insert(this_sym);
+
+                if let Some(base_path) = &sym.base_path {
+                    let super_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Super);
+                    let super_sym = SpecialVarSymbol::new(super_path, base_path.clone());
+                    self.symtab.insert(super_sym);
+                }
+
+
+                path.as_ref().clone_into(&mut self.current_path);
                 self.symtab.insert(sym);
                 
                 traverse_definition = true;
@@ -147,7 +159,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
         if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
             let path = StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name));
             if self.check_contains(&path, SymbolType::State, state_name_node.range()) {
-                let mut sym = StateSymbol::new(path, self.doc_path.clone());
+                let mut sym = StateSymbol::new(path.clone(), self.doc_path.clone());
     
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if !sym.specifiers.insert(spec) {
@@ -159,8 +171,24 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                 }
     
                 sym.base_state_name = n.base().and_then(|base| base.value(&self.doc)).map(|ident| ident.into());
+
+
+                let this_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::This);
+                let this_sym = SpecialVarSymbol::new(this_path, path.clone().into());
+                self.symtab.insert(this_sym);
+
+                //TODO super_path can only be known after all states of all base classes are known
+
+                let parent_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Parent);
+                let parent_sym = SpecialVarSymbol::new(parent_path, path.parent_class_path.clone());
+                self.symtab.insert(parent_sym);
+
+                let virtual_parent_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::VirtualParent);
+                let virtual_parent_sym = SpecialVarSymbol::new(virtual_parent_path, path.parent_class_path.clone());
+                self.symtab.insert(virtual_parent_sym);
     
-                sym.path().clone_into(&mut self.current_path);
+    
+                path.as_ref().clone_into(&mut self.current_path);
                 self.symtab.insert(sym);
 
                 traverse_definition = true;
@@ -276,7 +304,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                 sym.return_type_path = if let Some(ret_typn) = n.return_type() {
                     self.check_type_from_type_annot(ret_typn)
                 } else {
-                    TypeSymbolPath::Basic(BasicTypeSymbolPath::new("void"))
+                    TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"))
                 };
     
                 sym.path().clone_into(&mut self.current_path);
@@ -321,7 +349,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                 sym.return_type_path = if let Some(ret_typn) = n.return_type() {
                     self.check_type_from_type_annot(ret_typn)
                 } else {
-                    TypeSymbolPath::Basic(BasicTypeSymbolPath::new("void"))
+                    TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"))
                 };
     
                 sym.path().clone_into(&mut self.current_path);
