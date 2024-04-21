@@ -107,6 +107,18 @@ impl AsRef<SymbolPath> for SymbolPathBuf {
     }
 }
 
+impl PartialEq<SymbolPath> for SymbolPathBuf {
+    fn eq(&self, other: &SymbolPath) -> bool {
+        self.inner == other.inner
+    }
+}
+
+impl PartialEq<SymbolPathBuf> for SymbolPath {
+    fn eq(&self, other: &SymbolPathBuf) -> bool {
+        self.inner == other.inner
+    }
+}
+
 
 
 #[repr(transparent)]

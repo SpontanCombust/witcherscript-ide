@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
-use abs_path::AbsPath;
 use thiserror::Error;
+use lsp_types as lsp;
+use abs_path::AbsPath;
 use crate::model::symbols::*;
 use crate::model::symbol_variant::SymbolVariant;
 use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
@@ -19,7 +20,8 @@ pub struct SymbolTable {
 #[error("symbol path already occupied")]
 pub struct PathOccupiedError {
     pub occupied_path: SymbolPathBuf,
-    pub occupyed_type: SymbolType,
+    pub occupied_type: SymbolType,
+    pub occupied_range: Option<lsp::Range>
 }
 
 
@@ -29,13 +31,13 @@ impl SymbolTable {
     }
 
 
-    pub fn insert<S>(&mut self, sym: S)
+    pub(crate) fn insert<S>(&mut self, sym: S)
     where S: Symbol + Into<SymbolVariant> {
         self.symbols.insert(sym.path().to_owned(), sym.into());
     }
 
-    pub fn insert_primary<S>(&mut self, sym: S)
-    where S: PrimarySymbol + Into<SymbolVariant> {
+    pub(crate) fn insert_primary<S>(&mut self, sym: S)
+    where S: PrimarySymbol + LocatableSymbol + Into<SymbolVariant> {
         if let Some(assocs) = self.file_assocs.get_mut(sym.decl_file_path()) {
             assocs.push(sym.path().to_owned());
         } else {
@@ -49,8 +51,9 @@ impl SymbolTable {
         if let Some(occupying) = self.symbols.get(path) {
             let occupying_sym = occupying.as_dyn();
             Err(PathOccupiedError {
-                occupyed_type: occupying_sym.typ(),
-                occupied_path: occupying_sym.path().to_sympath_buf()
+                occupied_type: occupying_sym.typ(),
+                occupied_path: occupying_sym.path().to_sympath_buf(),
+                occupied_range: occupying.range()  
             })
         } else {
             Ok(())
@@ -61,11 +64,26 @@ impl SymbolTable {
         self.symbols.get(path)
     }
 
-    pub fn get_mut(&mut self, path: &SymbolPath) -> Option<&mut SymbolVariant> {
+    pub(crate) fn get_mut(&mut self, path: &SymbolPath) -> Option<&mut SymbolVariant> {
         self.symbols.get_mut(path)
     }
 
-    pub fn remove(&mut self, path: &SymbolPath) -> Option<SymbolVariant> {
+    pub fn locate(&self, path: &SymbolPath) -> Option<SymbolLocation> {
+        path.root()
+            .and_then(|root| self.symbols.get(root))
+            .and_then(|v| {
+                if let (Some(file_path), Some(range)) = (v.decl_file_path(), v.range()) {
+                    Some(SymbolLocation { 
+                        file_path: file_path.to_owned(), 
+                        range
+                    })
+                } else {
+                    None
+                }
+            })
+    }
+
+    pub(crate) fn remove(&mut self, path: &SymbolPath) -> Option<SymbolVariant> {
         self.symbols.remove(path)
     }
 
@@ -77,4 +95,11 @@ impl SymbolTable {
             .filter(move |(p, _)| p.components().count() == comp_count)
             .map(|(_, v)| v)
     }
+}
+
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SymbolLocation {
+    file_path: AbsPath,
+    range: lsp::Range
 }

@@ -1,3 +1,4 @@
+use lsp_types as lsp;
 use crate::model::symbol_path::SymbolPath;
 use super::*;
 
@@ -38,100 +39,100 @@ impl ArrayTypeSymbol {
         let mut params = Vec::new();
 
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "operator[]"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "operator[]"), lsp::Range::default());
             f.return_type_path = self.data_type_path().clone();
-            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "index"));
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "index"), lsp::Range::default());
             p.type_path = int_path.clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Clear"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Clear"), lsp::Range::default());
             f.return_type_path = void_path.clone();
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Size"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Size"), lsp::Range::default());
             f.return_type_path = int_path.clone();
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "PushBack"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "PushBack"), lsp::Range::default());
             f.return_type_path = self.data_type_path().clone();
-            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Resize"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Resize"), lsp::Range::default());
             f.return_type_path = void_path.clone();
-            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "newSize"));
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "newSize"), lsp::Range::default());
             p.type_path = int_path.clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Remove"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Remove"), lsp::Range::default());
             f.return_type_path = bool_path.clone();
-            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Contains"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Contains"), lsp::Range::default());
             f.return_type_path = bool_path.clone();
-            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "FindFirst"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "FindFirst"), lsp::Range::default());
             f.return_type_path = int_path.clone();
-            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "FindLast"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "FindLast"), lsp::Range::default());
             f.return_type_path = int_path.clone();
-            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Grow"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Grow"), lsp::Range::default());
             f.return_type_path = int_path.clone();
-            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "numElements"));
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "numElements"), lsp::Range::default());
             p.type_path = int_path.clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Erase"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Erase"), lsp::Range::default());
             f.return_type_path = void_path.clone();
-            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "index"));
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "index"), lsp::Range::default());
             p.type_path = int_path.clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Insert"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Insert"), lsp::Range::default());
             f.return_type_path = void_path.clone();
-            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "index"));
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "index"), lsp::Range::default());
             p.type_path = int_path.clone();
             params.push(p);
-            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"));
+            let mut p = FunctionParameterSymbol::new(DataSymbolPath::new(&f.path(), "element"), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
             params.push(p);
             funcs.push(f);
         }
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Last"));
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "Last"), lsp::Range::default());
             f.return_type_path = self.data_type_path().clone();
             funcs.push(f);
         }

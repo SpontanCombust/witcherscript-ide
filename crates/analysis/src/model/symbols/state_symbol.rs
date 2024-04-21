@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript::attribs::StateSpecifier;
 use crate::model::symbol_path::SymbolPath;
@@ -9,6 +10,7 @@ use super::*;
 pub struct StateSymbol {
     path: StateSymbolPath,
     decl_file_path: AbsPath,
+    range: lsp::Range,
     pub specifiers: HashSet<StateSpecifier>,
     pub base_state_name: Option<String>,
     /*//TODO base_state_path can be known only after the class tree can be inspected 
@@ -33,11 +35,18 @@ impl PrimarySymbol for StateSymbol {
     }
 }
 
+impl LocatableSymbol for StateSymbol {
+    fn range(&self) -> lsp::Range {
+        self.range
+    }
+}
+
 impl StateSymbol {
-    pub fn new(path: StateSymbolPath, decl_file_path: AbsPath) -> Self {
+    pub fn new(path: StateSymbolPath, decl_file_path: AbsPath, range: lsp::Range) -> Self {
         Self {
             path,
             decl_file_path,
+            range,
             specifiers: HashSet::new(),
             base_state_name: None,
             base_state_path: None

@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript::attribs::StructSpecifier;
 use crate::model::symbol_path::SymbolPath;
@@ -9,6 +10,7 @@ use super::*;
 pub struct StructSymbol {
     path: BasicTypeSymbolPath,
     decl_file_path: AbsPath,
+    range: lsp::Range,
     pub specifiers: HashSet<StructSpecifier>
 }
 
@@ -28,10 +30,17 @@ impl PrimarySymbol for StructSymbol {
     }
 }
 
+impl LocatableSymbol for StructSymbol {
+    fn range(&self) -> lsp::Range {
+        self.range
+    }
+}
+
 impl StructSymbol {
-    pub fn new(path: BasicTypeSymbolPath, decl_file_path: AbsPath) -> Self {
+    pub fn new(path: BasicTypeSymbolPath, decl_file_path: AbsPath, range: lsp::Range) -> Self {
         Self {
             path,
+            range,
             decl_file_path,
             specifiers: HashSet::new()
         }

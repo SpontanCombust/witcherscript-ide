@@ -1,4 +1,6 @@
 use strum_macros::{EnumIs, EnumTryAs};
+use lsp_types as lsp;
+use abs_path::AbsPath;
 use super::symbols::*;
 
 
@@ -46,6 +48,48 @@ impl SymbolVariant {
             SymbolVariant::Autobind(v) => v,
             SymbolVariant::LocalVar(v) => v,
             SymbolVariant::SpecialVar(v) => v
+        }
+    }
+
+    pub fn range(&self) -> Option<lsp::Range> {
+        match self {
+            SymbolVariant::Class(s) => Some(s.range()),
+            SymbolVariant::State(s) => Some(s.range()),
+            SymbolVariant::Struct(s) => Some(s.range()),
+            SymbolVariant::Enum(s) => Some(s.range()),
+            SymbolVariant::Array(_) => None,
+            SymbolVariant::GlobalFunc(s) => Some(s.range()),
+            SymbolVariant::MemberFunc(s) => Some(s.range()),
+            SymbolVariant::Event(s) => Some(s.range()),
+            SymbolVariant::Primitive(_) => None,
+            SymbolVariant::EnumVariant(s) => Some(s.range()),
+            SymbolVariant::FuncParam(s) => Some(s.range()),
+            SymbolVariant::GlobalVar(_) => None,
+            SymbolVariant::MemberVar(s) => Some(s.range()),
+            SymbolVariant::Autobind(s) => Some(s.range()),
+            SymbolVariant::LocalVar(s) => Some(s.range()),
+            SymbolVariant::SpecialVar(_) => None,
+        }
+    }
+
+    pub fn decl_file_path(&self) -> Option<&AbsPath> {
+        match self {
+            SymbolVariant::Class(s) => Some(s.decl_file_path()),
+            SymbolVariant::State(s) => Some(s.decl_file_path()),
+            SymbolVariant::Struct(s) => Some(s.decl_file_path()),
+            SymbolVariant::Enum(s) => Some(s.decl_file_path()),
+            SymbolVariant::Array(_) => None,
+            SymbolVariant::GlobalFunc(s) => Some(s.decl_file_path()),
+            SymbolVariant::MemberFunc(_) => None,
+            SymbolVariant::Event(_) => None,
+            SymbolVariant::Primitive(_) => None,
+            SymbolVariant::EnumVariant(_) => None,
+            SymbolVariant::FuncParam(_) => None,
+            SymbolVariant::GlobalVar(_) => None,
+            SymbolVariant::MemberVar(_) => None,
+            SymbolVariant::Autobind(_) => None,
+            SymbolVariant::LocalVar(_) => None,
+            SymbolVariant::SpecialVar(_) => None,
         }
     }
 }
