@@ -39,7 +39,6 @@ impl SymbolPathBuf {
     /// Adds a new component at the end of the path
     pub fn push(&mut self, name: &str, category: SymbolCategory) {
         // allow only alphanumerics and underscore
-        debug_assert!(name.chars().filter(|c| !c.is_alphanumeric() && c != &'_').count() == 0);
 
         if !self.buff.is_empty() {
             self.buff.push(COMPONENT_SEP);

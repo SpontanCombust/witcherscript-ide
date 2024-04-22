@@ -48,11 +48,9 @@ impl SymbolTable {
 
     pub(crate) fn insert_primary<S>(&mut self, sym: S)
     where S: PrimarySymbol + LocatableSymbol + Into<SymbolVariant> {
-        if let Some(assocs) = self.file_assocs.get_mut(sym.decl_file_path()) {
-            assocs.push(sym.path().to_owned());
-        } else {
-            self.file_assocs.insert(sym.decl_file_path().to_owned(), vec![sym.path().to_owned()]);
-        }
+        self.file_assocs.entry(sym.decl_file_path().to_owned())
+            .or_default()
+            .push(sym.path().to_owned());
 
         self.symbols.insert(sym.path().to_owned(), sym.into());
     }
@@ -174,8 +172,9 @@ impl SymbolTable {
             }
 
             errors.insert(file_path.clone(), file_errors);
-            
             self.file_assocs.insert(file_path, sympath_roots);
+
+            file_sympaths.clear();
         }
 
         errors

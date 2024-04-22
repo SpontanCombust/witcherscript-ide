@@ -97,10 +97,18 @@ impl Backend {
         let start = Instant::now();
 
         let (diff_nodes_added, diff_nodes_removed, diff_edges_added, diff_edges_removed) = (diff.added_nodes, diff.removed_nodes, diff.added_edges, diff.removed_edges);
-        self.on_graph_nodes_removed(diff_nodes_removed).await;
-        self.on_graph_nodes_added(diff_nodes_added).await;
-        self.on_graph_edges_added(diff_edges_added).await;
-        self.on_graph_edges_removed(diff_edges_removed).await;
+        if !diff_nodes_removed.is_empty() {
+            self.on_graph_nodes_removed(diff_nodes_removed).await;
+        }
+        if !diff_nodes_added.is_empty() {
+            self.on_graph_nodes_added(diff_nodes_added).await;
+        }
+        if !diff_edges_added.is_empty() {
+            self.on_graph_edges_added(diff_edges_added).await;
+        }
+        if !diff_edges_removed.is_empty() {
+            self.on_graph_edges_removed(diff_edges_removed).await;
+        }
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Handled content graph related changes in {:.3}s", duration.as_secs_f32())).await;

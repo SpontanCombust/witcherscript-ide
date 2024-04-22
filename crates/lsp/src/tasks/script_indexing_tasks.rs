@@ -44,9 +44,15 @@ impl Backend {
         let start = Instant::now();
 
         let (diff_added, diff_removed, diff_modified) = (diff.added, diff.removed, diff.modified);
-        self.on_source_tree_files_removed(diff_removed).await;
-        self.on_source_tree_files_added(diff_added, content_path, run_diagnostics).await;
-        self.on_source_tree_files_modified(diff_modified, content_path, run_diagnostics).await;
+        if !diff_removed.is_empty() {
+            self.on_source_tree_files_removed(diff_removed).await;
+        }
+        if !diff_added.is_empty() {
+            self.on_source_tree_files_added(diff_added, content_path, run_diagnostics).await;
+        }
+        if !diff_modified.is_empty() {
+            self.on_source_tree_files_modified(diff_modified, content_path, run_diagnostics).await;
+        }
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Handled source tree related changes to {} in {:.3}s", content_path.display(), duration.as_secs_f32())).await;

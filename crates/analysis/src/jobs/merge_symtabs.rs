@@ -19,6 +19,7 @@ pub fn merge_symbol_tables(target_symtab: &mut SymbolTable, source_symtab: Symbo
 
         diagnostics
             .entry(file_path)
-            .and_modify(|entry| entry.extend(errors_as_diags));
+            .or_default()
+            .extend(errors_as_diags);
     }
 }
