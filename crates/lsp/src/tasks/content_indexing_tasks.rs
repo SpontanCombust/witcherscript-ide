@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use tokio::time::Instant;
 use abs_path::AbsPath;
+use witcherscript_analysis::model::collections::SymbolTable;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory, RedkitProjectDirectory};
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{ContentGraph, ContentScanner, FileError};
@@ -129,6 +130,8 @@ impl Backend {
             });
 
             self.source_trees.insert(added_content_path.clone(), source_tree);
+
+            self.symtabs.insert(added_content_path.clone(), SymbolTable::new());
         }
 
         // handling source tree changes in a seperate step to not lock resources for too long
@@ -152,6 +155,8 @@ impl Backend {
                     modified: vec![]
                 });
             }
+
+            self.symtabs.remove(removed_content_path);
             
             if !removed_content_path.exists() || !removed_node.in_workspace {
                 if let Some(project) = removed_content.as_any().downcast_ref::<ProjectDirectory>() {

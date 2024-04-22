@@ -9,6 +9,7 @@ use tower_lsp::{Client, LanguageServer, LspService, Server};
 use abs_path::AbsPath;
 use witcherscript::Script;
 use witcherscript::script_document::ScriptDocument;
+use witcherscript_analysis::model::collections::SymbolTable;
 use witcherscript_project::{ContentGraph, SourceTree};
 use crate::config::Config;
 use crate::reporting::Reporter;
@@ -31,7 +32,8 @@ pub struct Backend {
     content_graph: RwLock<ContentGraph>,
     source_trees: SourceTreeMap,
     // key is path to the file
-    scripts: Arc<DashMap<AbsPath, ScriptState>>
+    scripts: Arc<ScriptStates>,
+    symtabs: SymbolTables,
 }
 
 #[derive(Debug, Shrinkwrap)]
@@ -71,6 +73,32 @@ pub struct ScriptState {
     is_foreign: bool
 }
 
+#[derive(Debug, Shrinkwrap)]
+pub struct ScriptStates {
+    inner: DashMap<AbsPath, ScriptState>
+}
+
+impl ScriptStates {
+    fn new() -> Self {
+        Self {
+            inner: DashMap::new()
+        }
+    }
+}
+
+#[derive(Debug, Shrinkwrap)]
+pub struct SymbolTables {
+    // key is path to content directory
+    inner: DashMap<AbsPath, SymbolTable>
+}
+
+impl SymbolTables {
+    fn new() -> Self {
+        Self {
+            inner: DashMap::new()
+        }
+    }
+}
 
 impl Backend {
     pub const LANGUAGE_ID: &'static str = "witcherscript";
@@ -85,7 +113,8 @@ impl Backend {
 
             content_graph: RwLock::new(ContentGraph::new()),
             source_trees: SourceTreeMap::new(),
-            scripts: Arc::new(DashMap::new())
+            scripts: Arc::new(ScriptStates::new()),
+            symtabs: SymbolTables::new()
         }
     }
 }

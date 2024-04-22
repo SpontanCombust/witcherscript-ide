@@ -26,7 +26,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
                 is_foreign: true
             });
 
-            backend.on_scripts_modified([doc_path.clone()], true).await;
+            backend.on_scripts_modified(vec![doc_path.clone()], None, true).await;
             backend.reporter.commit_diagnostics(&doc_path).await;
         }
     }
@@ -52,7 +52,8 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
     } 
 
     if should_notify {
-        backend.on_scripts_modified([doc_path.clone()], true).await;
+        let content_path = backend.source_trees.containing_content_path(&doc_path);
+        backend.on_scripts_modified(vec![doc_path.clone()], content_path.as_ref(), true).await;
         backend.reporter.commit_diagnostics(&doc_path).await;
     }
 }
