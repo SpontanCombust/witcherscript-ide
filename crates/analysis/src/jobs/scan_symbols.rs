@@ -13,17 +13,18 @@ use crate::model::symbols::*;
 use crate::diagnostics::*;
 
 
-pub fn scan_symbols(script: &Script, doc: &ScriptDocument, doc_path: &AbsPath, symtab: &mut SymbolTable, diagnostics: &mut Vec<Diagnostic>) {
+pub fn scan_symbols(script: &Script, doc: &ScriptDocument, doc_path: &AbsPath, symtab: &mut SymbolTable) -> Vec<Diagnostic> {
     let mut visitor = SymbolScannerVisitor {
         symtab,
         doc,
         doc_path,
-        diagnostics,
+        diagnostics: Vec::new(),
         current_path: SymbolPathBuf::empty(),
         current_ordinal: 0
     };
 
     script.root_node().accept(&mut visitor);
+    visitor.diagnostics
 }
 
 
@@ -31,7 +32,7 @@ struct SymbolScannerVisitor<'a> {
     symtab: &'a mut SymbolTable,
     doc: &'a ScriptDocument,
     doc_path: &'a AbsPath,
-    diagnostics: &'a mut Vec<Diagnostic>,
+    diagnostics: Vec<Diagnostic>,
 
     current_path: SymbolPathBuf,
     current_ordinal: usize // used for struct members and function parameters
@@ -41,13 +42,18 @@ impl SymbolScannerVisitor<'_> {
     // Returns whether the symbol is not a duplicate
     fn check_contains(&mut self, path: &SymbolPath, sym_typ: SymbolType, range: Range) -> bool {
         if let Err(err) = self.symtab.contains(path) {
+            let (precursor_file_path, precursor_range) = err.occupied_location
+                .map(|loc| (Some(loc.file_path), Some(loc.range)))
+                .unwrap_or((None, None));
+
             self.diagnostics.push(Diagnostic { 
                 range, 
                 body: ErrorDiagnostic::SymbolNameTaken { 
                     name: err.occupied_path.components().last().unwrap().name.to_string(), 
                     this_type: sym_typ, 
                     precursor_type: err.occupied_type,
-                    precursor_range: err.occupied_range.unwrap_or_default()
+                    precursor_file_path,
+                    precursor_range
                 }.into()
             });
             

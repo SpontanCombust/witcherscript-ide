@@ -73,6 +73,11 @@ impl SymbolPathBuf {
             self.buff.clear();
         }   
     }
+
+    /// Makes the path empty
+    pub fn clear(&mut self) {
+        self.buff.clear();
+    }
 }
 
 impl Default for SymbolPathBuf {
