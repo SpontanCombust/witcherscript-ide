@@ -46,17 +46,27 @@ impl Backend {
             self.on_source_tree_files_removed(diff_removed).await;
         }
         if !diff_added.is_empty() {
-            self.on_source_tree_files_added(diff_added, content_path, run_diagnostics).await;
+            self.on_source_tree_files_added(diff_added.clone()).await;
         }
         if !diff_modified.is_empty() {
-            self.on_source_tree_files_modified(diff_modified, content_path, run_diagnostics).await;
+            self.on_source_tree_files_modified(diff_modified.clone()).await;
+        }
+
+        let modified_script_paths: Vec<_> = 
+            diff_added.into_iter()
+            .chain(diff_modified.into_iter())
+            .map(|f| f.into_absolute_path())
+            .collect();
+
+        if !modified_script_paths.is_empty() {
+            self.on_scripts_modified(modified_script_paths, Some(content_path), true, run_diagnostics).await;
         }
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Handled source tree related changes to {} in {:.3}s", content_path.display(), duration.as_secs_f32())).await;
     }
 
-    async fn on_source_tree_files_added(&self, added_files: Vec<SourceTreeFile>, content_path: &AbsPath, run_diagnostics: bool) {
+    async fn on_source_tree_files_added(&self, added_files: Vec<SourceTreeFile>) {
         let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
 
         let added_files_cloned = added_files.clone();
@@ -81,12 +91,6 @@ impl Backend {
                 is_foreign: false
             });
         }
-
-        let script_paths = added_files.into_iter()
-            .map(|f| f.into_absolute_path())
-            .collect();
-        
-        self.on_scripts_modified(script_paths, Some(content_path), run_diagnostics).await;
     }
 
     async fn on_source_tree_files_removed(&self, removed_files: Vec<SourceTreeFile>) {
@@ -97,7 +101,7 @@ impl Backend {
         }
     }
     
-    async fn on_source_tree_files_modified(&self, modified_files: Vec<SourceTreeFile>, content_path: &AbsPath, run_diagnostics: bool) {
+    async fn on_source_tree_files_modified(&self, modified_files: Vec<SourceTreeFile>) {
         for modified_file in &modified_files {
             if let Some(mut script_state) = self.scripts.get_mut(modified_file.absolute_path()) {
                 // for cases when files have been updated outside of of LSP client's knowledge
@@ -109,19 +113,15 @@ impl Backend {
                 }
             }
         }
-
-        let modified_script_paths = modified_files.into_iter()
-            .map(|f| f.into_absolute_path())
-            .collect();
-
-        self.on_scripts_modified(modified_script_paths, Some(content_path), run_diagnostics).await;
     }
 
     
-    pub async fn on_scripts_modified(&self, modified_script_paths: Vec<AbsPath>, content_path: Option<&AbsPath>, run_diagnostics: bool) {
-        if let Ok(mut symtabs) = self.symtabs.try_write() {
-            if let Some(mut main_symtab) = content_path.and_then(|content_path| symtabs.get_mut(content_path)) {
-                self.scan_symbols(&mut main_symtab, &modified_script_paths).await;
+    pub async fn on_scripts_modified(&self, modified_script_paths: Vec<AbsPath>, content_path: Option<&AbsPath>, scan_symbols: bool, run_diagnostics: bool) {
+        if scan_symbols {
+            if let Ok(mut symtabs) = self.symtabs.try_write() {
+                if let Some(mut main_symtab) = content_path.and_then(|content_path| symtabs.get_mut(content_path)) {
+                    self.scan_symbols(&mut main_symtab, &modified_script_paths).await;
+                }
             }
         }
 
