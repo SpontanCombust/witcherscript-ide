@@ -249,6 +249,44 @@ impl Backend {
             dot_graph
         })
     }
+
+    pub async fn handle_debug_script_symbols_request(&self, params: requests::debug::script_symbols::Parameters) -> Result<requests::debug::script_symbols::Response> {
+        let script_path: AbsPath;
+        if let Ok(path) = AbsPath::try_from(params.script_uri) {
+            script_path = path;
+        } else {
+            return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
+        }
+
+        let content_path: AbsPath;
+        if let Some(path) = self.source_trees.containing_content_path(&script_path) {
+            content_path = path;
+        } else {
+            return Err(jsonrpc::Error {
+                code: jsonrpc::ErrorCode::ServerError(-1060),
+                message: "Script file does not belong to any known content".into(),
+                data: None
+            });
+        }
+
+        let symtab_ref;
+        if let Some(symtab) = self.symtabs.get(&content_path) {
+            symtab_ref = symtab;
+        } else {
+            return Err(jsonrpc::Error {
+                code: jsonrpc::ErrorCode::ServerError(-1061),
+                message: "Symbol table for the content could not be found".into(),
+                data: None
+            });
+        }
+
+        let sym_iter = symtab_ref.get_for_file(&script_path);
+        let script_symbols = format!("{:#?}", sym_iter.collect::<Vec<_>>());
+
+        Ok(requests::debug::script_symbols::Response {
+            symbols: script_symbols
+        })
+    }
 }
 
 

@@ -104,6 +104,12 @@
         "command": "witcherscript-ide.debug.contentGraphDot",
         "title": "Show content graph",
         "category": "WitcherScript-IDE (debug)"
+      },
+      {
+        "command": "witcherscript-ide.debug.showScriptSymbols",
+        "title": "Show script symbols",
+        "category": "WitcherScript-IDE (debug)",
+        "enablement": "editorLangId == 'witcherscript'"
       }
     ],
     "grammars": [

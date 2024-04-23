@@ -14,7 +14,8 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.scripts.importVanilla", commandImportVanillaScripts()),
         vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", commandDiffScriptWithVanilla()),
         vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context)),
-        vscode.commands.registerCommand("witcherscript-ide.debug.contentGraphDot", commandContentGraphDot(context))
+        vscode.commands.registerCommand("witcherscript-ide.debug.contentGraphDot", commandContentGraphDot(context)),
+        vscode.commands.registerCommand("witcherscript-ide.debug.showScriptSymbols", commandShowScriptSymbols(context))
     );
 }
 
@@ -446,6 +447,64 @@ function commandContentGraphDot(context: vscode.ExtensionContext): Cmd {
 
         await vscode.window.showTextDocument(doc, options);
     }
+}
+
+function commandShowScriptSymbols(context: vscode.ExtensionContext) {
+    const astSuffix = " - symbols";
+
+    const tdcp = new (class implements vscode.TextDocumentContentProvider {
+        readonly scheme = "witcherscript-ide-symbols";
+
+        eventEmitter = new vscode.EventEmitter<vscode.Uri>();
+
+        provideTextDocumentContent(uri: vscode.Uri): vscode.ProviderResult<string> {
+            // VSCode at the time of writing this does not provide any quick and easy way to display a custom tab label.
+            // Its default way of getting the tab name is the file name component of URI passed to openTextDocument.
+            // So if I want to display "{file} - AST" I need to do a bit of URI hacking and pass the whole thing to it.
+            // Anyways, LS needs name of the actual file, so the decoratory suffix needs to be gone from that URI.
+            uri = vscode.Uri.file(uri.fsPath.substring(0, uri.fsPath.length - astSuffix.length));
+
+            const params: requests.debug.scriptSymbols.Parameters = {
+                scriptUri: client.code2ProtocolConverter.asUri(uri)
+            }
+            return client.sendRequest(requests.debug.scriptSymbols.type, params).then(
+                (response) => {
+                    return response.symbols;
+                },
+                (error) => {
+                    vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+                    return ""
+                }
+            )
+        }
+
+        get onDidChange(): vscode.Event<vscode.Uri> {
+            return this.eventEmitter.event;
+        }
+    })();
+
+    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(tdcp.scheme, tdcp));
+
+    return async () => {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor) {
+            return;
+        }
+
+        const scriptPath = activeEditor.document.uri.fsPath;
+        const uri = vscode.Uri.file(scriptPath + astSuffix).with({ scheme: tdcp.scheme });
+        
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const options: vscode.TextDocumentShowOptions = {
+            viewColumn: vscode.ViewColumn.Two,
+            preview: false,
+            preserveFocus: true
+        };
+
+        tdcp.eventEmitter.fire(uri);
+        
+        vscode.window.showTextDocument(doc, options);
+    };
 }
 
 

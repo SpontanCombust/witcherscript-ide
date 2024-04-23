@@ -4,14 +4,14 @@ use abs_path::AbsPath;
 use super::symbols::*;
 
 
-#[derive(Debug, Clone, EnumIs, EnumTryAs)]
+#[derive(Clone, EnumIs, EnumTryAs)]
 pub enum SymbolVariant {
     // types
     Class(ClassSymbol),
     State(StateSymbol),
     Struct(StructSymbol),
     Enum(EnumSymbol),
-    Array(ArrayTypeSymbol),
+    Array(ArrayTypeSymbol), //TODO maybe rework array symbol so only one set of symbols has to persist and specialized types get generated dynamically
 
     // callables
     GlobalFunc(GlobalFunctionSymbol),
@@ -27,6 +27,29 @@ pub enum SymbolVariant {
     Autobind(AutobindSymbol),
     LocalVar(LocalVarSymbol),
     SpecialVar(SpecialVarSymbol)
+}
+
+impl std::fmt::Debug for SymbolVariant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Class(s) => s.fmt(f),
+            Self::State(s) => s.fmt(f),
+            Self::Struct(s) => s.fmt(f),
+            Self::Enum(s) => s.fmt(f),
+            Self::Array(s) => s.fmt(f),
+            Self::GlobalFunc(s) => s.fmt(f),
+            Self::MemberFunc(s) => s.fmt(f),
+            Self::Event(s) => s.fmt(f),
+            Self::Primitive(s) => s.fmt(f),
+            Self::EnumVariant(s) => s.fmt(f),
+            Self::FuncParam(s) => s.fmt(f),
+            Self::GlobalVar(s) => s.fmt(f),
+            Self::MemberVar(s) => s.fmt(f),
+            Self::Autobind(s) => s.fmt(f),
+            Self::LocalVar(s) => s.fmt(f),
+            Self::SpecialVar(s) => s.fmt(f),
+        }
+    }
 }
 
 impl SymbolVariant {

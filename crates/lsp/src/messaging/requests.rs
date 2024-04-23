@@ -141,4 +141,23 @@ pub mod debug {
     
         pub const METHOD: &'static str = "witcherscript-ide/debug/contentGraphDot";
     }
+
+    /// Returns a human-readable report containing all code symbols in a given script file
+    pub mod script_symbols {
+        use super::*;
+
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Parameters {
+            pub script_uri: lsp::Url
+        }
+        
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Response {
+            pub symbols: String
+        }
+    
+        pub const METHOD: &'static str = "witcherscript-ide/debug/scriptSymbols";
+    }
 }

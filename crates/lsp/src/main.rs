@@ -172,6 +172,7 @@ async fn main() {
         .custom_method(requests::scripts::parent_content::METHOD, Backend::handle_scripts_parent_content_request)
         .custom_method(requests::debug::script_ast::METHOD, Backend::handle_debug_script_ast_request)
         .custom_method(requests::debug::content_graph_dot::METHOD, Backend::handle_debug_content_graph_dot_request)
+        .custom_method(requests::debug::script_symbols::METHOD, Backend::handle_debug_script_symbols_request)
         .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;

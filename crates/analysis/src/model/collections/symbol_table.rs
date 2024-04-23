@@ -1,4 +1,5 @@
 use std::collections::{HashMap, BTreeMap};
+use std::iter;
 use thiserror::Error;
 use lsp_types as lsp;
 use abs_path::AbsPath;
@@ -104,13 +105,33 @@ impl SymbolTable {
         }
     }
 
-    pub fn get_children<'a, 'b>(&'a self, path: &'b SymbolPath) -> impl Iterator<Item = &'a SymbolVariant> where 'b: 'a {
+    pub fn get_children<'a>(&'a self, path: &SymbolPath) -> impl Iterator<Item = &'a SymbolVariant> + 'a {
         let comp_count = path.components().count() + 1;
 
-        self.symbols.range(path.to_sympath_buf()..)
-            .take_while(|(p, _)| p.starts_with(path))
+        let path_clone = path.to_owned();
+        self.symbols.range(path.to_owned()..)
+            .take_while(move |(p, _)| p.starts_with(&path_clone))
             .filter(move |(p, _)| p.components().count() == comp_count)
             .map(|(_, v)| v)
+    }
+
+    pub fn get_for_file<'a>(&'a self, file_path: &AbsPath) -> Box<dyn Iterator<Item = &'a SymbolVariant> + 'a> {
+        let roots = self.file_assocs
+            .get(file_path)
+            .map(|v| v.as_slice())
+            .unwrap_or_default();
+
+        if !roots.is_empty() {
+            let iter = roots.iter()
+                .map(|root| self.symbols.range(root.to_owned()..)
+                                .take_while(|(p, _)| p.starts_with(root))
+                                .map(|(_, v)| v))
+                .flatten();
+
+            Box::new(iter)
+        } else {
+            Box::new(iter::empty())
+        }
     }
 
     pub(crate) fn merge(&mut self, mut other: Self) -> HashMap<AbsPath, Vec<MergeConflictError>> {
@@ -140,7 +161,7 @@ impl SymbolTable {
                 // if a primary symbol is a duplicate we can skip its children
                 // elements from BTreeMap come in key-ascending order, so we can expect 
                 // possible children symbols to be right after the parent
-                if incoming_sympath.starts_with(&sympath_to_skip) {
+                if !sympath_to_skip.is_empty() && incoming_sympath.starts_with(&sympath_to_skip) {
                     continue;
                 }
 
