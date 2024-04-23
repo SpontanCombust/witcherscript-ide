@@ -5,7 +5,7 @@ use tokio::sync::mpsc;
 use abs_path::AbsPath;
 use witcherscript::Script;
 use witcherscript_analysis::diagnostics::Diagnostic;
-use crate::{reporting::IntoLspDiagnostic, Backend, ScriptState};
+use crate::{reporting::{DiagnosticGroup, IntoLspDiagnostic}, Backend, ScriptState};
 
 
 #[bitmask(u8)]
@@ -46,8 +46,8 @@ impl Backend {
         });
 
         while let Some((script_path, diags)) = recv.recv().await {
-            self.reporter.clear_diagnostics(script_path.as_ref());
-            self.reporter.push_diagnostics(script_path.as_ref(), diags);
+            self.reporter.clear_diagnostics(script_path.as_ref(), DiagnosticGroup::Analysis);
+            self.reporter.push_diagnostics(script_path.as_ref(), diags,  DiagnosticGroup::Analysis);
         }
     }
 
@@ -71,8 +71,8 @@ impl Backend {
         });
 
         while let Some((script_path, diags)) = recv.recv().await {
-            self.reporter.clear_diagnostics(script_path.as_ref());
-            self.reporter.push_diagnostics(script_path.as_ref(), diags);
+            self.reporter.clear_diagnostics(script_path.as_ref(), DiagnosticGroup::Analysis);
+            self.reporter.push_diagnostics(script_path.as_ref(), diags, DiagnosticGroup::Analysis);
         }
     }
 }

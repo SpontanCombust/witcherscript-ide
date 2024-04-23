@@ -6,6 +6,7 @@ use witcherscript_project::content::{ContentScanError, ProjectDirectory, RedkitP
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{ContentGraph, ContentScanner, FileError};
 use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphEdgeWithContent, GraphNode};
+use crate::reporting::DiagnosticGroup;
 use crate::{reporting::IntoLspDiagnostic, Backend};
 
 
@@ -207,10 +208,10 @@ impl Backend {
                 self.reporter.log_warning(format!("Content scanning issue for {}: {}", err.path.display(), err.error)).await;
             },
             ContentScanError::ManifestParse(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
             },
             ContentScanError::RedkitManifestRead(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
             },
             ContentScanError::NotContent => {},
         }
@@ -223,22 +224,22 @@ impl Backend {
                 self.reporter.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
             },
             ContentGraphError::ManifestRead(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
             },
             ContentGraphError::RedkitManifestRead(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
             },
             ContentGraphError::DependencyPathNotFound { content_path: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
             },
             ContentGraphError::DependencyNameNotFound { content_name: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
             },
             ContentGraphError::DependencyNameNotFoundAtPath { content_name: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
             },
             ContentGraphError::MultipleMatchingDependencies { content_name: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic());
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
             }
         }
     }

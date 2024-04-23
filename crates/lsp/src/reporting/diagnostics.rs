@@ -96,50 +96,65 @@ impl IntoLspDiagnostic for (String, lsp::Range) {
 
 #[derive(Debug)]
 pub struct BufferedDiagnostics {
-    pub diags: Vec<lsp::Diagnostic>,
-    pub changed: bool,
-    pub should_purge: bool
+    diags: Vec<BufferedDiagnostic>,
+    changed: bool,
+    should_purge: bool
+}
+
+#[derive(Debug)]
+struct BufferedDiagnostic {
+    diag: lsp::Diagnostic,
+    group: DiagnosticGroup
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DiagnosticGroup {
+    ContentScan,
+    SymbolScan,
+    Analysis
 }
 
 impl Reporter {
-    pub fn push_diagnostic(&self, path: &AbsPath, diag: lsp::Diagnostic) {
+    pub fn push_diagnostic(&self, path: &AbsPath, diag: lsp::Diagnostic, group: DiagnosticGroup) {
+        let bd = BufferedDiagnostic { diag, group };
         if let Some(mut kv) = self.buffered_diagnostics.get_mut(path) {
             let v = kv.value_mut();
-            v.diags.push(diag);
+            v.diags.push(bd);
             v.changed = true;
         } else {
             self.buffered_diagnostics.insert(path.clone(), BufferedDiagnostics {
-                diags: vec![diag],
+                diags: vec![bd],
                 changed: true,
                 should_purge: false
             });
         }
     }
 
-    pub fn push_diagnostics(&self, path: &AbsPath, diags: impl IntoIterator<Item = lsp::Diagnostic>) {
+    pub fn push_diagnostics(&self, path: &AbsPath, diags: impl IntoIterator<Item = lsp::Diagnostic>, group: DiagnosticGroup) {
+        let bds = diags.into_iter().map(|diag| BufferedDiagnostic { diag, group });
         if let Some(mut kv) = self.buffered_diagnostics.get_mut(path) {
             let v = kv.value_mut();
-            v.diags.extend(diags.into_iter());
+            v.diags.extend(bds);
             v.changed = true;
         } else {
             self.buffered_diagnostics.insert(path.clone(), BufferedDiagnostics {
-                diags: diags.into_iter().collect(),
+                diags: bds.collect(),
                 changed: true,
                 should_purge: false
             });
         }
     }
 
-    pub fn clear_diagnostics(&self, path: &AbsPath) {
+    pub fn clear_diagnostics(&self, path: &AbsPath, source: DiagnosticGroup) {
         self.buffered_diagnostics
             .alter(path, |_, mut v|  {
-                v.diags.clear();
+                v.diags.retain(|d| d.group != source);
                 v.changed = true;
                 v
             });
     }
 
-    /// In addition to clearing diagnostics for a given file, said file will be forgotten about
+    /// Clears all diagnostics for a given file and additionally that file gets forgotten about by the diagnostic system
     pub fn purge_diagnostics(&self, path: &AbsPath) {
         self.buffered_diagnostics
             .alter(path, |_, mut v|  {
@@ -166,7 +181,7 @@ impl Reporter {
                 let uri = kv.key().to_uri();
     
                 let v = kv.value_mut();
-                let diags = v.diags.drain(..).collect();
+                let diags = v.diags.drain(..).map(|d| d.diag).collect();
                 v.changed = false;
     
                 self.client.publish_diagnostics(uri, diags, None).await;
@@ -181,7 +196,7 @@ impl Reporter {
             let uri = kv.key().to_uri();
 
             let v = kv.value_mut();
-            let diags = v.diags.drain(..).collect();
+            let diags = v.diags.drain(..).map(|d| d.diag).collect();
             v.changed = false;
 
             self.client.publish_diagnostics(uri, diags, None).await;

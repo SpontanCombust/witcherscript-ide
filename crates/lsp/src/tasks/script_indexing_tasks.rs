@@ -5,7 +5,7 @@ use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_analysis::{diagnostics::Diagnostic, jobs, model::collections::SymbolTable};
 use witcherscript_project::source_tree::{SourceTreeFile, SourceTreeDifference};
-use crate::{reporting::IntoLspDiagnostic, Backend, ScriptState, ScriptStates};
+use crate::{reporting::{DiagnosticGroup, IntoLspDiagnostic}, Backend, ScriptState, ScriptStates};
 
 
 impl Backend {
@@ -168,7 +168,8 @@ impl Backend {
         jobs::merge_symbol_tables(symtab, scanning_symtab, &mut scanning_diagnostis);
 
         for (file_path, diagnostics) in scanning_diagnostis {
-            self.reporter.push_diagnostics(&file_path, diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic()));
+            self.reporter.clear_diagnostics(&file_path, DiagnosticGroup::SymbolScan);
+            self.reporter.push_diagnostics(&file_path, diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic()),  DiagnosticGroup::SymbolScan);
         }
     }
 }
