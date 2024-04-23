@@ -1,14 +1,16 @@
 use std::{collections::HashMap, sync::{Arc, Mutex}};
 use abs_path::AbsPath;
 use rayon::prelude::*;
-use tokio::sync::oneshot;
+use tokio::{sync::oneshot, time::Instant};
 use witcherscript_analysis::{diagnostics::AnalysisDiagnostic, jobs, model::collections::SymbolTable};
 use crate::{reporting::{DiagnosticGroup, IntoLspDiagnostic}, Backend, ScriptStates};
 
 
 impl Backend {
     /// modified_script_paths must belong to the same content as the symtab
-    pub async fn scan_symbols(&self, symtab: &mut SymbolTable, modified_script_paths: &Vec<AbsPath>) {
+    pub async fn scan_symbols(&self, symtab: &mut SymbolTable, content_path: &AbsPath, modified_script_paths: &Vec<AbsPath>) {
+        let start = Instant::now();
+
         let job_provider = SymbolScanJobProvider {
             scripts: self.scripts.clone(),
             script_paths: Arc::new(Mutex::new(modified_script_paths.clone()))
@@ -44,6 +46,9 @@ impl Backend {
         let (scanning_symtab, mut scanning_diagnostis) = recv.await.expect("on_scripts_modified symbol scan recv fail");
 
         jobs::merge_symbol_tables(symtab, scanning_symtab, &mut scanning_diagnostis);
+
+        let duration = Instant::now() - start;
+        self.reporter.log_info(format!("Updated symbol table for content {} in {:.3}s", content_path, duration.as_secs_f32())).await;
 
         for (file_path, diagnostics) in scanning_diagnostis {
             self.reporter.clear_diagnostics(&file_path, DiagnosticGroup::SymbolScan);
