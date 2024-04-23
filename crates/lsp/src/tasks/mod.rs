@@ -3,3 +3,4 @@
 mod content_indexing_tasks;
 mod script_indexing_tasks;
 mod script_analysis_tasks;
+mod symbol_scan_tasks;

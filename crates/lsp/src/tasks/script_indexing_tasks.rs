@@ -1,11 +1,9 @@
-use std::{collections::HashMap, sync::{Arc, Mutex}};
+use tokio::{sync::mpsc, time::Instant};
 use rayon::prelude::*;
-use tokio::{sync::{mpsc, oneshot}, time::Instant};
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
-use witcherscript_analysis::{diagnostics::Diagnostic, jobs, model::collections::SymbolTable};
-use witcherscript_project::source_tree::{SourceTreeFile, SourceTreeDifference};
-use crate::{reporting::{DiagnosticGroup, IntoLspDiagnostic}, Backend, ScriptState, ScriptStates};
+use witcherscript_project::source_tree::{SourceTreeDifference, SourceTreeFile};
+use crate::{Backend, ScriptState};
 
 
 impl Backend {
@@ -123,7 +121,7 @@ impl Backend {
     pub async fn on_scripts_modified(&self, modified_script_paths: Vec<AbsPath>, content_path: Option<&AbsPath>, run_diagnostics: bool) {
         if let Ok(mut symtabs) = self.symtabs.try_write() {
             if let Some(mut main_symtab) = content_path.and_then(|content_path| symtabs.get_mut(content_path)) {
-                self.alter_symbol_table(&mut main_symtab, &modified_script_paths).await;
+                self.scan_symbols(&mut main_symtab, &modified_script_paths).await;
             }
         }
 
@@ -131,101 +129,5 @@ impl Backend {
             self.run_script_analysis(modified_script_paths).await;
         }
     }
-
-    async fn alter_symbol_table(&self, symtab: &mut SymbolTable, modified_script_paths: &Vec<AbsPath>) {
-        let job_provider = SymbolScanJobProvider {
-            scripts: self.scripts.clone(),
-            script_paths: Arc::new(Mutex::new(modified_script_paths.clone()))
-        };
-
-        let worker_count = std::cmp::min(rayon::current_num_threads(), modified_script_paths.len());
-
-        let (send, recv) = oneshot::channel();
-        rayon::spawn(move || {
-            let mut workers = Vec::with_capacity(worker_count);
-
-            for _ in 0..worker_count {
-                workers.push(SymbolScanWorker::new(job_provider.clone()));
-            }
-
-            workers.par_iter_mut()
-                .for_each(|w| w.work());
-
-            let (mut merged_symtab, mut merged_diagnostics) = workers.pop().unwrap().finish();
-            while let Some(worker) = workers.pop() {
-                let (symtab, diagnostics) = worker.finish();
-                merged_diagnostics.extend(diagnostics);
-                jobs::merge_symbol_tables(&mut merged_symtab, symtab, &mut merged_diagnostics);
-            }
-
-            send.send((merged_symtab, merged_diagnostics)).expect("on_scripts_modified symbol scan send fail");
-        });
-
-        for p in modified_script_paths {
-            symtab.remove_for_file(p);
-        }
-
-        let (scanning_symtab, mut scanning_diagnostis) = recv.await.expect("on_scripts_modified symbol scan recv fail");
-
-        jobs::merge_symbol_tables(symtab, scanning_symtab, &mut scanning_diagnostis);
-
-        for (file_path, diagnostics) in scanning_diagnostis {
-            self.reporter.clear_diagnostics(&file_path, DiagnosticGroup::SymbolScan);
-            self.reporter.push_diagnostics(&file_path, diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic()),  DiagnosticGroup::SymbolScan);
-        }
-    }
 }
 
-struct SymbolScanWorker {
-    symtab: SymbolTable,
-    diagnostics: HashMap<AbsPath, Vec<Diagnostic>>,
-    job_provider: SymbolScanJobProvider
-}
-
-impl SymbolScanWorker {
-    fn new(job_provider: SymbolScanJobProvider) -> Self {
-        Self {
-            symtab: SymbolTable::new(),
-            diagnostics: HashMap::new(),
-            job_provider
-        }
-    }
-
-    fn work(&mut self) {
-        while let Some(job) = self.job_provider.poll() {
-            let script_state = job.scripts.get(&job.script_path).unwrap();
-            let diagnostics = jobs::scan_symbols(
-                &script_state.script, 
-                &script_state.buffer, 
-                &job.script_path, 
-                &mut self.symtab
-            );
-
-            self.diagnostics.insert(job.script_path.to_owned(), diagnostics);
-        }
-    }
-
-    fn finish(self) -> (SymbolTable, HashMap<AbsPath, Vec<Diagnostic>>) {
-        (self.symtab, self.diagnostics)
-    }
-}
-
-struct SymbolScanJob {
-    script_path: AbsPath,
-    scripts: Arc<ScriptStates>
-}
-
-#[derive(Clone)]
-struct SymbolScanJobProvider {
-    script_paths: Arc<Mutex<Vec<AbsPath>>>,
-    scripts: Arc<ScriptStates>
-}
-
-impl SymbolScanJobProvider {
-    fn poll(&self) -> Option<SymbolScanJob> {
-        let mut paths = self.script_paths.lock().unwrap();
-        paths.pop().map(|p| {
-            SymbolScanJob { script_path: p, scripts: self.scripts.clone() }
-        })
-    }
-}
