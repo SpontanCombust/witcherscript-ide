@@ -140,7 +140,8 @@ impl Backend {
 
             self.source_trees.insert(added_content_path.clone(), source_tree);
 
-            self.symtabs.insert(added_content_path.clone(), SymbolTable::new());
+            let mut symtabs = self.symtabs.write().await;
+            symtabs.insert(added_content_path.clone(), SymbolTable::new());
         }
 
         // handling source tree changes in a seperate step to not lock resources for too long
@@ -165,7 +166,8 @@ impl Backend {
                 });
             }
 
-            self.symtabs.remove(removed_content_path);
+            let mut symtabs = self.symtabs.write().await;
+            symtabs.remove(removed_content_path);
             
             if !removed_content_path.exists() || !removed_node.in_workspace {
                 if let Some(project) = removed_content.as_any().downcast_ref::<ProjectDirectory>() {

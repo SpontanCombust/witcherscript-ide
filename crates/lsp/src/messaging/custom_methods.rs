@@ -269,8 +269,9 @@ impl Backend {
             });
         }
 
+        let symtabs = self.symtabs.read().await;
         let symtab_ref;
-        if let Some(symtab) = self.symtabs.get(&content_path) {
+        if let Some(symtab) = symtabs.get(&content_path) {
             symtab_ref = symtab;
         } else {
             return Err(jsonrpc::Error {

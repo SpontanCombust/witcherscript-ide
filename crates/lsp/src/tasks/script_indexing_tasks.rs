@@ -121,8 +121,10 @@ impl Backend {
 
     
     pub async fn on_scripts_modified(&self, modified_script_paths: Vec<AbsPath>, content_path: Option<&AbsPath>, run_diagnostics: bool) {
-        if let Some(mut main_symtab) = content_path.and_then(|content_path| self.symtabs.get_mut(content_path)) {
-            self.alter_symbol_table(&mut main_symtab, &modified_script_paths).await;
+        if let Ok(mut symtabs) = self.symtabs.try_write() {
+            if let Some(mut main_symtab) = content_path.and_then(|content_path| symtabs.get_mut(content_path)) {
+                self.alter_symbol_table(&mut main_symtab, &modified_script_paths).await;
+            }
         }
 
         if run_diagnostics {

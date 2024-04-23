@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 use dashmap::DashMap;
 use filetime::FileTime;
@@ -33,7 +34,7 @@ pub struct Backend {
     source_trees: SourceTreeMap,
     // key is path to the file
     scripts: Arc<ScriptStates>,
-    symtabs: SymbolTables,
+    symtabs: RwLock<SymbolTables>,
 }
 
 #[derive(Debug, Shrinkwrap)]
@@ -87,15 +88,16 @@ impl ScriptStates {
 }
 
 #[derive(Debug, Shrinkwrap)]
+#[shrinkwrap(mutable)]
 pub struct SymbolTables {
     // key is path to content directory
-    inner: DashMap<AbsPath, SymbolTable>
+    pub inner: HashMap<AbsPath, SymbolTable>
 }
 
 impl SymbolTables {
     fn new() -> Self {
         Self {
-            inner: DashMap::new()
+            inner: HashMap::new()
         }
     }
 }
@@ -114,7 +116,7 @@ impl Backend {
             content_graph: RwLock::new(ContentGraph::new()),
             source_trees: SourceTreeMap::new(),
             scripts: Arc::new(ScriptStates::new()),
-            symtabs: SymbolTables::new()
+            symtabs: RwLock::new(SymbolTables::new())
         }
     }
 }
