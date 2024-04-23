@@ -181,7 +181,7 @@ impl Reporter {
                 let uri = kv.key().to_uri();
     
                 let v = kv.value_mut();
-                let diags = v.diags.drain(..).map(|d| d.diag).collect();
+                let diags = v.diags.iter().map(|d| d.diag.clone()).collect();
                 v.changed = false;
     
                 self.client.publish_diagnostics(uri, diags, None).await;
@@ -196,7 +196,7 @@ impl Reporter {
             let uri = kv.key().to_uri();
 
             let v = kv.value_mut();
-            let diags = v.diags.drain(..).map(|d| d.diag).collect();
+            let diags = v.diags.iter().map(|d| d.diag.clone()).collect();
             v.changed = false;
 
             self.client.publish_diagnostics(uri, diags, None).await;
