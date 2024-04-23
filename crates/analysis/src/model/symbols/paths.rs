@@ -29,6 +29,12 @@ impl DataSymbolPath {
     }
 }
 
+impl From<DataSymbolPath> for SymbolPathBuf {
+    fn from(value: DataSymbolPath) -> Self {
+        value.0
+    }
+}
+
 
 #[derive(Debug, Clone, Shrinkwrap)]
 pub struct GlobalCallableSymbolPath(SymbolPathBuf);
@@ -39,6 +45,12 @@ impl GlobalCallableSymbolPath {
     }
 }
 
+impl From<GlobalCallableSymbolPath> for SymbolPathBuf {
+    fn from(value: GlobalCallableSymbolPath) -> Self {
+        value.0
+    }
+}
+
 
 #[derive(Debug, Clone, Shrinkwrap)]
 pub struct MemberCallableSymbolPath(SymbolPathBuf);
@@ -46,6 +58,12 @@ pub struct MemberCallableSymbolPath(SymbolPathBuf);
 impl MemberCallableSymbolPath {
     pub fn new(parent_path: &SymbolPath, name: &str) -> Self {
         Self(parent_path.join(&SymbolPathBuf::new(name, SymbolCategory::Callable)))
+    }
+}
+
+impl From<MemberCallableSymbolPath> for SymbolPathBuf {
+    fn from(value: MemberCallableSymbolPath) -> Self {
+        value.0
     }
 }
 
@@ -60,6 +78,18 @@ impl BasicTypeSymbolPath {
 
     pub fn empty() -> Self {
         Self(SymbolPathBuf::empty())
+    }
+}
+
+impl From<BasicTypeSymbolPath> for SymbolPathBuf {
+    fn from(value: BasicTypeSymbolPath) -> Self {
+        value.0
+    }
+}
+
+impl Default for BasicTypeSymbolPath {
+    fn default() -> Self {
+        Self::empty()
     }
 }
 
@@ -91,6 +121,12 @@ impl From<StateSymbolPath> for BasicTypeSymbolPath {
     }
 }
 
+impl From<StateSymbolPath> for SymbolPathBuf {
+    fn from(value: StateSymbolPath) -> Self {
+        value.path
+    }
+}
+
 
 #[derive(Debug, Clone, Shrinkwrap)]
 pub struct ArrayTypeSymbolPath {
@@ -114,6 +150,12 @@ impl ArrayTypeSymbolPath {
         }
     }
 }
+
+impl From<ArrayTypeSymbolPath> for SymbolPathBuf {
+    fn from(value: ArrayTypeSymbolPath) -> Self {
+        value.path
+    }
+} 
 
 
 #[derive(Debug, Clone)]
@@ -168,6 +210,15 @@ impl From<ArrayTypeSymbolPath> for TypeSymbolPath {
     }
 }
 
+impl From<TypeSymbolPath> for SymbolPathBuf {
+    fn from(value: TypeSymbolPath) -> Self {
+        match value {
+            TypeSymbolPath::BasicOrState(p) => p.into(),
+            TypeSymbolPath::Array(p) => p.into(),
+        }
+    }
+}
+
 
 #[derive(Debug, Clone, Shrinkwrap)]
 pub struct SpecialVarSymbolPath {
@@ -189,5 +240,11 @@ impl SpecialVarSymbolPath {
             path: parent_path.join(&SymbolPathBuf::new(name, SymbolCategory::Data)),
             kind
         }
+    }
+}
+
+impl From<SpecialVarSymbolPath> for SymbolPathBuf {
+    fn from(value: SpecialVarSymbolPath) -> Self {
+        value.path
     }
 }

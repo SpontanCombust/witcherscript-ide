@@ -1,5 +1,4 @@
-use std::collections::{HashMap, BTreeMap};
-use std::iter;
+use std::collections::{btree_map, BTreeMap, HashMap};
 use thiserror::Error;
 use lsp_types as lsp;
 use abs_path::AbsPath;
@@ -14,7 +13,7 @@ use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
 pub struct SymbolTable {
     symbols: BTreeMap<SymbolPathBuf, SymbolVariant>,
     /// SymbolPath roots of symbols associated with given files
-    file_assocs: HashMap<AbsPath, Vec<SymbolPathBuf>>
+    file_assocs: HashMap<AbsPath, Vec<SymbolPathBuf>> //TODO replace with a relative path
 }
 
 #[derive(Debug, Clone, Error)]
@@ -105,34 +104,29 @@ impl SymbolTable {
         }
     }
 
-    pub fn get_children<'a>(&'a self, path: &SymbolPath) -> impl Iterator<Item = &'a SymbolVariant> + 'a {
-        let comp_count = path.components().count() + 1;
 
-        let path_clone = path.to_owned();
-        self.symbols.range(path.to_owned()..)
-            .take_while(move |(p, _)| p.starts_with(&path_clone))
-            .filter(move |(p, _)| p.components().count() == comp_count)
-            .map(|(_, v)| v)
+    /// Iterate over direct children of a symbol in a symbol hierarchy
+    pub fn get_children<'a>(&'a self, path: &SymbolPath) -> SymbolChildren<'a> {
+        SymbolChildren::new(self, path)
     }
 
-    pub fn get_for_file<'a>(&'a self, file_path: &AbsPath) -> Box<dyn Iterator<Item = &'a SymbolVariant> + 'a> {
-        let roots = self.file_assocs
-            .get(file_path)
-            .map(|v| v.as_slice())
-            .unwrap_or_default();
-
-        if !roots.is_empty() {
-            let iter = roots.iter()
-                .map(|root| self.symbols.range(root.to_owned()..)
-                                .take_while(|(p, _)| p.starts_with(root))
-                                .map(|(_, v)| v))
-                .flatten();
-
-            Box::new(iter)
-        } else {
-            Box::new(iter::empty())
-        }
+    pub fn get_for_file<'a>(&'a self, file_path: &AbsPath) -> FileSymbols<'a> {
+        FileSymbols::new(self, file_path)
     }
+
+    /// Returns an iterator going through all base classes of a given class symbol.
+    /// The first symbol is the one pointed to by the starting path (if it points to an existing class symbol).
+    pub fn class_hierarchy<'a>(&'a self, sympath: &SymbolPath) -> ClassHierarchy<'a> {
+        ClassHierarchy::new(self, sympath)
+    }
+
+    /// Iterator going through all base states of a given state symbol.
+    /// The first symbol is the one pointed to by the starting path (if it points to an existing state symbol).
+    pub fn state_hierarchy<'a>(&'a self, sympath: &SymbolPath) -> StateHierarchy<'a> {
+        StateHierarchy::new(self, sympath)
+    }
+
+
 
     pub(crate) fn merge(&mut self, mut other: Self) -> HashMap<AbsPath, Vec<MergeConflictError>> {
         let mut errors = HashMap::new();
@@ -207,4 +201,133 @@ impl SymbolTable {
 pub struct SymbolLocation {
     pub file_path: AbsPath,
     pub range: lsp::Range
+}
+
+
+
+/// Iterate over direct children of a symbol in a symbol hierarchy
+#[derive(Clone)]
+pub struct SymbolChildren<'st> {
+    iter: btree_map::Range<'st, SymbolPathBuf, SymbolVariant>,
+    parent_sympath: SymbolPathBuf,
+    children_comp_count: usize
+}
+
+impl<'st> SymbolChildren<'st> {
+    fn new(symtab: &'st SymbolTable, sympath: &SymbolPath) -> Self {
+        Self {
+            iter: symtab.symbols.range(sympath.to_owned()..),
+            parent_sympath: sympath.to_owned(),
+            children_comp_count: sympath.components().count() + 1
+        }
+    }
+}
+
+impl<'st> Iterator for SymbolChildren<'st> {
+    type Item = &'st SymbolVariant;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next()
+            .filter(|(sympath, _)| sympath.starts_with(&self.parent_sympath) && sympath.components().count() == self.children_comp_count)
+            .map(|(_, variant)| variant)
+    }
+}
+
+
+/// Iterate over symbols associated with a script file at a given path
+pub struct FileSymbols<'st> {
+    iter: Box<dyn Iterator<Item = &'st SymbolVariant> + 'st>
+}
+
+impl<'st> FileSymbols<'st> {
+    fn new(symtab: &'st SymbolTable, file_path: &AbsPath) -> Self {
+        let roots = symtab.file_assocs
+            .get(file_path)
+            .map(|v| v.as_slice())
+            .unwrap_or_default();
+
+        let iter = roots.iter()
+            .map(|root| symtab.symbols.range(root.to_owned()..)
+                            .take_while(|(p, _)| p.starts_with(root))
+                            .map(|(_, v)| v))
+            .flatten();
+
+        Self {
+            iter: Box::new(iter)
+        }
+    }
+} 
+
+impl<'st> Iterator for FileSymbols<'st> {
+    type Item = &'st SymbolVariant;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next()
+    }
+}
+
+
+/// Iterator going through all base classes of a given class symbol 
+/// starting from the class pointed to by the `start_path` parameter (if it points to an existing class symbol).
+#[derive(Clone)]
+pub struct ClassHierarchy<'st> {
+    symtab: &'st SymbolTable,
+    current_path: SymbolPathBuf
+}
+
+impl<'st> ClassHierarchy<'st> {
+    fn new(symtab: &'st SymbolTable, start_path: &SymbolPath) -> Self {
+        Self {
+            symtab,
+            current_path: start_path.to_owned()
+        }
+    }
+}
+
+impl<'st> Iterator for ClassHierarchy<'st> {
+    type Item = &'st ClassSymbol;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_path.is_empty() {
+            None
+        } else if let Some(class) = self.symtab.get(&self.current_path).and_then(|v| v.try_as_class_ref()) {
+            self.current_path = class.base_path.as_ref().map(|p| p.clone().into()).unwrap_or_default();
+            Some(class)
+        } else {
+            None
+        }
+    }
+}
+
+
+/// Iterator going through all base states of a given state symbol
+/// starting from the state pointed to by the `start_path` parameter (if it points to an existing state symbol).
+#[derive(Clone)]
+pub struct StateHierarchy<'st> {
+    symtab: &'st SymbolTable,
+    current_path: SymbolPathBuf
+}
+
+impl<'st> StateHierarchy<'st> {
+    fn new(symtab: &'st SymbolTable, start_path: &SymbolPath) -> Self {
+        Self {
+            symtab,
+            current_path: start_path.to_owned()
+        }
+    }
+}
+
+impl<'st> Iterator for StateHierarchy<'st> {
+    type Item = &'st StateSymbol;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_path.is_empty() {
+            None
+        } else if let Some(state) = self.symtab.get(&self.current_path).and_then(|v| v.try_as_state_ref()) {
+            self.current_path = state.base_state_path.as_ref().map(|p| p.clone().into()).unwrap_or_default();
+            Some(state)
+        } else {
+            None
+        }
+    }
 }
