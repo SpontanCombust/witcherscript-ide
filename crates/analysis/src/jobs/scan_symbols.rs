@@ -13,7 +13,7 @@ use crate::model::symbols::*;
 use crate::diagnostics::*;
 
 
-pub fn scan_symbols(script: &Script, doc: &ScriptDocument, doc_path: &AbsPath, symtab: &mut SymbolTable) -> Vec<Diagnostic> {
+pub fn scan_symbols(script: &Script, doc: &ScriptDocument, doc_path: &AbsPath, symtab: &mut SymbolTable) -> Vec<AnalysisDiagnostic> {
     let mut visitor = SymbolScannerVisitor {
         symtab,
         doc,
@@ -32,7 +32,7 @@ struct SymbolScannerVisitor<'a> {
     symtab: &'a mut SymbolTable,
     doc: &'a ScriptDocument,
     doc_path: &'a AbsPath,
-    diagnostics: Vec<Diagnostic>,
+    diagnostics: Vec<AnalysisDiagnostic>,
 
     current_path: SymbolPathBuf,
     current_ordinal: usize // used for struct members and function parameters
@@ -46,9 +46,9 @@ impl SymbolScannerVisitor<'_> {
                 .map(|loc| (Some(loc.file_path), Some(loc.range)))
                 .unwrap_or((None, None));
 
-            self.diagnostics.push(Diagnostic { 
+            self.diagnostics.push(AnalysisDiagnostic { 
                 range, 
-                body: ErrorDiagnostic::SymbolNameTaken { 
+                body: AnalysisError::SymbolNameTaken { 
                     name: err.occupied_path.components().last().unwrap().name.to_string(), 
                     this_type: sym_typ, 
                     precursor_type: err.occupied_type,
@@ -67,9 +67,9 @@ impl SymbolScannerVisitor<'_> {
     fn check_type_from_identifier(&mut self, n: IdentifierNode) -> BasicTypeSymbolPath {
         if let Some(type_name) = n.value(&self.doc) {
             if type_name.as_str() == ArrayTypeSymbol::TYPE_NAME {
-                self.diagnostics.push(Diagnostic { 
+                self.diagnostics.push(AnalysisDiagnostic { 
                     range: Range::new(n.range().end, n.range().end), 
-                    body: ErrorDiagnostic::MissingTypeArg.into()
+                    body: AnalysisError::MissingTypeArg.into()
                 });
             } else {
                 return BasicTypeSymbolPath::new(&type_name);
@@ -90,9 +90,9 @@ impl SymbolScannerVisitor<'_> {
                     }   
                 } else {
                     // since only array type takes type argument, all other uses of type arg are invalid
-                    self.diagnostics.push(Diagnostic { 
+                    self.diagnostics.push(AnalysisDiagnostic { 
                         range: n.type_arg().unwrap().range(), 
-                        body: ErrorDiagnostic::UnnecessaryTypeArg.into()
+                        body: AnalysisError::UnnecessaryTypeArg.into()
                     });
 
                     return self.check_type_from_identifier(n.type_name()).into();
@@ -120,9 +120,9 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                 
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if !sym.specifiers.insert(spec) {
-                        self.diagnostics.push(Diagnostic { 
+                        self.diagnostics.push(AnalysisDiagnostic { 
                             range, 
-                            body: ErrorDiagnostic::RepeatedSpecifier.into()
+                            body: AnalysisError::RepeatedSpecifier.into()
                         });
                     }
                 }
@@ -173,9 +173,9 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
     
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if !sym.specifiers.insert(spec) {
-                        self.diagnostics.push(Diagnostic { 
+                        self.diagnostics.push(AnalysisDiagnostic { 
                             range, 
-                            body: ErrorDiagnostic::RepeatedSpecifier.into()
+                            body: AnalysisError::RepeatedSpecifier.into()
                         });
                     }
                 }
@@ -228,9 +228,9 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
     
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if !sym.specifiers.insert(spec) {
-                        self.diagnostics.push(Diagnostic { 
+                        self.diagnostics.push(AnalysisDiagnostic { 
                             range, 
-                            body: ErrorDiagnostic::RepeatedSpecifier.into()
+                            body: AnalysisError::RepeatedSpecifier.into()
                         });
                     }
                 }
@@ -304,9 +304,9 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
     
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if !sym.specifiers.insert(spec) {
-                        self.diagnostics.push(Diagnostic { 
+                        self.diagnostics.push(AnalysisDiagnostic { 
                             range, 
-                            body: ErrorDiagnostic::RepeatedSpecifier.into()
+                            body: AnalysisError::RepeatedSpecifier.into()
                         });
                     }
                 }
@@ -350,9 +350,9 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
     
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if !sym.specifiers.insert(spec) {
-                        self.diagnostics.push(Diagnostic { 
+                        self.diagnostics.push(AnalysisDiagnostic { 
                             range, 
-                            body: ErrorDiagnostic::RepeatedSpecifier.into()
+                            body: AnalysisError::RepeatedSpecifier.into()
                         });
                     }
                 }
@@ -419,9 +419,9 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
         let mut specifiers = HashSet::new();
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if !specifiers.insert(spec) {
-                self.diagnostics.push(Diagnostic { 
+                self.diagnostics.push(AnalysisDiagnostic { 
                     range, 
-                    body: ErrorDiagnostic::RepeatedSpecifier.into()
+                    body: AnalysisError::RepeatedSpecifier.into()
                 });
             }
         }
@@ -451,18 +451,18 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if matches!(spec, MemberVarSpecifier::AccessModifier(_)) {
                 if found_access_modif_before {
-                    self.diagnostics.push(Diagnostic { 
+                    self.diagnostics.push(AnalysisDiagnostic { 
                         range, 
-                        body: ErrorDiagnostic::MultipleAccessModifiers.into()
+                        body: AnalysisError::MultipleAccessModifiers.into()
                     })
                 }
                 found_access_modif_before = true;
             }
 
             if !specifiers.insert(spec) {
-                self.diagnostics.push(Diagnostic { 
+                self.diagnostics.push(AnalysisDiagnostic { 
                     range, 
-                    body: ErrorDiagnostic::RepeatedSpecifier.into()
+                    body: AnalysisError::RepeatedSpecifier.into()
                 });
             }
         }
@@ -482,7 +482,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                     self.symtab.insert(sym);
                 }
             }
-            self.current_ordinal += 1;
+            self.current_ordinal += 1; //FIXME doesn't get reset when in class
         }
     }
 
@@ -497,18 +497,18 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if matches!(spec, AutobindSpecifier::AccessModifier(_)) {
                         if found_access_modif_before {
-                            self.diagnostics.push(Diagnostic { 
+                            self.diagnostics.push(AnalysisDiagnostic { 
                                 range, 
-                                body: ErrorDiagnostic::MultipleAccessModifiers.into()
+                                body: AnalysisError::MultipleAccessModifiers.into()
                             })
                         }
                         found_access_modif_before = true;
                     }
     
                     if !sym.specifiers.insert(spec) {
-                        self.diagnostics.push(Diagnostic { 
+                        self.diagnostics.push(AnalysisDiagnostic { 
                             range, 
-                            body: ErrorDiagnostic::RepeatedSpecifier.into()
+                            body: AnalysisError::RepeatedSpecifier.into()
                         });
                     }
                 }

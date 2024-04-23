@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 use abs_path::AbsPath;
-use crate::{diagnostics::{Diagnostic, ErrorDiagnostic}, model::collections::SymbolTable};
+use crate::{diagnostics::{AnalysisDiagnostic, AnalysisError}, model::collections::SymbolTable};
 
 
-pub fn merge_symbol_tables(target_symtab: &mut SymbolTable, source_symtab: SymbolTable, diagnostics: &mut HashMap<AbsPath, Vec<Diagnostic>>) {
+pub fn merge_symbol_tables(target_symtab: &mut SymbolTable, source_symtab: SymbolTable, diagnostics: &mut HashMap<AbsPath, Vec<AnalysisDiagnostic>>) {
     for (file_path, errors) in target_symtab.merge(source_symtab) {
         let errors_as_diags = errors.into_iter()
-            .map(|err| Diagnostic { 
+            .map(|err| AnalysisDiagnostic { 
                 range: err.incoming_location.range, 
-                body: ErrorDiagnostic::SymbolNameTaken { 
+                body: AnalysisError::SymbolNameTaken { 
                     name: err.occupied_path.components().last().unwrap().name.to_string(), 
                     this_type: err.incoming_type, 
                     precursor_type: err.occupied_type,

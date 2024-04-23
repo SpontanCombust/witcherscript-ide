@@ -5,7 +5,7 @@ use crate::model::symbols::SymbolType;
 
 
 #[derive(Debug, Clone)]
-pub enum ErrorDiagnostic {
+pub enum AnalysisError {
     Syntax(SyntaxErrorDiagnostic),
     SymbolNameTaken {
         name: String,
@@ -29,16 +29,16 @@ pub enum SyntaxErrorDiagnostic {
 }
 
 
-impl Display for ErrorDiagnostic {
+impl Display for AnalysisError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ErrorDiagnostic::Syntax(err) => write!(f, "Syntax error: {}", err),
-            ErrorDiagnostic::SymbolNameTaken { name, .. } => write!(f, "Name {} is already taken", name),
-            ErrorDiagnostic::TypeNotFound => write!(f, "Type could not be found"),
-            ErrorDiagnostic::MissingTypeArg => write!(f, "Missing type argument"),
-            ErrorDiagnostic::UnnecessaryTypeArg => write!(f, "This type does not take any type arguments"),
-            ErrorDiagnostic::RepeatedSpecifier => write!(f, "Repeated specifier"),
-            ErrorDiagnostic::MultipleAccessModifiers => write!(f, "Only one access modifier is allowed"),
+            AnalysisError::Syntax(err) => write!(f, "Syntax error: {}", err),
+            AnalysisError::SymbolNameTaken { name, .. } => write!(f, "The name {} is defined multiple times", name),
+            AnalysisError::TypeNotFound => write!(f, "Type could not be found"),
+            AnalysisError::MissingTypeArg => write!(f, "Missing type argument"),
+            AnalysisError::UnnecessaryTypeArg => write!(f, "This type does not take any type arguments"),
+            AnalysisError::RepeatedSpecifier => write!(f, "Repeated specifier"),
+            AnalysisError::MultipleAccessModifiers => write!(f, "Only one access modifier is allowed"),
         }
     }
 }

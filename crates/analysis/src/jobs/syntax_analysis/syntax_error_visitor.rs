@@ -2,10 +2,10 @@ use lsp_types::Range;
 use witcherscript::{SyntaxNode, SyntaxError};
 use witcherscript::tokens::*;
 use witcherscript::ast::*;
-use crate::diagnostics::{Diagnostic, ErrorDiagnostic, SyntaxErrorDiagnostic};
+use crate::diagnostics::{AnalysisDiagnostic, AnalysisError, SyntaxErrorDiagnostic};
 
 
-pub fn syntax_analysis(script_root: RootNode, diagnostics: &mut Vec<Diagnostic>) {
+pub fn syntax_analysis(script_root: RootNode, diagnostics: &mut Vec<AnalysisDiagnostic>) {
     let mut visitor = SyntaxErrorVisitor {
         diagnostics
     };
@@ -15,14 +15,14 @@ pub fn syntax_analysis(script_root: RootNode, diagnostics: &mut Vec<Diagnostic>)
 
 
 struct SyntaxErrorVisitor<'a> {
-    diagnostics: &'a mut Vec<Diagnostic>   
+    diagnostics: &'a mut Vec<AnalysisDiagnostic>   
 }
 
 impl SyntaxErrorVisitor<'_> {
     fn missing_element(&mut self, range: Range, expected: String) {
-        self.diagnostics.push(Diagnostic { 
+        self.diagnostics.push(AnalysisDiagnostic { 
             range, 
-            body: ErrorDiagnostic::Syntax(SyntaxErrorDiagnostic::MissingElement(expected)).into()
+            body: AnalysisError::Syntax(SyntaxErrorDiagnostic::MissingElement(expected)).into()
         })
     }
 
@@ -101,10 +101,10 @@ impl SyntaxErrorVisitor<'_> {
                     }
                 },
                 SyntaxError::Invalid(errn) => {
-                    self.diagnostics.push(Diagnostic { 
+                    self.diagnostics.push(AnalysisDiagnostic { 
                         range: errn.range(), 
                         // for now just create a generic syntax error on the range to know that this thing works
-                        body: ErrorDiagnostic::Syntax(SyntaxErrorDiagnostic::Other).into()
+                        body: AnalysisError::Syntax(SyntaxErrorDiagnostic::Other).into()
                     })       
                 }
             }

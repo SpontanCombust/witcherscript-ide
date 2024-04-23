@@ -1,6 +1,6 @@
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
-use witcherscript_analysis::diagnostics::{Diagnostic, DiagnosticBody};
+use witcherscript_analysis::diagnostics::{AnalysisDiagnostic, AnalysisDiagnosticBody};
 use witcherscript_project::{manifest, redkit, FileError};
 use crate::Backend;
 use super::Reporter;
@@ -10,14 +10,14 @@ pub trait IntoLspDiagnostic {
     fn into_lsp_diagnostic(self) -> lsp::Diagnostic;
 }
 
-impl IntoLspDiagnostic for Diagnostic {
+impl IntoLspDiagnostic for AnalysisDiagnostic {
     fn into_lsp_diagnostic(self) -> lsp::Diagnostic {
         lsp::Diagnostic {
             range: self.range,
             severity: Some(match self.body {
-                DiagnosticBody::Error(_) => lsp::DiagnosticSeverity::ERROR,
-                DiagnosticBody::Warning(_) => lsp::DiagnosticSeverity::WARNING,
-                DiagnosticBody::Info(_) => lsp::DiagnosticSeverity::INFORMATION,
+                AnalysisDiagnosticBody::Error(_) => lsp::DiagnosticSeverity::ERROR,
+                AnalysisDiagnosticBody::Warning(_) => lsp::DiagnosticSeverity::WARNING,
+                AnalysisDiagnosticBody::Info(_) => lsp::DiagnosticSeverity::INFORMATION,
             }),
             source: Some(Backend::SERVER_NAME.to_string()),
             message: self.body.to_string(),

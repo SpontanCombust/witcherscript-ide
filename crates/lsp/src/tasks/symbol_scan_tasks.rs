@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::{Arc, Mutex}};
 use abs_path::AbsPath;
 use rayon::prelude::*;
 use tokio::sync::oneshot;
-use witcherscript_analysis::{diagnostics::Diagnostic, jobs, model::collections::SymbolTable};
+use witcherscript_analysis::{diagnostics::AnalysisDiagnostic, jobs, model::collections::SymbolTable};
 use crate::{reporting::{DiagnosticGroup, IntoLspDiagnostic}, Backend, ScriptStates};
 
 
@@ -54,7 +54,7 @@ impl Backend {
 
 struct SymbolScanWorker {
     symtab: SymbolTable,
-    diagnostics: HashMap<AbsPath, Vec<Diagnostic>>,
+    diagnostics: HashMap<AbsPath, Vec<AnalysisDiagnostic>>,
     job_provider: SymbolScanJobProvider
 }
 
@@ -81,7 +81,7 @@ impl SymbolScanWorker {
         }
     }
 
-    fn finish(self) -> (SymbolTable, HashMap<AbsPath, Vec<Diagnostic>>) {
+    fn finish(self) -> (SymbolTable, HashMap<AbsPath, Vec<AnalysisDiagnostic>>) {
         (self.symtab, self.diagnostics)
     }
 }
