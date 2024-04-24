@@ -211,7 +211,7 @@ pub trait StatementVisitor {
 
     /// Called when visiting a function block. This may mean a function definition or a scope inside that function.
     fn visit_block_stmt(&mut self, n: &FunctionBlockNode, ctx: FunctionBlockTraversalContext) -> FunctionBlockTraversalPolicy { Default::default() }
-    fn exit_block_stmt(&mut self, n: &FunctionBlockNode, ctx: FunctionBlockTraversalContext);
+    fn exit_block_stmt(&mut self, n: &FunctionBlockNode, ctx: FunctionBlockTraversalContext) {}
 
     /// Called when visiting a NOP statement. 
     /// It most notably means:
