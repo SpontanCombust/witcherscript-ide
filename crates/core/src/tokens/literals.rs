@@ -3,9 +3,8 @@ use std::fmt::Debug;
 use std::str::ParseBoolError;
 use shrinkwraprs::Shrinkwrap;
 use thiserror::Error;
-use crate::{DebugMaybeAlternate, DebugRange};
-use crate::script_document::ScriptDocument;
-use crate::{AnyNode, NamedSyntaxNode, SyntaxNode, ast::{ExpressionTraversal, ExpressionVisitor}};
+use crate::{AnyNode, NamedSyntaxNode, SyntaxNode, DebugMaybeAlternate, DebugRange, script_document::ScriptDocument};
+use crate::ast::{ExpressionTraversal, ExpressionVisitor, ExpressionTraversalContext};
 
 
 #[derive(Debug, Clone, Error)]
@@ -356,7 +355,9 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralNode<'script> {
 }
 
 impl ExpressionTraversal for LiteralNode<'_> {
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V) {
-        visitor.visit_literal_expr(self);
+    type TraversalCtx = ExpressionTraversalContext;
+
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        visitor.visit_literal_expr(self, ctx);
     }
 }

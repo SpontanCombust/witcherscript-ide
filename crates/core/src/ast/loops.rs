@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
+use super::*;
 
 
 mod tags {
@@ -58,10 +58,12 @@ impl<'script> TryFrom<AnyNode<'script>> for ForLoopNode<'script> {
 }
 
 impl StatementTraversal for ForLoopNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        let tp = visitor.visit_for_stmt(self);
+    type TraversalCtx = StatementTraversalContext;
+
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let tp = visitor.visit_for_stmt(self, ctx);
         if tp.traverse_body {
-            self.body().accept(visitor);
+            self.body().accept(visitor, StatementTraversalContext::ForLoopBody);
         }
     }
 }
@@ -106,10 +108,12 @@ impl<'script> TryFrom<AnyNode<'script>> for WhileLoopNode<'script> {
 }
 
 impl StatementTraversal for WhileLoopNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        let tp = visitor.visit_while_stmt(self);
+    type TraversalCtx = StatementTraversalContext;
+
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let tp = visitor.visit_while_stmt(self, ctx);
         if tp.traverse_body {
-            self.body().accept(visitor);
+            self.body().accept(visitor, StatementTraversalContext::WhileLoopBody);
         }
     }
 }
@@ -154,10 +158,12 @@ impl<'script> TryFrom<AnyNode<'script>> for DoWhileLoopNode<'script> {
 }
 
 impl StatementTraversal for DoWhileLoopNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        let tp = visitor.visit_do_while_stmt(self);
+    type TraversalCtx = StatementTraversalContext;
+
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let tp = visitor.visit_do_while_stmt(self, ctx);
         if tp.traverse_body {
-            self.body().accept(visitor);
+            self.body().accept(visitor, StatementTraversalContext::DoWhileLoopBody);
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::StatementTraversal;
+use super::*;
 
 
 mod tags {
@@ -8,7 +8,7 @@ mod tags {
     pub struct Nop;
 }
 
-
+//TODO bring back full traversal in root and type declarations once there is only one visitor trait
 pub type NopNode<'script> = SyntaxNode<'script, tags::Nop>;
 
 impl NamedSyntaxNode for NopNode<'_> {
@@ -36,7 +36,9 @@ impl<'script> TryFrom<AnyNode<'script>> for NopNode<'script> {
 }
 
 impl StatementTraversal for NopNode<'_> {
-    fn accept<V: super::StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_nop_stmt(self);
+    type TraversalCtx = StatementTraversalContext;
+
+    fn accept<V: super::StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        visitor.visit_nop_stmt(self, ctx);
     }
 }

@@ -59,17 +59,19 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassDeclarationNode<'script> {
 }
 
 impl DeclarationTraversal for ClassDeclarationNode<'_> {
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
+    type TraversalCtx = ();
+
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         let tp = visitor.visit_class_decl(self);
         if tp.traverse_definition {
-            self.definition().accept(visitor);
+            self.definition().accept(visitor, PropertyTraversalContext::ClassDefinition);
         }
         visitor.exit_class_decl(self);
     }
 }
 
 
-
+//TODO make seperate StateBlockNode type with the same NODE_KIND to disambiguate traversal with state 
 pub type ClassBlockNode<'script> = SyntaxNode<'script, tags::ClassBlock>;
 
 impl NamedSyntaxNode for ClassBlockNode<'_> {
@@ -104,8 +106,10 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassBlockNode<'script> {
 }
 
 impl DeclarationTraversal for ClassBlockNode<'_> {
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
-        self.iter().for_each(|s| s.accept(visitor));
+    type TraversalCtx = PropertyTraversalContext;
+
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        self.iter().for_each(|s| s.accept(visitor, ctx));
     }
 }
 
@@ -180,15 +184,17 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassStatementNode<'script> {
 }
 
 impl DeclarationTraversal for ClassStatementNode<'_> {
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
+    type TraversalCtx = PropertyTraversalContext;
+
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         match self.clone().value() {
-            ClassStatement::Var(s) => s.accept(visitor),
-            ClassStatement::Default(s) => s.accept(visitor),
-            ClassStatement::DefaultsBlock(s) => s.accept(visitor),
-            ClassStatement::Hint(s) => s.accept(visitor),
-            ClassStatement::Autobind(s) => s.accept(visitor),
-            ClassStatement::Method(s) => s.accept(visitor),
-            ClassStatement::Event(s) => s.accept(visitor),
+            ClassStatement::Var(s) => s.accept(visitor, ctx),
+            ClassStatement::Default(s) => s.accept(visitor, ctx),
+            ClassStatement::DefaultsBlock(s) => s.accept(visitor, ctx),
+            ClassStatement::Hint(s) => s.accept(visitor, ctx),
+            ClassStatement::Autobind(s) => s.accept(visitor, ctx),
+            ClassStatement::Method(s) => s.accept(visitor, ctx),
+            ClassStatement::Event(s) => s.accept(visitor, ctx),
             ClassStatement::Nop(_) => {},
         }
     }
@@ -250,8 +256,10 @@ impl<'script> TryFrom<AnyNode<'script>> for AutobindDeclarationNode<'script> {
 }
 
 impl DeclarationTraversal for AutobindDeclarationNode<'_> {
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
-        visitor.visit_autobind_decl(self);
+    type TraversalCtx = PropertyTraversalContext;
+
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        visitor.visit_autobind_decl(self, ctx);
     }
 }
 

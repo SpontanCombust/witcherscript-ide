@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{attribs::StateSpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{ClassBlockNode, DeclarationTraversal, DeclarationVisitor};
+use super::*;
 
 
 mod tags {
@@ -61,10 +61,12 @@ impl<'script> TryFrom<AnyNode<'script>> for StateDeclarationNode<'script> {
 }
 
 impl DeclarationTraversal for StateDeclarationNode<'_> {
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V) {
+    type TraversalCtx = ();
+
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         let tp = visitor.visit_state_decl(self);
         if tp.traverse_definition {
-            self.definition().accept(visitor);
+            self.definition().accept(visitor, PropertyTraversalContext::StateDefinition);
         }
         visitor.exit_state_decl(self);
     }

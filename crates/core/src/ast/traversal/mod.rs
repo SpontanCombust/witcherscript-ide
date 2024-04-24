@@ -1,21 +1,29 @@
 mod policies;
 mod visitor;
+mod contexts;
 
 pub use policies::*;
 pub use visitor::*;
+pub use contexts::*;
 
 
 /// Traverse an expression node using left-recursion.
 pub trait ExpressionTraversal {
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V);
+    type TraversalCtx;
+
+    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx);
 }
 
 /// Traverse a statement node using left-recursion.
 pub trait DeclarationTraversal {
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V);
+    type TraversalCtx;
+
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx);
 }
 
 /// Traverse a statement node using left-recursion.
 pub trait StatementTraversal {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V);
+    type TraversalCtx;
+
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx);
 }

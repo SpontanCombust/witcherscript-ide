@@ -2,7 +2,7 @@ use std::io;
 use ropey::Rope;
 use thiserror::Error;
 use tree_sitter::{Parser, Tree, LanguageError};
-use crate::{ast::RootNode, script_document::ScriptDocument};
+use crate::{ast::{DeclarationTraversal, DeclarationVisitor, RootNode}, script_document::ScriptDocument};
 
 
 #[derive(Debug, Clone)]
@@ -74,7 +74,12 @@ impl Script {
     }
 
 
+    #[inline(always)]
     pub fn root_node(&self) -> RootNode {
         RootNode::new(self.current_tree.root_node())
+    }
+
+    pub fn visit_nodes<V: DeclarationVisitor>(&self, visitor: &mut V) {
+        self.root_node().accept(visitor, ());
     }
 }
