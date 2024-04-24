@@ -64,14 +64,14 @@ impl DeclarationTraversal for ClassDeclarationNode<'_> {
     fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         let tp = visitor.visit_class_decl(self);
         if tp.traverse_definition {
-            self.definition().accept(visitor, PropertyTraversalContext::ClassDefinition);
+            self.definition().accept(visitor, ());
         }
         visitor.exit_class_decl(self);
     }
 }
 
 
-//TODO make seperate StateBlockNode type with the same NODE_KIND to disambiguate traversal with state 
+
 pub type ClassBlockNode<'script> = SyntaxNode<'script, tags::ClassBlock>;
 
 impl NamedSyntaxNode for ClassBlockNode<'_> {
@@ -106,10 +106,10 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassBlockNode<'script> {
 }
 
 impl DeclarationTraversal for ClassBlockNode<'_> {
-    type TraversalCtx = PropertyTraversalContext;
+    type TraversalCtx = ();
 
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        self.iter().for_each(|s| s.accept(visitor, ctx));
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+        self.iter().for_each(|s| s.accept(visitor, PropertyTraversalContext::ClassDefinition));
     }
 }
 

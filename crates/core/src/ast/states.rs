@@ -1,10 +1,11 @@
 use std::fmt::Debug;
-use crate::{attribs::StateSpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{attribs::StateSpecifierNode, tokens::IdentifierNode, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
 mod tags {
     pub struct StateDeclaration;
+    pub struct StateBlock;
 }
 
 
@@ -31,7 +32,7 @@ impl<'script> StateDeclarationNode<'script> {
         self.field_child("base").map(|n| n.into())
     }
 
-    pub fn definition(&self) -> ClassBlockNode<'script> {
+    pub fn definition(&self) -> StateBlockNode<'script> {
         self.field_child("definition").unwrap().into()
     }
 }
@@ -66,8 +67,50 @@ impl DeclarationTraversal for StateDeclarationNode<'_> {
     fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         let tp = visitor.visit_state_decl(self);
         if tp.traverse_definition {
-            self.definition().accept(visitor, PropertyTraversalContext::StateDefinition);
+            self.definition().accept(visitor, ());
         }
         visitor.exit_state_decl(self);
+    }
+}
+
+
+pub type StateBlockNode<'script> = SyntaxNode<'script, tags::StateBlock>;
+
+impl NamedSyntaxNode for StateBlockNode<'_> {
+    const NODE_KIND: &'static str = "class_block";
+}
+
+impl<'script> StateBlockNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = ClassStatementNode<'script>> {
+        self.named_children().map(|n| n.into())
+    }
+}
+
+impl Debug for StateBlockNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate_named(
+            &format!("StateBlock {}", self.range().debug()), 
+            &self.iter().collect::<Vec<_>>()
+        )
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for StateBlockNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl DeclarationTraversal for StateBlockNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+        self.iter().for_each(|s| s.accept(visitor, PropertyTraversalContext::StateDefinition));
     }
 }
