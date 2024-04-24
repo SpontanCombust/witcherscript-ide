@@ -209,9 +209,9 @@ pub trait StatementVisitor {
     /// Called when visiting a `delete` statement.
     fn visit_delete_stmt(&mut self, n: &DeleteStatementNode, ctx: StatementTraversalContext) {}
 
-    /// Called when visiting a function block. This may mean a function definition or a scope inside that function.
-    fn visit_block_stmt(&mut self, n: &FunctionBlockNode, ctx: FunctionBlockTraversalContext) -> FunctionBlockTraversalPolicy { Default::default() }
-    fn exit_block_stmt(&mut self, n: &FunctionBlockNode, ctx: FunctionBlockTraversalContext) {}
+    /// Called when visiting statements grouped with curly brackets { }.
+    fn visit_compound_stmt(&mut self, n: &CompoundStatementNode, ctx: StatementTraversalContext) -> CompoundStatementTraversalPolicy { Default::default() }
+    fn exit_compound_stmt(&mut self, n: &CompoundStatementNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a NOP statement. 
     /// It most notably means:

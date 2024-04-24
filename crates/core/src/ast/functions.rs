@@ -14,6 +14,7 @@ mod tags {
     pub struct ContinueStatement;
     pub struct ReturnStatement;
     pub struct DeleteStatement;
+    pub struct CompoundStatement;
 }
 
 
@@ -274,14 +275,57 @@ impl StatementTraversal for FunctionDefinitionNode<'_> {
 
     fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         if let FunctionDefinition::Some(block) = self.clone().value() {
-            let block_ctx = match ctx {
-                FunctionTraversalContext::GlobalFunction => FunctionBlockTraversalContext::GlobalFunctionDefinition,
-                FunctionTraversalContext::MemberFunction => FunctionBlockTraversalContext::MemberFunctionDefinition,
-                FunctionTraversalContext::Event => FunctionBlockTraversalContext::EventDefinition,
-            };
-
-            block.accept(visitor, block_ctx);
+            block.accept(visitor, ctx);
         }
+    }
+}
+
+
+
+pub type FunctionBlockNode<'script> = SyntaxNode<'script, tags::FunctionBlock>;
+
+impl NamedSyntaxNode for FunctionBlockNode<'_> {
+    const NODE_KIND: &'static str = "func_block";
+}
+
+impl<'script> FunctionBlockNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = FunctionStatementNode<'script>> {
+        self.named_children().map(|n| n.into())
+    }
+}
+
+impl Debug for FunctionBlockNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate_named(
+            &format!("FunctionBlock {}", self.range().debug()), 
+            &self.iter().collect::<Vec<_>>()
+        )
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for FunctionBlockNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl StatementTraversal for FunctionBlockNode<'_> {
+    type TraversalCtx = FunctionTraversalContext;
+
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let iter_ctx = match ctx {
+            FunctionTraversalContext::GlobalFunction => StatementTraversalContext::GlobalFunctionDefinition,
+            FunctionTraversalContext::MemberFunction => StatementTraversalContext::MemberFunctionDefinition,
+            FunctionTraversalContext::Event => StatementTraversalContext::EventDefinition,
+        };
+
+        self.iter().for_each(|s| s.accept(visitor, iter_ctx));
     }
 }
 
@@ -395,7 +439,7 @@ pub enum FunctionStatement<'script> {
     Continue(ContinueStatementNode<'script>),
     Return(ReturnStatementNode<'script>),
     Delete(DeleteStatementNode<'script>),
-    Block(FunctionBlockNode<'script>),
+    Compound(CompoundStatementNode<'script>),
     Nop(NopNode<'script>),
 }
 
@@ -413,7 +457,7 @@ impl Debug for FunctionStatement<'_> {
             Self::Continue(n) => f.debug_maybe_alternate(n),
             Self::Return(n) => f.debug_maybe_alternate(n),
             Self::Delete(n) => f.debug_maybe_alternate(n),
-            Self::Block(n) => f.debug_maybe_alternate(n),
+            Self::Compound(n) => f.debug_maybe_alternate(n),
             Self::Nop(n) => f.debug_maybe_alternate(n),
         }
     }
@@ -435,7 +479,7 @@ impl<'script> FunctionStatementNode<'script> {
             ContinueStatementNode::NODE_KIND => FunctionStatement::Continue(self.into()),
             ReturnStatementNode::NODE_KIND => FunctionStatement::Return(self.into()),
             DeleteStatementNode::NODE_KIND => FunctionStatement::Delete(self.into()),
-            FunctionBlockNode::NODE_KIND => FunctionStatement::Block(self.into()),
+            CompoundStatementNode::NODE_KIND => FunctionStatement::Compound(self.into()),
             NopNode::NODE_KIND => FunctionStatement::Nop(self.into()),
             _ => panic!("Unknown function statement type: {} {}", self.tree_node.kind(), self.range().debug())
         }
@@ -468,7 +512,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionStatementNode<'script> {
             ContinueStatementNode::NODE_KIND    |
             ReturnStatementNode::NODE_KIND      |
             DeleteStatementNode::NODE_KIND      |
-            FunctionBlockNode::NODE_KIND        |
+            CompoundStatementNode::NODE_KIND    |
             NopNode::NODE_KIND                  => Ok(value.into()),
             _ => Err(())
         }
@@ -491,61 +535,9 @@ impl StatementTraversal for FunctionStatementNode<'_> {
             FunctionStatement::Continue(s) => s.accept(visitor, ctx),
             FunctionStatement::Return(s) => s.accept(visitor, ctx),
             FunctionStatement::Delete(s) => s.accept(visitor, ctx),
-            FunctionStatement::Block(s) => s.accept(visitor, FunctionBlockTraversalContext::Statement(ctx)),
+            FunctionStatement::Compound(s) => s.accept(visitor, ctx),
             FunctionStatement::Nop(s) => s.accept(visitor, ctx),
         }
-    }
-}
-
-
-pub type FunctionBlockNode<'script> = SyntaxNode<'script, tags::FunctionBlock>;
-
-impl NamedSyntaxNode for FunctionBlockNode<'_> {
-    const NODE_KIND: &'static str = "func_block";
-}
-
-impl<'script> FunctionBlockNode<'script> {
-    pub fn iter(&self) -> impl Iterator<Item = FunctionStatementNode<'script>> {
-        self.named_children().map(|n| n.into())
-    }
-}
-
-impl Debug for FunctionBlockNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_maybe_alternate_named(
-            &format!("FunctionBlock {}", self.range().debug()), 
-            &self.iter().collect::<Vec<_>>()
-        )
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for FunctionBlockNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
-    }
-}
-
-impl StatementTraversal for FunctionBlockNode<'_> {
-    type TraversalCtx = FunctionBlockTraversalContext;
-
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        let tp = visitor.visit_block_stmt(self, ctx);
-        if tp.traverse {
-            let iter_ctx = match ctx {
-                //TODO make seperate CompoundStatement type with the same NODE_KIND to disambiguate traversal with function definition 
-                FunctionBlockTraversalContext::Statement(stmt_ctx) => stmt_ctx,
-                _ => StatementTraversalContext::InCallableDefinition
-            };
-
-            self.iter().for_each(|s| s.accept(visitor, iter_ctx));
-        }
-        visitor.exit_block_stmt(self, ctx);
     }
 }
 
@@ -702,5 +694,52 @@ impl StatementTraversal for DeleteStatementNode<'_> {
 
     fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         visitor.visit_delete_stmt(self, ctx);
+    }
+}
+
+
+
+pub type CompoundStatementNode<'script> = SyntaxNode<'script, tags::CompoundStatement>;
+
+impl NamedSyntaxNode for CompoundStatementNode<'_> {
+    const NODE_KIND: &'static str = "func_block";
+}
+
+impl<'script> CompoundStatementNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = FunctionStatementNode<'script>> {
+        self.named_children().map(|n| n.into())
+    }
+}
+
+impl Debug for CompoundStatementNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate_named(
+            &format!("CompoundStatement {}", self.range().debug()), 
+            &self.iter().collect::<Vec<_>>()
+        )
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for CompoundStatementNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl StatementTraversal for CompoundStatementNode<'_> {
+    type TraversalCtx = StatementTraversalContext;
+
+    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let tp = visitor.visit_compound_stmt(self, ctx);
+        if tp.traverse {
+            self.iter().for_each(|s| s.accept(visitor, StatementTraversalContext::InCompoundStatement));
+        }
+        visitor.exit_compound_stmt(self, ctx);
     }
 }

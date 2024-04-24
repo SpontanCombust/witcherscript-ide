@@ -382,7 +382,7 @@ impl DeclarationVisitor for SyntaxErrorVisitor<'_> {
 }
 
 impl StatementVisitor for SyntaxErrorVisitor<'_> {
-    fn visit_block_stmt(&mut self, n: &FunctionBlockNode, _: FunctionBlockTraversalContext) -> FunctionBlockTraversalPolicy {
+    fn visit_compound_stmt(&mut self, n: &CompoundStatementNode, _: StatementTraversalContext) -> CompoundStatementTraversalPolicy {
          let traverse = if n.has_errors() {
             self.check_errors(n);
             true
@@ -390,7 +390,7 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             false
         };
 
-        FunctionBlockTraversalPolicy { 
+        CompoundStatementTraversalPolicy { 
             traverse 
         }
     }

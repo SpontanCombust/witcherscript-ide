@@ -54,19 +54,15 @@ pub enum FunctionTraversalContext {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StatementTraversalContext {
-    InCallableDefinition,
+    GlobalFunctionDefinition,
+    MemberFunctionDefinition,
+    EventDefinition,
+
     IfConditionalBody,
     IfConditionalElseBody,
     SwitchConditionalBody,
     ForLoopBody,
     WhileLoopBody,
-    DoWhileLoopBody
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FunctionBlockTraversalContext {
-    GlobalFunctionDefinition,
-    MemberFunctionDefinition,
-    EventDefinition,
-    Statement(StatementTraversalContext)
+    DoWhileLoopBody,
+    InCompoundStatement
 }

@@ -627,11 +627,11 @@ impl BitAnd for SwitchConditionalTraversalPolicy {
 
 
 #[derive(Debug, Clone)]
-pub struct FunctionBlockTraversalPolicy {
+pub struct CompoundStatementTraversalPolicy {
     pub traverse: bool
 }
 
-impl Default for FunctionBlockTraversalPolicy {
+impl Default for CompoundStatementTraversalPolicy {
     fn default() -> Self {
         Self { 
             traverse: true 
@@ -639,7 +639,7 @@ impl Default for FunctionBlockTraversalPolicy {
     }
 }
 
-impl BitAnd for FunctionBlockTraversalPolicy {
+impl BitAnd for CompoundStatementTraversalPolicy {
     type Output = Self;
 
     fn bitand(self, rhs: Self) -> Self::Output {
