@@ -65,6 +65,7 @@ impl StatementTraversal for IfConditionalNode<'_> {
         if tp.traverse_else_body {
             self.else_body().map(|s| { s.accept(visitor, StatementTraversalContext::IfConditionalElseBody) });
         }
+        visitor.exit_if_stmt(self, ctx);
     }
 }
 
@@ -115,6 +116,7 @@ impl StatementTraversal for SwitchConditionalNode<'_> {
         if tp.traverse_body {
             self.body().accept(visitor, ());
         }
+        visitor.exit_switch_stmt(self, ctx);
     }
 }
 

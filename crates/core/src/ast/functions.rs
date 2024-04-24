@@ -545,6 +545,7 @@ impl StatementTraversal for FunctionBlockNode<'_> {
 
             self.iter().for_each(|s| s.accept(visitor, iter_ctx));
         }
+        visitor.exit_block_stmt(self, ctx);
     }
 }
 

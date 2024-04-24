@@ -171,21 +171,25 @@ pub trait StatementVisitor {
     /// Called when visiting an expression statement inside a function.
     fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode, ctx: StatementTraversalContext) {}
     
-    //TODO! add missing exit_ functions
     /// Called when visiting a `for` loop.
     fn visit_for_stmt(&mut self, n: &ForLoopNode, ctx: StatementTraversalContext) -> ForLoopTraversalPolicy { Default::default() }
+    fn exit_for_stmt(&mut self, n: &ForLoopNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a `while` loop.
     fn visit_while_stmt(&mut self, n: &WhileLoopNode, ctx: StatementTraversalContext) -> WhileLoopTraversalPolicy { Default::default() }
+    fn exit_while_stmt(&mut self, n: &WhileLoopNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a `do-while` loop.
     fn visit_do_while_stmt(&mut self, n: &DoWhileLoopNode, ctx: StatementTraversalContext) -> DoWhileLoopTraversalPolicy { Default::default() }
+    fn exit_do_while_stmt(&mut self, n: &DoWhileLoopNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting an `if` condition.
     fn visit_if_stmt(&mut self, n: &IfConditionalNode, ctx: StatementTraversalContext) -> IfConditionalTraversalPolicy { Default::default() }
+    fn exit_if_stmt(&mut self, n: &IfConditionalNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a `switch` statement.
     fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode, ctx: StatementTraversalContext) -> SwitchConditionalTraversalPolicy { Default::default() }
+    fn exit_switch_stmt(&mut self, n: &SwitchConditionalNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a `case` label inside a `switch` statement.
     fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) {}
@@ -207,6 +211,7 @@ pub trait StatementVisitor {
 
     /// Called when visiting a function block. This may mean a function definition or a scope inside that function.
     fn visit_block_stmt(&mut self, n: &FunctionBlockNode, ctx: FunctionBlockTraversalContext) -> FunctionBlockTraversalPolicy { Default::default() }
+    fn exit_block_stmt(&mut self, n: &FunctionBlockNode, ctx: FunctionBlockTraversalContext);
 
     /// Called when visiting a NOP statement. 
     /// It most notably means:

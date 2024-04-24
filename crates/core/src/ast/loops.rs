@@ -65,6 +65,7 @@ impl StatementTraversal for ForLoopNode<'_> {
         if tp.traverse_body {
             self.body().accept(visitor, StatementTraversalContext::ForLoopBody);
         }
+        visitor.exit_for_stmt(self, ctx);
     }
 }
 
@@ -115,6 +116,7 @@ impl StatementTraversal for WhileLoopNode<'_> {
         if tp.traverse_body {
             self.body().accept(visitor, StatementTraversalContext::WhileLoopBody);
         }
+        visitor.exit_while_stmt(self, ctx);
     }
 }
 
@@ -165,5 +167,6 @@ impl StatementTraversal for DoWhileLoopNode<'_> {
         if tp.traverse_body {
             self.body().accept(visitor, StatementTraversalContext::DoWhileLoopBody);
         }
+        visitor.exit_do_while_stmt(self, ctx);
     }
 }
