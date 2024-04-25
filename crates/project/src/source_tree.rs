@@ -1,112 +1,110 @@
-use std::borrow::Borrow;
-use std::collections::BTreeSet;
-use std::fmt::Display;
-use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use abs_path::AbsPath;
 use filetime::FileTime;
-use shrinkwraprs::Shrinkwrap;
 use crate::FileError;
+
+
+#[derive(Debug, Clone)]
+pub struct SourceTreePath {
+    script_root: Arc<AbsPath>,
+    abs_path: AbsPath
+}
+
+impl SourceTreePath {
+    fn new(script_root: Arc<AbsPath>, abs_path: AbsPath) -> Self {
+        Self {
+            script_root,
+            abs_path
+        }
+    }
+
+
+    #[inline(always)]
+    pub fn absolute(&self) -> &AbsPath {
+        &self.abs_path
+    }
+
+    #[inline(always)]
+    pub fn into_absolute(self) -> AbsPath {
+        self.abs_path
+    }
+
+    #[inline(always)]
+    pub fn local(&self) -> &Path {
+        self.abs_path.strip_prefix(self.script_root.as_ref()).unwrap()
+    }
+
+    #[inline(always)]
+    pub fn into_local(self) -> PathBuf {
+        self.abs_path.strip_prefix(self.script_root.as_ref()).unwrap().to_owned()
+    }
+
+    #[inline(always)]
+    pub fn script_root(&self) -> &AbsPath {
+        self.script_root.as_ref()
+    }
+}
+
+impl PartialEq for SourceTreePath {
+    #[inline(always)]
+    fn eq(&self, other: &Self) -> bool {
+        self.abs_path == other.abs_path
+    }
+}
+
+impl Eq for SourceTreePath {}
+
+impl PartialOrd for SourceTreePath {
+    #[inline(always)]
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.abs_path.partial_cmp(&other.abs_path)
+    }
+}
+
+impl Ord for SourceTreePath {
+    #[inline(always)]
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.abs_path.cmp(&other.abs_path)
+    }
+}
+
+impl std::hash::Hash for SourceTreePath {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.abs_path.hash(state);
+    }
+}
+
+impl std::borrow::Borrow<AbsPath> for SourceTreePath {
+    fn borrow(&self) -> &AbsPath {
+        &self.abs_path
+    }
+}
+
+impl std::ops::Deref for SourceTreePath {
+    type Target = AbsPath;
+
+    fn deref(&self) -> &Self::Target {
+        &self.abs_path
+    }
+}
+
+
 
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SourceTreeFile {
-    script_root: Arc<AbsPath>,
-    abs_path: AbsPath,
-    modified_timestamp: FileTime
-}
-
-impl SourceTreeFile {
-    /// A full path to the file
-    pub fn absolute_path(&self) -> &AbsPath {
-        &self.abs_path
-    }
-
-    pub fn into_absolute_path(self) -> AbsPath {
-        self.abs_path
-    }
-
-    /// Path relative tp the root
-    pub fn local_path(&self) -> &Path {
-        self.abs_path.strip_prefix(self.script_root.as_ref()).unwrap()
-    }
-
-    /// A full path to the "scripts" directory
-    pub fn script_root(&self) -> &AbsPath {
-        self.script_root.as_ref()
-    }
-
-    pub fn modified_timestamp(&self) -> FileTime {
-        self.modified_timestamp
-    }
-}
-
-impl Borrow<AbsPath> for SourceTreeFile {
-    fn borrow(&self) -> &AbsPath {
-        &self.abs_path
-    }
-}
-
-impl Display for SourceTreeFile {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.abs_path)
-    }
+    pub path: SourceTreePath,
+    pub modified_timestamp: FileTime
 }
 
 
-/// A wrapper type for SourceTreeFile made specifically to compare individual objects in the set only based on abs_path.
-/// This in turn means that set operations only take abs_path into account and not modified_timestamp.
-#[derive(Debug, Clone, Shrinkwrap)]
-struct SourceTreeFileComparatorWrapper {
-    inner: SourceTreeFile
-}
-
-impl Borrow<AbsPath> for SourceTreeFileComparatorWrapper {
-    fn borrow(&self) -> &AbsPath {
-        &self.inner.abs_path
-    }
-}
-
-impl PartialEq for SourceTreeFileComparatorWrapper {
-    fn eq(&self, other: &Self) -> bool {
-        self.inner.abs_path == other.inner.abs_path
-    }
-}
-
-impl Eq for SourceTreeFileComparatorWrapper {}
-
-impl PartialOrd for SourceTreeFileComparatorWrapper {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.inner.abs_path.partial_cmp(&other.inner.abs_path)
-    }
-}
-
-impl Ord for SourceTreeFileComparatorWrapper {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.inner.abs_path.cmp(&other.inner.abs_path)
-    }
-}
-
-impl From<SourceTreeFile> for SourceTreeFileComparatorWrapper {
-    fn from(value: SourceTreeFile) -> Self {
-        Self {
-            inner: value
-        }
-    }
-}
-
-impl From<SourceTreeFileComparatorWrapper> for SourceTreeFile {
-    fn from(value: SourceTreeFileComparatorWrapper) -> Self {
-        value.inner
-    }
-}
 
 
 #[derive(Debug, Clone)]
 pub struct SourceTree {
     script_root: Arc<AbsPath>,
-    tree: BTreeSet<SourceTreeFileComparatorWrapper>,
+    tree: Vec<SourceTreeFile>,
     /// Errors encountered during scanning
     pub errors: Vec<FileError<std::io::Error>>
 }
@@ -115,7 +113,7 @@ impl SourceTree {
     pub(crate) fn new(script_root: AbsPath) -> Self {
         let mut tree = Self {
             script_root: Arc::new(script_root),
-            tree: BTreeSet::new(),
+            tree: Vec::new(),
             errors: Vec::new()
         };
 
@@ -152,15 +150,14 @@ impl SourceTree {
     fn scan_visit_file(&mut self, path: AbsPath) {
         if let Some(ext) = path.extension() {
             if ext == "ws" {
-                match fs::metadata(&path) {
+                match std::fs::metadata(&path) {
                     Ok(metadata) => {
-                        let timestamp = FileTime::from_last_modification_time(&metadata);
+                        let modified_timestamp = FileTime::from_last_modification_time(&metadata);
 
-                        self.tree.insert(SourceTreeFile {
-                            script_root: self.script_root.clone(),
-                            abs_path: path,
-                            modified_timestamp: timestamp
-                        }.into());
+                        self.tree.push(SourceTreeFile {
+                            path: SourceTreePath::new(self.script_root.clone(), path),
+                            modified_timestamp
+                        });
                     },
                     Err(err) => {
                         self.errors.push(FileError::new(path.clone(), err));
@@ -171,26 +168,15 @@ impl SourceTree {
     }
 
     pub fn scan(&mut self) -> SourceTreeDifference {
-        let old_tree = std::mem::replace(&mut self.tree, BTreeSet::new());
+        let old_tree = std::mem::replace(&mut self.tree, Vec::new());
         self.errors.clear();
 
         self.scan_visit_dir(self.script_root.as_ref().to_owned());
+        self.tree.sort_by(|a, b| a.path.cmp(&b.path));
 
-        let diff_added = self.tree.difference(&old_tree).cloned().map(|f| f.inner);
-        let diff_removed = old_tree.difference(&self.tree).cloned().map(|f| f.inner);
-        let diff_modified = self.tree.iter().filter(|self_file| {
-            if let Some(old_file) = old_tree.get(self_file.absolute_path()) {
-                self_file.modified_timestamp > old_file.modified_timestamp
-            } else {
-                false
-            }
-        }).cloned().map(|f| f.inner);
+        let diff = SourceTreeDifference::from_comparison(old_tree, &self.tree);
             
-        SourceTreeDifference { 
-            added: diff_added.collect(), 
-            removed: diff_removed.collect(), 
-            modified: diff_modified.collect()
-        }
+        diff
     }
 
     
@@ -204,19 +190,16 @@ impl SourceTree {
 
     /// Searches for a file with a given absolute path
     pub fn contains(&self, path: &AbsPath) -> bool {
-        self.tree.contains(path)
+        self.tree.binary_search_by(|f| f.path.abs_path.cmp(path)).is_ok()
     }
 
     /// Searches for a file with a given path relative to the tree root
     pub fn contains_local(&self, path: &Path) -> bool {
-        self.tree.iter().any(move |f| {
-            let local = f.local_path();
-            local == path
-        })
+        self.tree.binary_search_by(|f| f.path.local().cmp(path)).is_ok()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &SourceTreeFile> {
-        self.tree.iter().map(|f| f.as_ref())
+        self.tree.iter()
     }    
 }
 
@@ -239,7 +222,7 @@ impl IntoIterator for SourceTree {
 
     fn into_iter(self) -> Self::IntoIter {
         IntoIter {
-            iter: Box::new(self.tree.into_iter().map(|f| f.inner))
+            iter: Box::new(self.tree.into_iter())
         }
     }
 }
@@ -253,6 +236,41 @@ pub struct SourceTreeDifference {
 }
 
 impl SourceTreeDifference {
+    pub fn from_comparison(old_tree: Vec<SourceTreeFile>, new_tree: &Vec<SourceTreeFile>) -> Self {
+        let (mut i, mut j) = (0, 0);
+        let mut diff = Self::default();
+
+        while i < old_tree.len() && j < new_tree.len() {
+            match old_tree[i].path.cmp(&new_tree[j].path) {
+                std::cmp::Ordering::Less => {
+                    diff.removed.push(old_tree[i].clone());
+                    i += 1;
+                },
+                std::cmp::Ordering::Equal => {
+                    if old_tree[i].modified_timestamp < new_tree[j].modified_timestamp {
+                        diff.modified.push(old_tree[i].clone());
+                    }
+                    i += 1;
+                    j += 1;
+                },
+                std::cmp::Ordering::Greater => {
+                    diff.added.push(new_tree[j].clone());
+                    j += 1;
+                },
+            }
+        }
+        while i < old_tree.len() {
+            diff.removed.push(old_tree[i].clone());
+            i += 1;
+        }
+        while j < new_tree.len() {
+            diff.added.push(new_tree[j].clone());
+            j += 1;
+        }
+
+        diff
+    }
+
     pub fn is_empty(&self) -> bool {
         self.added.is_empty() && 
         self.removed.is_empty() && 

@@ -55,7 +55,7 @@ impl Backend {
         let modified_script_paths: Vec<_> = 
             diff_added.into_iter()
             .chain(diff_modified.into_iter())
-            .map(|f| f.into_absolute_path())
+            .map(|f| f.path.into_absolute())
             .collect();
 
         if !modified_script_paths.is_empty() {
@@ -73,10 +73,10 @@ impl Backend {
         rayon::spawn(move || {
             added_files_cloned.into_par_iter()
                 .map(|f| {
-                    let path = f.absolute_path().to_owned();
+                    let path = f.path.absolute().to_owned();
                     let doc = ScriptDocument::from_file(&path).unwrap();
                     let script = Script::new(&doc).unwrap();
-                    (path, doc, script, f.modified_timestamp())
+                    (path, doc, script, f.modified_timestamp)
                 })
                 .for_each(|result| send.blocking_send(result).expect("on_source_tree_paths_added mpsc::send fail"));
         });
@@ -96,20 +96,20 @@ impl Backend {
     async fn on_source_tree_files_removed(&self, removed_files: Vec<SourceTreeFile>) {
         for removed_file in removed_files {
             // self.log_info(format!("Deprecated script: {}", removed_path)).await;
-            self.scripts.remove(removed_file.absolute_path());
-            self.reporter.purge_diagnostics(removed_file.absolute_path());
+            self.scripts.remove(removed_file.path.absolute());
+            self.reporter.purge_diagnostics(removed_file.path.absolute());
         }
     }
     
     async fn on_source_tree_files_modified(&self, modified_files: Vec<SourceTreeFile>) {
         for modified_file in &modified_files {
-            if let Some(mut script_state) = self.scripts.get_mut(modified_file.absolute_path()) {
+            if let Some(mut script_state) = self.scripts.get_mut(modified_file.path.absolute()) {
                 // for cases when files have been updated outside of of LSP client's knowledge
-                if modified_file.modified_timestamp() > script_state.modified_timestamp {
-                    let doc = ScriptDocument::from_file(modified_file.absolute_path()).unwrap();
+                if modified_file.modified_timestamp > script_state.modified_timestamp {
+                    let doc = ScriptDocument::from_file(modified_file.path.absolute()).unwrap();
                     script_state.script.refresh(&doc).unwrap();
                     script_state.buffer = doc;
-                    script_state.modified_timestamp = modified_file.modified_timestamp();
+                    script_state.modified_timestamp = modified_file.modified_timestamp;
                 }
             }
         }
