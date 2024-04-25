@@ -109,6 +109,13 @@ impl SymbolScannerVisitor<'_> {
 
 
 impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
+    const TRAVERSAL_POLICY_DEFAULT: bool = false;
+
+
+    fn visit_root(&mut self, _: &RootNode) -> RootTraversalPolicy {
+        RootTraversalPolicy { traverse: true }
+    }
+
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
         let mut traverse_definition = false;
 
@@ -541,8 +548,4 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             traverse_init_value: false
         }
     }
-
-
-
-    //TODO default traversal policy bool const 
 }

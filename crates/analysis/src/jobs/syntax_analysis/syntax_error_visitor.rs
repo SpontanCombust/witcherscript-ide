@@ -113,6 +113,9 @@ impl SyntaxErrorVisitor<'_> {
 }
 
 impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
+    const TRAVERSAL_POLICY_DEFAULT: bool = true;
+
+    
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy {
         let traverse = if n.has_errors() {
             self.check_errors(n);
