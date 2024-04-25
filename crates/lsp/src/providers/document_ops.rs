@@ -23,7 +23,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
                 buffer: doc_buff,
                 script,
                 modified_timestamp: FileTime::now(),
-                is_foreign: true
+                source_tree_path: None
             });
 
             backend.on_scripts_modified(vec![doc_path.clone()], None, false, true).await;
@@ -107,7 +107,7 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
         if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
             let script_state = entry.value_mut();
 
-            if script_state.is_foreign {
+            if script_state.source_tree_path.is_none() {
                 backend.reporter.purge_diagnostics(&doc_path);
                 backend.reporter.commit_diagnostics(&doc_path).await;
                 should_remove_script = true;

@@ -69,26 +69,25 @@ impl Backend {
     async fn on_source_tree_files_added(&self, added_files: Vec<SourceTreeFile>) {
         let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
 
-        let added_files_cloned = added_files.clone();
         rayon::spawn(move || {
-            added_files_cloned.into_par_iter()
+            added_files.into_par_iter()
                 .map(|f| {
-                    let path = f.path.absolute().to_owned();
-                    let doc = ScriptDocument::from_file(&path).unwrap();
+                    let path = f.path;
+                    let doc = ScriptDocument::from_file(path.absolute()).unwrap();
                     let script = Script::new(&doc).unwrap();
                     (path, doc, script, f.modified_timestamp)
                 })
                 .for_each(|result| send.blocking_send(result).expect("on_source_tree_paths_added mpsc::send fail"));
         });
 
-        while let Some((script_path, buffer, script, modified_timestamp)) = recv.recv().await {
+        while let Some((source_tree_path, buffer, script, modified_timestamp)) = recv.recv().await {
             // Doing to many logs at once puts a strain on the connection, better to do this through a Progress or something...
-            // self.log_info(format!("Discovered script: {}", script_path.display())).await;
-            self.scripts.insert(script_path, ScriptState { 
+            // self.log_info(format!("Discovered script: {}", source_tree_path.absolute())).await;
+            self.scripts.insert(source_tree_path.absolute().to_owned(), ScriptState { 
                 script, 
                 buffer,
                 modified_timestamp,
-                is_foreign: false
+                source_tree_path: Some(source_tree_path)
             });
         }
     }

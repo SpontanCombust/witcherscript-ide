@@ -11,7 +11,7 @@ use abs_path::AbsPath;
 use witcherscript::Script;
 use witcherscript::script_document::ScriptDocument;
 use witcherscript_analysis::model::collections::SymbolTable;
-use witcherscript_project::{ContentGraph, SourceTree};
+use witcherscript_project::{ContentGraph, SourceTree, SourceTreePath};
 use crate::config::Config;
 use crate::reporting::Reporter;
 use crate::messaging::requests;
@@ -70,8 +70,8 @@ pub struct ScriptState {
     /// Timestamp for the modification of the script and not necessairly the file,
     /// i.e. the timestamp will update with `did_change` notification even if the file itself has not been saved yet.
     modified_timestamp: FileTime,
-    /// Marks a script that is not known to any content in the content graph
-    is_foreign: bool
+    /// If None it means the script is foreign, i.e. not known to any content in the content graph
+    source_tree_path: Option<SourceTreePath>
 }
 
 #[derive(Debug, Shrinkwrap)]

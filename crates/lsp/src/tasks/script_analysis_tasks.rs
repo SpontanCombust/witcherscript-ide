@@ -15,7 +15,7 @@ pub enum ScriptAnalysisKind {
 
 impl ScriptAnalysisKind {
     pub fn suggested_for_script(script_state: &ScriptState) -> Self {
-        if script_state.is_foreign {
+        if script_state.source_tree_path.is_none() {
             ScriptAnalysisKind::SyntaxAnalysis
         } else {
             ScriptAnalysisKind::all()
