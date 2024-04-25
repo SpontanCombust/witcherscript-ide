@@ -10,6 +10,7 @@ pub struct StructSymbol {
     path: BasicTypeSymbolPath,
     local_source_path: PathBuf,
     range: lsp::Range,
+    label_range: lsp::Range,
     pub specifiers: HashSet<StructSpecifier>
 }
 
@@ -33,13 +34,18 @@ impl LocatableSymbol for StructSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl StructSymbol {
-    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range) -> Self {
+    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,
+            label_range,
             local_source_path,
             specifiers: HashSet::new()
         }

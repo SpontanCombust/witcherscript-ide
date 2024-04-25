@@ -10,6 +10,7 @@ pub struct GlobalFunctionSymbol {
     path: GlobalCallableSymbolPath,
     local_source_path: PathBuf,
     range: lsp::Range,
+    label_range: lsp::Range,
     pub specifiers: HashSet<GlobalFunctionSpecifier>,
     pub flavour: Option<GlobalFunctionFlavour>,
     pub return_type_path: TypeSymbolPath
@@ -35,14 +36,19 @@ impl LocatableSymbol for GlobalFunctionSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl GlobalFunctionSymbol {
-    pub fn new(path: GlobalCallableSymbolPath, local_source_path: PathBuf, range: lsp::Range) -> Self {
+    pub fn new(path: GlobalCallableSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             local_source_path,
             range,
+            label_range,
             specifiers: HashSet::new(),
             flavour: None,
             return_type_path: TypeSymbolPath::empty()
@@ -56,6 +62,7 @@ impl GlobalFunctionSymbol {
 pub struct MemberFunctionSymbol {
     path: MemberCallableSymbolPath,
     range: lsp::Range,
+    label_range: lsp::Range,
     pub specifiers: HashSet<MemberFunctionSpecifier>,
     pub flavour: Option<MemberFunctionFlavour>,
     pub return_type_path: TypeSymbolPath
@@ -75,13 +82,18 @@ impl LocatableSymbol for MemberFunctionSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl MemberFunctionSymbol {
-    pub fn new(path: MemberCallableSymbolPath, range: lsp::Range) -> Self {
+    pub fn new(path: MemberCallableSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,
+            label_range,
             specifiers: HashSet::new(),
             flavour: None,
             return_type_path: TypeSymbolPath::empty()
@@ -94,7 +106,8 @@ impl MemberFunctionSymbol {
 #[derive(Debug, Clone)]
 pub struct EventSymbol {
     path: MemberCallableSymbolPath,
-    range: lsp::Range
+    range: lsp::Range,
+    label_range: lsp::Range,
 }
 
 impl Symbol for EventSymbol {
@@ -111,13 +124,18 @@ impl LocatableSymbol for EventSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl EventSymbol {
-    pub fn new(path: MemberCallableSymbolPath, range: lsp::Range) -> Self {
+    pub fn new(path: MemberCallableSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
-            range
+            range,
+            label_range
         }
     }
 }

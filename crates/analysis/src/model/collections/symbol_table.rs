@@ -84,10 +84,10 @@ impl SymbolTable {
         path.root()
             .and_then(|root| self.symbols.get(root))
             .and_then(|v| {
-                if let (Some(file_path), Some(range)) = (v.local_source_path(), v.range()) {
+                if let (Some(file_path), Some(range)) = (v.local_source_path(), v.label_range()) {
                     Some(SymbolLocation { 
                         local_source_path: file_path.to_owned(), 
-                        range
+                        label_range: range
                     })
                 } else {
                     None
@@ -175,7 +175,7 @@ impl SymbolTable {
                         incoming_type: incoming_sym.typ(),
                         incoming_location: SymbolLocation { 
                             local_source_path: file_path.clone(), 
-                            range: incoming_variant.range().unwrap_or_default()
+                            label_range: incoming_variant.label_range().unwrap_or_default()
                         }
                     });
 
@@ -200,7 +200,7 @@ impl SymbolTable {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SymbolLocation {
     pub local_source_path: PathBuf,
-    pub range: lsp::Range
+    pub label_range: lsp::Range
 }
 
 

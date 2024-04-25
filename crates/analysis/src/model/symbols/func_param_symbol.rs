@@ -9,6 +9,7 @@ use super::*;
 pub struct FunctionParameterSymbol {
     path: DataSymbolPath,
     range: lsp::Range,
+    label_range: lsp::Range,
     pub specifiers: HashSet<FunctionParameterSpecifier>,
     pub type_path: TypeSymbolPath,
     pub ordinal: usize
@@ -28,13 +29,18 @@ impl LocatableSymbol for FunctionParameterSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl FunctionParameterSymbol {
-    pub fn new(path: DataSymbolPath, range: lsp::Range) -> Self {
+    pub fn new(path: DataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,
+            label_range,
             specifiers: HashSet::new(),
             type_path: TypeSymbolPath::empty(),
             ordinal: 0

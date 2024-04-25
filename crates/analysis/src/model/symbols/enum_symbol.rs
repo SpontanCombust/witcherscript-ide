@@ -9,6 +9,7 @@ pub struct EnumSymbol {
     path: BasicTypeSymbolPath,
     local_source_path: PathBuf,
     range: lsp::Range,
+    label_range: lsp::Range,
     pub variants: HashMap<SymbolPathBuf, EnumVariantSymbol>
 }
 
@@ -32,14 +33,19 @@ impl LocatableSymbol for EnumSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl EnumSymbol {
-    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range) -> Self {
+    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             local_source_path,
             range,
+            label_range,
             variants: HashMap::new()
         }
     }
@@ -50,7 +56,8 @@ impl EnumSymbol {
 #[derive(Debug, Clone)]
 pub struct EnumVariantSymbol {
     path: DataSymbolPath,
-    range: lsp::Range
+    range: lsp::Range,
+    label_range: lsp::Range
 }
 
 impl Symbol for EnumVariantSymbol {
@@ -67,13 +74,18 @@ impl LocatableSymbol for EnumVariantSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl EnumVariantSymbol {
-    pub fn new(path: DataSymbolPath, range: lsp::Range) -> Self {
+    pub fn new(path: DataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
-            range
+            range,
+            label_range
         }
     }
 }

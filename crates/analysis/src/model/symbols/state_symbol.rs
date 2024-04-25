@@ -10,6 +10,7 @@ pub struct StateSymbol {
     path: StateSymbolPath,
     local_source_path: PathBuf,
     range: lsp::Range,
+    label_range: lsp::Range,
     pub specifiers: HashSet<StateSpecifier>,
     pub base_state_name: Option<String>,
     /*//TODO base_state_path can be known only after the class tree can be inspected 
@@ -38,14 +39,19 @@ impl LocatableSymbol for StateSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl StateSymbol {
-    pub fn new(path: StateSymbolPath, local_source_path: PathBuf, range: lsp::Range) -> Self {
+    pub fn new(path: StateSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             local_source_path,
             range,
+            label_range,
             specifiers: HashSet::new(),
             base_state_name: None,
             base_state_path: None

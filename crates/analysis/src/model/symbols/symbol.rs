@@ -21,7 +21,8 @@ pub trait PrimarySymbol: Symbol {
 /// Denotes a symbol, which location can be pin-pointed in a file
 /// The range typically spans over the name label of the symbol 
 pub trait LocatableSymbol: Symbol {
-    fn range(&self) -> lsp::Range; //TODO two ranges - one for label, one for the entire node
+    fn range(&self) -> lsp::Range;
+    fn label_range(&self) -> lsp::Range;
 }
 
 

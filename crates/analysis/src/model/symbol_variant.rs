@@ -95,6 +95,27 @@ impl SymbolVariant {
         }
     }
 
+    pub fn label_range(&self) -> Option<lsp::Range> {
+        match self {
+            SymbolVariant::Class(s) => Some(s.label_range()),
+            SymbolVariant::State(s) => Some(s.label_range()),
+            SymbolVariant::Struct(s) => Some(s.label_range()),
+            SymbolVariant::Enum(s) => Some(s.label_range()),
+            SymbolVariant::Array(_) => None,
+            SymbolVariant::GlobalFunc(s) => Some(s.label_range()),
+            SymbolVariant::MemberFunc(s) => Some(s.label_range()),
+            SymbolVariant::Event(s) => Some(s.label_range()),
+            SymbolVariant::Primitive(_) => None,
+            SymbolVariant::EnumVariant(s) => Some(s.label_range()),
+            SymbolVariant::FuncParam(s) => Some(s.label_range()),
+            SymbolVariant::GlobalVar(_) => None,
+            SymbolVariant::MemberVar(s) => Some(s.label_range()),
+            SymbolVariant::Autobind(s) => Some(s.label_range()),
+            SymbolVariant::LocalVar(s) => Some(s.label_range()),
+            SymbolVariant::SpecialVar(_) => None,
+        }
+    }
+
     pub fn local_source_path(&self) -> Option<&Path> {
         match self {
             SymbolVariant::Class(s) => Some(s.local_source_path()),

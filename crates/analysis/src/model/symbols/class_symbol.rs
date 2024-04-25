@@ -10,6 +10,7 @@ pub struct ClassSymbol {
     path: BasicTypeSymbolPath,
     local_source_path: PathBuf,
     range: lsp::Range,
+    label_range: lsp::Range,
     pub specifiers: HashSet<ClassSpecifier>,
     pub base_path: Option<BasicTypeSymbolPath>
 }
@@ -34,14 +35,19 @@ impl LocatableSymbol for ClassSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl ClassSymbol {
-    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range) -> Self {
+    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             local_source_path,
             range,
+            label_range,
             specifiers: HashSet::new(),
             base_path: None
         }
@@ -54,6 +60,7 @@ impl ClassSymbol {
 pub struct AutobindSymbol {
     path: DataSymbolPath,
     range: lsp::Range,
+    label_range: lsp::Range,
     pub specifiers: HashSet<AutobindSpecifier>,
     pub type_path: TypeSymbolPath,
 }
@@ -72,13 +79,18 @@ impl LocatableSymbol for AutobindSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl AutobindSymbol {
-    pub fn new(path: DataSymbolPath, range: lsp::Range) -> Self {
+    pub fn new(path: DataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,
+            label_range,
             specifiers: HashSet::new(),
             type_path: TypeSymbolPath::empty()
         }

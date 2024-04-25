@@ -15,12 +15,12 @@ pub fn merge_symbol_tables(
 
         let errors_as_diags = errors.into_iter()
             .map(|err| AnalysisDiagnostic { 
-                range: err.incoming_location.range, 
+                range: err.incoming_location.label_range, 
                 body: AnalysisError::SymbolNameTaken { 
                     name: err.occupied_path.components().last().unwrap().name.to_string(), 
                     this_type: err.incoming_type, 
                     precursor_type: err.occupied_type,
-                    precursor_range: err.occupied_location.as_ref().map(|loc| loc.range),
+                    precursor_range: err.occupied_location.as_ref().map(|loc| loc.label_range),
                     precursor_file_path: err.occupied_location.as_ref().map(|loc| scripts_root.join(&loc.local_source_path).unwrap())
                 }.into()
             });

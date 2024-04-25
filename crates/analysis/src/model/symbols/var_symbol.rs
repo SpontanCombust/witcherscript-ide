@@ -9,6 +9,7 @@ use super::*;
 pub struct MemberVarSymbol {
     path: DataSymbolPath,
     range: lsp::Range,
+    label_range: lsp::Range,
     pub specifiers: HashSet<MemberVarSpecifier>,
     pub type_path: TypeSymbolPath,
     pub ordinal: usize // used in the context of struct constructors
@@ -28,13 +29,18 @@ impl LocatableSymbol for MemberVarSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl MemberVarSymbol {
-    pub fn new(path: DataSymbolPath, range: lsp::Range) -> Self {
+    pub fn new(path: DataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,
+            label_range,
             specifiers: HashSet::new(),
             type_path: TypeSymbolPath::empty(),
             ordinal: 0
@@ -48,6 +54,7 @@ impl MemberVarSymbol {
 pub struct LocalVarSymbol {
     path: DataSymbolPath,
     range: lsp::Range,
+    label_range: lsp::Range,
     pub type_path: TypeSymbolPath,
 }
 
@@ -65,13 +72,18 @@ impl LocatableSymbol for LocalVarSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
 }
 
 impl LocalVarSymbol {
-    pub fn new(path: DataSymbolPath, range: lsp::Range) -> Self {
+    pub fn new(path: DataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,
+            label_range,
             type_path: TypeSymbolPath::empty()
         }
     }
