@@ -281,7 +281,18 @@ impl Backend {
             });
         }
 
-        let sym_iter = symtab_ref.get_for_file(&script_path);
+        let script_ref;
+        if let Some(script) = self.scripts.get(&script_path) {
+            script_ref = script;
+        } else {
+            return Err(jsonrpc::Error {
+                code: jsonrpc::ErrorCode::ServerError(-1062),
+                message: "No script at the path was found".into(),
+                data: None
+            });
+        }
+
+        let sym_iter = symtab_ref.get_for_source(&script_ref.source_tree_path.as_ref().unwrap().local());
         let script_symbols = format!("{:#?}", sym_iter.collect::<Vec<_>>());
 
         Ok(requests::debug::script_symbols::Response {

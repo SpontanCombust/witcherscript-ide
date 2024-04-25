@@ -1298,6 +1298,7 @@ dependencies = [
  "thiserror",
  "uuid",
  "witcherscript",
+ "witcherscript-project",
 ]
 
 [[package]]

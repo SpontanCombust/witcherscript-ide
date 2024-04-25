@@ -115,11 +115,20 @@ impl Backend {
     }
 
     
+
     pub async fn on_scripts_modified(&self, modified_script_paths: Vec<AbsPath>, content_path: Option<&AbsPath>, scan_symbols: bool, run_diagnostics: bool) {
         if let (Some(content_path), true) = (content_path, scan_symbols) {
+            let mut modified_source_paths = Vec::with_capacity(modified_script_paths.len());
+            for script_path in modified_script_paths.iter() {
+                if let Some(script_state) = self.scripts.get(script_path) {
+                    let source_path = script_state.source_tree_path.as_ref().unwrap().clone();
+                    modified_source_paths.push(source_path);
+                } 
+            }
+
             if let Ok(mut symtabs) = self.symtabs.try_write() {
                 if let Some(mut content_symtab) = symtabs.get_mut(content_path) {
-                    self.scan_symbols(&mut content_symtab, content_path, &modified_script_paths).await;
+                    self.scan_symbols(&mut content_symtab, content_path, modified_source_paths).await;
                 }
             }
         }

@@ -1,6 +1,5 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::{Path, PathBuf}};
 use lsp_types as lsp;
-use abs_path::AbsPath;
 use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::*;
 
@@ -8,7 +7,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct EnumSymbol {
     path: BasicTypeSymbolPath,
-    decl_file_path: AbsPath,
+    local_source_path: PathBuf,
     range: lsp::Range,
     pub variants: HashMap<SymbolPathBuf, EnumVariantSymbol>
 }
@@ -24,8 +23,8 @@ impl Symbol for EnumSymbol {
 }
 
 impl PrimarySymbol for EnumSymbol {
-    fn decl_file_path(&self) -> &AbsPath {
-        &self.decl_file_path
+    fn local_source_path(&self) -> &Path {
+        &self.local_source_path
     }
 }
 
@@ -36,10 +35,10 @@ impl LocatableSymbol for EnumSymbol {
 }
 
 impl EnumSymbol {
-    pub fn new(path: BasicTypeSymbolPath, decl_file_path: AbsPath, range: lsp::Range) -> Self {
+    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range) -> Self {
         Self {
             path,
-            decl_file_path,
+            local_source_path,
             range,
             variants: HashMap::new()
         }

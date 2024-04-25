@@ -3,8 +3,16 @@ use abs_path::AbsPath;
 use crate::{diagnostics::{AnalysisDiagnostic, AnalysisError}, model::collections::SymbolTable};
 
 
-pub fn merge_symbol_tables(target_symtab: &mut SymbolTable, source_symtab: SymbolTable, diagnostics: &mut HashMap<AbsPath, Vec<AnalysisDiagnostic>>) {
-    for (file_path, errors) in target_symtab.merge(source_symtab) {
+/// Key in the `diagnostics` map is a local path of the source file in the source tree
+pub fn merge_symbol_tables(
+    target_symtab: &mut SymbolTable, 
+    source_symtab: SymbolTable,
+    scripts_root: &AbsPath,
+    diagnostics: &mut HashMap<AbsPath, Vec<AnalysisDiagnostic>>
+) {
+    for (local_source_path, errors) in target_symtab.merge(source_symtab) {
+        let abs_source_path = scripts_root.join(local_source_path).unwrap();
+
         let errors_as_diags = errors.into_iter()
             .map(|err| AnalysisDiagnostic { 
                 range: err.incoming_location.range, 
@@ -13,12 +21,12 @@ pub fn merge_symbol_tables(target_symtab: &mut SymbolTable, source_symtab: Symbo
                     this_type: err.incoming_type, 
                     precursor_type: err.occupied_type,
                     precursor_range: err.occupied_location.as_ref().map(|loc| loc.range),
-                    precursor_file_path: err.occupied_location.as_ref().map(|loc| loc.file_path.clone())
+                    precursor_file_path: err.occupied_location.as_ref().map(|loc| scripts_root.join(&loc.local_source_path).unwrap())
                 }.into()
             });
 
         diagnostics
-            .entry(file_path)
+            .entry(abs_source_path)
             .or_default()
             .extend(errors_as_diags);
     }

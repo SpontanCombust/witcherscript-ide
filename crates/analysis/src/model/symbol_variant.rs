@@ -1,6 +1,6 @@
+use std::path::Path;
 use strum_macros::{EnumIs, EnumTryAs};
 use lsp_types as lsp;
-use abs_path::AbsPath;
 use super::symbols::*;
 
 
@@ -95,14 +95,14 @@ impl SymbolVariant {
         }
     }
 
-    pub fn decl_file_path(&self) -> Option<&AbsPath> {
+    pub fn local_source_path(&self) -> Option<&Path> {
         match self {
-            SymbolVariant::Class(s) => Some(s.decl_file_path()),
-            SymbolVariant::State(s) => Some(s.decl_file_path()),
-            SymbolVariant::Struct(s) => Some(s.decl_file_path()),
-            SymbolVariant::Enum(s) => Some(s.decl_file_path()),
+            SymbolVariant::Class(s) => Some(s.local_source_path()),
+            SymbolVariant::State(s) => Some(s.local_source_path()),
+            SymbolVariant::Struct(s) => Some(s.local_source_path()),
+            SymbolVariant::Enum(s) => Some(s.local_source_path()),
             SymbolVariant::Array(_) => None,
-            SymbolVariant::GlobalFunc(s) => Some(s.decl_file_path()),
+            SymbolVariant::GlobalFunc(s) => Some(s.local_source_path()),
             SymbolVariant::MemberFunc(_) => None,
             SymbolVariant::Event(_) => None,
             SymbolVariant::Primitive(_) => None,

@@ -1,19 +1,19 @@
 use std::collections::{btree_map, BTreeMap, HashMap};
+use std::path::{Path, PathBuf};
 use thiserror::Error;
 use lsp_types as lsp;
-use abs_path::AbsPath;
 use crate::model::symbols::*;
 use crate::model::symbol_variant::SymbolVariant;
 use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
 
-
+//TODO some sort of type that will allow searching through symtabs of the entire dependency tree
 /// Contains information about all scanned symbols. Symbols are identified by their path.
 /// On a given unique path only one symbol can be present.
 #[derive(Debug, Clone, Default)]
 pub struct SymbolTable {
     symbols: BTreeMap<SymbolPathBuf, SymbolVariant>,
-    /// SymbolPath roots of symbols associated with given files
-    file_assocs: HashMap<AbsPath, Vec<SymbolPathBuf>> //TODO replace with a relative path
+    /// SymbolPath roots of symbols associated with given local paths in a source tree
+    source_path_assocs: HashMap<PathBuf, Vec<SymbolPathBuf>>
 }
 
 #[derive(Debug, Clone, Error)]
@@ -48,7 +48,7 @@ impl SymbolTable {
 
     pub(crate) fn insert_primary<S>(&mut self, sym: S)
     where S: PrimarySymbol + LocatableSymbol + Into<SymbolVariant> {
-        self.file_assocs.entry(sym.decl_file_path().to_owned())
+        self.source_path_assocs.entry(sym.local_source_path().to_owned())
             .or_default()
             .push(sym.path().to_owned());
 
@@ -84,9 +84,9 @@ impl SymbolTable {
         path.root()
             .and_then(|root| self.symbols.get(root))
             .and_then(|v| {
-                if let (Some(file_path), Some(range)) = (v.decl_file_path(), v.range()) {
+                if let (Some(file_path), Some(range)) = (v.local_source_path(), v.range()) {
                     Some(SymbolLocation { 
-                        file_path: file_path.to_owned(), 
+                        local_source_path: file_path.to_owned(), 
                         range
                     })
                 } else {
@@ -95,8 +95,8 @@ impl SymbolTable {
             })
     }
  
-    pub fn remove_for_file(&mut self, file_path: &AbsPath) {
-        if let Some(sympaths) = self.file_assocs.get_mut(file_path) {
+    pub fn remove_for_source(&mut self, local_source_path: &Path) {
+        if let Some(sympaths) = self.source_path_assocs.get_mut(local_source_path) {
             for root in sympaths.iter() {
                 self.symbols.retain(|sp, _| !sp.root().map(|r| r == root).unwrap_or(false));
             }
@@ -110,8 +110,8 @@ impl SymbolTable {
         SymbolChildren::new(self, path)
     }
 
-    pub fn get_for_file<'a>(&'a self, file_path: &AbsPath) -> FileSymbols<'a> {
-        FileSymbols::new(self, file_path)
+    pub fn get_for_source<'a>(&'a self, local_source_path: &Path) -> FileSymbols<'a> {
+        FileSymbols::new(self, local_source_path)
     }
 
     /// Returns an iterator going through all base classes of a given class symbol.
@@ -128,14 +128,14 @@ impl SymbolTable {
 
 
 
-    pub(crate) fn merge(&mut self, mut other: Self) -> HashMap<AbsPath, Vec<MergeConflictError>> {
+    pub(crate) fn merge(&mut self, mut other: Self) -> HashMap<PathBuf, Vec<MergeConflictError>> {
         let mut errors = HashMap::new();
         if other.is_empty() {
             return errors;
         }
 
         let mut file_sympaths = Vec::new();
-        for (file_path, sympath_roots) in other.file_assocs {
+        for (file_path, sympath_roots) in other.source_path_assocs {
             let mut file_errors = Vec::new();
 
             for root in &sympath_roots {
@@ -174,7 +174,7 @@ impl SymbolTable {
                         occupied_location: self.locate(&incoming_sympath),
                         incoming_type: incoming_sym.typ(),
                         incoming_location: SymbolLocation { 
-                            file_path: file_path.clone(), 
+                            local_source_path: file_path.clone(), 
                             range: incoming_variant.range().unwrap_or_default()
                         }
                     });
@@ -187,7 +187,7 @@ impl SymbolTable {
             }
 
             errors.insert(file_path.clone(), file_errors);
-            self.file_assocs.insert(file_path, sympath_roots);
+            self.source_path_assocs.insert(file_path, sympath_roots);
 
             file_sympaths.clear();
         }
@@ -199,7 +199,7 @@ impl SymbolTable {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SymbolLocation {
-    pub file_path: AbsPath,
+    pub local_source_path: PathBuf,
     pub range: lsp::Range
 }
 
@@ -240,9 +240,9 @@ pub struct FileSymbols<'st> {
 }
 
 impl<'st> FileSymbols<'st> {
-    fn new(symtab: &'st SymbolTable, file_path: &AbsPath) -> Self {
-        let roots = symtab.file_assocs
-            .get(file_path)
+    fn new(symtab: &'st SymbolTable, local_source_path: &Path) -> Self {
+        let roots = symtab.source_path_assocs
+            .get(local_source_path)
             .map(|v| v.as_slice())
             .unwrap_or_default();
 

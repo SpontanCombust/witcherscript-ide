@@ -1,6 +1,5 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, path::{Path, PathBuf}};
 use lsp_types as lsp;
-use abs_path::AbsPath;
 use witcherscript::attribs::{ClassSpecifier, AutobindSpecifier};
 use crate::model::symbol_path::SymbolPath;
 use super::*;
@@ -9,7 +8,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct ClassSymbol {
     path: BasicTypeSymbolPath,
-    decl_file_path: AbsPath,
+    local_source_path: PathBuf,
     range: lsp::Range,
     pub specifiers: HashSet<ClassSpecifier>,
     pub base_path: Option<BasicTypeSymbolPath>
@@ -26,8 +25,8 @@ impl Symbol for ClassSymbol {
 }
 
 impl PrimarySymbol for ClassSymbol {
-    fn decl_file_path(&self) -> &AbsPath {
-        &self.decl_file_path
+    fn local_source_path(&self) -> &Path {
+        &self.local_source_path
     }
 }
 
@@ -38,10 +37,10 @@ impl LocatableSymbol for ClassSymbol {
 }
 
 impl ClassSymbol {
-    pub fn new(path: BasicTypeSymbolPath, decl_file_path: AbsPath, range: lsp::Range) -> Self {
+    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range) -> Self {
         Self {
             path,
-            decl_file_path,
+            local_source_path,
             range,
             specifiers: HashSet::new(),
             base_path: None

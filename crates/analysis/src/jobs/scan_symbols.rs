@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::path::Path;
 use abs_path::AbsPath;
 use lsp_types::Range;
 use witcherscript::attribs::AutobindSpecifier;
@@ -13,11 +14,18 @@ use crate::model::symbols::*;
 use crate::diagnostics::*;
 
 
-pub fn scan_symbols(script: &Script, doc: &ScriptDocument, doc_path: &AbsPath, symtab: &mut SymbolTable) -> Vec<AnalysisDiagnostic> {
+pub fn scan_symbols(
+    script: &Script, 
+    doc: &ScriptDocument, 
+    local_source_path: &Path,
+    scripts_root: &AbsPath,
+    symtab: &mut SymbolTable
+) -> Vec<AnalysisDiagnostic> {
     let mut visitor = SymbolScannerVisitor {
         symtab,
         doc,
-        doc_path,
+        local_source_path,
+        scripts_root,
         diagnostics: Vec::new(),
         current_path: SymbolPathBuf::empty(),
         current_ordinal: 0
@@ -31,7 +39,8 @@ pub fn scan_symbols(script: &Script, doc: &ScriptDocument, doc_path: &AbsPath, s
 struct SymbolScannerVisitor<'a> {
     symtab: &'a mut SymbolTable,
     doc: &'a ScriptDocument,
-    doc_path: &'a AbsPath,
+    local_source_path: &'a Path,
+    scripts_root: &'a AbsPath,
     diagnostics: Vec<AnalysisDiagnostic>,
 
     current_path: SymbolPathBuf,
@@ -43,7 +52,7 @@ impl SymbolScannerVisitor<'_> {
     fn check_contains(&mut self, path: &SymbolPath, sym_typ: SymbolType, range: Range) -> bool {
         if let Err(err) = self.symtab.contains(path) {
             let (precursor_file_path, precursor_range) = err.occupied_location
-                .map(|loc| (Some(loc.file_path), Some(loc.range)))
+                .map(|loc| (Some(self.scripts_root.join(loc.local_source_path).unwrap()), Some(loc.range)))
                 .unwrap_or((None, None));
 
             self.diagnostics.push(AnalysisDiagnostic { 
@@ -123,7 +132,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         if let Some(class_name) = name_node.value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&class_name);
             if self.check_contains(&path, SymbolType::Class, name_node.range()) {
-                let mut sym = ClassSymbol::new(path.clone(), self.doc_path.clone(), name_node.range());
+                let mut sym = ClassSymbol::new(path.clone(), self.local_source_path.to_owned(), name_node.range());
                 
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if !sym.specifiers.insert(spec) {
@@ -176,7 +185,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
             let path = StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name));
             if self.check_contains(&path, SymbolType::State, state_name_node.range()) {
-                let mut sym = StateSymbol::new(path.clone(), self.doc_path.clone(), state_name_node.range());
+                let mut sym = StateSymbol::new(path.clone(), self.local_source_path.to_owned(), state_name_node.range());
     
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if !sym.specifiers.insert(spec) {
@@ -231,7 +240,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         if let Some(struct_name) = name_node.value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&struct_name);
             if self.check_contains(&path, SymbolType::Struct, name_node.range()) {
-                let mut sym = StructSymbol::new(path, self.doc_path.clone(), name_node.range());
+                let mut sym = StructSymbol::new(path, self.local_source_path.to_owned(), name_node.range());
     
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if !sym.specifiers.insert(spec) {
@@ -268,7 +277,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         if let Some(enum_name) = name_node.value(&self.doc) {
             let path = BasicTypeSymbolPath::new(&enum_name);
             if self.check_contains(&path, SymbolType::Enum, name_node.range()) {
-                let sym = EnumSymbol::new(path, self.doc_path.clone(), name_node.range());
+                let sym = EnumSymbol::new(path, self.local_source_path.to_owned(), name_node.range());
     
                 sym.path().clone_into(&mut self.current_path);
                 self.symtab.insert_primary(sym);
@@ -307,7 +316,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         if let Some(func_name) = name_node.value(&self.doc) {
             let path = GlobalCallableSymbolPath::new(&func_name);
             if self.check_contains(&path, SymbolType::GlobalFunction, name_node.range()) {
-                let mut sym = GlobalFunctionSymbol::new(path, self.doc_path.clone(), name_node.range());
+                let mut sym = GlobalFunctionSymbol::new(path, self.local_source_path.to_owned(), name_node.range());
     
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                     if !sym.specifiers.insert(spec) {
