@@ -285,11 +285,7 @@ impl<'script> FunctionCallArgumentsNode<'script> {
                 previous_was_comma = false;
             } else {
                 if previous_was_comma {
-                    let range = n.range();
-                    args.push(FunctionCallArgument::Omitted(lsp_types::Position { 
-                        line: range.start.line, 
-                        character: range.start.character - 1 // -1 because the arg would be before the comma
-                    }));
+                    args.push(FunctionCallArgument::Omitted(n.range()));
                 }
                 previous_was_comma = true;
             }
@@ -332,7 +328,7 @@ impl SyntaxNodeTraversal for FunctionCallArgumentsNode<'_> {
 #[derive(Clone)]
 pub enum FunctionCallArgument<'script> {
     Some(ExpressionNode<'script>),
-    Omitted(lsp_types::Position) //TODO range instead of Position
+    Omitted(lsp_types::Range)
 }
 
 impl Debug for FunctionCallArgument<'_> {
