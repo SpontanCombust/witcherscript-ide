@@ -74,10 +74,10 @@ impl<'script> TryFrom<AnyNode<'script>> for RootStatementNode<'script> {
     }
 }
 
-impl DeclarationTraversal for RootStatementNode<'_> {
+impl SyntaxNodeTraversal for RootStatementNode<'_> {
     type TraversalCtx = ();
 
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         match self.clone().value() {
             RootStatement::Function(s) => s.accept(visitor, ()),
             RootStatement::Class(s) => s.accept(visitor, ()),
@@ -124,10 +124,10 @@ impl<'script> TryFrom<AnyNode<'script>> for RootNode<'script> {
     }
 }
 
-impl DeclarationTraversal for RootNode<'_> {
+impl SyntaxNodeTraversal for RootNode<'_> {
     type TraversalCtx = ();
 
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         let tp = visitor.visit_root(self);
         if tp.traverse {
             self.iter().for_each(|s| s.accept(visitor, ()));

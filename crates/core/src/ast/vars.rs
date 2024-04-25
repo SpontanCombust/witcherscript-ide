@@ -91,11 +91,15 @@ impl<'script> TryFrom<AnyNode<'script>> for VarDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for VarDeclarationNode<'_> {
+impl SyntaxNodeTraversal for VarDeclarationNode<'_> {
     type TraversalCtx = StatementTraversalContext;
 
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        visitor.visit_local_var_decl_stmt(self, ctx);
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let tp = visitor.visit_local_var_decl_stmt(self, ctx);
+        if tp.traverse_init_value {
+            self.init_value().map(|init_value| init_value.accept(visitor, ExpressionTraversalContext::VarDeclarationInitValue));
+        }
+        visitor.exit_local_var_decl_stmt(self, ctx);
     }
 }
 
@@ -143,10 +147,10 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberVarDeclarationNode<'script> {
     }
 }
 
-impl DeclarationTraversal for MemberVarDeclarationNode<'_> {
+impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
     type TraversalCtx = PropertyTraversalContext;
 
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         visitor.visit_member_var_decl(self, ctx);
     }
 }

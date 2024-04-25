@@ -4,12 +4,12 @@ use super::policies::*;
 use super::contexts::*;
 
 
-/// Handle visitations to expression nodes.
+/// Handle visitations to syntax nodes.
 /// Visitor functions for nodes that contain visitable children nodes inside them return traversal policy objects that dictate if those children are traversed into.
 /// By default all policy fields have `true` value.
 /// These nodes also have a corresponding `exit_` function for them, which is run after the node itself and (possibly) its children are visited.
 #[allow(unused_variables)]
-pub trait ExpressionVisitor {
+pub trait SyntaxNodeVisitor {
     /// Called when visiting a parenthesized expression node.
     fn visit_nested_expr(&mut self, n: &NestedExpressionNode, ctx: ExpressionTraversalContext) -> NestedExpressionTraversalPolicy { Default::default() }
     /// Called after visiting the nested expression node and possibly also children nodes specified in traversal policy.
@@ -83,16 +83,10 @@ pub trait ExpressionVisitor {
     fn visit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode, ctx: ExpressionTraversalContext) -> TernaryConditionalExpressionTraversalPolicy { Default::default() }
     /// Called after visiting a ternary conditional expression and possibly also children nodes specified in traversal policy.
     fn exit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode, ctx: ExpressionTraversalContext) {}
-}
 
 
 
-/// Handle visitations to declaration nodes. Does not include local var declaration.
-/// Visitor functions for nodes that contain visitable children nodes inside them return traversal policy objects that dictate if those children are traversed into.
-/// By default all policy fields have `true` value.
-/// These nodes also have a corresponding `exit_` function for them, which is run after the node itself and (possibly) its children are visited.
-#[allow(unused_variables)]
-pub trait DeclarationVisitor {
+
     /// Called when visiting the highest node in the hierarchy.
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy { Default::default() }
 
@@ -122,7 +116,9 @@ pub trait DeclarationVisitor {
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: PropertyTraversalContext) {}
 
     /// Called when visiting a statement assigning a default value to a field.
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: PropertyTraversalContext) {}
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy { Default::default() }
+    /// Called after visiting a statement assigning a default value to a field and possibly also children nodes specified in traversal policy.
+    fn exit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: PropertyTraversalContext) {}
 
     /// Called when visiting a `defaults` block.
     fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: PropertyTraversalContext) -> MemberDefaultsBlockTraversalPolicy { Default::default() }
@@ -130,7 +126,9 @@ pub trait DeclarationVisitor {
     fn exit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: PropertyTraversalContext) {}
 
     /// Called when visiting a default value assignment inside a `defaults` block.
-    fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) {}
+    fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) -> MemberDefaultValueTraversalPolicy { Default::default() }
+    /// Called after visiting a default value assignment inside a `defaults` block and possibly also children nodes specified in traversal policy.
+    fn exit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) {}
 
     /// Called when visiting a statement noting some information about a perticular type field.
     fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: PropertyTraversalContext) {}
@@ -155,44 +153,49 @@ pub trait DeclarationVisitor {
     fn visit_event_decl(&mut self, n: &EventDeclarationNode, ctx: PropertyTraversalContext) -> EventDeclarationTraversalPolicy { Default::default() }
     /// Called after visiting member function declaration and possibly also children nodes specified in traversal policy.
     fn exit_event_decl(&mut self, n: &EventDeclarationNode, ctx: PropertyTraversalContext) {}
-}
 
 
 
-/// Handle visitations to statement nodes.
-/// Visitor functions for nodes that contain visitable children nodes inside them return traversal policy objects that dictate if those children are traversed into.
-/// By default all policy fields have `true` value.
-/// These nodes also have a corresponding `exit_` function for them, which is run after the node itself and (possibly) its children are visited.
-#[allow(unused_variables)]
-pub trait StatementVisitor {    
+
     /// Called when visiting a local variable declaration inside a function.
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, ctx: StatementTraversalContext) {}
+    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, ctx: StatementTraversalContext) -> VarDeclarationTraversalPolicy { Default::default() }
+    /// Called after visiting a local variable declaration and possibly also children nodes specified in traversal policy.
+    fn exit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting an expression statement inside a function.
-    fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode, ctx: StatementTraversalContext) {}
+    fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode, ctx: StatementTraversalContext) -> ExpressionStatementTraversalPolicy { Default::default() }
+    /// Called after visiting an expression statement and possibly also children nodes specified in traversal policy.
+    fn exit_expr_stmt(&mut self, n: &ExpressionStatementNode, ctx: StatementTraversalContext) {}
     
     /// Called when visiting a `for` loop.
     fn visit_for_stmt(&mut self, n: &ForLoopNode, ctx: StatementTraversalContext) -> ForLoopTraversalPolicy { Default::default() }
+    /// Called after visiting a `for` loop and possibly also children nodes specified in traversal policy.
     fn exit_for_stmt(&mut self, n: &ForLoopNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a `while` loop.
     fn visit_while_stmt(&mut self, n: &WhileLoopNode, ctx: StatementTraversalContext) -> WhileLoopTraversalPolicy { Default::default() }
+    /// Called after visiting a `while` loop and possibly also children nodes specified in traversal policy.
     fn exit_while_stmt(&mut self, n: &WhileLoopNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a `do-while` loop.
     fn visit_do_while_stmt(&mut self, n: &DoWhileLoopNode, ctx: StatementTraversalContext) -> DoWhileLoopTraversalPolicy { Default::default() }
+    /// Called after visiting a `do-while` loop and possibly also children nodes specified in traversal policy.
     fn exit_do_while_stmt(&mut self, n: &DoWhileLoopNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting an `if` condition.
     fn visit_if_stmt(&mut self, n: &IfConditionalNode, ctx: StatementTraversalContext) -> IfConditionalTraversalPolicy { Default::default() }
+    /// Called after visiting an `if` condition and possibly also children nodes specified in traversal policy.
     fn exit_if_stmt(&mut self, n: &IfConditionalNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a `switch` statement.
     fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode, ctx: StatementTraversalContext) -> SwitchConditionalTraversalPolicy { Default::default() }
+    /// Called after visiting a `switch` statement and possibly also children nodes specified in traversal policy.
     fn exit_switch_stmt(&mut self, n: &SwitchConditionalNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a `case` label inside a `switch` statement.
-    fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) {}
+    fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) -> SwitchConditionalCaseLabelTraversalPolicy { Default::default() }
+    /// Called after visiting a `case` label inside a `switch` statement and possibly also children nodes specified in traversal policy.
+    fn exit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) {}
 
     /// Called when visiting a `default` label inside a `switch` statement.
     fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode) {}
@@ -204,13 +207,18 @@ pub trait StatementVisitor {
     fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a `return` statement.
-    fn visit_return_stmt(&mut self, n: &ReturnStatementNode, ctx: StatementTraversalContext) {}
+    fn visit_return_stmt(&mut self, n: &ReturnStatementNode, ctx: StatementTraversalContext) -> ReturnStatementTraversalPolicy { Default::default() }
+    /// Called after visiting a `return` statement and possibly also children nodes specified in traversal policy.
+    fn exit_return_stmt(&mut self, n: &ReturnStatementNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a `delete` statement.
-    fn visit_delete_stmt(&mut self, n: &DeleteStatementNode, ctx: StatementTraversalContext) {}
+    fn visit_delete_stmt(&mut self, n: &DeleteStatementNode, ctx: StatementTraversalContext) -> DeleteStatementTraversalPolicy { Default::default() }
+    /// Called after visiting a `delete` statement and possibly also children nodes specified in traversal policy.
+    fn exit_delete_stmt(&mut self, n: &DeleteStatementNode, ctx: StatementTraversalContext) {}
 
-    /// Called when visiting statements grouped with curly brackets { }.
+    /// Called when visiting a scope block statement in a function.
     fn visit_compound_stmt(&mut self, n: &CompoundStatementNode, ctx: StatementTraversalContext) -> CompoundStatementTraversalPolicy { Default::default() }
+    /// Called after visiting a scope block statement in a function and possibly also children nodes specified in traversal policy.
     fn exit_compound_stmt(&mut self, n: &CompoundStatementNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting a NOP statement. 

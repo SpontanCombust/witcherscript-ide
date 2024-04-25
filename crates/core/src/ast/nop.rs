@@ -8,7 +8,7 @@ mod tags {
     pub struct Nop;
 }
 
-//TODO bring back full traversal in root and type declarations once there is only one visitor trait
+
 pub type NopNode<'script> = SyntaxNode<'script, tags::Nop>;
 
 impl NamedSyntaxNode for NopNode<'_> {
@@ -35,10 +35,10 @@ impl<'script> TryFrom<AnyNode<'script>> for NopNode<'script> {
     }
 }
 
-impl StatementTraversal for NopNode<'_> {
+impl SyntaxNodeTraversal for NopNode<'_> {
     type TraversalCtx = StatementTraversalContext;
 
-    fn accept<V: super::StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: super::SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         visitor.visit_nop_stmt(self, ctx);
     }
 }

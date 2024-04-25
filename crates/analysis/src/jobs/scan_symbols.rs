@@ -108,7 +108,7 @@ impl SymbolScannerVisitor<'_> {
 
 
 
-impl DeclarationVisitor for SymbolScannerVisitor<'_> {
+impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
         let mut traverse_definition = false;
 
@@ -294,7 +294,7 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
-        let mut traverse_params = false;
+        let mut traverse = false;
 
         let name_node = n.name();
         if let Some(func_name) = name_node.value(&self.doc) {
@@ -322,25 +322,25 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                 sym.path().clone_into(&mut self.current_path);
                 self.symtab.insert_primary(sym);
 
-                traverse_params = true;
+                traverse = true;
             }
         }
 
         GlobalFunctionDeclarationTraversalPolicy { 
-            traverse_params
+            traverse_params: traverse,
+            traverse_definition: traverse
         }
     }
 
-    fn exit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) {
+    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
-            n.definition().accept(self, FunctionTraversalContext::GlobalFunction);
             self.current_path.pop();
             self.current_ordinal = 0;
         }
     }
 
     fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
-        let mut traverse_params = false;
+        let mut traverse = false;
 
         let name_node = n.name();
         if let Some(func_name) = name_node.value(&self.doc) {
@@ -368,26 +368,26 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                 sym.path().clone_into(&mut self.current_path);
                 self.symtab.insert(sym);
 
-                traverse_params = true;
+                traverse = true;
             }
         }
 
         MemberFunctionDeclarationTraversalPolicy {
-            traverse_params
+            traverse_params: traverse,
+            traverse_definition: traverse
         }
     }
 
-    fn exit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) {
         // pop only if visit managed to create the symbol
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
-            n.definition().accept(self, FunctionTraversalContext::MemberFunction);
             self.current_path.pop();
             self.current_ordinal = 0;
         }
     }
 
     fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
-        let mut traverse_params = false;
+        let mut traverse = false;
 
         let name_node = n.name();
         if let Some(event_name) = name_node.value(&self.doc) {
@@ -398,18 +398,18 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
                 sym.path().clone_into(&mut self.current_path);
                 self.symtab.insert(sym);
 
-                traverse_params = true;
+                traverse = true;
             }
         }
 
         EventDeclarationTraversalPolicy { 
-            traverse_params
+            traverse_params: traverse,
+            traverse_definition: traverse
         }
     }
 
-    fn exit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: PropertyTraversalContext) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
-            n.definition().accept(self, FunctionTraversalContext::Event);
             self.current_path.pop();
             self.current_ordinal = 0;
         }
@@ -519,10 +519,10 @@ impl DeclarationVisitor for SymbolScannerVisitor<'_> {
             }
         }
     }
-}
 
-impl StatementVisitor for SymbolScannerVisitor<'_> {
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) {
+
+
+    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
         let type_path = self.check_type_from_type_annot(n.var_type());
     
         for name_node in n.names() {
@@ -536,5 +536,13 @@ impl StatementVisitor for SymbolScannerVisitor<'_> {
                 }
             }
         }
+
+        VarDeclarationTraversalPolicy {
+            traverse_init_value: false
+        }
     }
+
+
+
+    //TODO default traversal policy bool const 
 }

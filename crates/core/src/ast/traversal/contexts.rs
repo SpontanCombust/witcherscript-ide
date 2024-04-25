@@ -6,6 +6,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExpressionTraversalContext {
     MemberDefaultValue,
+    
     ExpressionStatement,
     ReturnStatement,
     DeleteStatement,
@@ -17,6 +18,7 @@ pub enum ExpressionTraversalContext {
     IfConditionalCond,
     SwitchConditionalCond,
     SwitchConditionalCaseLabel,
+    VarDeclarationInitValue,
 
     NestedExpressionInner,
     FunctionCallExpressionFunc,

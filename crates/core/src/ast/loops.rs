@@ -57,11 +57,20 @@ impl<'script> TryFrom<AnyNode<'script>> for ForLoopNode<'script> {
     }
 }
 
-impl StatementTraversal for ForLoopNode<'_> {
+impl SyntaxNodeTraversal for ForLoopNode<'_> {
     type TraversalCtx = StatementTraversalContext;
 
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_for_stmt(self, ctx);
+        if tp.traverse_init {
+            self.init().map(|init| init.accept(visitor, ExpressionTraversalContext::ForLoopInit));
+        }
+        if tp.traverse_cond {
+            self.cond().map(|cond| cond.accept(visitor, ExpressionTraversalContext::ForLoopCond));
+        }
+        if tp.traverse_iter {
+            self.iter().map(|iter| iter.accept(visitor, ExpressionTraversalContext::ForLoopIter));
+        }
         if tp.traverse_body {
             self.body().accept(visitor, StatementTraversalContext::ForLoopBody);
         }
@@ -108,11 +117,14 @@ impl<'script> TryFrom<AnyNode<'script>> for WhileLoopNode<'script> {
     }
 }
 
-impl StatementTraversal for WhileLoopNode<'_> {
+impl SyntaxNodeTraversal for WhileLoopNode<'_> {
     type TraversalCtx = StatementTraversalContext;
 
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_while_stmt(self, ctx);
+        if tp.traverse_cond {
+            self.cond().accept(visitor, ExpressionTraversalContext::WhileLoopCond);
+        }
         if tp.traverse_body {
             self.body().accept(visitor, StatementTraversalContext::WhileLoopBody);
         }
@@ -159,11 +171,14 @@ impl<'script> TryFrom<AnyNode<'script>> for DoWhileLoopNode<'script> {
     }
 }
 
-impl StatementTraversal for DoWhileLoopNode<'_> {
+impl SyntaxNodeTraversal for DoWhileLoopNode<'_> {
     type TraversalCtx = StatementTraversalContext;
 
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_do_while_stmt(self, ctx);
+        if tp.traverse_cond {
+            self.cond().accept(visitor, ExpressionTraversalContext::DoWhileLoopCond);
+        }
         if tp.traverse_body {
             self.body().accept(visitor, StatementTraversalContext::DoWhileLoopBody);
         }

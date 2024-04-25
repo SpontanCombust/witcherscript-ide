@@ -4,7 +4,7 @@ use witcherscript::tokens::*;
 use witcherscript::ast::*;
 use crate::diagnostics::{AnalysisDiagnostic, AnalysisError, SyntaxErrorDiagnostic};
 
-
+//TODO change param to &Script
 pub fn syntax_analysis(script_root: RootNode, diagnostics: &mut Vec<AnalysisDiagnostic>) {
     let mut visitor = SyntaxErrorVisitor {
         diagnostics
@@ -112,7 +112,7 @@ impl SyntaxErrorVisitor<'_> {
     }
 }
 
-impl DeclarationVisitor for SyntaxErrorVisitor<'_> {
+impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy {
         let traverse = if n.has_errors() {
             self.check_errors(n);
@@ -233,16 +233,19 @@ impl DeclarationVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: PropertyTraversalContext) {
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy {
+        let mut traverse_value = false;
         if n.has_errors() {
             self.check_identifier(&n.member());
 
             let value = n.value();
-            if !self.check_expression(&value) {
-                value.accept(self, ExpressionTraversalContext::MemberDefaultValue);
-            }
+            traverse_value = !self.check_expression(&value);
     
             self.check_errors(n);
+        }
+
+        MemberDefaultValueTraversalPolicy {
+            traverse_value
         }
     }
 
@@ -275,6 +278,7 @@ impl DeclarationVisitor for SyntaxErrorVisitor<'_> {
 
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
         let mut traverse_params = false;
+        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
             n.return_type().map(|n| self.check_type_annot(&n));
@@ -287,19 +291,18 @@ impl DeclarationVisitor for SyntaxErrorVisitor<'_> {
                 traverse_params = true;
             }
 
-            let def = n.definition();
-            if !self.check_function_def(&def) {
-                def.accept(self, FunctionTraversalContext::GlobalFunction);
-            }
+            traverse_definition = !self.check_function_def(&n.definition());
         }
 
         GlobalFunctionDeclarationTraversalPolicy { 
-            traverse_params
+            traverse_params,
+            traverse_definition
         }
     }
 
     fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
         let mut traverse_params = false;
+        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
     
@@ -315,19 +318,18 @@ impl DeclarationVisitor for SyntaxErrorVisitor<'_> {
                 traverse_params = true;
             }
 
-            let def = n.definition();
-            if !self.check_function_def(&def) {
-                def.accept(self, FunctionTraversalContext::MemberFunction);
-            }
+            traverse_definition = !self.check_function_def(&n.definition());
         }
         
-        return MemberFunctionDeclarationTraversalPolicy { 
-            traverse_params
+        MemberFunctionDeclarationTraversalPolicy { 
+            traverse_params,
+            traverse_definition
         }
     }
 
     fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
         let mut traverse_params = false;
+        let mut traverse_definition = false;
         if n.has_errors() {
             self.check_identifier(&n.name());
 
@@ -343,14 +345,12 @@ impl DeclarationVisitor for SyntaxErrorVisitor<'_> {
                 traverse_params = true;
             }
 
-            let def = n.definition();
-            if !self.check_function_def(&def) {
-                def.accept(self, FunctionTraversalContext::Event);
-            }
+            traverse_definition = !self.check_function_def(&n.definition());
         }
         
         EventDeclarationTraversalPolicy { 
-            traverse_params
+            traverse_params,
+            traverse_definition
         }
     }
 
@@ -367,21 +367,23 @@ impl DeclarationVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) {
+    fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) -> MemberDefaultValueTraversalPolicy {
+        let mut traverse_value = false;
         if n.has_errors() {
             self.check_identifier(&n.member());
-
-            let value = n.value();
-            if !self.check_expression(&value) {
-                value.accept(self, ExpressionTraversalContext::MemberDefaultValue);
-            }
+            traverse_value = !self.check_expression(&n.value());
     
             self.check_errors(n);
         }
-    }
-}
 
-impl StatementVisitor for SyntaxErrorVisitor<'_> {
+        MemberDefaultValueTraversalPolicy {
+            traverse_value
+        }
+    }
+
+
+    
+    
     fn visit_compound_stmt(&mut self, n: &CompoundStatementNode, _: StatementTraversalContext) -> CompoundStatementTraversalPolicy {
          let traverse = if n.has_errors() {
             self.check_errors(n);
@@ -395,33 +397,44 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) {
+    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+        let mut traverse_init_value = false;
         if n.has_errors() {
             n.names().for_each(|name| { self.check_identifier(&name); } );
             self.check_type_annot(&n.var_type());
+            traverse_init_value = n.init_value().map(|init_value| !self.check_expression(&init_value)).unwrap_or(false);
     
             self.check_errors(n);
         }
-    }
 
-    fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode, _: StatementTraversalContext) {
-        if n.has_errors() {
-            let expr = n.expr();
-            if !self.check_expression(&expr) {
-                expr.accept(self, ExpressionTraversalContext::ExpressionStatement);
-            }
-    
-            self.check_errors(n);
+        VarDeclarationTraversalPolicy {
+            traverse_init_value
         }
     }
 
-    fn visit_return_stmt(&mut self, n: &ReturnStatementNode, _: StatementTraversalContext) {
+    fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode, _: StatementTraversalContext) -> ExpressionStatementTraversalPolicy {
+        let mut traverse_expr = false;
         if n.has_errors() {
-            if let Some(value) = n.value() {
-                value.accept(self, ExpressionTraversalContext::ReturnStatement);
-            }
+            traverse_expr = !self.check_expression(&n.expr());
     
             self.check_errors(n);
+        }
+
+        ExpressionStatementTraversalPolicy {
+            traverse_expr
+        }
+    }
+
+    fn visit_return_stmt(&mut self, n: &ReturnStatementNode, _: StatementTraversalContext) -> ReturnStatementTraversalPolicy {
+        let mut traverse_value = false;
+        if n.has_errors() {
+            traverse_value = n.value().map(|value| !self.check_expression(&value)).unwrap_or(false);
+    
+            self.check_errors(n);
+        }
+
+        ReturnStatementTraversalPolicy {
+            traverse_value
         }
     }
 
@@ -437,127 +450,123 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_delete_stmt(&mut self, n: &DeleteStatementNode, _: StatementTraversalContext) {
+    fn visit_delete_stmt(&mut self, n: &DeleteStatementNode, _: StatementTraversalContext) -> DeleteStatementTraversalPolicy {
+        let mut traverse_value = false;
         if n.has_errors() {
-            let value = n.value();
-            if !self.check_expression(&value) {
-                value.accept(self, ExpressionTraversalContext::DeleteStatement);
-            }
+            traverse_value = !self.check_expression(&n.value());
     
             self.check_errors(n);
+        }
+
+        DeleteStatementTraversalPolicy {
+            traverse_value
         }
     }
 
     fn visit_for_stmt(&mut self, n: &ForLoopNode, _: StatementTraversalContext) -> ForLoopTraversalPolicy {
+        let mut traverse_init = false;
+        let mut traverse_cond = false;
+        let mut traverse_iter = false;
         let mut traverse_body = false;
         if n.has_errors() {
-            if let Some(init) = n.init() {
-                init.accept(self, ExpressionTraversalContext::ForLoopInit);
-            }
-            if let Some(cond) = n.cond() {
-                cond.accept(self, ExpressionTraversalContext::ForLoopCond)
-            }
-            if let Some(iter) = n.iter() {
-                iter.accept(self, ExpressionTraversalContext::ForLoopIter);
-            }
+            traverse_init = n.init().map(|init| !self.check_expression(&init)).unwrap_or(false);
+            traverse_cond = n.cond().map(|cond| !self.check_expression(&cond)).unwrap_or(false);
+            traverse_iter = n.iter().map(|iter| !self.check_expression(&iter)).unwrap_or(false);
+            traverse_body = !self.check_function_stmt(&n.body());
 
             self.check_errors(n);
-    
-            traverse_body = !self.check_function_stmt(&n.body());
         }
 
         ForLoopTraversalPolicy { 
+            traverse_init,
+            traverse_cond,
+            traverse_iter,
             traverse_body 
         }
     }
 
     fn visit_while_stmt(&mut self, n: &WhileLoopNode, _: StatementTraversalContext) -> WhileLoopTraversalPolicy {
+        let mut traverse_cond = false;
         let mut traverse_body = false;
         if n.has_errors() {
-            let cond = n.cond();
-            if !self.check_expression(&cond) {
-                cond.accept(self, ExpressionTraversalContext::WhileLoopCond);
-            }
-    
-            self.check_errors(n);
-    
+            traverse_cond = !self.check_expression(&n.cond());
             traverse_body = !self.check_function_stmt(&n.body());
+
+            self.check_errors(n);
         }
 
         WhileLoopTraversalPolicy { 
+            traverse_cond,
             traverse_body 
         }
     }
 
     fn visit_do_while_stmt(&mut self, n: &DoWhileLoopNode, _: StatementTraversalContext) -> DoWhileLoopTraversalPolicy {
+        let mut traverse_cond = false;
         let mut traverse_body = false;
         if n.has_errors() {
-            let cond = n.cond();
-            if !self.check_expression(&cond) {
-                cond.accept(self, ExpressionTraversalContext::DoWhileLoopCond);
-            }
-    
-            self.check_errors(n);
-    
+            traverse_cond = !self.check_expression(&n.cond());
             traverse_body = !self.check_function_stmt(&n.body());
+
+            self.check_errors(n);
         }
 
         DoWhileLoopTraversalPolicy { 
+            traverse_cond,
             traverse_body 
         }
     }
 
     fn visit_if_stmt(&mut self, n: &IfConditionalNode, _: StatementTraversalContext) -> IfConditionalTraversalPolicy {
+        let mut traverse_cond = false;
         let mut traverse_body = false;
         let mut traverse_else_body = false;
         if n.has_errors() {
-            let cond = n.cond();
-            if !self.check_expression(&cond) {
-                cond.accept(self, ExpressionTraversalContext::IfConditionalCond);
-            }
-    
-            self.check_errors(n);
-            
+            traverse_cond = !self.check_expression(&n.cond());
             traverse_body = !self.check_function_stmt(&n.body());
             traverse_else_body = n.else_body().map(|n| !self.check_function_stmt(&n)).unwrap_or(false);
+
+            self.check_errors(n);
         }
 
         IfConditionalTraversalPolicy { 
+            traverse_cond,
             traverse_body, 
             traverse_else_body
         }
     }
 
     fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode, _: StatementTraversalContext) -> SwitchConditionalTraversalPolicy {
+        let mut traverse_cond = false;
         let mut traverse_body = false;
         if n.has_errors() {
-            let cond = n.cond();
-            if !self.check_expression(&cond) {
-                cond.accept(self, ExpressionTraversalContext::SwitchConditionalCond);
-            }
-    
-            self.check_errors(n);
-    
+            traverse_cond = !self.check_expression(&n.cond());
+
             let body = n.body();
             if body.has_errors() {
                 self.check_errors(&body);
                 traverse_body = true;
             }
+    
+            self.check_errors(n);
         }
 
-        SwitchConditionalTraversalPolicy { 
+        SwitchConditionalTraversalPolicy {
+            traverse_cond, 
             traverse_body 
         }
     }
 
-    fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) {
+    fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) -> SwitchConditionalCaseLabelTraversalPolicy {
+        let mut traverse_value = false;
         if n.has_errors() {
-            let value = n.value();
-            if !self.check_expression(&value) {
-                value.accept(self, ExpressionTraversalContext::SwitchConditionalCaseLabel);
-            }
+            traverse_value = !self.check_expression(&n.value());
     
             self.check_errors(n);
+        }
+
+        SwitchConditionalCaseLabelTraversalPolicy {
+            traverse_value
         }
     }
 
@@ -566,9 +575,10 @@ impl StatementVisitor for SyntaxErrorVisitor<'_> {
             self.check_errors(n);
         }
     }
-}
 
-impl ExpressionVisitor for SyntaxErrorVisitor<'_> {
+
+
+
     fn visit_array_expr(&mut self, n: &ArrayExpressionNode, _: ExpressionTraversalContext) -> ArrayExpressionTraversalPolicy {
         let traverse_accessor = !self.check_expression(&n.accessor());
         let traverse_index = !self.check_expression(&n.index());

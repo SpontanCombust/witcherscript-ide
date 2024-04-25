@@ -61,10 +61,10 @@ impl<'script> TryFrom<AnyNode<'script>> for StateDeclarationNode<'script> {
     }
 }
 
-impl DeclarationTraversal for StateDeclarationNode<'_> {
+impl SyntaxNodeTraversal for StateDeclarationNode<'_> {
     type TraversalCtx = ();
 
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         let tp = visitor.visit_state_decl(self);
         if tp.traverse_definition {
             self.definition().accept(visitor, ());
@@ -107,10 +107,10 @@ impl<'script> TryFrom<AnyNode<'script>> for StateBlockNode<'script> {
     }
 }
 
-impl DeclarationTraversal for StateBlockNode<'_> {
+impl SyntaxNodeTraversal for StateBlockNode<'_> {
     type TraversalCtx = ();
 
-    fn accept<V: DeclarationVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         self.iter().for_each(|s| s.accept(visitor, PropertyTraversalContext::StateDefinition));
     }
 }

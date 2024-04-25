@@ -55,10 +55,10 @@ impl<'script> TryFrom<AnyNode<'script>> for NestedExpressionNode<'script> {
     }
 }
 
-impl ExpressionTraversal for NestedExpressionNode<'_> {
+impl SyntaxNodeTraversal for NestedExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_nested_expr(self, ctx);
         if tp.traverse_inner {
             self.inner().accept(visitor, ExpressionTraversalContext::NestedExpressionInner);
@@ -95,10 +95,10 @@ impl<'script> TryFrom<AnyNode<'script>> for ThisExpressionNode<'script> {
     }
 }
 
-impl ExpressionTraversal for ThisExpressionNode<'_> {
+impl SyntaxNodeTraversal for ThisExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         visitor.visit_this_expr(self, ctx);
     }
 }
@@ -131,10 +131,10 @@ impl<'script> TryFrom<AnyNode<'script>> for SuperExpressionNode<'script> {
     }
 }
 
-impl ExpressionTraversal for SuperExpressionNode<'_> {
+impl SyntaxNodeTraversal for SuperExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         visitor.visit_super_expr(self, ctx);
     }
 }
@@ -167,10 +167,10 @@ impl<'script> TryFrom<AnyNode<'script>> for ParentExpressionNode<'script> {
     }
 }
 
-impl ExpressionTraversal for ParentExpressionNode<'_> {
+impl SyntaxNodeTraversal for ParentExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         visitor.visit_parent_expr(self, ctx);
     }
 }
@@ -203,10 +203,10 @@ impl<'script> TryFrom<AnyNode<'script>> for VirtualParentExpressionNode<'script>
     }
 }
 
-impl ExpressionTraversal for VirtualParentExpressionNode<'_> {
+impl SyntaxNodeTraversal for VirtualParentExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         visitor.visit_virtual_parent_expr(self, ctx);
     }
 }
@@ -250,10 +250,10 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionCallExpressionNode<'script> 
     }
 }
 
-impl ExpressionTraversal for FunctionCallExpressionNode<'_> {
+impl SyntaxNodeTraversal for FunctionCallExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_func_call_expr(self, ctx);
         if tp.traverse_func {
             self.func().accept(visitor, ExpressionTraversalContext::FunctionCallExpressionFunc);
@@ -320,10 +320,10 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionCallArgumentsNode<'script> {
     }
 }
 
-impl ExpressionTraversal for FunctionCallArgumentsNode<'_> {
+impl SyntaxNodeTraversal for FunctionCallArgumentsNode<'_> {
     type TraversalCtx = ();
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         self.iter().for_each(|n| n.accept(visitor, ()))
     }
 }
@@ -344,10 +344,10 @@ impl Debug for FunctionCallArgument<'_> {
     }
 }
 
-impl ExpressionTraversal for FunctionCallArgument<'_> {
+impl SyntaxNodeTraversal for FunctionCallArgument<'_> {
     type TraversalCtx = ();
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         let tp = visitor.visit_func_call_arg(self);
         if tp.traverse_expr {
             if let FunctionCallArgument::Some(n) = self {
@@ -397,10 +397,10 @@ impl<'script> TryFrom<AnyNode<'script>> for ArrayExpressionNode<'script> {
     }
 }
 
-impl ExpressionTraversal for ArrayExpressionNode<'_> {
+impl SyntaxNodeTraversal for ArrayExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_array_expr(self, ctx);
         if tp.traverse_accessor {
             self.accessor().accept(visitor, ExpressionTraversalContext::ArrayExpressionAccessor);
@@ -451,10 +451,10 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberFieldExpressionNode<'script> {
     }
 }
 
-impl ExpressionTraversal for MemberFieldExpressionNode<'_> {
+impl SyntaxNodeTraversal for MemberFieldExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_member_field_expr(self, ctx);
         if tp.traverse_accessor {
             self.accessor().accept(visitor, ExpressionTraversalContext::MemberFieldExpressionAccessor);
@@ -502,10 +502,10 @@ impl<'script> TryFrom<AnyNode<'script>> for NewExpressionNode<'script> {
     }
 }
 
-impl ExpressionTraversal for NewExpressionNode<'_> {
+impl SyntaxNodeTraversal for NewExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_new_expr(self, ctx);
         if tp.traverse_lifetime_obj {
             self.lifetime_obj().map(|n| n.accept(visitor, ExpressionTraversalContext::NewExpressionLifetimeObj));
@@ -553,10 +553,10 @@ impl<'script> TryFrom<AnyNode<'script>> for TypeCastExpressionNode<'script> {
     }
 }
 
-impl ExpressionTraversal for TypeCastExpressionNode<'_> {
+impl SyntaxNodeTraversal for TypeCastExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_type_cast_expr(self, ctx);
         if tp.traverse_value {
             self.value().accept(visitor, ExpressionTraversalContext::TypeCastExpressionValue);
@@ -604,10 +604,10 @@ impl<'script> TryFrom<AnyNode<'script>> for UnaryOperationExpressionNode<'script
     }
 }
 
-impl ExpressionTraversal for UnaryOperationExpressionNode<'_> {
+impl SyntaxNodeTraversal for UnaryOperationExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_unary_op_expr(self, ctx);
         if tp.traverse_right {
             self.right().accept(visitor, ExpressionTraversalContext::UnaryOperationExpressionRight);
@@ -660,10 +660,10 @@ impl<'script> TryFrom<AnyNode<'script>> for BinaryOperationExpressionNode<'scrip
     }
 }
 
-impl ExpressionTraversal for BinaryOperationExpressionNode<'_> {
+impl SyntaxNodeTraversal for BinaryOperationExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_binary_op_expr(self, ctx);
         if tp.traverse_left {
             self.left().accept(visitor, ExpressionTraversalContext::BinaryOperationExpressionLeft);
@@ -719,10 +719,10 @@ impl<'script> TryFrom<AnyNode<'script>> for AssignmentOperationExpressionNode<'s
     }
 }
 
-impl ExpressionTraversal for AssignmentOperationExpressionNode<'_> {
+impl SyntaxNodeTraversal for AssignmentOperationExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_assign_op_expr(self, ctx);
         if tp.traverse_left {
             self.left().accept(visitor, ExpressionTraversalContext::AssignmentOperationExpressionLeft);
@@ -778,10 +778,10 @@ impl<'script> TryFrom<AnyNode<'script>> for TernaryConditionalExpressionNode<'sc
     }
 }
 
-impl ExpressionTraversal for TernaryConditionalExpressionNode<'_> {
+impl SyntaxNodeTraversal for TernaryConditionalExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_ternary_cond_expr(self, ctx);
         if tp.traverse_cond {
             self.cond().accept(visitor, ExpressionTraversalContext::TernaryConditionalExpressionCond);
@@ -916,10 +916,10 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
     }
 }
 
-impl ExpressionTraversal for ExpressionNode<'_> {
+impl SyntaxNodeTraversal for ExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
-    fn accept<V: ExpressionVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         match self.clone().value() {
             Expression::Nested(n) => n.accept(visitor, ctx),
             Expression::Literal(n) => n.accept(visitor, ctx),
@@ -975,10 +975,14 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionStatementNode<'script> {
     }
 }
 
-impl StatementTraversal for ExpressionStatementNode<'_> {
+impl SyntaxNodeTraversal for ExpressionStatementNode<'_> {
     type TraversalCtx = StatementTraversalContext;
 
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        visitor.visit_expr_stmt(self, ctx);
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let tp = visitor.visit_expr_stmt(self, ctx);
+        if tp.traverse_expr {
+            self.expr().accept(visitor, ExpressionTraversalContext::ExpressionStatement);
+        }
+        visitor.exit_expr_stmt(self, ctx);
     }
 }
