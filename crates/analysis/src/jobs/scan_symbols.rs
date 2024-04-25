@@ -28,7 +28,8 @@ pub fn scan_symbols(
         scripts_root,
         diagnostics: Vec::new(),
         current_path: SymbolPathBuf::empty(),
-        current_ordinal: 0
+        current_param_ordinal: 0,
+        current_var_ordinal: 0
     };
 
     script.visit_nodes(&mut visitor);
@@ -44,7 +45,8 @@ struct SymbolScannerVisitor<'a> {
     diagnostics: Vec<AnalysisDiagnostic>,
 
     current_path: SymbolPathBuf,
-    current_ordinal: usize // used for struct members and function parameters
+    current_param_ordinal: usize,
+    current_var_ordinal: usize
 }
 
 impl SymbolScannerVisitor<'_> {
@@ -172,7 +174,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     fn exit_class_decl(&mut self, _: &ClassDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Type).unwrap_or(false)  {
             self.current_path.pop();
-            self.current_ordinal = 0;
+            self.current_var_ordinal = 0;
         }
     }
 
@@ -229,7 +231,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     fn exit_state_decl(&mut self, _: &StateDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Type).unwrap_or(false)  {
             self.current_path.pop();
-            self.current_ordinal = 0;
+            self.current_var_ordinal = 0;
         }
     }
 
@@ -266,7 +268,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     fn exit_struct_decl(&mut self, _: &StructDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Type).unwrap_or(false)  {
             self.current_path.pop();
-            self.current_ordinal = 0;
+            self.current_var_ordinal = 0;
         }
     }
 
@@ -351,7 +353,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             self.current_path.pop();
-            self.current_ordinal = 0;
+            self.current_param_ordinal = 0;
         }
     }
 
@@ -398,7 +400,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         // pop only if visit managed to create the symbol
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             self.current_path.pop();
-            self.current_ordinal = 0;
+            self.current_param_ordinal = 0;
         }
     }
 
@@ -427,7 +429,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: PropertyTraversalContext) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             self.current_path.pop();
-            self.current_ordinal = 0;
+            self.current_param_ordinal = 0;
         }
     }
 
@@ -452,12 +454,12 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                     let mut sym = FunctionParameterSymbol::new(path, n.range(), name_node.range());
                     sym.specifiers = specifiers.clone();
                     sym.type_path = type_path.clone();
-                    sym.ordinal = self.current_ordinal;
+                    sym.ordinal = self.current_param_ordinal;
 
                     self.symtab.insert(sym);
                 }
             }
-            self.current_ordinal += 1;
+            self.current_param_ordinal += 1;
         }
     }
 
@@ -493,12 +495,12 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                     let mut sym = MemberVarSymbol::new(path, n.range(), name_node.range());
                     sym.specifiers = specifiers.clone();
                     sym.type_path = type_path.clone();
-                    sym.ordinal = self.current_ordinal;
+                    sym.ordinal = self.current_var_ordinal;
 
                     self.symtab.insert(sym);
                 }
             }
-            self.current_ordinal += 1; //FIXME doesn't get reset when in class
+            self.current_var_ordinal += 1;
         }
     }
 
@@ -556,5 +558,29 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         VarDeclarationTraversalPolicy {
             traverse_init_value: false
         }
+    }
+
+    fn visit_compound_stmt(&mut self, _: &CompoundStatementNode, _: StatementTraversalContext) -> CompoundStatementTraversalPolicy {
+        CompoundStatementTraversalPolicy { traverse: true }
+    }
+    
+    fn visit_while_stmt(&mut self, _: &WhileLoopNode, _: StatementTraversalContext) -> WhileLoopTraversalPolicy {
+        WhileLoopTraversalPolicy { traverse_cond: false, traverse_body: true }
+    }
+
+    fn visit_do_while_stmt(&mut self, _: &DoWhileLoopNode, _: StatementTraversalContext) -> DoWhileLoopTraversalPolicy {
+        DoWhileLoopTraversalPolicy { traverse_cond: false, traverse_body: true }
+    }
+
+    fn visit_for_stmt(&mut self, _: &ForLoopNode, _: StatementTraversalContext) -> ForLoopTraversalPolicy {
+        ForLoopTraversalPolicy { traverse_init: false, traverse_cond: false, traverse_iter: false, traverse_body: true }
+    }
+
+    fn visit_if_stmt(&mut self, _: &IfConditionalNode, _: StatementTraversalContext) -> IfConditionalTraversalPolicy {
+        IfConditionalTraversalPolicy { traverse_cond: false, traverse_body: true, traverse_else_body: true }
+    }
+
+    fn visit_switch_stmt(&mut self, _: &SwitchConditionalNode, _: StatementTraversalContext) -> SwitchConditionalTraversalPolicy {
+        SwitchConditionalTraversalPolicy { traverse_cond: false, traverse_body: true }
     }
 }
