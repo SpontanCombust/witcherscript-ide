@@ -23,7 +23,7 @@ pub fn scan_symbols(script: &Script, doc: &ScriptDocument, doc_path: &AbsPath, s
         current_ordinal: 0
     };
 
-    script.root_node().accept(&mut visitor, ());
+    script.visit_nodes(&mut visitor);
     visitor.diagnostics
 }
 

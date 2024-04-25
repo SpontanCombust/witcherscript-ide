@@ -1,16 +1,16 @@
 use lsp_types::Range;
-use witcherscript::{SyntaxNode, SyntaxError};
+use witcherscript::{Script, SyntaxError, SyntaxNode};
 use witcherscript::tokens::*;
 use witcherscript::ast::*;
 use crate::diagnostics::{AnalysisDiagnostic, AnalysisError, SyntaxErrorDiagnostic};
 
-//TODO change param to &Script
-pub fn syntax_analysis(script_root: RootNode, diagnostics: &mut Vec<AnalysisDiagnostic>) {
+
+pub fn syntax_analysis(script: &Script, diagnostics: &mut Vec<AnalysisDiagnostic>) {
     let mut visitor = SyntaxErrorVisitor {
         diagnostics
     };
 
-    script_root.accept(&mut visitor, ());
+    script.visit_nodes(&mut visitor);
 }
 
 
