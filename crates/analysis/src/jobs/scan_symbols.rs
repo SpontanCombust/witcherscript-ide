@@ -120,7 +120,9 @@ impl SymbolScannerVisitor<'_> {
 
 
 impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
-    const TRAVERSAL_POLICY_DEFAULT: bool = false;
+    fn traversal_policy_default(&self) -> bool {
+        false
+    }
 
 
     fn visit_root(&mut self, _: &RootNode) -> RootTraversalPolicy {

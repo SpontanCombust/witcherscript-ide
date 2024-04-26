@@ -113,7 +113,9 @@ impl SyntaxErrorVisitor<'_> {
 }
 
 impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
-    const TRAVERSAL_POLICY_DEFAULT: bool = true;
+    fn traversal_policy_default(&self) -> bool {
+        true
+    }
 
     
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy {
