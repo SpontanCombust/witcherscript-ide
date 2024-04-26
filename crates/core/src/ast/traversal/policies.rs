@@ -1,7 +1,7 @@
 use std::ops::BitAnd;
 
 
-pub(crate) trait DefaultTo {
+pub(crate) trait TraversalPolicy: Sized + std::ops::BitAnd<Output = Self> {
     fn default_to(value: bool) -> Self;
 }
 
@@ -11,7 +11,7 @@ pub struct NestedExpressionTraversalPolicy {
     pub traverse_inner: bool
 }
 
-impl DefaultTo for NestedExpressionTraversalPolicy {
+impl TraversalPolicy for NestedExpressionTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -37,7 +37,7 @@ pub struct FunctionCallExpressionTraversalPolicy {
     pub traverse_args: bool,
 }
 
-impl DefaultTo for FunctionCallExpressionTraversalPolicy {
+impl TraversalPolicy for FunctionCallExpressionTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -64,7 +64,7 @@ pub struct FunctionCallArgumentTraversalPolicy {
     pub traverse_expr: bool
 }
 
-impl DefaultTo for FunctionCallArgumentTraversalPolicy {
+impl TraversalPolicy for FunctionCallArgumentTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -90,7 +90,7 @@ pub struct ArrayExpressionTraversalPolicy {
     pub traverse_index: bool
 }
 
-impl DefaultTo for ArrayExpressionTraversalPolicy {
+impl TraversalPolicy for ArrayExpressionTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -117,7 +117,7 @@ pub struct MemberFieldExpressionTraversalPolicy {
     pub traverse_accessor: bool
 }
 
-impl DefaultTo for MemberFieldExpressionTraversalPolicy {
+impl TraversalPolicy for MemberFieldExpressionTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -142,7 +142,7 @@ pub struct NewExpressionTraversalPolicy {
     pub traverse_lifetime_obj: bool
 }
 
-impl DefaultTo for NewExpressionTraversalPolicy {
+impl TraversalPolicy for NewExpressionTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -167,7 +167,7 @@ pub struct TypeCastExpressionTraversalPolicy {
     pub traverse_value: bool
 }
 
-impl DefaultTo for TypeCastExpressionTraversalPolicy {
+impl TraversalPolicy for TypeCastExpressionTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -192,7 +192,7 @@ pub struct UnaryOperationExpressionTraversalPolicy {
     pub traverse_right: bool
 }
 
-impl DefaultTo for UnaryOperationExpressionTraversalPolicy {
+impl TraversalPolicy for UnaryOperationExpressionTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -218,7 +218,7 @@ pub struct BinaryOperationExpressionTraversalPolicy {
     pub traverse_right: bool
 }
 
-impl DefaultTo for BinaryOperationExpressionTraversalPolicy {
+impl TraversalPolicy for BinaryOperationExpressionTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -246,7 +246,7 @@ pub struct AssignmentOperationExpressionTraversalPolicy {
     pub traverse_right: bool
 }
 
-impl DefaultTo for AssignmentOperationExpressionTraversalPolicy {
+impl TraversalPolicy for AssignmentOperationExpressionTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -275,7 +275,7 @@ pub struct TernaryConditionalExpressionTraversalPolicy {
     pub traverse_alt: bool
 }
 
-impl DefaultTo for TernaryConditionalExpressionTraversalPolicy {
+impl TraversalPolicy for TernaryConditionalExpressionTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -306,7 +306,7 @@ pub struct RootTraversalPolicy {
     pub traverse: bool
 }
 
-impl DefaultTo for RootTraversalPolicy {
+impl TraversalPolicy for RootTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -331,7 +331,7 @@ pub struct ClassDeclarationTraversalPolicy {
     pub traverse_definition: bool
 }
 
-impl DefaultTo for ClassDeclarationTraversalPolicy {
+impl TraversalPolicy for ClassDeclarationTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -356,7 +356,7 @@ pub struct StateDeclarationTraversalPolicy {
     pub traverse_definition: bool
 }
 
-impl DefaultTo for StateDeclarationTraversalPolicy {
+impl TraversalPolicy for StateDeclarationTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -381,7 +381,7 @@ pub struct StructDeclarationTraversalPolicy {
     pub traverse_definition: bool
 }
 
-impl DefaultTo for StructDeclarationTraversalPolicy {
+impl TraversalPolicy for StructDeclarationTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -406,7 +406,7 @@ pub struct EnumDeclarationTraversalPolicy {
     pub traverse_definition: bool
 }
 
-impl DefaultTo for EnumDeclarationTraversalPolicy {
+impl TraversalPolicy for EnumDeclarationTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -431,7 +431,7 @@ pub struct MemberDefaultValueTraversalPolicy {
     pub traverse_value: bool
 }
 
-impl DefaultTo for MemberDefaultValueTraversalPolicy {
+impl TraversalPolicy for MemberDefaultValueTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -456,7 +456,7 @@ pub struct MemberDefaultsBlockTraversalPolicy {
     pub traverse: bool
 }
 
-impl DefaultTo for MemberDefaultsBlockTraversalPolicy {
+impl TraversalPolicy for MemberDefaultsBlockTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -482,7 +482,7 @@ pub struct GlobalFunctionDeclarationTraversalPolicy {
     pub traverse_definition: bool
 }
 
-impl DefaultTo for GlobalFunctionDeclarationTraversalPolicy {
+impl TraversalPolicy for GlobalFunctionDeclarationTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -510,7 +510,7 @@ pub struct MemberFunctionDeclarationTraversalPolicy {
     pub traverse_definition: bool
 }
 
-impl DefaultTo for MemberFunctionDeclarationTraversalPolicy {
+impl TraversalPolicy for MemberFunctionDeclarationTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -538,7 +538,7 @@ pub struct EventDeclarationTraversalPolicy {
     pub traverse_definition: bool
 }
 
-impl DefaultTo for EventDeclarationTraversalPolicy {
+impl TraversalPolicy for EventDeclarationTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -570,7 +570,7 @@ pub struct ForLoopTraversalPolicy {
     pub traverse_body: bool
 }
 
-impl DefaultTo for ForLoopTraversalPolicy {
+impl TraversalPolicy for ForLoopTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -602,7 +602,7 @@ pub struct WhileLoopTraversalPolicy {
     pub traverse_body: bool
 }
 
-impl DefaultTo for WhileLoopTraversalPolicy {
+impl TraversalPolicy for WhileLoopTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -630,7 +630,7 @@ pub struct DoWhileLoopTraversalPolicy {
     pub traverse_body: bool
 }
 
-impl DefaultTo for DoWhileLoopTraversalPolicy {
+impl TraversalPolicy for DoWhileLoopTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -659,7 +659,7 @@ pub struct IfConditionalTraversalPolicy {
     pub traverse_else_body: bool
 }
 
-impl DefaultTo for IfConditionalTraversalPolicy {
+impl TraversalPolicy for IfConditionalTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -689,7 +689,7 @@ pub struct SwitchConditionalTraversalPolicy {
     pub traverse_body: bool
 }
 
-impl DefaultTo for SwitchConditionalTraversalPolicy {
+impl TraversalPolicy for SwitchConditionalTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -716,7 +716,7 @@ pub struct SwitchConditionalCaseLabelTraversalPolicy {
     pub traverse_value: bool
 }
 
-impl DefaultTo for SwitchConditionalCaseLabelTraversalPolicy {
+impl TraversalPolicy for SwitchConditionalCaseLabelTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -741,7 +741,7 @@ pub struct CompoundStatementTraversalPolicy {
     pub traverse: bool
 }
 
-impl DefaultTo for CompoundStatementTraversalPolicy {
+impl TraversalPolicy for CompoundStatementTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -766,7 +766,7 @@ pub struct VarDeclarationTraversalPolicy {
     pub traverse_init_value: bool
 }
 
-impl DefaultTo for VarDeclarationTraversalPolicy {
+impl TraversalPolicy for VarDeclarationTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -791,7 +791,7 @@ pub struct ExpressionStatementTraversalPolicy {
     pub traverse_expr: bool
 }
 
-impl DefaultTo for ExpressionStatementTraversalPolicy {
+impl TraversalPolicy for ExpressionStatementTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -816,7 +816,7 @@ pub struct ReturnStatementTraversalPolicy {
     pub traverse_value: bool
 }
 
-impl DefaultTo for ReturnStatementTraversalPolicy {
+impl TraversalPolicy for ReturnStatementTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -841,7 +841,7 @@ pub struct DeleteStatementTraversalPolicy {
     pub traverse_value: bool
 }
 
-impl DefaultTo for DeleteStatementTraversalPolicy {
+impl TraversalPolicy for DeleteStatementTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
