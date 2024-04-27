@@ -1,7 +1,7 @@
 use std::ops::BitAnd;
 
 
-pub(crate) trait TraversalPolicy: Sized + std::ops::BitAnd<Output = Self> {
+pub trait TraversalPolicy: Sized + std::ops::BitAnd<Output = Self> {
     fn default_to(value: bool) -> Self;
 }
 

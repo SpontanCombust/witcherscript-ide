@@ -10,7 +10,9 @@ use super::contexts::*;
 /// These nodes also have a corresponding `exit_` function for them, which is run after the node itself and (possibly) its children are visited.
 #[allow(unused_variables)]
 pub trait SyntaxNodeVisitor {
-    fn traversal_policy_default(&self) -> bool;
+    fn traversal_policy_default(&self) -> bool {
+        true
+    }
 
 
     /// Called when visiting a parenthesized expression node.
