@@ -1,6 +1,6 @@
+use std::{borrow::Cow, cell::Cell, fmt::Debug, marker::PhantomData};
 use lsp_types as lsp;
 use tree_sitter as ts;
-use std::{cell::Cell, fmt::Debug, marker::PhantomData};
 use crate::{SyntaxError, script_document::ScriptDocument};
 
 
@@ -141,6 +141,7 @@ impl<'script, T> SyntaxNode<'script, T> {
         }
     }
 
+    #[inline]
     pub fn is_missing(&self) -> bool {
         // More reliable way than tree_sitter::Node::is_missing().
         // That's because in the node tree only leaves can be marked as missing.
@@ -153,7 +154,8 @@ impl<'script, T> SyntaxNode<'script, T> {
 
     /// Returns text that this node spans in the text document
     /// If the node is missing returns None
-    pub fn text(&self, doc: &ScriptDocument) -> Option<String> {
+    #[inline]
+    pub fn text<'d>(&self, doc: &'d ScriptDocument) -> Option<Cow<'d, str>> {
         if self.is_missing() {
             None
         } else {

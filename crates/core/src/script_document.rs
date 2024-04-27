@@ -1,4 +1,4 @@
-use std::{io::{self, BufReader, BufRead}, path::Path, fs::File};
+use std::{borrow::Cow, fs::File, io::{self, BufRead, BufReader}, path::Path};
 use encoding_rs_io::DecodeReaderBytes;
 use ropey::{Rope, RopeBuilder};
 use tree_sitter as ts;
@@ -45,10 +45,10 @@ impl ScriptDocument {
         })
     }
 
-    pub fn text_at(&self, range: lsp::Range) -> String {
+    pub fn text_at(&self, range: lsp::Range) -> Cow<'_, str> {
         let start_char = self.rope.position_to_char(&range.start);
         let end_char = self.rope.position_to_char(&range.end);
-        self.rope.slice(start_char..end_char).to_string()
+        self.rope.slice(start_char..end_char).into()
     }
 
     pub fn edit(&mut self, event: &lsp::TextDocumentContentChangeEvent) {

@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fmt::Debug;
 use shrinkwraprs::Shrinkwrap;
 use crate::{script_document::ScriptDocument, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
@@ -5,15 +6,24 @@ use crate::ast::{SyntaxNodeTraversal, ExpressionTraversalContext, SyntaxNodeVisi
 
 
 #[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Identifier(String);
+pub struct Identifier<'d>(Cow<'d, str>);
 
-impl Into<String> for Identifier {
-    fn into(self) -> String {
-        self.0
+impl std::fmt::Display for Identifier<'_> {
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
-pub type IdentifierNode<'script> = SyntaxNode<'script, Identifier>;
+impl<'d, S: AsRef<str>> PartialEq<S> for Identifier<'d> {
+    #[inline]
+    fn eq(&self, other: &S) -> bool {
+        self.0 == other.as_ref()
+    }
+}
+
+
+pub type IdentifierNode<'script> = SyntaxNode<'script, Identifier<'script>>;
 
 impl NamedSyntaxNode for IdentifierNode<'_> {
     const NODE_KIND: &'static str = "ident";
@@ -21,7 +31,7 @@ impl NamedSyntaxNode for IdentifierNode<'_> {
 
 impl IdentifierNode<'_> {
     /// Returns None if the node is marked as missing
-    pub fn value(&self, doc: &ScriptDocument) -> Option<Identifier> {
+    pub fn value<'d>(&self, doc: &'d ScriptDocument) -> Option<Identifier<'d>> {
         self.text(doc).map(|s| Identifier(s))
     }
 }

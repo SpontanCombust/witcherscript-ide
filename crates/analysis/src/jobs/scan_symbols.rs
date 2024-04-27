@@ -77,7 +77,7 @@ impl SymbolScannerVisitor<'_> {
     /// Returns type path and type name, if it's invalid returns empty path
     fn check_type_from_identifier(&mut self, n: IdentifierNode) -> BasicTypeSymbolPath {
         if let Some(type_name) = n.value(&self.doc) {
-            if type_name.as_str() == ArrayTypeSymbol::TYPE_NAME {
+            if type_name == ArrayTypeSymbol::TYPE_NAME {
                 self.diagnostics.push(AnalysisDiagnostic { 
                     range: Range::new(n.range().end, n.range().end), 
                     body: AnalysisError::MissingTypeArg.into()
@@ -94,7 +94,7 @@ impl SymbolScannerVisitor<'_> {
     fn check_type_from_type_annot(&mut self, n: TypeAnnotationNode) -> TypeSymbolPath {
         if let Some(type_arg_node) = n.type_arg() {
             if let Some(type_name) = n.type_name().value(&self.doc) {
-                if type_name.as_str() == ArrayTypeSymbol::TYPE_NAME {
+                if type_name == ArrayTypeSymbol::TYPE_NAME {
                     let type_arg_path = self.check_type_from_type_annot(type_arg_node);
                     if !type_arg_path.is_empty() {
                         return TypeSymbolPath::Array(ArrayTypeSymbolPath::new(type_arg_path));
@@ -200,7 +200,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                     }
                 }
     
-                sym.base_state_name = n.base().and_then(|base| base.value(&self.doc)).map(|ident| ident.into());
+                sym.base_state_name = n.base().and_then(|base| base.value(&self.doc)).map(|ident| ident.to_string());
 
 
                 let this_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::This);
