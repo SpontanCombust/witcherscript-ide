@@ -22,7 +22,7 @@ pub struct SyntaxNodeVisitorChain<'a> {
 impl<'a> SyntaxNodeVisitorChain<'a> {
     pub fn new() -> Self {
         Self {
-            links: Vec::new(),
+            links: Vec::with_capacity(2),
             link_passes_stack: Vec::with_capacity(32)
         }
     }

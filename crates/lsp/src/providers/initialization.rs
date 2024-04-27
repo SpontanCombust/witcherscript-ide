@@ -55,6 +55,7 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
                 }),
                 file_operations: None
             }),
+            selection_range_provider: Some(lsp::SelectionRangeProviderCapability::Simple(true)),
             ..lsp::ServerCapabilities::default()
         }
     })

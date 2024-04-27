@@ -4,3 +4,5 @@ pub mod initialization;
 pub mod document_ops;
 pub mod configuration;
 pub mod workspace;
+
+pub mod selection_range;

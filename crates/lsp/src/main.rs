@@ -28,6 +28,7 @@ impl LanguageServer for Backend {
         Ok(())
     }
 
+
     async fn did_open(&self, params: lsp::DidOpenTextDocumentParams) {
         providers::document_ops::did_open(self, params).await
     }
@@ -44,12 +45,18 @@ impl LanguageServer for Backend {
         providers::document_ops::did_close(self, params).await
     }
 
+
     async fn did_change_configuration(&self, params: lsp::DidChangeConfigurationParams) {
         providers::configuration::did_change_configuration(self, params).await
     }
 
     async fn did_change_workspace_folders(&self, params: lsp::DidChangeWorkspaceFoldersParams) {
         providers::workspace::did_change_workspace_folders(self, params).await
+    }
+
+
+    async fn selection_range(&self, params: lsp::SelectionRangeParams) -> Result<Option<Vec<lsp::SelectionRange>>> {
+        providers::selection_range::selection_range(self, params).await
     }
 }
 

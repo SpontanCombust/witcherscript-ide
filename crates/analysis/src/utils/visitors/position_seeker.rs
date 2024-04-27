@@ -17,6 +17,8 @@ pub struct PositionSeeker {
 
 #[derive(Debug, Clone, Default)]
 pub struct PositionSeekerPayload {
+    /// Signals that the given node likely directly contains a node, 
+    /// which spans the specified position 
     pub done: bool
 }
 
@@ -33,6 +35,17 @@ impl PositionSeeker {
         };
 
         (self_, payload)
+    }
+
+    pub fn new_rc(position: lsp::Position) -> (Rc<RefCell<Self>>, Rc<RefCell<PositionSeekerPayload>>) {
+        let (self_, payload) = Self::new(position);
+        (Rc::new(RefCell::new(self_)), payload)
+    }
+
+    pub fn reset(&mut self, position: lsp::Position) {
+        self.pos = position;
+        self.currently_in_range = false;
+        self.payload.borrow_mut().done = false;
     }
 }
 
