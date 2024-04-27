@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use lsp_types as lsp;
 use crate::{tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
@@ -328,7 +329,27 @@ impl SyntaxNodeTraversal for FunctionCallArgumentsNode<'_> {
 #[derive(Clone)]
 pub enum FunctionCallArgument<'script> {
     Some(ExpressionNode<'script>),
-    Omitted(lsp_types::Range)
+    Omitted(lsp::Range)
+}
+
+impl FunctionCallArgument<'_> {
+    #[inline]
+    pub fn range(&self) -> lsp::Range {
+        match self {
+            FunctionCallArgument::Some(n) => n.range(),
+            FunctionCallArgument::Omitted(r) => *r,
+        }
+    }
+
+    #[inline]
+    pub fn spans_position(&self, position: lsp::Position) -> bool {
+        let r = self.range();
+        if r.start.line < r.end.line {
+            r.start.line <= position.line && position.line <= r.end.line
+        } else {
+            r.start.character <= position.character && position.character <= r.end.character
+        }
+    }
 }
 
 impl Debug for FunctionCallArgument<'_> {

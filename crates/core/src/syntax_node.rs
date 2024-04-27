@@ -118,6 +118,8 @@ impl<'script, T> SyntaxNode<'script, T> {
         })
     }
 
+    //TODO unnamed children
+
 
     /// Returns the range at which this node is located in the text document
     #[inline]
@@ -127,6 +129,16 @@ impl<'script, T> SyntaxNode<'script, T> {
             lsp::Position::new(r.start_point.row as u32, r.start_point.column as u32),
             lsp::Position::new(r.end_point.row as u32, r.end_point.column as u32)
         )
+    }
+
+    #[inline]
+    pub fn spans_position(&self, position: lsp::Position) -> bool {
+        let r = self.range();
+        if r.start.line < r.end.line {
+            r.start.line <= position.line && position.line <= r.end.line
+        } else {
+            r.start.character <= position.character && position.character <= r.end.character
+        }
     }
 
     pub fn is_missing(&self) -> bool {
@@ -139,7 +151,6 @@ impl<'script, T> SyntaxNode<'script, T> {
         range.start == range.end
     }
 
-    //TODO non-allocating variant that writes into a buffer
     /// Returns text that this node spans in the text document
     /// If the node is missing returns None
     pub fn text(&self, doc: &ScriptDocument) -> Option<String> {
