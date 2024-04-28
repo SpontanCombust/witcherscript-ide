@@ -7,7 +7,7 @@ use tower_lsp::Client;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_analysis::model::collections::SymbolTable;
-use witcherscript_project::{ContentGraph, SourceTree, SourceTreePath};
+use witcherscript_project::{ContentGraph, SourceTree, SourceTreeFile, SourceTreePath};
 use crate::{config::Config, reporting::Reporter};
 
 
@@ -39,12 +39,26 @@ impl SourceTreeMap {
         }
     }
 
+    /// Returns an absolute path to the content owning a source file at a given path
     pub fn containing_content_path(&self, source_path: &AbsPath) -> Option<AbsPath> {
         for it in self.inner.iter() {
             let content_path = it.key();
             let source_tree = it.value();
             if source_path.starts_with(source_tree.script_root()) {
                 return Some(content_path.to_owned());
+            }
+        }
+
+        None
+    }
+
+    /// Returns an absolute path to the content owning a source file at a given path and the source tree file object associated with the source path
+    pub fn find_source_file(&self, source_path: &AbsPath) -> Option<(AbsPath, SourceTreeFile)> {
+        for it in self.inner.iter() {
+            let content_path = it.key();
+            let source_tree = it.value();
+            if let Some(source) = source_tree.find(source_path) {
+                return Some((content_path.to_owned(), source.to_owned()))
             }
         }
 

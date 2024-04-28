@@ -6,6 +6,7 @@ use crate::model::symbols::*;
 use crate::model::symbol_variant::SymbolVariant;
 use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
 
+//TODO move symbols stuff into dedicated package, also diagnostics
 //TODO some sort of type that will allow searching through symtabs of the entire dependency tree
 /// Contains information about all scanned symbols. Symbols are identified by their path.
 /// On a given unique path only one symbol can be present.
@@ -105,11 +106,14 @@ impl SymbolTable {
     }
 
 
-    /// Iterate over direct children of a symbol in a symbol hierarchy
+    /// Iterate over direct children of a symbol in a symbol hierarchy.
+    /// Symbols are returned ordered by their symbol path.
     pub fn get_children<'a>(&'a self, path: &SymbolPath) -> SymbolChildren<'a> {
         SymbolChildren::new(self, path)
     }
 
+    /// Iterate over symbols attributed to a given local source path.
+    /// Symbols are returned ordered by their symbol path.
     pub fn get_for_source<'a>(&'a self, local_source_path: &Path) -> FileSymbols<'a> {
         FileSymbols::new(self, local_source_path)
     }

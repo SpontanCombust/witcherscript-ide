@@ -58,6 +58,10 @@ impl LanguageServer for Backend {
     async fn selection_range(&self, params: lsp::SelectionRangeParams) -> Result<Option<Vec<lsp::SelectionRange>>> {
         providers::selection_range::selection_range(self, params).await
     }
+
+    async fn document_symbol(&self, params: lsp::DocumentSymbolParams) -> Result<Option<lsp::DocumentSymbolResponse>> {
+        providers::document_symbols::document_symbol(self, params).await
+    }
 }
 
 

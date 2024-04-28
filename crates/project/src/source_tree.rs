@@ -188,12 +188,28 @@ impl SourceTree {
         self.tree.len()
     }
 
+    #[inline]
+    pub fn find(&self, path: &AbsPath) -> Option<&SourceTreeFile> {
+        self.tree.binary_search_by(|f| f.path.abs_path.cmp(path))
+            .map(|idx| &self.tree[idx])
+            .ok()
+    }
+
     /// Searches for a file with a given absolute path
+    #[inline]
     pub fn contains(&self, path: &AbsPath) -> bool {
         self.tree.binary_search_by(|f| f.path.abs_path.cmp(path)).is_ok()
     }
 
+    #[inline]
+    pub fn find_local(&self, path: &Path) -> Option<&SourceTreeFile> {
+        self.tree.binary_search_by(|f| f.path.local().cmp(path))
+            .map(|idx| &self.tree[idx])
+            .ok()
+    }
+
     /// Searches for a file with a given path relative to the tree root
+    #[inline]
     pub fn contains_local(&self, path: &Path) -> bool {
         self.tree.binary_search_by(|f| f.path.local().cmp(path)).is_ok()
     }
