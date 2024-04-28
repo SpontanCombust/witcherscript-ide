@@ -136,8 +136,10 @@ impl<'script, T> SyntaxNode<'script, T> {
         let r = self.range();
         if r.start.line < r.end.line {
             r.start.line <= position.line && position.line <= r.end.line
-        } else {
+        } else if r.start.line == position.line {
             r.start.character <= position.character && position.character <= r.end.character
+        } else {
+            false
         }
     }
 

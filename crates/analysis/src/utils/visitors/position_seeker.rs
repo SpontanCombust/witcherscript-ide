@@ -3,7 +3,7 @@ use lsp_types as lsp;
 use witcherscript::{ast::*, tokens::*};
 
 
-/// Utility node visitor travels only through nodes placed at a specified position
+/// Utility node visitor travels only through nodes that span a specified position
 /// and it keeps traversing until it stumbles onto a node with no traversable children.
 /// Then it sets the `done` flag in the payload it can share with other objects.
 /// It is not guaranteed that the `done` flag will be eventually set.
@@ -56,8 +56,10 @@ impl SyntaxNodeVisitor for PositionSeeker {
     
 
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy {
+        self.currently_in_range = n.spans_position(self.pos);
+
         RootTraversalPolicy { 
-            traverse: n.spans_position(self.pos)
+            traverse: self.currently_in_range
         }
     }
 
