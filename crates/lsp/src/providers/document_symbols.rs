@@ -55,7 +55,13 @@ pub async fn document_symbol(backend: &Backend, params: lsp::DocumentSymbolParam
             if let Some(parent_sympath) = sympath.parent() {
                 while doc_sym_stack.last().map(|(p, _)| p != parent_sympath).unwrap_or(false) {
                     reduce_stack(&mut doc_sym_stack, &mut doc_syms);
-                }       
+                }
+            // ...if it is primary we reduce the stack until it's empty,
+            // because the current symbol has no parent symbols
+            } else {
+                while !doc_sym_stack.is_empty() {
+                    reduce_stack(&mut doc_sym_stack, &mut doc_syms);
+                }
             }
 
             // after the stack is reduced to an appropriate ancestor
@@ -121,7 +127,7 @@ impl ToDocumentSymbol for StateSymbol {
     #[allow(deprecated)]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
-            name: self.name().to_owned(),
+            name: format!("state {} in {}", self.state_name(), self.parent_class_name()),
             kind: lsp::SymbolKind::CLASS,
             range: self.range(),
             selection_range: self.label_range(),
@@ -159,7 +165,7 @@ impl ToDocumentSymbol for EnumVariantSymbol {
             selection_range: self.label_range(),
             detail: None,
             tags: None,
-            children: Some(Vec::new()),
+            children: None,
             deprecated: None
         })
     }
@@ -228,16 +234,18 @@ impl ToDocumentSymbol for PrimitiveTypeSymbol {
 impl ToDocumentSymbol for FunctionParameterSymbol {
     #[allow(deprecated)]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        Some(lsp::DocumentSymbol {
-            name: self.name().to_owned(),
-            kind: lsp::SymbolKind::VARIABLE,
-            range: self.range(),
-            selection_range: self.label_range(),
-            detail: None,
-            tags: None,
-            children: None,
-            deprecated: None
-        })
+        // we're not going to include parameters in listed symbols
+        None
+        // Some(lsp::DocumentSymbol {
+        //     name: self.name().to_owned(),
+        //     kind: lsp::SymbolKind::VARIABLE,
+        //     range: self.range(),
+        //     selection_range: self.label_range(),
+        //     detail: None,
+        //     tags: None,
+        //     children: None,
+        //     deprecated: None
+        // })
     }
 }
 
@@ -286,16 +294,18 @@ impl ToDocumentSymbol for AutobindSymbol {
 impl ToDocumentSymbol for LocalVarSymbol {
     #[allow(deprecated)]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        Some(lsp::DocumentSymbol {
-            name: self.name().to_owned(),
-            kind: lsp::SymbolKind::VARIABLE,
-            range: self.range(),
-            selection_range: self.label_range(),
-            detail: None,
-            tags: None,
-            children: None,
-            deprecated: None
-        })
+        // we're not going to include local vars in listed symbols
+        None
+        // Some(lsp::DocumentSymbol {
+        //     name: self.name().to_owned(),
+        //     kind: lsp::SymbolKind::VARIABLE,
+        //     range: self.range(),
+        //     selection_range: self.label_range(),
+        //     detail: None,
+        //     tags: None,
+        //     children: None,
+        //     deprecated: None
+        // })
     }
 }
 

@@ -66,4 +66,8 @@ impl StateSymbol {
     pub fn parent_class_path(&self) -> &SymbolPath {
         &self.path.parent_class_path
     }
+
+    pub fn parent_class_name(&self) -> &str {
+        self.path.parent_class_path.components().last().unwrap().name
+    }
 }
