@@ -214,8 +214,14 @@ impl SymbolPath {
 impl ToOwned for SymbolPath {
     type Owned = SymbolPathBuf;
 
+    #[inline]
     fn to_owned(&self) -> Self::Owned {
         self.to_sympath_buf()
+    }
+
+    #[inline]
+    fn clone_into(&self, target: &mut Self::Owned) {
+        self.inner.clone_into(&mut target.buff);
     }
 }
 

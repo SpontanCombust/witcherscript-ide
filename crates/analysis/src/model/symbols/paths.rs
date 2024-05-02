@@ -1,16 +1,15 @@
-/// Symbol paths are not all uniform, especially for types.
-/// Arrays for example are identified with `array<Type>`, where `array` and `Type` are distinct identifiers.
-/// Following utility wrapper types exist to gather these exceptions under a single umbrella, 
-/// detached from symbols themselves (in the sense of creating them).
-/// They provide convenience constructors and some of them house extra fields.
-/// 
-/// SymbolPath is used as a means of uniquely identifying a symbol in a global name space. 
-/// During script file parsing a given symbol has to be first checked whether it is not a duplicate or whatnot.
-/// This means paths should be deduced before eventual symbol creation in case of an error.
-/// 
-/// Symbols that are not scanned from .ws files do not need dedicated path types as they exist regardless 
-/// of which files are scanned.
-
+//! Symbol paths are not all uniform, especially for types.
+//! Arrays for example are identified with `array<Type>`, where `array` and `Type` are distinct identifiers.
+//! Following utility wrapper types exist to gather these exceptions under a single umbrella, 
+//! detached from symbols themselves (in the sense of creating them).
+//! They provide convenience constructors and some of them house extra fields.
+//! 
+//! SymbolPath is used as a means of uniquely identifying a symbol in a global name space. 
+//! During script file parsing a given symbol has to be first checked whether it is not a duplicate or whatnot.
+//! This means paths should be deduced before eventual symbol creation in case of an error.
+//! 
+//! Symbols that are not scanned from .ws files do not need dedicated path types as they exist regardless 
+//! of which files are scanned.
 
 use std::{ops::Deref, borrow::Borrow};
 use shrinkwraprs::Shrinkwrap;
@@ -25,7 +24,9 @@ pub struct DataSymbolPath(SymbolPathBuf);
 impl DataSymbolPath {
     /// Data is always a child of some data structure or function (except globals)
     pub fn new(parent_path: &SymbolPath, name: &str) -> Self {
-        Self(parent_path.join(&SymbolPathBuf::new(name, SymbolCategory::Data)))
+        let mut path = parent_path.to_owned();
+        path.push(name, SymbolCategory::Data);
+        Self(path)
     }
 }
 
@@ -41,7 +42,8 @@ pub struct GlobalCallableSymbolPath(SymbolPathBuf);
 
 impl GlobalCallableSymbolPath {
     pub fn new(name: &str) -> Self {
-        Self(SymbolPathBuf::new(name, SymbolCategory::Callable))
+        let path = SymbolPathBuf::new(name, SymbolCategory::Callable);
+        Self(path)
     }
 }
 
@@ -57,7 +59,9 @@ pub struct MemberCallableSymbolPath(SymbolPathBuf);
 
 impl MemberCallableSymbolPath {
     pub fn new(parent_path: &SymbolPath, name: &str) -> Self {
-        Self(parent_path.join(&SymbolPathBuf::new(name, SymbolCategory::Callable)))
+        let mut path = parent_path.to_owned();
+        path.push(name, SymbolCategory::Callable);
+        Self(path)
     }
 }
 
@@ -73,7 +77,8 @@ pub struct BasicTypeSymbolPath(SymbolPathBuf);
 
 impl BasicTypeSymbolPath {
     pub fn new(name: &str) -> Self {
-        Self(SymbolPathBuf::new(name, SymbolCategory::Type))
+        let path = SymbolPathBuf::new(name, SymbolCategory::Type);
+        Self(path)
     }
 
     pub fn empty() -> Self {
@@ -107,8 +112,10 @@ pub struct StateSymbolPath {
 
 impl StateSymbolPath {
     pub fn new(state_name: &str, parent_class_path: BasicTypeSymbolPath) -> Self {
+        let path = SymbolPathBuf::new(&format!("{}State{}", parent_class_path.to_string(), state_name), SymbolCategory::Type);
+
         Self {
-            path: SymbolPathBuf::new(&format!("{}State{}", parent_class_path.to_string(), state_name), SymbolCategory::Type),
+            path,
             state_name: state_name.to_string(),
             parent_class_path
         }
@@ -137,8 +144,10 @@ pub struct ArrayTypeSymbolPath {
 
 impl ArrayTypeSymbolPath {
     pub fn new(type_arg_path: TypeSymbolPath) -> Self {
+        let path = SymbolPathBuf::new(&format!("array<{}>", type_arg_path.to_string()), SymbolCategory::Type);
+
         Self {
-            path: SymbolPathBuf::new(&format!("array<{}>", type_arg_path.to_string()), SymbolCategory::Type),
+            path,
             type_arg_path: Box::new(type_arg_path)
         }
     }
@@ -236,8 +245,11 @@ impl SpecialVarSymbolPath {
             SpecialVarSymbolKind::VirtualParent => Keyword::VirtualParent.as_ref(),
         };
 
+        let mut path = parent_path.to_owned();
+        path.push(name, SymbolCategory::Data);
+
         Self {
-            path: parent_path.join(&SymbolPathBuf::new(name, SymbolCategory::Data)),
+            path,
             kind
         }
     }
