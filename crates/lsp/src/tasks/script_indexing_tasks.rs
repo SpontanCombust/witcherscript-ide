@@ -52,15 +52,32 @@ impl Backend {
             self.on_source_tree_files_modified(diff_modified.clone()).await;
         }
 
-        let modified_script_paths: Vec<_> = 
+        let added_or_modified: Vec<_> = 
             diff_added.into_iter()
             .chain(diff_modified.into_iter())
-            .map(|f| f.path.into_absolute())
             .collect();
 
-        if !modified_script_paths.is_empty() {
-            self.on_scripts_modified(modified_script_paths, Some(content_path), true, run_diagnostics).await;
+        if !added_or_modified.is_empty() {
+            {
+                let mut symtabs = self.symtabs.write().await;
+                if let Some(mut content_symtab) = symtabs.get_mut(content_path) {
+                    let paths = added_or_modified.iter()
+                        .map(|f| f.path.clone())
+                        .collect();
+
+                    self.scan_symbols(&mut content_symtab, content_path, paths).await;
+                }
+            }
+
+            if run_diagnostics {
+                let paths = added_or_modified.into_iter()
+                    .map(|f| f.path.into_absolute())
+                    .par_bridge();
+
+                self.run_script_analysis(paths).await;
+            }
         }
+
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Handled source tree related changes to {} in {:.3}s", content_path.display(), duration.as_secs_f32())).await;
@@ -111,30 +128,6 @@ impl Backend {
                     script_state.modified_timestamp = modified_file.modified_timestamp;
                 }
             }
-        }
-    }
-
-    
-
-    pub async fn on_scripts_modified(&self, modified_script_paths: Vec<AbsPath>, content_path: Option<&AbsPath>, scan_symbols: bool, run_diagnostics: bool) {
-        if let (Some(content_path), true) = (content_path, scan_symbols) {
-            let mut modified_source_paths = Vec::with_capacity(modified_script_paths.len());
-            for script_path in modified_script_paths.iter() {
-                if let Some(script_state) = self.scripts.get(script_path) {
-                    let source_path = script_state.source_tree_path.as_ref().unwrap().clone();
-                    modified_source_paths.push(source_path);
-                } 
-            }
-
-            if let Ok(mut symtabs) = self.symtabs.try_write() {
-                if let Some(mut content_symtab) = symtabs.get_mut(content_path) {
-                    self.scan_symbols(&mut content_symtab, content_path, modified_source_paths).await;
-                }
-            }
-        }
-
-        if run_diagnostics {
-            self.run_script_analysis(modified_script_paths).await;
         }
     }
 }

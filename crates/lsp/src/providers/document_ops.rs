@@ -26,7 +26,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
                 source_tree_path: None
             });
 
-            backend.on_scripts_modified(vec![doc_path.clone()], None, false, true).await;
+            backend.run_script_analysis([doc_path.clone()]).await;
             backend.reporter.commit_diagnostics(&doc_path).await;
         }
     }
@@ -34,7 +34,9 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
 
 pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentParams) {
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
+
     let mut should_notify = false;
+    let mut source_path = None;
     if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
         let script_state = entry.value_mut();
 
@@ -48,12 +50,19 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
 
         script_state.modified_timestamp = FileTime::now();
 
+        source_path = script_state.source_tree_path.clone();
         should_notify = true;
     } 
 
     if should_notify {
-        let content_path = backend.source_trees.containing_content_path(&doc_path);
-        backend.on_scripts_modified(vec![doc_path.clone()], content_path.as_ref(), false, true).await;
+        if let (Some(source_path), Some(content_path)) = (source_path, backend.source_trees.containing_content_path(&doc_path)) {
+            if let Ok(mut symtabs) = backend.symtabs.try_write() {
+                let mut symtab = symtabs.get_mut(&content_path).unwrap();
+                backend.scan_symbols(&mut symtab, &content_path, vec![source_path]).await;
+            }
+        }
+
+        backend.run_script_analysis([doc_path.clone()]).await;
         backend.reporter.commit_diagnostics(&doc_path).await;
     }
 }
@@ -87,7 +96,6 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
         }
 
         if let Some(containing_content_path) = backend.source_trees.containing_content_path(&doc_path) {
-            // will handle `on_scripts_modified` for this script
             backend.scan_source_tree(&containing_content_path).await;
         }
     } else if (doc_path.file_name().unwrap() == Manifest::FILE_NAME || doc_path.extension().unwrap() == redkit::RedkitManifest::EXTENSION) && belongs_to_workspace {
