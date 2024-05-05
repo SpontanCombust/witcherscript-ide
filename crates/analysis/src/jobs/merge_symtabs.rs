@@ -17,9 +17,7 @@ pub fn merge_symbol_tables(
             .map(|err| AnalysisDiagnostic { 
                 range: err.incoming_location.label_range, 
                 body: AnalysisError::SymbolNameTaken { 
-                    name: err.occupied_path.components().last().unwrap().name.to_string(), 
-                    this_type: err.incoming_type, 
-                    precursor_type: err.occupied_type,
+                    name: err.occupied_path.components().last().unwrap().name.to_string(),
                     precursor_range: err.occupied_location.as_ref().map(|loc| loc.label_range),
                     precursor_file_path: err.occupied_location.as_ref().map(|loc| scripts_root.join(&loc.local_source_path).unwrap())
                 }.into()

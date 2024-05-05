@@ -1,7 +1,6 @@
 use std::fmt::Display;
 use lsp_types as lsp;
 use abs_path::AbsPath;
-use crate::model::symbols::SymbolType;
 use super::AnalysisDiagnosticRelatedInfo;
 
 
@@ -10,8 +9,6 @@ pub enum AnalysisError {
     Syntax(SyntaxErrorDiagnostic),
     SymbolNameTaken {
         name: String,
-        this_type: SymbolType,
-        precursor_type: SymbolType,
         precursor_file_path: Option<AbsPath>,
         precursor_range: Option<lsp::Range>
     },
@@ -32,10 +29,8 @@ pub enum SyntaxErrorDiagnostic {
 impl AnalysisError {
     pub fn related_info(&self) -> Option<AnalysisDiagnosticRelatedInfo> {
         match self {
-            Self::SymbolNameTaken { 
-                name: _, 
-                this_type: _, 
-                precursor_type: _, 
+            Self::SymbolNameTaken {
+                name: _,
                 precursor_file_path, 
                 precursor_range 
             } if precursor_file_path.is_some() => {

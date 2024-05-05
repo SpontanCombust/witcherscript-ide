@@ -21,7 +21,6 @@ pub struct SymbolTable {
 #[error("symbol path already occupied")]
 pub struct PathOccupiedError {
     pub occupied_path: SymbolPathBuf,
-    pub occupied_type: SymbolType,
     pub occupied_location: Option<SymbolLocation>
 }
 
@@ -29,9 +28,7 @@ pub struct PathOccupiedError {
 #[error("symbol could not be merged into another a symbol table")]
 pub struct MergeConflictError {
     pub occupied_path: SymbolPathBuf,
-    pub occupied_type: SymbolType,
     pub occupied_location: Option<SymbolLocation>,
-    pub incoming_type: SymbolType,
     pub incoming_location: SymbolLocation
 }
 
@@ -64,7 +61,6 @@ impl SymbolTable {
         if let Some(occupying) = self.symbols.get(path) {
             let occupying_sym = occupying.as_dyn();
             Err(PathOccupiedError {
-                occupied_type: occupying_sym.typ(),
                 occupied_path: occupying_sym.path().to_sympath_buf(),
                 occupied_location: self.locate(path)
             })
@@ -155,12 +151,9 @@ impl SymbolTable {
                 let root_variant = other.symbols.remove(root).unwrap();
                 if let Some(occupying_variant) = self.symbols.get(root) {
                     let occupying_sym = occupying_variant.as_dyn();
-                    let incoming_sym = root_variant.as_dyn();
                     file_errors.push(MergeConflictError {
-                        occupied_type: occupying_sym.typ(),
                         occupied_path: occupying_sym.path().to_sympath_buf(),
                         occupied_location: self.locate(root),
-                        incoming_type: incoming_sym.typ(),
                         incoming_location: SymbolLocation { 
                             local_source_path: file_path.to_owned(), 
                             label_range: root_variant.label_range().unwrap_or_default()
@@ -200,12 +193,9 @@ impl SymbolTable {
                         }
 
                         let occupying_sym = occupying_variant.as_dyn();
-                        let incoming_sym = incoming_variant.as_dyn();
                         file_errors.push(MergeConflictError {
-                            occupied_type: occupying_sym.typ(),
                             occupied_path: occupying_sym.path().to_sympath_buf(),
                             occupied_location: self.locate(&incoming_sympath),
-                            incoming_type: incoming_sym.typ(),
                             incoming_location: SymbolLocation { 
                                 local_source_path: file_path.to_owned(), 
                                 label_range: incoming_variant.label_range().unwrap_or_default()
