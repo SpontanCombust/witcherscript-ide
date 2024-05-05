@@ -144,62 +144,85 @@ impl SymbolTable {
             return errors;
         }
 
-        let mut file_sympaths = Vec::new();
+        let mut root_children_sympaths = Vec::new();
         for (file_path, sympath_roots) in other.source_path_assocs {
             let mut file_errors = Vec::new();
 
+            self.source_path_assocs.entry(file_path.clone())
+                .or_default();
+
             for root in &sympath_roots {
-                let range = other.symbols.range(root.clone()..)
-                    .take_while(|(p, _)| p.starts_with(&root))
-                    .map(|(p, _)| p)
-                    .cloned();
-
-                file_sympaths.extend(range);
-            }
-
-            let mut file_sympaths_iter = file_sympaths.iter();
-            let mut sympath_to_skip = SymbolPathBuf::empty();
-            while let Some(incoming_sympath) = file_sympaths_iter.next() {
-                let incoming_variant = other.symbols.remove(incoming_sympath).unwrap();
-
-                // if a primary symbol is a duplicate we can skip its children
-                // elements from BTreeMap come in key-ascending order, so we can expect 
-                // possible children symbols to be right after the parent
-                if !sympath_to_skip.is_empty() && incoming_sympath.starts_with(&sympath_to_skip) {
-                    continue;
-                }
-
-                if let Some(occupying_variant) = self.symbols.get(incoming_sympath) {
-                    // array symbols get dynamically injected as their use is encountered
-                    // so it gets a special treatment here
-                    if occupying_variant.is_array() {
-                        continue;
-                    }
-
+                let root_variant = other.symbols.remove(root).unwrap();
+                if let Some(occupying_variant) = self.symbols.get(root) {
                     let occupying_sym = occupying_variant.as_dyn();
-                    let incoming_sym = incoming_variant.as_dyn();
+                    let incoming_sym = root_variant.as_dyn();
                     file_errors.push(MergeConflictError {
                         occupied_type: occupying_sym.typ(),
                         occupied_path: occupying_sym.path().to_sympath_buf(),
-                        occupied_location: self.locate(&incoming_sympath),
+                        occupied_location: self.locate(root),
                         incoming_type: incoming_sym.typ(),
                         incoming_location: SymbolLocation { 
-                            local_source_path: file_path.clone(), 
-                            label_range: incoming_variant.label_range().unwrap_or_default()
+                            local_source_path: file_path.to_owned(), 
+                            label_range: root_variant.label_range().unwrap_or_default()
                         }
                     });
 
-                    sympath_to_skip.clone_from(incoming_sympath);
-                } else {
-                    self.symbols.insert(incoming_sympath.to_owned(), incoming_variant);
-                    sympath_to_skip.clear();
+                    continue;
                 }
+
+                self.symbols.insert(root.to_owned(), root_variant);
+                self.source_path_assocs.get_mut(&file_path).unwrap().push(root.to_owned());
+
+
+                root_children_sympaths.extend(
+                    other.symbols.range(root.clone()..)
+                    .take_while(|(p, _)| p.starts_with(&root))
+                    .map(|(p, _)| p)
+                    .cloned());
+
+                let mut sympath_to_skip = SymbolPathBuf::empty();
+                for incoming_sympath in root_children_sympaths.iter() {
+                    let incoming_variant = other.symbols.remove(incoming_sympath).unwrap();
+
+                    // if some symbol is a duplicate we can skip its children
+                    // elements from BTreeMap come in key-ascending order, so we can expect 
+                    // possible children symbols to be right after the parent
+                    if !sympath_to_skip.is_empty() && incoming_sympath.starts_with(&sympath_to_skip) {
+                        continue;
+                    }
+
+                    if let Some(occupying_variant) = self.symbols.get(incoming_sympath) {
+                        // array symbols do not get declared in a normal sense
+                        // they get dynamically created when coming accross an array var declaration
+                        // so testing for duplicate for an array in perticular doesn't make sense
+                        if occupying_variant.is_array() {
+                            continue;
+                        }
+
+                        let occupying_sym = occupying_variant.as_dyn();
+                        let incoming_sym = incoming_variant.as_dyn();
+                        file_errors.push(MergeConflictError {
+                            occupied_type: occupying_sym.typ(),
+                            occupied_path: occupying_sym.path().to_sympath_buf(),
+                            occupied_location: self.locate(&incoming_sympath),
+                            incoming_type: incoming_sym.typ(),
+                            incoming_location: SymbolLocation { 
+                                local_source_path: file_path.to_owned(), 
+                                label_range: incoming_variant.label_range().unwrap_or_default()
+                            }
+                        });
+
+                        incoming_sympath.clone_into(&mut sympath_to_skip);
+                    } else {
+                        self.symbols.insert(incoming_sympath.to_owned(), incoming_variant);
+                        sympath_to_skip.clear();
+                    }
+                }
+
+                root_children_sympaths.clear();
             }
 
             errors.insert(file_path.clone(), file_errors);
-            self.source_path_assocs.insert(file_path, sympath_roots);
-
-            file_sympaths.clear();
         }
 
         errors
