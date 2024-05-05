@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use abs_path::AbsPath;
 use lsp_types::Range;
 use super::{AnalysisError, AnalysisWarning, AnalysisInfo};
 
@@ -14,6 +15,24 @@ pub enum AnalysisDiagnosticBody {
     Error(AnalysisError),
     Warning(AnalysisWarning),
     Info(AnalysisInfo)
+}
+
+#[derive(Debug, Clone)]
+pub struct AnalysisDiagnosticRelatedInfo {
+    pub path: AbsPath,
+    pub range: Range,
+    pub message: String
+}
+
+
+impl AnalysisDiagnosticBody {
+    pub fn related_info(&self) -> Option<AnalysisDiagnosticRelatedInfo> {
+        match self {
+            AnalysisDiagnosticBody::Error(err) => err.related_info(),
+            AnalysisDiagnosticBody::Warning(warn) => warn.related_info(),
+            AnalysisDiagnosticBody::Info(info) => info.related_info(),
+        }
+    }
 }
 
 impl From<AnalysisError> for AnalysisDiagnosticBody {

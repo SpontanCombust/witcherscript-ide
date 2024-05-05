@@ -12,6 +12,14 @@ pub trait IntoLspDiagnostic {
 
 impl IntoLspDiagnostic for AnalysisDiagnostic {
     fn into_lsp_diagnostic(self) -> lsp::Diagnostic {
+        let related_information = self.body.related_info().map(|ri| vec![lsp::DiagnosticRelatedInformation {
+            location: lsp::Location {
+                uri: ri.path.to_uri(),
+                range: ri.range
+            },
+            message: ri.message
+        }]);
+
         lsp::Diagnostic {
             range: self.range,
             severity: Some(match self.body {
@@ -21,6 +29,7 @@ impl IntoLspDiagnostic for AnalysisDiagnostic {
             }),
             source: Some(Backend::SERVER_NAME.to_string()),
             message: self.body.to_string(),
+            related_information,
             ..Default::default()
         }
     }

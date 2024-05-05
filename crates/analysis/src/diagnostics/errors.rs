@@ -2,6 +2,7 @@ use std::fmt::Display;
 use lsp_types as lsp;
 use abs_path::AbsPath;
 use crate::model::symbols::SymbolType;
+use super::AnalysisDiagnosticRelatedInfo;
 
 
 #[derive(Debug, Clone)]
@@ -28,6 +29,26 @@ pub enum SyntaxErrorDiagnostic {
     Other
 }
 
+impl AnalysisError {
+    pub fn related_info(&self) -> Option<AnalysisDiagnosticRelatedInfo> {
+        match self {
+            Self::SymbolNameTaken { 
+                name: _, 
+                this_type: _, 
+                precursor_type: _, 
+                precursor_file_path, 
+                precursor_range 
+            } if precursor_file_path.is_some() => {
+                Some(AnalysisDiagnosticRelatedInfo { 
+                    path: precursor_file_path.clone().unwrap(), 
+                    range: precursor_range.clone().unwrap(), 
+                    message: "Name originally defined here".into()
+                })
+            }
+            _ => None
+        }
+    }
+}
 
 impl Display for AnalysisError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
