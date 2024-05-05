@@ -296,7 +296,11 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
                 traverse_params = true;
             }
 
-            traverse_definition = !self.check_function_def(&n.definition());
+            let def = n.definition();
+            if !self.check_function_def(&def) {
+                self.check_errors(&def);
+                traverse_definition = true;
+            }
         }
 
         GlobalFunctionDeclarationTraversalPolicy { 
@@ -323,7 +327,11 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
                 traverse_params = true;
             }
 
-            traverse_definition = !self.check_function_def(&n.definition());
+            let def = n.definition();
+            if !self.check_function_def(&def) {
+                self.check_errors(&def);
+                traverse_definition = true;
+            }
         }
         
         MemberFunctionDeclarationTraversalPolicy { 
@@ -350,7 +358,11 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
                 traverse_params = true;
             }
 
-            traverse_definition = !self.check_function_def(&n.definition());
+            let def = n.definition();
+            if !self.check_function_def(&def) {
+                self.check_errors(&def);
+                traverse_definition = true;
+            }
         }
         
         EventDeclarationTraversalPolicy { 
