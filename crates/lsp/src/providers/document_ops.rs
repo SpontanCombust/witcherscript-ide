@@ -36,7 +36,7 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
 
     let mut should_notify = false;
-    let mut source_path = None;
+    // let mut source_path = None;
     if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
         let script_state = entry.value_mut();
 
@@ -50,17 +50,18 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
 
         script_state.modified_timestamp = FileTime::now();
 
-        source_path = script_state.source_tree_path.clone();
+        // source_path = script_state.source_tree_path.clone();
         should_notify = true;
     } 
 
     if should_notify {
-        if let (Some(source_path), Some(content_path)) = (source_path, backend.source_trees.containing_content_path(&doc_path)) {
-            if let Ok(mut symtabs) = backend.symtabs.try_write() {
-                let mut symtab = symtabs.get_mut(&content_path).unwrap();
-                backend.scan_symbols(&mut symtab, &content_path, vec![source_path]).await;
-            }
-        }
+        //FIXME need to optimize symbol scanning!
+        // if let (Some(source_path), Some(content_path)) = (source_path, backend.source_trees.containing_content_path(&doc_path)) {
+        //     if let Ok(mut symtabs) = backend.symtabs.try_write() {
+        //         let mut symtab = symtabs.get_mut(&content_path).unwrap();
+        //         backend.scan_symbols(&mut symtab, &content_path, vec![source_path]).await;
+        //     }
+        // }
 
         backend.run_script_analysis([doc_path.clone()]).await;
         backend.reporter.commit_diagnostics(&doc_path).await;
@@ -116,7 +117,7 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
             let script_state = entry.value_mut();
 
             if script_state.source_tree_path.is_none() {
-                backend.reporter.purge_diagnostics(&doc_path);
+                backend.reporter.purge_diagnostics(&doc_path).await;
                 backend.reporter.commit_diagnostics(&doc_path).await;
                 should_remove_script = true;
             }

@@ -58,8 +58,8 @@ impl Backend {
         self.reporter.log_info(format!("Updated symbol table for content {} in {:.3}s", content_path, duration.as_secs_f32())).await;
 
         for (file_path, diagnostics) in scanning_diagnostis {
-            self.reporter.clear_diagnostics(&file_path, DiagnosticGroup::SymbolScan);
-            self.reporter.push_diagnostics(&file_path, diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic()),  DiagnosticGroup::SymbolScan);
+            self.reporter.clear_diagnostics(&file_path, DiagnosticGroup::SymbolScan).await;
+            self.reporter.push_diagnostics(&file_path, diagnostics.into_iter().map(|diag| diag.into_lsp_diagnostic()),  DiagnosticGroup::SymbolScan).await;
         }
     }
 }

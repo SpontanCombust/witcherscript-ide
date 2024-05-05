@@ -72,7 +72,7 @@ impl Backend {
     pub async fn build_content_graph(&self, content_graph: &mut ContentGraph) {
         self.reporter.log_info("Building content graph...").await;
 
-        self.reporter.clear_all_diagnostics();
+        self.reporter.clear_all_diagnostics().await;
         
         let diff = content_graph.build();
     
@@ -170,10 +170,15 @@ impl Backend {
             symtabs.remove(removed_content_path);
             
             if !removed_content_path.exists() || !removed_node.in_workspace {
+                let mut manifest_path = None;
                 if let Some(project) = removed_content.as_any().downcast_ref::<ProjectDirectory>() {
-                    self.reporter.purge_diagnostics(project.manifest_path());
+                    manifest_path = Some(project.manifest_path());
                 } else if let Some(redkit_proj) = removed_content.as_any().downcast_ref::<RedkitProjectDirectory>() {
-                    self.reporter.purge_diagnostics(redkit_proj.manifest_path());
+                    manifest_path = Some(redkit_proj.manifest_path());
+                }
+
+                if let Some(manifest_path) = manifest_path {
+                    self.reporter.purge_diagnostics(manifest_path).await;
                 }
             }
         }
@@ -210,10 +215,10 @@ impl Backend {
                 self.reporter.log_warning(format!("Content scanning issue for {}: {}", err.path.display(), err.error)).await;
             },
             ContentScanError::ManifestParse(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
             },
             ContentScanError::RedkitManifestRead(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
             },
             ContentScanError::NotContent => {},
         }
@@ -226,22 +231,22 @@ impl Backend {
                 self.reporter.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
             },
             ContentGraphError::ManifestRead(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
             },
             ContentGraphError::RedkitManifestRead(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
+                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
             },
             ContentGraphError::DependencyPathNotFound { content_path: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
             },
             ContentGraphError::DependencyNameNotFound { content_name: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
             },
             ContentGraphError::DependencyNameNotFoundAtPath { content_name: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
             },
             ContentGraphError::MultipleMatchingDependencies { content_name: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan);
+                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
             }
         }
     }

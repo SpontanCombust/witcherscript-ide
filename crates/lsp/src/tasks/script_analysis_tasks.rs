@@ -46,8 +46,8 @@ impl Backend {
         });
 
         while let Some((script_path, diags)) = recv.recv().await {
-            self.reporter.clear_diagnostics(script_path.as_ref(), DiagnosticGroup::Analysis);
-            self.reporter.push_diagnostics(script_path.as_ref(), diags,  DiagnosticGroup::Analysis);
+            self.reporter.clear_diagnostics(script_path.as_ref(), DiagnosticGroup::Analysis).await;
+            self.reporter.push_diagnostics(script_path.as_ref(), diags,  DiagnosticGroup::Analysis).await;
         }
     }
 
@@ -71,8 +71,8 @@ impl Backend {
         });
 
         while let Some((script_path, diags)) = recv.recv().await {
-            self.reporter.clear_diagnostics(script_path.as_ref(), DiagnosticGroup::Analysis);
-            self.reporter.push_diagnostics(script_path.as_ref(), diags, DiagnosticGroup::Analysis);
+            self.reporter.clear_diagnostics(script_path.as_ref(), DiagnosticGroup::Analysis).await;
+            self.reporter.push_diagnostics(script_path.as_ref(), diags, DiagnosticGroup::Analysis).await;
         }
     }
 }

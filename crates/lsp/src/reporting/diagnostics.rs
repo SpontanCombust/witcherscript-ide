@@ -115,14 +115,14 @@ pub enum DiagnosticGroup {
 }
 
 impl Reporter {
-    pub fn push_diagnostic(&self, path: &AbsPath, diag: lsp::Diagnostic, group: DiagnosticGroup) {
+    pub async fn push_diagnostic(&self, path: &AbsPath, diag: lsp::Diagnostic, group: DiagnosticGroup) {
         let bd = BufferedDiagnostic { diag, group };
-        if let Some(mut kv) = self.buffered_diagnostics.get_mut(path) {
-            let v = kv.value_mut();
+        let mut diags = self.buffered_diagnostics.lock().await;
+        if let Some(v) = diags.get_mut(path) {
             v.diags.push(bd);
             v.changed = true;
         } else {
-            self.buffered_diagnostics.insert(path.clone(), BufferedDiagnostics {
+            diags.insert(path.clone(), BufferedDiagnostics {
                 diags: vec![bd],
                 changed: true,
                 should_purge: false
@@ -130,14 +130,14 @@ impl Reporter {
         }
     }
 
-    pub fn push_diagnostics(&self, path: &AbsPath, diags: impl IntoIterator<Item = lsp::Diagnostic>, group: DiagnosticGroup) {
+    pub async fn push_diagnostics(&self, path: &AbsPath, diags: impl IntoIterator<Item = lsp::Diagnostic>, group: DiagnosticGroup) {
         let bds = diags.into_iter().map(|diag| BufferedDiagnostic { diag, group });
-        if let Some(mut kv) = self.buffered_diagnostics.get_mut(path) {
-            let v = kv.value_mut();
+        let mut diags = self.buffered_diagnostics.lock().await;
+        if let Some(v) = diags.get_mut(path) {
             v.diags.extend(bds);
             v.changed = true;
         } else {
-            self.buffered_diagnostics.insert(path.clone(), BufferedDiagnostics {
+            diags.insert(path.clone(), BufferedDiagnostics {
                 diags: bds.collect(),
                 changed: true,
                 should_purge: false
@@ -145,63 +145,65 @@ impl Reporter {
         }
     }
 
-    pub fn clear_diagnostics(&self, path: &AbsPath, source: DiagnosticGroup) {
-        self.buffered_diagnostics
-            .alter(path, |_, mut v|  {
-                v.diags.retain(|d| d.group != source);
-                v.changed = true;
-                v
-            });
+    pub async fn clear_diagnostics(&self, path: &AbsPath, source: DiagnosticGroup) {
+        let mut diags = self.buffered_diagnostics.lock().await;
+        if let Some(v) = diags.get_mut(path) {
+            v.diags.retain(|d| d.group != source);
+            v.changed = true;
+        }
     }
 
     /// Clears all diagnostics for a given file and additionally that file gets forgotten about by the diagnostic system
-    pub fn purge_diagnostics(&self, path: &AbsPath) {
-        self.buffered_diagnostics
-            .alter(path, |_, mut v|  {
-                v.diags.clear();
-                v.changed = true;
-                v.should_purge = true;
-                v
-            });
+    pub async fn purge_diagnostics(&self, path: &AbsPath) {
+        let mut diags = self.buffered_diagnostics.lock().await;
+        if let Some(v) = diags.get_mut(path) {
+            v.diags.clear();
+            v.changed = true;
+            v.should_purge = true;
+        }
     }
 
-    pub fn clear_all_diagnostics(&self) {
-        self.buffered_diagnostics
-            .alter_all(|_, mut v| {
-                v.diags.clear();
-                v.changed = true;
-                v
-            });
+    pub async fn clear_all_diagnostics(&self) {
+        let mut diags = self.buffered_diagnostics.lock().await;
+        for (_, v) in diags.iter_mut() {
+            v.diags.clear();
+            v.changed = true;
+        }
     }
 
 
     pub async fn commit_diagnostics(&self, path: &AbsPath) {
-        if let Some(mut kv) = self.buffered_diagnostics.get_mut(path) {
-            if kv.value().changed {
-                let uri = kv.key().to_uri();
+        let mut diags = self.buffered_diagnostics.lock().await;
+        let mut should_purge = false;
+        if let Some(v) = diags.get_mut(path) {
+            if v.changed {
+                let uri = path.to_uri();
     
-                let v = kv.value_mut();
-                let diags = v.diags.iter().map(|d| d.diag.clone()).collect();
+                let to_publish = v.diags.iter().map(|d| d.diag.clone()).collect();
                 v.changed = false;
-    
-                self.client.publish_diagnostics(uri, diags, None).await;
+        
+                self.client.publish_diagnostics(uri, to_publish, None).await;
             }
+
+            should_purge = v.should_purge;            
         }
 
-        self.buffered_diagnostics.remove_if(path, |_, v| v.should_purge);
+        if should_purge {
+            diags.remove(path);
+        }
     }
 
     pub async fn commit_all_diagnostics(&self) {
-        for mut kv in self.buffered_diagnostics.iter_mut().filter(|kv| kv.value().changed) {
-            let uri = kv.key().to_uri();
+        let mut diags = self.buffered_diagnostics.lock().await;
+        for (k, v) in diags.iter_mut().filter(|(_, v)| v.changed) {
+            let uri = k.to_uri();
 
-            let v = kv.value_mut();
-            let diags = v.diags.iter().map(|d| d.diag.clone()).collect();
+            let to_publish = v.diags.iter().map(|d| d.diag.clone()).collect();
             v.changed = false;
 
-            self.client.publish_diagnostics(uri, diags, None).await;
+            self.client.publish_diagnostics(uri, to_publish, None).await;
         }
 
-        self.buffered_diagnostics.retain(|_, v| !v.should_purge);
+        diags.retain(|_, v| !v.should_purge);
     }
 }
