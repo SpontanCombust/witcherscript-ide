@@ -97,12 +97,18 @@ impl SymbolTable {
     }
  
     pub fn remove_for_source(&mut self, local_source_path: &Path) {
-        if let Some(sympaths) = self.source_path_assocs.get_mut(local_source_path) {
-            for root in sympaths.iter() {
-                self.symbols.retain(|sp, _| !sp.root().map(|r| r == root).unwrap_or(false));
-            }
-            sympaths.clear();
+        let for_removal: Vec<_> = 
+            self.get_for_source(local_source_path)
+            .map(|sym| sym.as_dyn().path().to_owned())
+            .collect();
+
+        for sympath in for_removal {
+            self.symbols.remove(&sympath);
         }
+
+        self.source_path_assocs
+            .get_mut(local_source_path)
+            .map(|assocs| assocs.clear());
     }
 
 
