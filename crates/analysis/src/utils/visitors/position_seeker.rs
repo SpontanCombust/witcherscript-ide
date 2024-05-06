@@ -303,13 +303,13 @@ impl SyntaxNodeVisitor for PositionSeeker {
             if n.init().map(|init| init.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_init = true;
             }
-            if n.cond().map(|cond| cond.spans_position(self.pos)).unwrap_or(false) {
+            else if n.cond().map(|cond| cond.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_cond = true;
             }
-            if n.iter().map(|iter| iter.spans_position(self.pos)).unwrap_or(false) {
+            else if n.iter().map(|iter| iter.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_iter = true;
             }
-            if n.body().spans_position(self.pos) {
+            else if n.body().spans_position(self.pos) {
                 tp.traverse_body = true;
             }
             else { 
@@ -328,7 +328,7 @@ impl SyntaxNodeVisitor for PositionSeeker {
             if n.cond().spans_position(self.pos) {
                 tp.traverse_cond = true;
             }
-            if n.body().spans_position(self.pos) {
+            else if n.body().spans_position(self.pos) {
                 tp.traverse_body = true;
             }
             else { 
@@ -347,7 +347,7 @@ impl SyntaxNodeVisitor for PositionSeeker {
             if n.cond().spans_position(self.pos) {
                 tp.traverse_cond = true;
             }
-            if n.body().spans_position(self.pos) {
+            else if n.body().spans_position(self.pos) {
                 tp.traverse_body = true;
             }
             else { 
@@ -366,10 +366,10 @@ impl SyntaxNodeVisitor for PositionSeeker {
             if n.cond().spans_position(self.pos) {
                 tp.traverse_cond = true;
             }
-            if n.body().spans_position(self.pos) {
+            else if n.body().spans_position(self.pos) {
                 tp.traverse_body = true;
             }
-            if n.else_body().map(|else_body| else_body.spans_position(self.pos)).unwrap_or(false) {
+            else if n.else_body().map(|else_body| else_body.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_else_body = true;
             }
             else { 
@@ -388,7 +388,7 @@ impl SyntaxNodeVisitor for PositionSeeker {
             if n.cond().spans_position(self.pos) {
                 tp.traverse_cond = true;
             }
-            if n.body().spans_position(self.pos) {
+            else if n.body().spans_position(self.pos) {
                 tp.traverse_body = true;
             }
             else { 
@@ -518,7 +518,7 @@ impl SyntaxNodeVisitor for PositionSeeker {
             if n.left().spans_position(self.pos) {
                 tp.traverse_left = true;
             }
-            if n.right().spans_position(self.pos) {
+            else if n.right().spans_position(self.pos) {
                 tp.traverse_right = true;
             }
             else { 
@@ -537,7 +537,7 @@ impl SyntaxNodeVisitor for PositionSeeker {
             if n.left().spans_position(self.pos) {
                 tp.traverse_left = true;
             }
-            if n.right().spans_position(self.pos) {
+            else if n.right().spans_position(self.pos) {
                 tp.traverse_right = true;
             }
             else { 
@@ -604,10 +604,10 @@ impl SyntaxNodeVisitor for PositionSeeker {
             if n.cond().spans_position(self.pos) {
                 tp.traverse_cond = true;
             }
-            if n.conseq().spans_position(self.pos) {
+            else if n.conseq().spans_position(self.pos) {
                 tp.traverse_conseq = true;
             }
-            if n.alt().spans_position(self.pos) {
+            else if n.alt().spans_position(self.pos) {
                 tp.traverse_alt = true;
             }
             else { 
@@ -642,7 +642,7 @@ impl SyntaxNodeVisitor for PositionSeeker {
             if n.accessor().spans_position(self.pos) {
                 tp.traverse_accessor = true;
             }
-            if n.index().spans_position(self.pos) {
+            else if n.index().spans_position(self.pos) {
                 tp.traverse_index = true;
             }
             else { 
@@ -661,7 +661,7 @@ impl SyntaxNodeVisitor for PositionSeeker {
             if n.func().spans_position(self.pos) {
                 tp.traverse_func = true;
             }
-            if n.args().map(|args| args.spans_position(self.pos)).unwrap_or(false) {
+            else if n.args().map(|args| args.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_args = true;
             }
             else { 
