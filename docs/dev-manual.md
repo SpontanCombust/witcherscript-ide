@@ -25,6 +25,7 @@ Currently available xtask commands:
     - `--target` - compilation target triple, e.g. x86_64-pc-windows-msvc
 - `prep-client` - build VSCode client
     - `--watch` - whether client should be continuously watched for changes made to it and rebuilt 
+    - `--fast` - whether client should be built instantly by skipping `npm ci` step
 - `package` - build and package VSCode extension into a .vsix file
     - `--out` - output path for the .vsix file; default is "./witcherscript-ide.vsix"
     - `--target` - VSCode extension target, e.g. win32-x64

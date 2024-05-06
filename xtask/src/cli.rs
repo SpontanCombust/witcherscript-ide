@@ -24,7 +24,10 @@ pub enum Commands {
     PrepClient {
         /// Whether client should be continuously watched for changes made to it and rebuilt 
         #[arg(long)]
-        watch: bool
+        watch: bool,
+        /// Whether client should be built instantly by skipping `npm ci` step
+        #[arg(long)]
+        fast: bool
     },
     /// Build and package VSCode extension into a .vsix file
     Package {
