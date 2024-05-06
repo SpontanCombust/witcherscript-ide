@@ -1,7 +1,8 @@
+use std::path::MAIN_SEPARATOR_STR;
 use xshell::{Shell, cmd};
 
 
-const LSP_DST: &str = "./editors/vscode/server/bin";
+const LSP_DST: &str = "editors/vscode/server/bin";
 
 pub fn prep_server(release: bool, target: Option<String>) -> anyhow::Result<()> {
     let sh = Shell::new()?;
@@ -19,29 +20,38 @@ pub fn prep_server(release: bool, target: Option<String>) -> anyhow::Result<()> 
     cmd!(sh, "cargo build --package witcherscript-lsp {build_opt_args...}").run()?;
 
 
-    let mut lsp_src = root.join("target");
+    let mut lsp_dir = root.join("target");
     if let Some(target) = &target {
-        lsp_src.push(target);
+        lsp_dir.push(target);
     }
     
     if release {
-        lsp_src.push("release");
+        lsp_dir.push("release");
     } else {
-        lsp_src.push("debug");
+        lsp_dir.push("debug");
     }
     
-    lsp_src.push("witcherscript-lsp");
-    
+
+    let mut lsp_bin = lsp_dir.join("witcherscript-lsp");
+
     if cfg!(windows) {
-        lsp_src.set_extension("exe");
+        lsp_bin.set_extension("exe");
     }
 
     // make sure destination folder exists
-    let lsp_dst = root.join(LSP_DST);
+    let lsp_dst = root.join(LSP_DST.replace('/', MAIN_SEPARATOR_STR));
     sh.create_dir(&lsp_dst)?;
 
-    sh.copy_file(lsp_src, &lsp_dst)?;
-    println!("Copied LSP into {}", lsp_dst.display());
+    sh.copy_file(lsp_bin, &lsp_dst)?;
+    println!("Copied LSP binary into {}", lsp_dst.display());
+
+
+    if cfg!(windows) && !release {
+        let lsp_pdb = lsp_dir.join("witcherscript_lsp.pdb");
+
+        sh.copy_file(lsp_pdb, &lsp_dst)?;
+        println!("Copied LSP .pdb into {}", lsp_dst.display());
+    }
 
     Ok(())
 }
