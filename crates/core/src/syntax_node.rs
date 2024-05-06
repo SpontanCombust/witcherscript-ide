@@ -134,13 +134,11 @@ impl<'script, T> SyntaxNode<'script, T> {
     #[inline]
     pub fn spans_position(&self, position: lsp::Position) -> bool {
         let r = self.range();
-        if r.start.line < r.end.line {
-            r.start.line <= position.line && position.line <= r.end.line
-        } else if r.start.line == position.line {
-            r.start.character <= position.character && position.character <= r.end.character
-        } else {
-            false
-        }
+
+        position.line >= r.start.line 
+        && position.line <= r.end.line
+        && if position.line == r.start.line { position.character >= r.start.character } else { true } 
+        && if position.line == r.end.line { position.character <= r.end.character } else { true }
     }
 
     #[inline]
