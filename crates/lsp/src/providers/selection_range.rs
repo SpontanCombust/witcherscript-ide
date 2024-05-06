@@ -548,6 +548,12 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
 
     fn visit_func_call_expr(&mut self, n: &FunctionCallExpressionNode, _: ExpressionTraversalContext) -> FunctionCallExpressionTraversalPolicy {
         self.range_stack.push(n.range());
+
+        if let Some(args) = n.args() {
+            if args.spans_position(self.pos) {
+                self.range_stack.push(args.range());
+            }
+        }
         
         TraversalPolicy::default_to(true)
     }
