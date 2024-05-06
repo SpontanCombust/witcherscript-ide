@@ -53,11 +53,9 @@ mkdocs serve
 
 To learn more about MKDocs check out their website at <https://www.mkdocs.org/>.
 
-## The project board
-You can access the [project board](https://github.com/users/SpontanCombust/projects/2/views/1) conveniently detailing what has been done and future plans.
-
 
 ## Contributing
 Contributions to the project are welcome. First create an issue or a PR to discuss the change you want to make and ensure that it doesn't conflict with any future plans or core features. The active development branch is `dev`.
 
-You can also catch me in the [Wolven Workshop](https://discord.gg/S3HjaY65uh) Discord server.
+You can access the [project board](https://github.com/users/SpontanCombust/projects/2/views/1) conveniently detailing what has been done and future plans.
+The board does not contain everything though and some issues might just be annotated with TODO or FIXME comments. For this I highly recommend the [Todo Tree](https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.todo-tree) extension.
