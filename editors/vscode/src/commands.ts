@@ -5,6 +5,7 @@ import * as fs from 'fs/promises';
 import { client } from "./extension"
 import * as requests from './requests';
 import * as state from './state';
+import * as tdcp from './providers/text_document_content_providers'
 
 
 export function registerCommands(context: vscode.ExtensionContext) {
@@ -14,8 +15,8 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.scripts.importVanilla", commandImportVanillaScripts()),
         vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", commandDiffScriptWithVanilla()),
         vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context)),
-        vscode.commands.registerCommand("witcherscript-ide.debug.contentGraphDot", commandContentGraphDot(context)),
-        vscode.commands.registerCommand("witcherscript-ide.debug.showScriptSymbols", commandShowScriptSymbols(context))
+        vscode.commands.registerCommand("witcherscript-ide.debug.contentGraphDot", commandContentGraphDot()),
+        vscode.commands.registerCommand("witcherscript-ide.debug.showScriptSymbols", commandShowScriptSymbols())
     );
 }
 
@@ -166,41 +167,6 @@ async function initializeProjectInDirectory(projectDirUri: vscode.Uri, projectNa
 
 
 function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
-    const astSuffix = " - AST";
-
-    const tdcp = new (class implements vscode.TextDocumentContentProvider {
-        readonly scheme = "witcherscript-ide-ast";
-
-        eventEmitter = new vscode.EventEmitter<vscode.Uri>();
-
-        provideTextDocumentContent(uri: vscode.Uri): vscode.ProviderResult<string> {
-            // VSCode at the time of writing this does not provide any quick and easy way to display a custom tab label.
-            // Its default way of getting the tab name is the file name component of URI passed to openTextDocument.
-            // So if I want to display "{file} - AST" I need to do a bit of URI hacking and pass the whole thing to it.
-            // Anyways, LS needs name of the actual file, so the decoratory suffix needs to be gone from that URI.
-            uri = vscode.Uri.file(uri.fsPath.substring(0, uri.fsPath.length - astSuffix.length));
-
-            const params: requests.debug.scriptAst.Parameters = {
-                scriptUri: client.code2ProtocolConverter.asUri(uri)
-            }
-            return client.sendRequest(requests.debug.scriptAst.type, params).then(
-                (response) => {
-                    return response.ast;
-                },
-                (error) => {
-                    vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
-                    return ""
-                }
-            )
-        }
-
-        get onDidChange(): vscode.Event<vscode.Uri> {
-            return this.eventEmitter.event;
-        }
-    })();
-
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(tdcp.scheme, tdcp));
-
     return async () => {
         const activeEditor = vscode.window.activeTextEditor;
         if (!activeEditor) {
@@ -209,16 +175,18 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
 
         const scriptPath = activeEditor.document.uri.fsPath;
         const scriptLine = activeEditor.selection.active.line + 1;
-        const uri = vscode.Uri.file(scriptPath + astSuffix).with({ scheme: tdcp.scheme });
+        const uri = vscode.Uri
+            .file(scriptPath + tdcp.ScriptAstProvider.pathSuffix)
+            .with({ scheme: tdcp.ScriptAstProvider.scheme });
         
         const doc = await vscode.workspace.openTextDocument(uri);
         const options: vscode.TextDocumentShowOptions = {
-            viewColumn: vscode.ViewColumn.Two,
+            viewColumn: vscode.ViewColumn.Beside,
             preview: false,
             preserveFocus: true
         };
 
-        tdcp.eventEmitter.fire(uri);
+        tdcp.ScriptAstProvider.getInstance().eventEmitter.fire(uri);
         
         vscode.window.showTextDocument(doc, options).then(async editor => {
             const astText = editor.document.getText();
@@ -406,85 +374,27 @@ function commandDiffScriptWithVanilla(): Cmd {
     }
 }
 
-function commandContentGraphDot(context: vscode.ExtensionContext): Cmd {
-    const tdcp = new (class implements vscode.TextDocumentContentProvider {
-        readonly scheme = "witcherscript-ide-graph-dot";
-
-        eventEmitter = new vscode.EventEmitter<vscode.Uri>();
-
-        provideTextDocumentContent(_: vscode.Uri): vscode.ProviderResult<string> {
-            const params: requests.debug.contentGraphDot.Parameters = {};
-            return client.sendRequest(requests.debug.contentGraphDot.type, params).then(
-                (response) => {
-                    return response.dotGraph;
-                },
-                (error) => {
-                    vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
-                    return ""
-                }
-            )
-        }
-
-        get onDidChange(): vscode.Event<vscode.Uri> {
-            return this.eventEmitter.event;
-        }
-    })();
-
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(tdcp.scheme, tdcp));
-
+function commandContentGraphDot(): Cmd {
     return async () => {
         const virtFileName = "WitcherScript Content Graph";
-        const uri = vscode.Uri.file(virtFileName).with({ scheme: tdcp.scheme });
+        const uri = vscode.Uri
+            .file(virtFileName)
+            .with({ scheme: tdcp.ContentGraphDotProvider.scheme });
 
         const doc = await vscode.workspace.openTextDocument(uri);
         const options: vscode.TextDocumentShowOptions = {
-            viewColumn: vscode.ViewColumn.Two,
+            viewColumn: vscode.ViewColumn.Beside,
             preview: false,
             preserveFocus: true
         };
 
-        tdcp.eventEmitter.fire(uri);
+        tdcp.ContentGraphDotProvider.getInstance().eventEmitter.fire(uri);
 
         await vscode.window.showTextDocument(doc, options);
     }
 }
 
-function commandShowScriptSymbols(context: vscode.ExtensionContext) {
-    const astSuffix = " - symbols";
-
-    const tdcp = new (class implements vscode.TextDocumentContentProvider {
-        readonly scheme = "witcherscript-ide-symbols";
-
-        eventEmitter = new vscode.EventEmitter<vscode.Uri>();
-
-        provideTextDocumentContent(uri: vscode.Uri): vscode.ProviderResult<string> {
-            // VSCode at the time of writing this does not provide any quick and easy way to display a custom tab label.
-            // Its default way of getting the tab name is the file name component of URI passed to openTextDocument.
-            // So if I want to display "{file} - AST" I need to do a bit of URI hacking and pass the whole thing to it.
-            // Anyways, LS needs name of the actual file, so the decoratory suffix needs to be gone from that URI.
-            uri = vscode.Uri.file(uri.fsPath.substring(0, uri.fsPath.length - astSuffix.length));
-
-            const params: requests.debug.scriptSymbols.Parameters = {
-                scriptUri: client.code2ProtocolConverter.asUri(uri)
-            }
-            return client.sendRequest(requests.debug.scriptSymbols.type, params).then(
-                (response) => {
-                    return response.symbols;
-                },
-                (error) => {
-                    vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
-                    return ""
-                }
-            )
-        }
-
-        get onDidChange(): vscode.Event<vscode.Uri> {
-            return this.eventEmitter.event;
-        }
-    })();
-
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(tdcp.scheme, tdcp));
-
+function commandShowScriptSymbols() {
     return async () => {
         const activeEditor = vscode.window.activeTextEditor;
         if (!activeEditor) {
@@ -492,16 +402,18 @@ function commandShowScriptSymbols(context: vscode.ExtensionContext) {
         }
 
         const scriptPath = activeEditor.document.uri.fsPath;
-        const uri = vscode.Uri.file(scriptPath + astSuffix).with({ scheme: tdcp.scheme });
+        const uri = vscode.Uri
+            .file(scriptPath + tdcp.ScriptSymbolsProvider.pathSuffix)
+            .with({ scheme: tdcp.ScriptSymbolsProvider.scheme });
         
         const doc = await vscode.workspace.openTextDocument(uri);
         const options: vscode.TextDocumentShowOptions = {
-            viewColumn: vscode.ViewColumn.Two,
+            viewColumn: vscode.ViewColumn.Beside,
             preview: false,
             preserveFocus: true
         };
 
-        tdcp.eventEmitter.fire(uri);
+        tdcp.ScriptSymbolsProvider.getInstance().eventEmitter.fire(uri);
         
         vscode.window.showTextDocument(doc, options);
     };

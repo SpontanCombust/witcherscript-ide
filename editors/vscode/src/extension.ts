@@ -5,12 +5,14 @@ import * as lsp from 'vscode-languageclient/node';
 import * as commands from './commands';
 import * as state from './state';
 import * as config from './config';
+import * as providers from './providers'
 
 
 export let client: lsp.LanguageClient;
 
 export function activate(context: vscode.ExtensionContext) {
 	commands.registerCommands(context);
+	providers.registerProviders(context);
 
 	const ext = process.platform === "win32" ? ".exe" : "";
 	const serverPath = context.asAbsolutePath(
