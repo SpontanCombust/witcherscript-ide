@@ -118,7 +118,11 @@
         "scopeName": "source.ws",
         "path": "./syntaxes/ws.tmLanguage.json"
       }
-    ]
+    ],
+    "tomlValidation": [{
+        "fileMatch": "witcherscript.toml",
+        "url": "https://github.com/SpontanCombust/witcherscript-ide/blob/dev/schemas/witcherscript.toml.schema.json"
+    }]
   },
 
   "scripts": {
