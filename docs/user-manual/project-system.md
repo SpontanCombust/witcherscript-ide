@@ -27,6 +27,7 @@ Every manifest is composed of following sections:
 
 - [content](#the-content-table) *:
     - [name](#the-name-field) *
+    - [description](#the-description-field)
     - [version](#the-version-field) *
     - [game_version](#the-game_version-field) *
     - [authors](#the-authors-field)
@@ -40,6 +41,9 @@ Project metadata establishing basic information on how its content is named and 
 
 #### The `name` field
 Name of the project. It must begin with an ASCII letter or underscore and contain only alphanumerical ASCII characters or underscores. Spaces are not allowed.
+
+#### The `description` field
+Short description of the project.
 
 #### The `version` field
 Version of the project. It must follow [semantic versioning](https://semver.org/) format.

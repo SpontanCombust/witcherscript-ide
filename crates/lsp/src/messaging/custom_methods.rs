@@ -310,6 +310,7 @@ fn manifest_template(project_name: &str) -> String {
 r#"# Basic information about this project
 [content]
 name = "{project_name}"
+description = ""
 version = "1.0.0"
 authors = []
 game_version = "4.04"
