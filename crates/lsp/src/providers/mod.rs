@@ -7,3 +7,6 @@ pub mod workspace;
 
 pub mod selection_range;
 pub mod document_symbols;
+pub mod goto;
+
+mod common;

@@ -57,6 +57,10 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
             }),
             selection_range_provider: Some(lsp::SelectionRangeProviderCapability::Simple(true)),
             document_symbol_provider: Some(lsp::OneOf::Left(true)),
+            definition_provider: Some(lsp::OneOf::Left(true)),
+            declaration_provider: Some(lsp::DeclarationCapability::Simple(true)),
+            type_definition_provider: Some(lsp::TypeDefinitionProviderCapability::Simple(true)),
+            implementation_provider: None,
             ..lsp::ServerCapabilities::default()
         }
     })

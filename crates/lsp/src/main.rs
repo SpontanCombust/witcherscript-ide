@@ -62,6 +62,19 @@ impl LanguageServer for Backend {
     async fn document_symbol(&self, params: lsp::DocumentSymbolParams) -> Result<Option<lsp::DocumentSymbolResponse>> {
         providers::document_symbols::document_symbol(self, params).await
     }
+
+
+    async fn goto_definition(&self, params: lsp::GotoDefinitionParams) -> Result<Option<lsp::GotoDefinitionResponse>> {
+        providers::goto::goto_definition(self, params).await
+    }
+
+    async fn goto_declaration(&self, params: lsp::request::GotoDeclarationParams) -> Result<Option<lsp::request::GotoDeclarationResponse>> {
+        providers::goto::goto_declaration(self, params).await
+    }
+
+    async fn goto_type_definition(&self, params: lsp::request::GotoTypeDefinitionParams) -> Result<Option<lsp::request::GotoTypeDefinitionResponse>> {
+        providers::goto::goto_type_definition(self, params).await
+    }
 }
 
 
