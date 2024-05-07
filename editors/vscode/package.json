@@ -121,7 +121,7 @@
     ],
     "tomlValidation": [{
         "fileMatch": "witcherscript.toml",
-        "url": "https://github.com/SpontanCombust/witcherscript-ide/blob/dev/schemas/witcherscript.toml.schema.json"
+        "url": "https://raw.githubusercontent.com/SpontanCombust/witcherscript-ide/dev/schemas/witcherscript.toml.schema.json"
     }]
   },
 
