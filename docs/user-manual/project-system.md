@@ -43,14 +43,14 @@ Project metadata establishing basic information on how its content is named and 
 Name of the project. It must begin with an ASCII letter or underscore and contain only alphanumerical ASCII characters or underscores. Spaces are not allowed.
 
 #### The `description` field
-Short description of the project.
+Short description of the project. This field is optional.
 
 #### The `version` field
 Version of the project. It must follow [semantic versioning](https://semver.org/) format.
 
 #### The `game_version` field
 Version of Witcher 3 with which this project is compatible. It can be a range of versions.
-The field does not require any specific format at the moment, but it will change in the future.
+The field does not require any specific format at the moment, but it may change in the future.
 
 #### The `authors` field
 An array of authors of this project. Their form can be completely arbitrary.
