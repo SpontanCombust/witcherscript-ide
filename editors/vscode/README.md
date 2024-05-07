@@ -7,6 +7,7 @@ Provides support for Witcher 3's scripting language WitcherScript.
 - syntax highlighting
 - basic syntactical analysis
 - initializing or creating new script projects
+- validation of project manifests when having [`Even Better TOML`](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) extension installed
 - importing and comparing scripts with their vanilla counterparts
 - support for REDKit projects
 
