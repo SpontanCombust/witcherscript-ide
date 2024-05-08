@@ -78,18 +78,21 @@ impl SymbolTable {
     }
 
     pub fn locate(&self, path: &SymbolPath) -> Option<SymbolLocation> {
-        path.root()
+        let local_source_path = path.root()
             .and_then(|root| self.symbols.get(root))
-            .and_then(|v| {
-                if let (Some(file_path), Some(range)) = (v.local_source_path(), v.label_range()) {
-                    Some(SymbolLocation { 
-                        local_source_path: file_path.to_owned(), 
-                        label_range: range
-                    })
-                } else {
-                    None
-                }
+            .and_then(|v| v.local_source_path());
+
+        let label_range = self.symbols.get(path)
+            .and_then(|v| v.label_range());
+
+        if let (Some(local_source_path), Some(label_range)) = (local_source_path, label_range) {
+            Some(SymbolLocation { 
+                local_source_path: local_source_path.to_owned(), 
+                label_range
             })
+        } else {
+            None
+        }
     }
  
     pub fn remove_for_source(&mut self, local_source_path: &Path) {
