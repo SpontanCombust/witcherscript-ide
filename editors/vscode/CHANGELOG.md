@@ -3,6 +3,27 @@
 # Changelog
 
 
+## v0.3.0-dev.1
+This is the first pre-release of the version that will finally bring "Go to" code features to the extension.
+If you find any criticial bugs make sure to submit an issue. Thank you!
+
+### Features
+- Added code symbol scanning. This enables the IDE to know about all the types, functions and data declared in workspace scripts. The use of it is limited for now [#9](https://github.com/SpontanCombust/witcherscript-ide/issues/9)
+- Added Document Symbols feature [#26](https://github.com/SpontanCombust/witcherscript-ide/issues/26)
+- Added Selection Range feature [#27](https://github.com/SpontanCombust/witcherscript-ide/issues/27)
+- Added `witcherscript.toml` schema, which can be used by [`Even Better TOML`](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) extension if you have it installed [#16](https://github.com/SpontanCombust/witcherscript-ide/issues/16)
+
+
+### Commands
+- Added debug command "Show script symbols" to get a view of all symbols coming from current script file
+
+
+### Other
+- Improved AST traversal and text retrieval performance through better memory management
+- Lessened the chance of code deadlock for diagnostics by using HashMap behind a Mutex instead of DashMap
+
+
+
 ## v0.2.1
 REDKit project support & fixes
 
