@@ -30,7 +30,8 @@ Currently available xtask commands:
 - `package` - build and package VSCode extension into a .vsix file
     - `--out` - output path for the .vsix file; default is "./witcherscript-ide.vsix"
     - `--target` - VSCode extension target, e.g. win32-x64
-- `install` - build, package and install the VSCode extension
+    - `--pre-release` - mark the package as pre-release
+- `install` - build, package and install the VSCode extension locally
 
 
 ## Debugging

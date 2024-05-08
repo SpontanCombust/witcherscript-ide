@@ -38,7 +38,10 @@ pub enum Commands {
         /// 
         /// https://code.visualstudio.com/api/working-with-extensions/publishing-extension#platformspecific-extensions
         #[arg(long)]
-        target: Option<String>
+        target: Option<String>,
+        /// Mark the packed extension as pre-release
+        #[arg(long)]
+        pre_release: bool
     },
     /// Build, package and install the VSCode extension
     Install
