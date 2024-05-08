@@ -36,6 +36,9 @@ Every manifest is composed of following sections:
 
 \* table/field is required
 
+:material-information-outline: If you have [`Even Better TOML`](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) extension installed it will provide you with auto-completion and hints when editing the manifest file.
+
+
 ### The `[content]` table
 Project metadata establishing basic information on how its content is named and structured.
 

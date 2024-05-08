@@ -6,8 +6,7 @@ Provides support for Witcher 3's scripting language WitcherScript.
 ## Features
 - syntax highlighting
 - basic syntactical analysis
-- initializing or creating new script projects
-- validation of project manifests when having [`Even Better TOML`](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) extension installed
+- creating and initializing script projects
 - importing and comparing scripts with their vanilla counterparts
 - support for REDKit projects
 
@@ -15,9 +14,12 @@ Provides support for Witcher 3's scripting language WitcherScript.
 
 
 ## Getting started and documentation
-
 This extension requires a few initial steps in order to have access to everything that it has to offer.
 For this and more head onto the [user manual](https://spontancombust.github.io/witcherscript-ide/user-manual).
+
+
+## Feedback
+You can submit bug reports and suggestions by creating an issue [here](https://github.com/SpontanCombust/witcherscript-ide/issues/new).
 
 
 ## Known Issues

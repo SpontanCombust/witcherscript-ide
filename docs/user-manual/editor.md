@@ -2,10 +2,10 @@
 
 ## Features
 
+<!--TODO add demo pictures or gifs for each point-->
 - syntax highlighting
 - basic syntactical analysis
-- initializing or creating new script projects
-- validation of project manifests when having [`Even Better TOML`](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) extension installed
+- creating and initializing [script projects](./project-system.md)
 - importing and comparing scripts with their vanilla counterparts
 - support for REDKit projects
 
