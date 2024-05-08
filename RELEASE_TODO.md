@@ -1,24 +1,25 @@
 # Release TODOs
 
-Just a list of all the tasks that are to be done before the release, so I don't forget about any of them :sweat_smile:
+List of all the tasks that are to be done during a release.
 
-1. Check TODOs
+1. Check TODOs in the code
 2. Update extension README
-3. Update documentation
+3. Update site documentation
 4. Update changelog
+5. (If main release) Replace pre-release changelogs with a single main release changelog 
 
-5. Verify Linux version
-6. Verify README in extensions tab
+6. Verify Linux version
+7. Verify README in extensions tab
 
-7. Merge to master
+8. (If main release) Merge to master
 
-8. Verify the website
-9. Verify documentation/site links
+9. Verify deployed documentation website
+10. Verify documentation/site links
 
-10. Bump version in `Cargo.toml`
-11. Bump version in client `package.json`
-12. Create a version tag and the release 
+11. Bump version in `Cargo.toml`
+12. Bump version in client `package.json`
+13. Create a version tag and the release 
 
-13. Verify VS Marketplace and Open VSX Registry
-14. Move tasks on the board to `Shipped`
-15. Close tasks and milestone
+14. Verify VS Marketplace and Open VSX Registry
+15. (If main release) Move tasks on the board to `Shipped`
+16. (If main release) Close tasks and milestone
