@@ -1,6 +1,6 @@
-use std::{collections::HashMap, path::{Path, PathBuf}};
+use std::path::{Path, PathBuf};
 use lsp_types as lsp;
-use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
+use crate::model::symbol_path::SymbolPath;
 use super::*;
 
 
@@ -9,8 +9,7 @@ pub struct EnumSymbol {
     path: BasicTypeSymbolPath,
     local_source_path: PathBuf,
     range: lsp::Range,
-    label_range: lsp::Range,
-    pub variants: HashMap<SymbolPathBuf, EnumVariantSymbol>
+    label_range: lsp::Range
 }
 
 impl Symbol for EnumSymbol {
@@ -45,8 +44,7 @@ impl EnumSymbol {
             path,
             local_source_path,
             range,
-            label_range,
-            variants: HashMap::new()
+            label_range
         }
     }
 }
