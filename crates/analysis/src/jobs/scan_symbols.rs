@@ -3,6 +3,7 @@ use std::path::Path;
 use abs_path::AbsPath;
 use lsp_types::Range;
 use witcherscript::attribs::AutobindSpecifier;
+use witcherscript::attribs::MemberFunctionSpecifier;
 use witcherscript::attribs::MemberVarSpecifier;
 use witcherscript::script_document::ScriptDocument;
 use witcherscript::tokens::*;
@@ -366,7 +367,18 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             if self.check_contains(&path, name_node.range()) {
                 let mut sym = MemberFunctionSymbol::new(path, n.range(), name_node.range());
     
+                let mut found_access_modif_before = false;
                 for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
+                    if matches!(spec, MemberFunctionSpecifier::AccessModifier(_)) {
+                        if found_access_modif_before {
+                            self.diagnostics.push(AnalysisDiagnostic { 
+                                range, 
+                                body: AnalysisError::MultipleAccessModifiers.into()
+                            })
+                        }
+                        found_access_modif_before = true;
+                    }
+
                     if !sym.specifiers.insert(spec) {
                         self.diagnostics.push(AnalysisDiagnostic { 
                             range, 
