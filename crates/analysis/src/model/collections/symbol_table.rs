@@ -91,19 +91,10 @@ impl SymbolTable {
         self.symbols.get_mut(path)
     }
 
+    #[inline]
     pub fn locate(&self, path: &SymbolPath) -> Option<SymbolLocation> {
-        let local_source_path = path.root()
-            .and_then(|root| self.symbols.get(root))
-            .and_then(|v| v.local_source_path())?;
-
-        let label_range = self.symbols.get(path)
-            .and_then(|v| v.label_range())?;
-
-        Some(SymbolLocation { 
-            abs_source_path: self.script_root.join(local_source_path).unwrap(),
-            local_source_path: local_source_path.to_owned(), 
-            label_range
-        })
+        let (_, loc) = self.get_with_location(path)?;
+        Some(loc)
     }
 
     pub fn get_with_location<'a>(&'a self, path: &SymbolPath) -> Option<(&'a SymbolVariant, SymbolLocation)> {
@@ -112,11 +103,13 @@ impl SymbolTable {
             .and_then(|v| v.local_source_path())?;
 
         let symvar = self.symbols.get(path)?;
+        let range = symvar.range()?;
         let label_range = symvar.label_range()?;
 
         Some((symvar, SymbolLocation { 
             abs_source_path: self.script_root.join(local_source_path).unwrap(),
             local_source_path: local_source_path.to_owned(), 
+            range,
             label_range
         }))
     }
@@ -186,7 +179,8 @@ impl SymbolTable {
                             occupied_location: self.locate(root),
                             incoming_location: SymbolLocation { 
                                 abs_source_path: self.script_root.join(&file_path).unwrap(),
-                                local_source_path: file_path.to_owned(), 
+                                local_source_path: file_path.to_owned(),
+                                range: root_variant.range().unwrap_or_default(),
                                 label_range: root_variant.label_range().unwrap_or_default()
                             }
                         });
@@ -232,6 +226,7 @@ impl SymbolTable {
                                 incoming_location: SymbolLocation { 
                                     abs_source_path: self.script_root.join(&file_path).unwrap(),
                                     local_source_path: file_path.to_owned(), 
+                                    range: incoming_variant.range().unwrap_or_default(),
                                     label_range: incoming_variant.label_range().unwrap_or_default()
                                 }
                             });
@@ -259,6 +254,7 @@ impl SymbolTable {
 pub struct SymbolLocation {
     pub abs_source_path: AbsPath,
     pub local_source_path: PathBuf,
+    pub range: lsp::Range,
     pub label_range: lsp::Range
 }
 
@@ -435,6 +431,16 @@ where It: Iterator<Item = &'a SymbolTable> {
         while let Some(symtab) = self.it.next() {
             if let Some(loc) = symtab.locate(path) {
                 return Some(loc);
+            }
+        }
+
+        None
+    }
+
+    pub fn get_with_location(mut self, path: &SymbolPath) -> Option<(&'a SymbolVariant, SymbolLocation)> {
+        while let Some(symtab) = self.it.next() {
+            if let Some(symvar_n_loc) = symtab.get_with_location(path) {
+                return Some(symvar_n_loc);
             }
         }
 

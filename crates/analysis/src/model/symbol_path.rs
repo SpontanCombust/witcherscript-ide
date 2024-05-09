@@ -2,7 +2,7 @@ use witcherscript::MISSING_TEXT;
 use super::symbols::SymbolCategory;
 
 
-/// Denotes a string that unambiguously identifies a symbol in the global namespace.
+/// Owned form of a string that unambiguously identifies a symbol in the global namespace.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SymbolPathBuf {
     buff: String
@@ -125,7 +125,7 @@ impl PartialEq<SymbolPathBuf> for SymbolPath {
 }
 
 
-
+/// String that unambiguously identifies a symbol in the global namespace.
 #[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SymbolPath {
