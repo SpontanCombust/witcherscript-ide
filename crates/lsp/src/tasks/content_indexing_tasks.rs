@@ -138,10 +138,11 @@ impl Backend {
                 modified: vec![]
             });
 
+            let scripts_root = source_tree.script_root_arc();
             self.source_trees.insert(added_content_path.clone(), source_tree);
 
             let mut symtabs = self.symtabs.write().await;
-            symtabs.insert(added_content_path.clone(), SymbolTable::new());
+            symtabs.insert(added_content_path.clone(), SymbolTable::new(scripts_root));
         }
 
         // handling source tree changes in a seperate step to not lock resources for too long

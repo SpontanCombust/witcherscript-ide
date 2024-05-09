@@ -44,6 +44,11 @@ impl SourceTreePath {
     pub fn script_root(&self) -> &AbsPath {
         self.script_root.as_ref()
     }
+
+    #[inline(always)]
+    pub fn script_root_arc(&self) -> Arc<AbsPath> {
+        self.script_root.clone()
+    }
 }
 
 impl PartialEq for SourceTreePath {
@@ -179,11 +184,18 @@ impl SourceTree {
         diff
     }
 
-    
+
+    #[inline]
     pub fn script_root(&self) -> &AbsPath {
         &self.script_root
     }
 
+    #[inline]
+    pub fn script_root_arc(&self) -> Arc<AbsPath> {
+        self.script_root.clone()
+    }
+
+    #[inline]
     pub fn len(&self) -> usize {
         self.tree.len()
     }
@@ -214,6 +226,7 @@ impl SourceTree {
         self.tree.binary_search_by(|f| f.path.local().cmp(path)).is_ok()
     }
 
+    #[inline]
     pub fn iter(&self) -> impl Iterator<Item = &SourceTreeFile> {
         self.tree.iter()
     }    

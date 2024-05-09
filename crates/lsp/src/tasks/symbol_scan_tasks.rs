@@ -22,8 +22,7 @@ impl Backend {
 
         let worker_count = std::cmp::min(rayon::current_num_threads(), modified_source_paths.len());
         let scripts = Arc::clone(&self.scripts);
-        let scripts_root = modified_source_paths.first().unwrap().script_root().to_owned();
-        let scripts_root_clone = scripts_root.clone();
+        let scripts_root = modified_source_paths.first().unwrap().script_root_arc();
 
         let job_provider = SymbolScanJobProvider {
             script_paths: Arc::new(Mutex::new(modified_source_paths))
@@ -34,7 +33,7 @@ impl Backend {
             let mut workers = Vec::with_capacity(worker_count);
 
             for _ in 0..worker_count {
-                workers.push(SymbolScanWorker::new(job_provider.clone(), Arc::clone(&scripts)));
+                workers.push(SymbolScanWorker::new(job_provider.clone(), Arc::clone(&scripts), scripts_root.clone()));
             }
 
             workers.par_iter_mut()
@@ -44,7 +43,7 @@ impl Backend {
             while let Some(worker) = workers.pop() {
                 let (symtab, diagnostics) = worker.finish();
                 merged_diagnostics.extend(diagnostics);
-                jobs::merge_symbol_tables(&mut merged_symtab, symtab, &scripts_root, &mut merged_diagnostics);
+                jobs::merge_symbol_tables(&mut merged_symtab, symtab, &mut merged_diagnostics);
             }
 
             send.send((merged_symtab, merged_diagnostics)).expect("on_scripts_modified symbol scan send fail");
@@ -52,7 +51,7 @@ impl Backend {
 
         let (scanning_symtab, mut scanning_diagnostis) = recv.await.expect("on_scripts_modified symbol scan recv fail");
 
-        jobs::merge_symbol_tables(symtab, scanning_symtab, &scripts_root_clone,  &mut scanning_diagnostis);
+        jobs::merge_symbol_tables(symtab, scanning_symtab, &mut scanning_diagnostis);
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Updated symbol table for content {} in {:.3}s", content_path, duration.as_secs_f32())).await;
@@ -72,9 +71,9 @@ struct SymbolScanWorker {
 }
 
 impl SymbolScanWorker {
-    fn new(job_provider: SymbolScanJobProvider, scripts: Arc<ScriptStates>) -> Self {
+    fn new(job_provider: SymbolScanJobProvider, scripts: Arc<ScriptStates>, scripts_root: Arc<AbsPath>) -> Self {
         Self {
-            symtab: SymbolTable::new(),
+            symtab: SymbolTable::new(scripts_root),
             diagnostics: HashMap::new(),
             job_provider,
             scripts

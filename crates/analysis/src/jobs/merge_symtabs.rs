@@ -7,11 +7,10 @@ use crate::{diagnostics::{AnalysisDiagnostic, AnalysisError}, model::collections
 pub fn merge_symbol_tables(
     target_symtab: &mut SymbolTable, 
     source_symtab: SymbolTable,
-    scripts_root: &AbsPath,
     diagnostics: &mut HashMap<AbsPath, Vec<AnalysisDiagnostic>>
 ) {
     for (local_source_path, errors) in target_symtab.merge(source_symtab) {
-        let abs_source_path = scripts_root.join(local_source_path).unwrap();
+        let abs_source_path = target_symtab.script_root().join(local_source_path).unwrap();
 
         let errors_as_diags = errors.into_iter()
             .map(|err| AnalysisDiagnostic { 
@@ -19,7 +18,7 @@ pub fn merge_symbol_tables(
                 body: AnalysisError::SymbolNameTaken { 
                     name: err.occupied_path.components().last().unwrap().name.to_string(),
                     precursor_range: err.occupied_location.as_ref().map(|loc| loc.label_range),
-                    precursor_file_path: err.occupied_location.as_ref().map(|loc| scripts_root.join(&loc.local_source_path).unwrap())
+                    precursor_file_path: err.occupied_location.as_ref().map(|loc| target_symtab.script_root().join(&loc.local_source_path).unwrap())
                 }.into()
             });
 

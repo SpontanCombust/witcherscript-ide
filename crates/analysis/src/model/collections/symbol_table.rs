@@ -1,17 +1,19 @@
 use std::collections::{btree_map, BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use thiserror::Error;
 use lsp_types as lsp;
+use abs_path::AbsPath;
 use crate::model::symbols::*;
 use crate::model::symbol_variant::SymbolVariant;
 use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
 
 //TODO move symbols stuff into dedicated package, also diagnostics
-//TODO some sort of type that will allow searching through symtabs of the entire dependency tree
 /// Contains information about all scanned symbols. Symbols are identified by their path.
 /// On a given unique path only one symbol can be present.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct SymbolTable {
+    script_root: Arc<AbsPath>,
     symbols: BTreeMap<SymbolPathBuf, SymbolVariant>,
     /// SymbolPath roots of symbols associated with given local paths in a source tree
     source_path_assocs: HashMap<PathBuf, Vec<SymbolPathBuf>>
@@ -34,8 +36,20 @@ pub struct MergeConflictError {
 
 
 impl SymbolTable {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(scripts_root: Arc<AbsPath>) -> Self {
+        Self {
+            script_root: scripts_root,
+            symbols: BTreeMap::new(),
+            source_path_assocs: HashMap::new()
+        }
+    }
+
+    pub fn script_root(&self) -> &AbsPath {
+        &self.script_root
+    }
+
+    pub fn script_root_arc(&self) -> Arc<AbsPath> {
+        self.script_root.clone()
     }
 
 
@@ -86,6 +100,7 @@ impl SymbolTable {
             .and_then(|v| v.label_range())?;
 
         Some(SymbolLocation { 
+            abs_source_path: self.script_root.join(local_source_path).unwrap(),
             local_source_path: local_source_path.to_owned(), 
             label_range
         })
@@ -100,6 +115,7 @@ impl SymbolTable {
         let label_range = symvar.label_range()?;
 
         Some((symvar, SymbolLocation { 
+            abs_source_path: self.script_root.join(local_source_path).unwrap(),
             local_source_path: local_source_path.to_owned(), 
             label_range
         }))
@@ -169,6 +185,7 @@ impl SymbolTable {
                             occupied_path: occupying_sym.path().to_sympath_buf(),
                             occupied_location: self.locate(root),
                             incoming_location: SymbolLocation { 
+                                abs_source_path: self.script_root.join(&file_path).unwrap(),
                                 local_source_path: file_path.to_owned(), 
                                 label_range: root_variant.label_range().unwrap_or_default()
                             }
@@ -213,6 +230,7 @@ impl SymbolTable {
                                 occupied_path: occupying_sym.path().to_sympath_buf(),
                                 occupied_location: self.locate(&incoming_sympath),
                                 incoming_location: SymbolLocation { 
+                                    abs_source_path: self.script_root.join(&file_path).unwrap(),
                                     local_source_path: file_path.to_owned(), 
                                     label_range: incoming_variant.label_range().unwrap_or_default()
                                 }
@@ -239,6 +257,7 @@ impl SymbolTable {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SymbolLocation {
+    pub abs_source_path: AbsPath,
     pub local_source_path: PathBuf,
     pub label_range: lsp::Range
 }
