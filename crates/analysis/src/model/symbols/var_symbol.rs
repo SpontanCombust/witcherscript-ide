@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use lsp_types as lsp;
 use witcherscript::attribs::MemberVarSpecifier;
 use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
@@ -10,7 +9,7 @@ pub struct MemberVarSymbol {
     path: DataSymbolPath,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: HashSet<MemberVarSpecifier>,
+    pub specifiers: SpecifierBitmask<MemberVarSpecifier>,
     pub type_path: TypeSymbolPath,
     pub ordinal: usize // used in the context of struct constructors
 }
@@ -41,7 +40,7 @@ impl MemberVarSymbol {
             path,
             range,
             label_range,
-            specifiers: HashSet::new(),
+            specifiers: SpecifierBitmask::new(),
             type_path: TypeSymbolPath::empty(),
             ordinal: 0
         }

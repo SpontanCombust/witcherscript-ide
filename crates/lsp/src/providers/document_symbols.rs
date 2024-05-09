@@ -260,7 +260,7 @@ impl ToDocumentSymbol for MemberVarSymbol {
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
-            kind: if self.specifiers.contains(&MemberVarSpecifier::Const) { 
+            kind: if self.specifiers.contains(MemberVarSpecifier::Const) { 
                 lsp::SymbolKind::CONSTANT 
             } else {
                 lsp::SymbolKind::FIELD

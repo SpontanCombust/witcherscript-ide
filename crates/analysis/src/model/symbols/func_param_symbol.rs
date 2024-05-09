@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use lsp_types as lsp;
 use witcherscript::attribs::FunctionParameterSpecifier;
 use crate::model::symbol_path::SymbolPath;
@@ -10,7 +9,7 @@ pub struct FunctionParameterSymbol {
     path: DataSymbolPath,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: HashSet<FunctionParameterSpecifier>,
+    pub specifiers: SpecifierBitmask<FunctionParameterSpecifier>,
     pub type_path: TypeSymbolPath,
     pub ordinal: usize
 }
@@ -41,7 +40,7 @@ impl FunctionParameterSymbol {
             path,
             range,
             label_range,
-            specifiers: HashSet::new(),
+            specifiers: SpecifierBitmask::new(),
             type_path: TypeSymbolPath::empty(),
             ordinal: 0
         }

@@ -1,4 +1,4 @@
-use std::{collections::HashSet, path::{Path, PathBuf}};
+use std::path::{Path, PathBuf};
 use lsp_types as lsp;
 use witcherscript::attribs::*;
 use crate::model::symbol_path::SymbolPath;
@@ -11,7 +11,7 @@ pub struct GlobalFunctionSymbol {
     local_source_path: PathBuf,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: HashSet<GlobalFunctionSpecifier>,
+    pub specifiers: SpecifierBitmask<GlobalFunctionSpecifier>,
     pub flavour: Option<GlobalFunctionFlavour>,
     pub return_type_path: TypeSymbolPath
 }
@@ -49,7 +49,7 @@ impl GlobalFunctionSymbol {
             local_source_path,
             range,
             label_range,
-            specifiers: HashSet::new(),
+            specifiers: SpecifierBitmask::new(),
             flavour: None,
             return_type_path: TypeSymbolPath::empty()
         }
@@ -63,7 +63,7 @@ pub struct MemberFunctionSymbol {
     path: MemberCallableSymbolPath,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: HashSet<MemberFunctionSpecifier>,
+    pub specifiers: SpecifierBitmask<MemberFunctionSpecifier>,
     pub flavour: Option<MemberFunctionFlavour>,
     pub return_type_path: TypeSymbolPath
 }
@@ -94,7 +94,7 @@ impl MemberFunctionSymbol {
             path,
             range,
             label_range,
-            specifiers: HashSet::new(),
+            specifiers: SpecifierBitmask::new(),
             flavour: None,
             return_type_path: TypeSymbolPath::empty()
         }

@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::path::Path;
 use abs_path::AbsPath;
 use lsp_types::Range;
@@ -446,7 +445,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: FunctionTraversalContext) {
-        let mut specifiers = HashSet::new();
+        let mut specifiers = SpecifierBitmask::new();
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if !specifiers.insert(spec) {
                 self.diagnostics.push(AnalysisDiagnostic { 
@@ -476,7 +475,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: PropertyTraversalContext) {
-        let mut specifiers = HashSet::new();
+        let mut specifiers = SpecifierBitmask::new();
         let mut found_access_modif_before = false;
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if matches!(spec, MemberVarSpecifier::AccessModifier(_)) {

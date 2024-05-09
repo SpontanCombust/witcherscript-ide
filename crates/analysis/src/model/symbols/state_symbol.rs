@@ -1,4 +1,4 @@
-use std::{collections::HashSet, path::{Path, PathBuf}};
+use std::path::{Path, PathBuf};
 use lsp_types as lsp;
 use witcherscript::attribs::StateSpecifier;
 use crate::model::symbol_path::SymbolPath;
@@ -11,7 +11,7 @@ pub struct StateSymbol {
     local_source_path: PathBuf,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: HashSet<StateSpecifier>,
+    pub specifiers: SpecifierBitmask<StateSpecifier>,
     pub base_state_name: Option<String>,
     /*//TODO base_state_path can be known only after the class tree can be inspected 
     the base state can belong to a super class of the statemachine class
@@ -52,7 +52,7 @@ impl StateSymbol {
             local_source_path,
             range,
             label_range,
-            specifiers: HashSet::new(),
+            specifiers: SpecifierBitmask::new(),
             base_state_name: None,
             base_state_path: None
         }

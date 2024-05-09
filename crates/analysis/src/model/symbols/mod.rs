@@ -9,6 +9,7 @@ mod function_symbol;
 mod class_symbol;
 mod state_symbol;
 mod array_type_symbol;
+mod specifier_bitmask;
 
 pub use symbol::*;
 pub use paths::*;
@@ -21,3 +22,4 @@ pub use function_symbol::*;
 pub use class_symbol::*;
 pub use array_type_symbol::*;
 pub use state_symbol::*;
+pub use specifier_bitmask::*;

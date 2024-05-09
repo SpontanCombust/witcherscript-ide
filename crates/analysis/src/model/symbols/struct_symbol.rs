@@ -1,4 +1,4 @@
-use std::{collections::HashSet, path::{Path, PathBuf}};
+use std::path::{Path, PathBuf};
 use lsp_types as lsp;
 use witcherscript::attribs::StructSpecifier;
 use crate::model::symbol_path::SymbolPath;
@@ -11,7 +11,7 @@ pub struct StructSymbol {
     local_source_path: PathBuf,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: HashSet<StructSpecifier>
+    pub specifiers: SpecifierBitmask<StructSpecifier>
 }
 
 impl Symbol for StructSymbol {
@@ -47,7 +47,7 @@ impl StructSymbol {
             range,
             label_range,
             local_source_path,
-            specifiers: HashSet::new()
+            specifiers: SpecifierBitmask::new()
         }
     }
 }
