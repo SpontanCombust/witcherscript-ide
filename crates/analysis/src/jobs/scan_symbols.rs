@@ -53,18 +53,22 @@ impl SymbolScannerVisitor<'_> {
     // Returns whether the symbol is not a duplicate
     fn check_contains(&mut self, path: &SymbolPath, range: Range) -> bool {
         if let Err(err) = self.symtab.contains(path) {
-            let (precursor_file_path, precursor_range) = err.occupied_location
-                .map(|loc| (Some(self.scripts_root.join(loc.local_source_path).unwrap()), Some(loc.label_range)))
-                .unwrap_or((None, None));
-
-            self.diagnostics.push(AnalysisDiagnostic { 
-                range, 
-                body: AnalysisError::SymbolNameTaken { 
-                    name: err.occupied_path.components().last().unwrap().name.to_string(),
-                    precursor_file_path,
-                    precursor_range
-                }.into()
-            });
+            // missing nodes don't get an error, as it's the job of syntax analysis to detect them and inform the user about them
+            // these situations are very rare anyways, so doing anything aside from showing a diagnostic is an overkill
+            if !path.has_missing() {
+                let (precursor_file_path, precursor_range) = err.occupied_location
+                    .map(|loc| (Some(self.scripts_root.join(loc.local_source_path).unwrap()), Some(loc.label_range)))
+                    .unwrap_or((None, None));
+    
+                self.diagnostics.push(AnalysisDiagnostic { 
+                    range, 
+                    body: AnalysisError::SymbolNameTaken { 
+                        name: err.occupied_path.components().last().unwrap().name.to_string(),
+                        precursor_file_path,
+                        precursor_range
+                    }.into()
+                });
+            }
             
             false
         } else {
@@ -74,15 +78,14 @@ impl SymbolScannerVisitor<'_> {
 
     /// Returns type path and type name, if it's invalid returns empty path
     fn check_type_from_identifier(&mut self, n: IdentifierNode) -> BasicTypeSymbolPath {
-        if let Some(type_name) = n.value(&self.doc) {
-            if type_name == ArrayTypeSymbol::TYPE_NAME {
-                self.diagnostics.push(AnalysisDiagnostic { 
-                    range: Range::new(n.range().end, n.range().end), 
-                    body: AnalysisError::MissingTypeArg.into()
-                });
-            } else {
-                return BasicTypeSymbolPath::new(&type_name);
-            }
+        let type_name = n.value(&self.doc);
+        if type_name == ArrayTypeSymbol::TYPE_NAME {
+            self.diagnostics.push(AnalysisDiagnostic { 
+                range: Range::new(n.range().end, n.range().end), 
+                body: AnalysisError::MissingTypeArg.into()
+            });
+        } else {
+            return BasicTypeSymbolPath::new(&type_name);
         }
 
         BasicTypeSymbolPath::empty()
@@ -91,21 +94,20 @@ impl SymbolScannerVisitor<'_> {
     /// Returns type path and type name, if it's invalid returns empty path
     fn check_type_from_type_annot(&mut self, n: TypeAnnotationNode) -> TypeSymbolPath {
         if let Some(type_arg_node) = n.type_arg() {
-            if let Some(type_name) = n.type_name().value(&self.doc) {
-                if type_name == ArrayTypeSymbol::TYPE_NAME {
-                    let type_arg_path = self.check_type_from_type_annot(type_arg_node);
-                    if !type_arg_path.is_empty() {
-                        return TypeSymbolPath::Array(ArrayTypeSymbolPath::new(type_arg_path));
-                    }   
-                } else {
-                    // since only array type takes type argument, all other uses of type arg are invalid
-                    self.diagnostics.push(AnalysisDiagnostic { 
-                        range: n.type_arg().unwrap().range(), 
-                        body: AnalysisError::UnnecessaryTypeArg.into()
-                    });
+            let type_name = n.type_name().value(&self.doc);
+            if type_name == ArrayTypeSymbol::TYPE_NAME {
+                let type_arg_path = self.check_type_from_type_annot(type_arg_node);
+                if !type_arg_path.is_empty() {
+                    return TypeSymbolPath::Array(ArrayTypeSymbolPath::new(type_arg_path));
+                }   
+            } else {
+                // since only array type takes type argument, all other uses of type arg are invalid
+                self.diagnostics.push(AnalysisDiagnostic { 
+                    range: n.type_arg().unwrap().range(), 
+                    body: AnalysisError::UnnecessaryTypeArg.into()
+                });
 
-                    return self.check_type_from_identifier(n.type_name()).into();
-                }
+                return self.check_type_from_identifier(n.type_name()).into();
             }
 
             TypeSymbolPath::empty()
@@ -131,39 +133,38 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let mut traverse_definition = false;
 
         let name_node = n.name();
-        if let Some(class_name) = name_node.value(&self.doc) {
-            let path = BasicTypeSymbolPath::new(&class_name);
-            if self.check_contains(&path, name_node.range()) {
-                let mut sym = ClassSymbol::new(path.clone(), self.local_source_path.to_owned(), n.range(), name_node.range());
-                
-                for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                    if !sym.specifiers.insert(spec) {
-                        self.diagnostics.push(AnalysisDiagnostic { 
-                            range, 
-                            body: AnalysisError::RepeatedSpecifier.into()
-                        });
-                    }
+        let class_name = name_node.value(&self.doc);
+        let path = BasicTypeSymbolPath::new(&class_name);
+        if self.check_contains(&path, name_node.range()) {
+            let mut sym = ClassSymbol::new(path.clone(), self.local_source_path.to_owned(), n.range(), name_node.range());
+            
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
+                if !sym.specifiers.insert(spec) {
+                    self.diagnostics.push(AnalysisDiagnostic { 
+                        range, 
+                        body: AnalysisError::RepeatedSpecifier.into()
+                    });
                 }
-    
-                sym.base_path = n.base().map(|base| self.check_type_from_identifier(base));
-
-
-                let this_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::This);
-                let this_sym = SpecialVarSymbol::new(this_path, path.clone());
-                self.symtab.insert(this_sym);
-
-                if let Some(base_path) = &sym.base_path {
-                    let super_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Super);
-                    let super_sym = SpecialVarSymbol::new(super_path, base_path.clone());
-                    self.symtab.insert(super_sym);
-                }
-
-
-                path.as_ref().clone_into(&mut self.current_path);
-                self.symtab.insert_primary(sym);
-                
-                traverse_definition = true;
             }
+    
+            sym.base_path = n.base().map(|base| self.check_type_from_identifier(base));
+
+
+            let this_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::This);
+            let this_sym = SpecialVarSymbol::new(this_path, path.clone());
+            self.symtab.insert(this_sym);
+
+            if let Some(base_path) = &sym.base_path {
+                let super_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Super);
+                let super_sym = SpecialVarSymbol::new(super_path, base_path.clone());
+                self.symtab.insert(super_sym);
+            }
+
+
+            path.as_ref().clone_into(&mut self.current_path);
+            self.symtab.insert_primary(sym);
+            
+            traverse_definition = true;
         }
 
         ClassDeclarationTraversalPolicy { 
@@ -184,43 +185,41 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let state_name_node = n.name();
         let state_name = state_name_node.value(&self.doc);
         let parent_name = n.parent().value(&self.doc);
-        if let (Some(state_name), Some(parent_name)) = (state_name, parent_name) {
-            let path = StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name));
-            if self.check_contains(&path, state_name_node.range()) {
-                let mut sym = StateSymbol::new(path.clone(), self.local_source_path.to_owned(), n.range(), state_name_node.range());
-    
-                for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                    if !sym.specifiers.insert(spec) {
-                        self.diagnostics.push(AnalysisDiagnostic { 
-                            range, 
-                            body: AnalysisError::RepeatedSpecifier.into()
-                        });
-                    }
+        let path = StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name));
+        if self.check_contains(&path, state_name_node.range()) {
+            let mut sym = StateSymbol::new(path.clone(), self.local_source_path.to_owned(), n.range(), state_name_node.range());
+
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
+                if !sym.specifiers.insert(spec) {
+                    self.diagnostics.push(AnalysisDiagnostic { 
+                        range, 
+                        body: AnalysisError::RepeatedSpecifier.into()
+                    });
                 }
-    
-                sym.base_state_name = n.base().and_then(|base| base.value(&self.doc)).map(|ident| ident.to_string());
-
-
-                let this_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::This);
-                let this_sym = SpecialVarSymbol::new(this_path, path.clone().into());
-                self.symtab.insert(this_sym);
-
-                //TODO super_path can only be known after all states of all base classes are known
-
-                let parent_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Parent);
-                let parent_sym = SpecialVarSymbol::new(parent_path, path.parent_class_path.clone());
-                self.symtab.insert(parent_sym);
-
-                let virtual_parent_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::VirtualParent);
-                let virtual_parent_sym = SpecialVarSymbol::new(virtual_parent_path, path.parent_class_path.clone());
-                self.symtab.insert(virtual_parent_sym);
-    
-    
-                path.as_ref().clone_into(&mut self.current_path);
-                self.symtab.insert_primary(sym);
-
-                traverse_definition = true;
             }
+
+            sym.base_state_name = n.base().map(|base| base.value(&self.doc).to_string());
+
+
+            let this_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::This);
+            let this_sym = SpecialVarSymbol::new(this_path, path.clone().into());
+            self.symtab.insert(this_sym);
+
+            //TODO super_path can only be known after all states of all base classes are known
+
+            let parent_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Parent);
+            let parent_sym = SpecialVarSymbol::new(parent_path, path.parent_class_path.clone());
+            self.symtab.insert(parent_sym);
+
+            let virtual_parent_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::VirtualParent);
+            let virtual_parent_sym = SpecialVarSymbol::new(virtual_parent_path, path.parent_class_path.clone());
+            self.symtab.insert(virtual_parent_sym);
+
+
+            path.as_ref().clone_into(&mut self.current_path);
+            self.symtab.insert_primary(sym);
+
+            traverse_definition = true;
         }
 
         StateDeclarationTraversalPolicy { 
@@ -239,25 +238,24 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let mut traverse_definition = false;
 
         let name_node = n.name();
-        if let Some(struct_name) = name_node.value(&self.doc) {
-            let path = BasicTypeSymbolPath::new(&struct_name);
-            if self.check_contains(&path, name_node.range()) {
-                let mut sym = StructSymbol::new(path, self.local_source_path.to_owned(), n.range(), name_node.range());
-    
-                for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                    if !sym.specifiers.insert(spec) {
-                        self.diagnostics.push(AnalysisDiagnostic { 
-                            range, 
-                            body: AnalysisError::RepeatedSpecifier.into()
-                        });
-                    }
-                }
-    
-                sym.path().clone_into(&mut self.current_path);
-                self.symtab.insert_primary(sym);
+        let struct_name = name_node.value(&self.doc);
+        let path = BasicTypeSymbolPath::new(&struct_name);
+        if self.check_contains(&path, name_node.range()) {
+            let mut sym = StructSymbol::new(path, self.local_source_path.to_owned(), n.range(), name_node.range());
 
-                traverse_definition = true;
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
+                if !sym.specifiers.insert(spec) {
+                    self.diagnostics.push(AnalysisDiagnostic { 
+                        range, 
+                        body: AnalysisError::RepeatedSpecifier.into()
+                    });
+                }
             }
+
+            sym.path().clone_into(&mut self.current_path);
+            self.symtab.insert_primary(sym);
+
+            traverse_definition = true;
         }
 
         StructDeclarationTraversalPolicy { 
@@ -276,16 +274,15 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let mut traverse_definition = false;
 
         let name_node = n.name();
-        if let Some(enum_name) = name_node.value(&self.doc) {
-            let path = BasicTypeSymbolPath::new(&enum_name);
-            if self.check_contains(&path, name_node.range()) {
-                let sym = EnumSymbol::new(path, self.local_source_path.to_owned(), n.range(), name_node.range());
-    
-                sym.path().clone_into(&mut self.current_path);
-                self.symtab.insert_primary(sym);
+        let enum_name = name_node.value(&self.doc);
+        let path = BasicTypeSymbolPath::new(&enum_name);
+        if self.check_contains(&path, name_node.range()) {
+            let sym = EnumSymbol::new(path, self.local_source_path.to_owned(), n.range(), name_node.range());
 
-                traverse_definition = true;
-            }
+            sym.path().clone_into(&mut self.current_path);
+            self.symtab.insert_primary(sym);
+
+            traverse_definition = true;
         }
 
         EnumDeclarationTraversalPolicy { 
@@ -301,13 +298,12 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
         let name_node = n.name();
-        if let Some(enum_variant_name) = name_node.value(&self.doc) {
-            let path = DataSymbolPath::new(&self.current_path, &enum_variant_name);
-            if self.check_contains(&path, name_node.range()) {
-                let sym = EnumVariantSymbol::new(path, n.range(), name_node.range());
-    
-                self.symtab.insert(sym);
-            }
+        let enum_variant_name = name_node.value(&self.doc);
+        let path = DataSymbolPath::new(&self.current_path, &enum_variant_name);
+        if self.check_contains(&path, name_node.range()) {
+            let sym = EnumVariantSymbol::new(path, n.range(), name_node.range());
+
+            self.symtab.insert(sym);
         }
     }
 
@@ -315,33 +311,32 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let mut traverse = false;
 
         let name_node = n.name();
-        if let Some(func_name) = name_node.value(&self.doc) {
-            let path = GlobalCallableSymbolPath::new(&func_name);
-            if self.check_contains(&path, name_node.range()) {
-                let mut sym = GlobalFunctionSymbol::new(path, self.local_source_path.to_owned(), n.range(), name_node.range());
-    
-                for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                    if !sym.specifiers.insert(spec) {
-                        self.diagnostics.push(AnalysisDiagnostic { 
-                            range, 
-                            body: AnalysisError::RepeatedSpecifier.into()
-                        });
-                    }
-                }
-    
-                sym.flavour = n.flavour().map(|flavn| flavn.value());
-    
-                sym.return_type_path = if let Some(ret_typn) = n.return_type() {
-                    self.check_type_from_type_annot(ret_typn)
-                } else {
-                    TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"))
-                };
-    
-                sym.path().clone_into(&mut self.current_path);
-                self.symtab.insert_primary(sym);
+        let func_name = name_node.value(&self.doc);
+        let path = GlobalCallableSymbolPath::new(&func_name);
+        if self.check_contains(&path, name_node.range()) {
+            let mut sym = GlobalFunctionSymbol::new(path, self.local_source_path.to_owned(), n.range(), name_node.range());
 
-                traverse = true;
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
+                if !sym.specifiers.insert(spec) {
+                    self.diagnostics.push(AnalysisDiagnostic { 
+                        range, 
+                        body: AnalysisError::RepeatedSpecifier.into()
+                    });
+                }
             }
+
+            sym.flavour = n.flavour().map(|flavn| flavn.value());
+
+            sym.return_type_path = if let Some(ret_typn) = n.return_type() {
+                self.check_type_from_type_annot(ret_typn)
+            } else {
+                TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"))
+            };
+
+            sym.path().clone_into(&mut self.current_path);
+            self.symtab.insert_primary(sym);
+
+            traverse = true;
         }
 
         GlobalFunctionDeclarationTraversalPolicy { 
@@ -361,44 +356,43 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let mut traverse = false;
 
         let name_node = n.name();
-        if let Some(func_name) = name_node.value(&self.doc) {
-            let path = MemberCallableSymbolPath::new(&self.current_path, &func_name);
-            if self.check_contains(&path, name_node.range()) {
-                let mut sym = MemberFunctionSymbol::new(path, n.range(), name_node.range());
-    
-                let mut found_access_modif_before = false;
-                for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                    if matches!(spec, MemberFunctionSpecifier::AccessModifier(_)) {
-                        if found_access_modif_before {
-                            self.diagnostics.push(AnalysisDiagnostic { 
-                                range, 
-                                body: AnalysisError::MultipleAccessModifiers.into()
-                            })
-                        }
-                        found_access_modif_before = true;
-                    }
+        let func_name = name_node.value(&self.doc);
+        let path = MemberCallableSymbolPath::new(&self.current_path, &func_name);
+        if self.check_contains(&path, name_node.range()) {
+            let mut sym = MemberFunctionSymbol::new(path, n.range(), name_node.range());
 
-                    if !sym.specifiers.insert(spec) {
+            let mut found_access_modif_before = false;
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
+                if matches!(spec, MemberFunctionSpecifier::AccessModifier(_)) {
+                    if found_access_modif_before {
                         self.diagnostics.push(AnalysisDiagnostic { 
                             range, 
-                            body: AnalysisError::RepeatedSpecifier.into()
-                        });
+                            body: AnalysisError::MultipleAccessModifiers.into()
+                        })
                     }
+                    found_access_modif_before = true;
                 }
-    
-                sym.flavour = n.flavour().map(|flavn| flavn.value());
-    
-                sym.return_type_path = if let Some(ret_typn) = n.return_type() {
-                    self.check_type_from_type_annot(ret_typn)
-                } else {
-                    TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"))
-                };
-    
-                sym.path().clone_into(&mut self.current_path);
-                self.symtab.insert(sym);
 
-                traverse = true;
+                if !sym.specifiers.insert(spec) {
+                    self.diagnostics.push(AnalysisDiagnostic { 
+                        range, 
+                        body: AnalysisError::RepeatedSpecifier.into()
+                    });
+                }
             }
+
+            sym.flavour = n.flavour().map(|flavn| flavn.value());
+
+            sym.return_type_path = if let Some(ret_typn) = n.return_type() {
+                self.check_type_from_type_annot(ret_typn)
+            } else {
+                TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"))
+            };
+
+            sym.path().clone_into(&mut self.current_path);
+            self.symtab.insert(sym);
+
+            traverse = true;
         }
 
         MemberFunctionDeclarationTraversalPolicy {
@@ -419,16 +413,15 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let mut traverse = false;
 
         let name_node = n.name();
-        if let Some(event_name) = name_node.value(&self.doc) {
-            let path = MemberCallableSymbolPath::new(&self.current_path, &event_name);
-            if self.check_contains(&path, name_node.range()) {
-                let sym = EventSymbol::new(path, n.range(), name_node.range());
-    
-                sym.path().clone_into(&mut self.current_path);
-                self.symtab.insert(sym);
+        let event_name = name_node.value(&self.doc);
+        let path = MemberCallableSymbolPath::new(&self.current_path, &event_name);
+        if self.check_contains(&path, name_node.range()) {
+            let sym = EventSymbol::new(path, n.range(), name_node.range());
 
-                traverse = true;
-            }
+            sym.path().clone_into(&mut self.current_path);
+            self.symtab.insert(sym);
+
+            traverse = true;
         }
 
         EventDeclarationTraversalPolicy { 
@@ -459,17 +452,17 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
 
         for name_node in n.names() {
-            if let Some(param_name) = name_node.value(&self.doc) {
-                let path = DataSymbolPath::new(&self.current_path, &param_name);
-                if self.check_contains(&path, name_node.range()) {
-                    let mut sym = FunctionParameterSymbol::new(path, n.range(), name_node.range());
-                    sym.specifiers = specifiers.clone();
-                    sym.type_path = type_path.clone();
-                    sym.ordinal = self.current_param_ordinal;
+            let param_name = name_node.value(&self.doc);
+            let path = DataSymbolPath::new(&self.current_path, &param_name);
+            if self.check_contains(&path, name_node.range()) {
+                let mut sym = FunctionParameterSymbol::new(path, n.range(), name_node.range());
+                sym.specifiers = specifiers.clone();
+                sym.type_path = type_path.clone();
+                sym.ordinal = self.current_param_ordinal;
 
-                    self.symtab.insert(sym);
-                }
+                self.symtab.insert(sym);
             }
+
             self.current_param_ordinal += 1;
         }
     }
@@ -500,52 +493,51 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
         
         for name_node in n.names() {
-            if let Some(var_name) = name_node.value(&self.doc) {
-                let path = DataSymbolPath::new(&self.current_path, &var_name);
-                if self.check_contains(&path, name_node.range()) {
-                    let mut sym = MemberVarSymbol::new(path, n.range(), name_node.range());
-                    sym.specifiers = specifiers.clone();
-                    sym.type_path = type_path.clone();
-                    sym.ordinal = self.current_var_ordinal;
+            let var_name = name_node.value(&self.doc);
+            let path = DataSymbolPath::new(&self.current_path, &var_name);
+            if self.check_contains(&path, name_node.range()) {
+                let mut sym = MemberVarSymbol::new(path, n.range(), name_node.range());
+                sym.specifiers = specifiers.clone();
+                sym.type_path = type_path.clone();
+                sym.ordinal = self.current_var_ordinal;
 
-                    self.symtab.insert(sym);
-                }
+                self.symtab.insert(sym);
             }
+
             self.current_var_ordinal += 1;
         }
     }
 
     fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: PropertyTraversalContext) {
         let name_node = n.name();
-        if let Some(autobind_name) = name_node.value(&self.doc) {
-            let path = DataSymbolPath::new(&self.current_path, &autobind_name);
-            if self.check_contains(&path, name_node.range()) {
-                let mut sym = AutobindSymbol::new(path, n.range(), name_node.range());
-    
-                let mut found_access_modif_before = false;
-                for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                    if matches!(spec, AutobindSpecifier::AccessModifier(_)) {
-                        if found_access_modif_before {
-                            self.diagnostics.push(AnalysisDiagnostic { 
-                                range, 
-                                body: AnalysisError::MultipleAccessModifiers.into()
-                            })
-                        }
-                        found_access_modif_before = true;
-                    }
-    
-                    if !sym.specifiers.insert(spec) {
+        let autobind_name = name_node.value(&self.doc);
+        let path = DataSymbolPath::new(&self.current_path, &autobind_name);
+        if self.check_contains(&path, name_node.range()) {
+            let mut sym = AutobindSymbol::new(path, n.range(), name_node.range());
+
+            let mut found_access_modif_before = false;
+            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
+                if matches!(spec, AutobindSpecifier::AccessModifier(_)) {
+                    if found_access_modif_before {
                         self.diagnostics.push(AnalysisDiagnostic { 
                             range, 
-                            body: AnalysisError::RepeatedSpecifier.into()
-                        });
+                            body: AnalysisError::MultipleAccessModifiers.into()
+                        })
                     }
+                    found_access_modif_before = true;
                 }
-    
-                sym.type_path = self.check_type_from_type_annot(n.autobind_type());
-    
-                self.symtab.insert(sym);
+
+                if !sym.specifiers.insert(spec) {
+                    self.diagnostics.push(AnalysisDiagnostic { 
+                        range, 
+                        body: AnalysisError::RepeatedSpecifier.into()
+                    });
+                }
             }
+
+            sym.type_path = self.check_type_from_type_annot(n.autobind_type());
+
+            self.symtab.insert(sym);
         }
     }
 
@@ -555,14 +547,13 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let type_path = self.check_type_from_type_annot(n.var_type());
     
         for name_node in n.names() {
-            if let Some(var_name) = name_node.value(&self.doc) {
-                let path = DataSymbolPath::new(&self.current_path, &var_name);
-                if self.check_contains(&path, name_node.range()) {
-                    let mut sym = LocalVarSymbol::new(path, n.range(), name_node.range());
-                    sym.type_path = type_path.clone();
+            let var_name = name_node.value(&self.doc);
+            let path = DataSymbolPath::new(&self.current_path, &var_name);
+            if self.check_contains(&path, name_node.range()) {
+                let mut sym = LocalVarSymbol::new(path, n.range(), name_node.range());
+                sym.type_path = type_path.clone();
 
-                    self.symtab.insert(sym);
-                }
+                self.symtab.insert(sym);
             }
         }
 

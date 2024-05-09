@@ -153,13 +153,13 @@ impl<'script, T> SyntaxNode<'script, T> {
     }
 
     /// Returns text that this node spans in the text document
-    /// If the node is missing returns None
+    /// If the node is missing returns [`MISSING_TEXT`]
     #[inline]
-    pub fn text<'d>(&self, doc: &'d ScriptDocument) -> Option<Cow<'d, str>> {
+    pub fn text<'d>(&self, doc: &'d ScriptDocument) -> Cow<'d, str> {
         if self.is_missing() {
-            None
+            Cow::Borrowed(MISSING_TEXT)
         } else {
-            Some(doc.text_at(self.range()))
+            doc.text_at(self.range())
         }
     }
 
@@ -263,6 +263,11 @@ impl Debug for AnyNode<'_> {
             .finish()
     }
 }
+
+
+
+/// Used to indicate a missing node when text of its span is requested
+pub const MISSING_TEXT: &'static str = "{missing}";
 
 
 

@@ -30,9 +30,9 @@ impl NamedSyntaxNode for IdentifierNode<'_> {
 }
 
 impl IdentifierNode<'_> {
-    /// Returns None if the node is marked as missing
-    pub fn value<'d>(&self, doc: &'d ScriptDocument) -> Option<Identifier<'d>> {
-        self.text(doc).map(|s| Identifier(s))
+    /// Will return [`crate::MISSING_TEXT`] if the node is marked as missing
+    pub fn value<'d>(&self, doc: &'d ScriptDocument) -> Identifier<'d> {
+        Identifier(self.text(doc))
     }
 }
 

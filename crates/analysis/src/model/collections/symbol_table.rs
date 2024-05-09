@@ -154,14 +154,16 @@ impl SymbolTable {
                 let root_variant = other.symbols.remove(root).unwrap();
                 if let Some(occupying_variant) = self.symbols.get(root) {
                     let occupying_sym = occupying_variant.as_dyn();
-                    file_errors.push(MergeConflictError {
-                        occupied_path: occupying_sym.path().to_sympath_buf(),
-                        occupied_location: self.locate(root),
-                        incoming_location: SymbolLocation { 
-                            local_source_path: file_path.to_owned(), 
-                            label_range: root_variant.label_range().unwrap_or_default()
-                        }
-                    });
+                    if !occupying_sym.path().has_missing() {
+                        file_errors.push(MergeConflictError {
+                            occupied_path: occupying_sym.path().to_sympath_buf(),
+                            occupied_location: self.locate(root),
+                            incoming_location: SymbolLocation { 
+                                local_source_path: file_path.to_owned(), 
+                                label_range: root_variant.label_range().unwrap_or_default()
+                            }
+                        });
+                    }
 
                     continue;
                 }
@@ -196,14 +198,16 @@ impl SymbolTable {
                         }
 
                         let occupying_sym = occupying_variant.as_dyn();
-                        file_errors.push(MergeConflictError {
-                            occupied_path: occupying_sym.path().to_sympath_buf(),
-                            occupied_location: self.locate(&incoming_sympath),
-                            incoming_location: SymbolLocation { 
-                                local_source_path: file_path.to_owned(), 
-                                label_range: incoming_variant.label_range().unwrap_or_default()
-                            }
-                        });
+                        if !occupying_sym.path().has_missing() {
+                            file_errors.push(MergeConflictError {
+                                occupied_path: occupying_sym.path().to_sympath_buf(),
+                                occupied_location: self.locate(&incoming_sympath),
+                                incoming_location: SymbolLocation { 
+                                    local_source_path: file_path.to_owned(), 
+                                    label_range: incoming_variant.label_range().unwrap_or_default()
+                                }
+                            });
+                        }
 
                         incoming_sympath.clone_into(&mut sympath_to_skip);
                     } else {
