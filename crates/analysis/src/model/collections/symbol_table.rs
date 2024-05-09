@@ -69,30 +69,40 @@ impl SymbolTable {
         }
     }
 
-    pub fn get(&self, path: &SymbolPath) -> Option<&SymbolVariant> {
+    pub fn get<'a>(&'a self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
         self.symbols.get(path)
     }
 
-    pub(crate) fn get_mut(&mut self, path: &SymbolPath) -> Option<&mut SymbolVariant> {
+    pub(crate) fn get_mut<'a>(&'a mut self, path: &SymbolPath) -> Option<&'a mut SymbolVariant> {
         self.symbols.get_mut(path)
     }
 
     pub fn locate(&self, path: &SymbolPath) -> Option<SymbolLocation> {
         let local_source_path = path.root()
             .and_then(|root| self.symbols.get(root))
-            .and_then(|v| v.local_source_path());
+            .and_then(|v| v.local_source_path())?;
 
         let label_range = self.symbols.get(path)
-            .and_then(|v| v.label_range());
+            .and_then(|v| v.label_range())?;
 
-        if let (Some(local_source_path), Some(label_range)) = (local_source_path, label_range) {
-            Some(SymbolLocation { 
-                local_source_path: local_source_path.to_owned(), 
-                label_range
-            })
-        } else {
-            None
-        }
+        Some(SymbolLocation { 
+            local_source_path: local_source_path.to_owned(), 
+            label_range
+        })
+    }
+
+    pub fn get_with_location<'a>(&'a self, path: &SymbolPath) -> Option<(&'a SymbolVariant, SymbolLocation)> {
+        let local_source_path = path.root()
+            .and_then(|root| self.symbols.get(root))
+            .and_then(|v| v.local_source_path())?;
+
+        let symvar = self.symbols.get(path)?;
+        let label_range = symvar.label_range()?;
+
+        Some((symvar, SymbolLocation { 
+            local_source_path: local_source_path.to_owned(), 
+            label_range
+        }))
     }
  
     pub fn remove_for_source(&mut self, local_source_path: &Path) {
@@ -354,6 +364,143 @@ impl<'st> Iterator for StateHierarchy<'st> {
         if self.current_path.is_empty() {
             None
         } else if let Some(state) = self.symtab.get(&self.current_path).and_then(|v| v.try_as_state_ref()) {
+            self.current_path = state.base_state_path.as_ref().map(|p| p.clone().into()).unwrap_or_default();
+            Some(state)
+        } else {
+            None
+        }
+    }
+}
+
+
+
+
+
+/// A type that can perform data fetching operations on many symbol tables
+/// until that data is found.
+/// Can be created from a iterator over symbol tables.
+/// Values are attempted to be fetched from symbol tables in the order that they are in the iterator.
+pub struct SymbolTableMarcher<It> {
+    it : It
+}
+
+impl<It> Clone for SymbolTableMarcher<It>
+where It: Clone {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self { it: self.it.clone() }
+    }
+}
+
+impl<'a, It> SymbolTableMarcher<It> 
+where It: Iterator<Item = &'a SymbolTable> {
+    pub fn contains(mut self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
+        while let Some(symtab) = self.it.next() {
+            symtab.contains(path)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn get(mut self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
+        while let Some(symtab) = self.it.next() {
+            if let Some(sym) = symtab.get(path) {
+                return Some(sym);
+            }
+        }
+
+        None
+    }
+
+    pub fn locate(mut self, path: &SymbolPath) -> Option<SymbolLocation> {
+        while let Some(symtab) = self.it.next() {
+            if let Some(loc) = symtab.locate(path) {
+                return Some(loc);
+            }
+        }
+
+        None
+    }
+
+    pub fn class_hierarchy(self, sympath: &SymbolPath) -> ClassHierarchyMarched<It> {
+        ClassHierarchyMarched::new(self, sympath)
+    }
+
+    pub fn state_hierarchy(self, sympath: &SymbolPath) -> StateHierarchyMarched<It> {
+        StateHierarchyMarched::new(self, sympath)
+    }
+}
+
+
+pub trait IntoSymbolTableMarcher {
+    fn into_marcher(self) -> SymbolTableMarcher<Self> where Self: Sized;
+}
+
+impl<'a, It> IntoSymbolTableMarcher for It
+where It: Iterator<Item = &'a SymbolTable> {
+    fn into_marcher(self) -> SymbolTableMarcher<Self> where Self: Sized {
+        SymbolTableMarcher { it: self }
+    }
+}
+
+
+/// Marcher variant of [`ClassHierarchy`]
+#[derive(Clone)]
+pub struct ClassHierarchyMarched<It> {
+    marcher: SymbolTableMarcher<It>,
+    current_path: SymbolPathBuf
+}
+
+impl<It> ClassHierarchyMarched<It> {
+    fn new(marcher: SymbolTableMarcher<It>, start_path: &SymbolPath) -> Self {
+        Self {
+            marcher,
+            current_path: start_path.to_owned()
+        }
+    }
+}
+
+impl<'a, It> Iterator for ClassHierarchyMarched<It> 
+where It: Iterator<Item = &'a SymbolTable> + Clone {
+    type Item = &'a ClassSymbol;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_path.is_empty() {
+            None
+        } else if let Some(class) = self.marcher.clone().get(&self.current_path).and_then(|v| v.try_as_class_ref()) {
+            self.current_path = class.base_path.as_ref().map(|p| p.clone().into()).unwrap_or_default();
+            Some(class)
+        } else {
+            None
+        }
+    }
+}
+
+
+/// Marcher variant of [`StateHierarchy`]
+#[derive(Clone)]
+pub struct StateHierarchyMarched<It> {
+    marcher: SymbolTableMarcher<It>,
+    current_path: SymbolPathBuf
+}
+
+impl<It> StateHierarchyMarched<It> {
+    fn new(marcher: SymbolTableMarcher<It>, start_path: &SymbolPath) -> Self {
+        Self {
+            marcher,
+            current_path: start_path.to_owned()
+        }
+    }
+}
+
+impl<'a, It> Iterator for StateHierarchyMarched<It> 
+where It: Iterator<Item = &'a SymbolTable> + Clone {
+    type Item = &'a StateSymbol;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_path.is_empty() {
+            None
+        } else if let Some(state) = self.marcher.clone().get(&self.current_path).and_then(|v| v.try_as_state_ref()) {
             self.current_path = state.base_state_path.as_ref().map(|p| p.clone().into()).unwrap_or_default();
             Some(state)
         } else {
