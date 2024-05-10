@@ -205,7 +205,13 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             let this_sym = SpecialVarSymbol::new(this_path, path.clone().into());
             self.symtab.insert(this_sym);
 
-            //TODO super_path can only be known after all states of all base classes are known
+            if let Some(base) = &sym.base_state_name {
+                //TODO super_path can only be evaluated after all states of all base classes are known
+            } else {
+                let super_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Super);
+                let super_sym = SpecialVarSymbol::new(super_path, BasicTypeSymbolPath::new("CScriptableState"));
+                self.symtab.insert(super_sym);
+            }
 
             let parent_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Parent);
             let parent_sym = SpecialVarSymbol::new(parent_path, path.parent_class_path.clone());
