@@ -12,8 +12,13 @@ import * as handlers from './handlers';
 export let client: lsp.LanguageClient;
 
 export function activate(context: vscode.ExtensionContext) {
+	const cfg = config.getConfiguration();
+
+	vscode.commands.executeCommand('setContext', 'witcherscript-ide.debugFeaturesEnabled', cfg.enableDebugFeatures);
+	
 	commands.registerCommands(context);
 	providers.registerProviders(context);
+
 
 	const ext = process.platform === "win32" ? ".exe" : "";
 	const serverPath = context.asAbsolutePath(
@@ -33,7 +38,6 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	};
 
-	const cfg = config.getConfiguration();
 	const initializationOptions: InitializationOptions = {
 		gameDirectory: cfg.gameDirectory,
 		contentRepositories: cfg.contentRepositories

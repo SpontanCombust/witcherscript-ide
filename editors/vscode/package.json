@@ -69,6 +69,11 @@
           },
           "default": [],
           "markdownDescription": "Paths to custom directories containing WitcherScript contents"
+        },
+        "witcherscript-ide.debug.enableDebugFeatures": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable debug features (requires extension reload)"
         }
       }
     },
@@ -98,18 +103,19 @@
         "command": "witcherscript-ide.debug.showScriptAst",
         "title": "Show script AST",
         "category": "WitcherScript-IDE (debug)",
-        "enablement": "editorLangId == 'witcherscript'"
+        "enablement": "witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
       },
       {
         "command": "witcherscript-ide.debug.contentGraphDot",
         "title": "Show content graph",
-        "category": "WitcherScript-IDE (debug)"
+        "category": "WitcherScript-IDE (debug)",
+        "enablement": "witcherscript-ide.debugFeaturesEnabled"
       },
       {
         "command": "witcherscript-ide.debug.showScriptSymbols",
         "title": "Show script symbols",
         "category": "WitcherScript-IDE (debug)",
-        "enablement": "editorLangId == 'witcherscript'"
+        "enablement": "witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
       }
     ],
     "grammars": [

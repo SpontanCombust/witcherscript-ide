@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 
 import { client } from "./extension"
+import { getConfiguration } from './config';
 import * as requests from './requests';
 import * as state from './state';
 import * as tdcp from './providers/text_document_content_providers'
@@ -14,10 +15,16 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.projects.create", commandCreateProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.scripts.importVanilla", commandImportVanillaScripts()),
         vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", commandDiffScriptWithVanilla()),
-        vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context)),
-        vscode.commands.registerCommand("witcherscript-ide.debug.contentGraphDot", commandContentGraphDot()),
-        vscode.commands.registerCommand("witcherscript-ide.debug.showScriptSymbols", commandShowScriptSymbols())
     );
+
+    const cfg = getConfiguration();
+    if (cfg.enableDebugFeatures) {
+        context.subscriptions.push(
+            vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context)),
+            vscode.commands.registerCommand("witcherscript-ide.debug.contentGraphDot", commandContentGraphDot()),
+            vscode.commands.registerCommand("witcherscript-ide.debug.showScriptSymbols", commandShowScriptSymbols())
+        );
+    }
 }
 
 type Cmd = (...args: any[]) => unknown;
