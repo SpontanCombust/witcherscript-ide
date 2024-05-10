@@ -111,8 +111,9 @@ pub struct StateSymbolPath {
 }
 
 impl StateSymbolPath {
-    pub fn new(state_name: &str, parent_class_path: BasicTypeSymbolPath) -> Self {
-        let path = SymbolPathBuf::new(&format!("{}State{}", parent_class_path.to_string(), state_name), SymbolCategory::Type);
+    pub fn new(state_name: &str, parent_class_name: &str) -> Self {
+        let path = SymbolPathBuf::new(&format!("{}State{}", parent_class_name, state_name), SymbolCategory::Type);
+        let parent_class_path = BasicTypeSymbolPath::new(parent_class_name);
 
         Self {
             path,

@@ -106,7 +106,7 @@ async fn inspect_symbol_at_position(backend: &Backend, doc_path: &AbsPath, posit
             Some(BasicTypeSymbolPath::new(&type_name).into())
         },
         PositionTargetKind::StateIdentifier { state_name, parent_name } => {
-            Some(StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name)).into())
+            Some(StateSymbolPath::new(&state_name, &parent_name).into())
         },
         // other stuff not reliably possible yet
         _ => {

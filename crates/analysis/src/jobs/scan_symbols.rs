@@ -185,7 +185,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let state_name_node = n.name();
         let state_name = state_name_node.value(&self.doc);
         let parent_name = n.parent().value(&self.doc);
-        let path = StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name));
+        let path = StateSymbolPath::new(&state_name, &parent_name);
         if self.check_contains(&path, state_name_node.range()) {
             let mut sym = StateSymbol::new(path.clone(), self.local_source_path.to_owned(), n.range(), state_name_node.range());
 
