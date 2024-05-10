@@ -7,6 +7,7 @@
 - basic syntactical analysis
 - creating and initializing [script projects](./project-system.md)
 - importing and comparing scripts with their vanilla counterparts
+- go to definition/declaration
 - support for REDKit projects
 
 **More coming soon!**
@@ -33,12 +34,19 @@ Shows a difference view between the original vanilla script and the imported, mo
 
 ### `witcherscript-ide.debug.showScriptAst`
 *"Show script AST"*  
-A debugging command. Shows the Abstract Syntax Tree  of the currently focused on script as it is uderstood by the language server.
+Shows the Abstract Syntax Tree  of the currently focused on script as it is uderstood by the language server.
 Warning: if document's identation is done with tabs instead of spaces it may not show accurate symbol span data.  
+Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
 
 ### `witcherscript-ide.debug.contentGraphDot`
 *"Show content graph"*  
-A debugging command. Shows the graph in Graphviz .dot format representing the overall content dependency graph of the workspace.
+Shows the graph in Graphviz .dot format representing the overall content dependency graph of the workspace.  
+Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
+
+### `witcherscript-ide.debug.showScriptSymbols`
+*"Show script symbols"*
+Shows code symbols that have been extracted from the currently focused on script file.  
+Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
 
 
 ## Configuration
@@ -48,3 +56,6 @@ Path to Witcher 3's root game directory (containing bin, content, Mods folders e
 
 ### `witcherscript-ide.contentRepositories`
 Paths to custom directories containing WitcherScript contents. Useful when not having Witcher 3 installed on your local machine or when simply storing scripts outside of game directory.
+
+### `witcherscript-ide.debug.enableDebugFeatures`
+Enables debug features. False by default. Requires extension reload when changed.
