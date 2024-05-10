@@ -44,17 +44,67 @@ impl<'a> TextDocumentPositionResolver<'a> {
     }
 
 
-    fn target_found(&mut self, range: lsp::Range, kind: PositionTargetKind) {
+    fn found_type_ident(&mut self, n: &IdentifierNode) {
         self.found_target = Some(PositionTarget { 
-            range,
-            kind
+            range: n.range(),
+            kind: PositionTargetKind::TypeIdentifier(n.value(self.doc).to_string())
         });
     }
+
+    fn found_state_base_ident(&mut self, n: &IdentifierNode) {
+        self.found_target = Some(PositionTarget { 
+            range: n.range(),
+            kind: PositionTargetKind::StateBaseIdentifier(n.value(self.doc).to_string())
+        });
+    }
+
+    fn found_data_ident(&mut self, n: &IdentifierNode) {
+        self.found_target = Some(PositionTarget { 
+            range: n.range(),
+            kind: PositionTargetKind::DataIdentifier(n.value(self.doc).to_string())
+        });
+    }
+
+    fn found_callable_ident(&mut self, n: &IdentifierNode) {
+        self.found_target = Some(PositionTarget { 
+            range: n.range(),
+            kind: PositionTargetKind::CallableIdentifier(n.value(self.doc).to_string())
+        });
+    }
+
+    fn found_this_kw(&mut self, n: &ThisExpressionNode) {
+        self.found_target = Some(PositionTarget { 
+            range: n.range(),
+            kind: PositionTargetKind::ThisKeyword
+        });
+    }
+
+    fn found_super_kw(&mut self, n: &SuperExpressionNode) {
+        self.found_target = Some(PositionTarget { 
+            range: n.range(),
+            kind: PositionTargetKind::SuperKeyword
+        });
+    }
+
+    fn found_parent_kw(&mut self, n: &ParentExpressionNode) {
+        self.found_target = Some(PositionTarget { 
+            range: n.range(),
+            kind: PositionTargetKind::ParentKeyword
+        });
+    }
+
+    fn found_virtual_parent_kw(&mut self, n: &VirtualParentExpressionNode) {
+        self.found_target = Some(PositionTarget { 
+            range: n.range(),
+            kind: PositionTargetKind::VirtualParentKeyword
+        });
+    }
+
 
     fn visit_type_annotation(&mut self, n: &TypeAnnotationNode) {
         let type_name = n.type_name();
         if type_name.spans_position(self.pos) {
-            self.target_found(type_name.range(), PositionTargetKind::TypeIdentifier(type_name.value(self.doc).to_string()));
+            self.found_type_ident(&type_name);
         } 
         else if let Some(type_arg) = n.type_arg() {
             if type_arg.spans_position(self.pos) {
@@ -76,10 +126,10 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let name = n.name();
 
             if name.spans_position(self.pos) {
-                self.target_found(name.range(), PositionTargetKind::TypeIdentifier(name.value(self.doc).to_string()));
+                self.found_type_ident(&name);
             }
             else if let Some(base) = n.base().filter(|base| base.spans_position(self.pos)) {
-                self.target_found(base.range(), PositionTargetKind::TypeIdentifier(base.value(self.doc).to_string()));
+                self.found_type_ident(&base);
             }
         }
 
@@ -92,13 +142,14 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let parent = n.parent();
 
             if name.spans_position(self.pos) {
-                self.target_found(name.range(), PositionTargetKind::TypeIdentifier(name.value(self.doc).to_string()));
+                // FIXME state name is not enough!
+                self.found_type_ident(&name);
             }
             else if parent.spans_position(self.pos) {
-                self.target_found(parent.range(), PositionTargetKind::TypeIdentifier(parent.value(self.doc).to_string()));
+                self.found_type_ident(&parent);
             }
             else if let Some(base) = n.base().filter(|base| base.spans_position(self.pos)) {
-                self.target_found(base.range(), PositionTargetKind::StateBaseIdentifier(base.value(self.doc).to_string()));
+                self.found_state_base_ident(&base);
             }
         }
 
@@ -110,7 +161,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let name = n.name();
 
             if name.spans_position(self.pos) {
-                self.target_found(name.range(), PositionTargetKind::TypeIdentifier(name.value(self.doc).to_string()));
+                self.found_type_ident(&name);
             }
         }
 
@@ -122,7 +173,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let name = n.name();
 
             if name.spans_position(self.pos) {
-                self.target_found(name.range(), PositionTargetKind::TypeIdentifier(name.value(self.doc).to_string()));
+                self.found_type_ident(&name);
             }
         }
 
@@ -135,7 +186,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let name = n.name();
 
             if name.spans_position(self.pos) {
-                self.target_found(name.range(), PositionTargetKind::DataIdentifier(name.value(self.doc).to_string()));
+                self.found_data_ident(&name);
             }
         }
     }
@@ -147,7 +198,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             self.visit_type_annotation(&var_type);
         }
         else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-            self.target_found(name.range(), PositionTargetKind::DataIdentifier(name.value(self.doc).to_string()));
+            self.found_data_ident(&name);
         }
     }
 
@@ -156,7 +207,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         let autobind_type = n.autobind_type();
 
         if name.spans_position(self.pos) {
-            self.target_found(name.range(), PositionTargetKind::DataIdentifier(name.value(self.doc).to_string()));
+            self.found_data_ident(&name);
         }
         else if autobind_type.spans_position(self.pos) {
             self.visit_type_annotation(&autobind_type);
@@ -168,7 +219,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let member = n.member();
 
             if member.spans_position(self.pos) {
-                self.target_found(member.range(), PositionTargetKind::DataIdentifier(member.value(self.doc).to_string()));
+                self.found_data_ident(&member);
             }
         }
 
@@ -180,7 +231,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let member = n.member();
 
             if member.spans_position(self.pos) {
-                self.target_found(member.range(), PositionTargetKind::DataIdentifier(member.value(self.doc).to_string()));
+                self.found_data_ident(&member);
             }
         }
 
@@ -191,7 +242,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         let member = n.member();
 
         if member.spans_position(self.pos) {
-            self.target_found(member.range(), PositionTargetKind::DataIdentifier(member.value(self.doc).to_string()));
+            self.found_data_ident(&member);
         }
     }
 
@@ -201,7 +252,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let name = n.name();
 
             if name.spans_position(self.pos) {
-                self.target_found(name.range(), PositionTargetKind::CallableIdentifier(name.value(self.doc).to_string()));
+                self.found_callable_ident(&name);
             }
             else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
                 self.visit_type_annotation(&rt);
@@ -216,7 +267,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let name = n.name();
 
             if name.spans_position(self.pos) {
-                self.target_found(name.range(), PositionTargetKind::CallableIdentifier(name.value(self.doc).to_string()));
+                self.found_callable_ident(&name);
             }
             else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
                 self.visit_type_annotation(&rt);
@@ -231,7 +282,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let name = n.name();
 
             if name.spans_position(self.pos) {
-                self.target_found(name.range(), PositionTargetKind::CallableIdentifier(name.value(self.doc).to_string()));
+                self.found_callable_ident(&name);
             }
             else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
                 self.visit_type_annotation(&rt);
@@ -248,7 +299,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             self.visit_type_annotation(&param_type);
         } 
         else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-            self.target_found(name.range(), PositionTargetKind::DataIdentifier(name.value(self.doc).to_string()));
+            self.found_data_ident(&name);
         }
     }
 
@@ -261,7 +312,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
                 self.visit_type_annotation(&var_type);
             } 
             else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-                self.target_found(name.range(), PositionTargetKind::DataIdentifier(name.value(self.doc).to_string()));
+                self.found_data_ident(&name);
             }
         }
 
@@ -270,28 +321,27 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
     
     fn visit_this_expr(&mut self, n: &ThisExpressionNode, _: ExpressionTraversalContext) {
-        self.target_found(n.range(), PositionTargetKind::ThisKeyword);
+        self.found_this_kw(n);
     }
 
     fn visit_super_expr(&mut self, n: &SuperExpressionNode, _: ExpressionTraversalContext) {
-        self.target_found(n.range(), PositionTargetKind::SuperKeyword);
+        self.found_super_kw(n);
     }
 
     fn visit_parent_expr(&mut self, n: &ParentExpressionNode, _: ExpressionTraversalContext) {
-        self.target_found(n.range(), PositionTargetKind::ParentKeyword);
+        self.found_parent_kw(n);
     }
 
     fn visit_virtual_parent_expr(&mut self, n: &VirtualParentExpressionNode, _: ExpressionTraversalContext) {
-        self.target_found(n.range(), PositionTargetKind::VirtualParentKeyword);
+        self.found_virtual_parent_kw(n);
     }
 
     fn visit_identifier_expr(&mut self, n: &IdentifierNode, cx: ExpressionTraversalContext) {
-        let kind = if cx == ExpressionTraversalContext::FunctionCallExpressionFunc {
-            PositionTargetKind::CallableIdentifier(n.value(self.doc).to_string())
+        if cx == ExpressionTraversalContext::FunctionCallExpressionFunc {
+            self.found_callable_ident(n);
         } else {
-            PositionTargetKind::DataIdentifier(n.value(self.doc).to_string())
+            self.found_data_ident(n);
         };
-        self.target_found(n.range(), kind);
     }
 
     fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, cx: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
@@ -299,12 +349,11 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let member = n.member();
 
             if member.spans_position(self.pos) {
-                let kind = if cx == ExpressionTraversalContext::FunctionCallExpressionFunc {
-                    PositionTargetKind::CallableIdentifier(member.value(self.doc).to_string())
+                if cx == ExpressionTraversalContext::FunctionCallExpressionFunc {
+                    self.found_callable_ident(&member);
                 } else {
-                    PositionTargetKind::DataIdentifier(member.value(self.doc).to_string())
+                    self.found_data_ident(&member);
                 };
-                self.target_found(member.range(), kind);
             }
         }
 
@@ -316,7 +365,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let class = n.class();
 
             if class.spans_position(self.pos) {
-                self.target_found(class.range(), PositionTargetKind::TypeIdentifier(class.value(self.doc).to_string()));
+                self.found_type_ident(&class);
             }
         }
 
@@ -328,7 +377,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let target_type = n.target_type();
 
             if n.target_type().spans_position(self.pos) {
-                self.target_found(target_type.range(), PositionTargetKind::TypeIdentifier(target_type.value(self.doc).to_string()));
+                self.found_type_ident(&target_type);
             }
         }
 
