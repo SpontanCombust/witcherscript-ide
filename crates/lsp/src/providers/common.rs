@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 use tower_lsp::lsp_types as lsp;
 use witcherscript::{ast::*, script_document::ScriptDocument, tokens::*};
-use witcherscript_analysis::utils::PositionSeekerPayload;
+use witcherscript_analysis::{model::symbol_path::SymbolPathBuf, utils::{PositionSeekerPayload, SymbolPathBuilderPayload}};
 
 
 /// A node visitor that can resolve a code identifier/symbol if a specified position points to such.
@@ -9,14 +9,16 @@ use witcherscript_analysis::utils::PositionSeekerPayload;
 pub(super) struct TextDocumentPositionResolver<'a> {
     pos: lsp::Position,
     doc: &'a ScriptDocument,
-    payload: Rc<RefCell<PositionSeekerPayload>>,
+    pos_seeker_payload: Rc<RefCell<PositionSeekerPayload>>,
+    sympath_builder_payload: Rc<RefCell<SymbolPathBuilderPayload>>,
     pub found_target: Option<PositionTarget>
 }
 
 #[derive(Debug, Clone)]
 pub(super) struct PositionTarget {
     pub range: lsp::Range,
-    pub kind: PositionTargetKind
+    pub kind: PositionTargetKind,
+    pub sympath_ctx: SymbolPathBuf
 }
 
 #[derive(Debug, Clone)]
@@ -41,11 +43,17 @@ pub(super) enum PositionTargetKind {
 }
 
 impl<'a> TextDocumentPositionResolver<'a> {
-    pub fn new_rc(pos: lsp::Position, doc: &'a ScriptDocument, point_seeker_payload: Rc<RefCell<PositionSeekerPayload>>) -> Rc<RefCell<Self>> {
+    pub fn new_rc(
+        pos: lsp::Position, 
+        doc: &'a ScriptDocument, 
+        pos_seeker_payload: Rc<RefCell<PositionSeekerPayload>>,
+        sympath_builder_payload: Rc<RefCell<SymbolPathBuilderPayload>>
+    ) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self {
             pos,
             doc,
-            payload: point_seeker_payload,
+            pos_seeker_payload,
+            sympath_builder_payload,
             found_target: None
         }))
     }
@@ -54,7 +62,8 @@ impl<'a> TextDocumentPositionResolver<'a> {
     fn found_type_ident(&mut self, n: &IdentifierNode) {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
-            kind: PositionTargetKind::TypeIdentifier(n.value(self.doc).to_string())
+            kind: PositionTargetKind::TypeIdentifier(n.value(self.doc).to_string()),
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
         });
     }
 
@@ -63,8 +72,9 @@ impl<'a> TextDocumentPositionResolver<'a> {
             range: name.range(),
             kind: PositionTargetKind::StateIdentifier {
                 state_name: name.value(self.doc).to_string(),
-                parent_name: parent.value(self.doc).to_string()
-            }
+                parent_name: parent.value(self.doc).to_string(),
+            },
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
         });
     }
 
@@ -74,49 +84,56 @@ impl<'a> TextDocumentPositionResolver<'a> {
             kind: PositionTargetKind::StateBaseIdentifier {
                 base_name: base.value(self.doc).to_string(),
                 parent_name: parent.value(self.doc).to_string()
-            }
+            },
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
         });
     }
 
     fn found_data_ident(&mut self, n: &IdentifierNode) {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
-            kind: PositionTargetKind::DataIdentifier(n.value(self.doc).to_string())
+            kind: PositionTargetKind::DataIdentifier(n.value(self.doc).to_string()),
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
         });
     }
 
     fn found_callable_ident(&mut self, n: &IdentifierNode) {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
-            kind: PositionTargetKind::CallableIdentifier(n.value(self.doc).to_string())
+            kind: PositionTargetKind::CallableIdentifier(n.value(self.doc).to_string()),
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
         });
     }
 
     fn found_this_kw(&mut self, n: &ThisExpressionNode) {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
-            kind: PositionTargetKind::ThisKeyword
+            kind: PositionTargetKind::ThisKeyword,
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
         });
     }
 
     fn found_super_kw(&mut self, n: &SuperExpressionNode) {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
-            kind: PositionTargetKind::SuperKeyword
+            kind: PositionTargetKind::SuperKeyword,
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
         });
     }
 
     fn found_parent_kw(&mut self, n: &ParentExpressionNode) {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
-            kind: PositionTargetKind::ParentKeyword
+            kind: PositionTargetKind::ParentKeyword,
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
         });
     }
 
     fn found_virtual_parent_kw(&mut self, n: &VirtualParentExpressionNode) {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
-            kind: PositionTargetKind::VirtualParentKeyword
+            kind: PositionTargetKind::VirtualParentKeyword,
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
         });
     }
 
@@ -142,7 +159,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
 
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -157,7 +174,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> StateDeclarationTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let name = n.name();
             let parent = n.parent();
 
@@ -176,7 +193,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> StructDeclarationTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -188,7 +205,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> EnumDeclarationTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -201,7 +218,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
     
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -234,7 +251,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let member = n.member();
 
             if member.spans_position(self.pos) {
@@ -246,7 +263,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) -> MemberDefaultValueTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let member = n.member();
 
             if member.spans_position(self.pos) {
@@ -267,7 +284,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
 
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -282,7 +299,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -297,7 +314,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -324,7 +341,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
 
     fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let var_type = n.var_type();
 
             if var_type.spans_position(self.pos) {
@@ -364,7 +381,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, cx: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let member = n.member();
 
             if member.spans_position(self.pos) {
@@ -380,7 +397,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_new_expr(&mut self, n: &NewExpressionNode, _: ExpressionTraversalContext) -> NewExpressionTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let class = n.class();
 
             if class.spans_position(self.pos) {
@@ -392,7 +409,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, _: ExpressionTraversalContext) -> TypeCastExpressionTraversalPolicy {
-        if self.payload.borrow().done {
+        if self.pos_seeker_payload.borrow().done {
             let target_type = n.target_type();
 
             if n.target_type().spans_position(self.pos) {

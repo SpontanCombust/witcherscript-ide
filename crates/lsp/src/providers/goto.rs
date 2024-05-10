@@ -2,7 +2,7 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::ast::SyntaxNodeVisitorChain;
-use witcherscript_analysis::{model::{collections::{symbol_table::SymbolLocation, IntoSymbolTableMarcher}, symbol_path::SymbolPathBuf, symbol_variant::SymbolVariant, symbols::*}, utils::PositionSeeker};
+use witcherscript_analysis::{model::{collections::{symbol_table::SymbolLocation, IntoSymbolTableMarcher}, symbol_path::SymbolPathBuf, symbol_variant::SymbolVariant, symbols::*}, utils::{PositionSeeker, SymbolPathBuilder}};
 use crate::{providers::common::PositionTargetKind, Backend, ScriptState};
 use super::common::{PositionTarget, TextDocumentPositionResolver};
 
@@ -95,7 +95,7 @@ async fn inspect_symbol_at_position(backend: &Backend, doc_path: &AbsPath, posit
         
     let symtabs = backend.symtabs.read().await;
 
-    let symtabs_iter = 
+    let symtabs_marcher = 
         content_dependency_paths.iter()
         .filter_map(|p| symtabs.get(p))
         .into_marcher();
@@ -108,6 +108,30 @@ async fn inspect_symbol_at_position(backend: &Backend, doc_path: &AbsPath, posit
         PositionTargetKind::StateIdentifier { state_name, parent_name } => {
             Some(StateSymbolPath::new(&state_name, &parent_name).into())
         },
+        PositionTargetKind::ThisKeyword => {
+            symtabs_marcher.clone()
+                .get(&SpecialVarSymbolPath::new(&position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::This))
+                .and_then(|v| v.try_as_special_var_ref())
+                .map(|sym| sym.type_path().clone())
+        },
+        PositionTargetKind::SuperKeyword => {
+            symtabs_marcher.clone()
+                .get(&SpecialVarSymbolPath::new(&position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::Super))
+                .and_then(|v| v.try_as_special_var_ref())
+                .map(|sym| sym.type_path().clone())
+        },
+        PositionTargetKind::ParentKeyword => {
+            symtabs_marcher.clone()
+                .get(&SpecialVarSymbolPath::new(&position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::Parent))
+                .and_then(|v| v.try_as_special_var_ref())
+                .map(|sym| sym.type_path().clone())
+        },
+        PositionTargetKind::VirtualParentKeyword => {
+            symtabs_marcher.clone()
+                .get(&SpecialVarSymbolPath::new(&position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::VirtualParent))
+                .and_then(|v| v.try_as_special_var_ref())
+                .map(|sym| sym.type_path().clone())
+        },
         // other stuff not reliably possible yet
         _ => {
             None
@@ -115,7 +139,7 @@ async fn inspect_symbol_at_position(backend: &Backend, doc_path: &AbsPath, posit
     };
 
     let (symvar, loc) = sympath
-        .and_then(|sympath| symtabs_iter.get_with_location(&sympath))
+        .and_then(|sympath| symtabs_marcher.get_with_location(&sympath))
         .map(|(symvar, loc)| (symvar.to_owned(), loc))
         .unzip();
 
@@ -128,10 +152,12 @@ async fn inspect_symbol_at_position(backend: &Backend, doc_path: &AbsPath, posit
 
 fn resolve_position(position: lsp::Position, script_state: &ScriptState) -> Option<PositionTarget> {
     let (pos_seeker, pos_seeker_payload) = PositionSeeker::new(position);
-    let resolver = TextDocumentPositionResolver::new_rc(position, &script_state.buffer, pos_seeker_payload.clone());
+    let (sympath_builder, sympath_builder_payload) = SymbolPathBuilder::new(&script_state.buffer);
+    let resolver = TextDocumentPositionResolver::new_rc(position, &script_state.buffer, pos_seeker_payload.clone(), sympath_builder_payload.clone());
 
     let mut chain = SyntaxNodeVisitorChain::new()
         .link(pos_seeker)
+        .link(sympath_builder)
         .link_rc(resolver.clone());
 
     script_state.script.visit_nodes(&mut chain);
