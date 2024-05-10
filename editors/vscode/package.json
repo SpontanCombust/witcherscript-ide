@@ -116,6 +116,12 @@
         "title": "Show script symbols",
         "category": "WitcherScript-IDE (debug)",
         "enablement": "witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
+      },
+      {
+        "command": "witcherscript-ide.debug.clearGlobalState",
+        "title": "Clear global cache of the extension",
+        "category": "WitcherScript-IDE (debug)",
+        "enablement": "witcherscript-ide.debugFeaturesEnabled"
       }
     ],
     "grammars": [

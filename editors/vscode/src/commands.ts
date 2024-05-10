@@ -22,7 +22,8 @@ export function registerCommands(context: vscode.ExtensionContext) {
         context.subscriptions.push(
             vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context)),
             vscode.commands.registerCommand("witcherscript-ide.debug.contentGraphDot", commandContentGraphDot()),
-            vscode.commands.registerCommand("witcherscript-ide.debug.showScriptSymbols", commandShowScriptSymbols())
+            vscode.commands.registerCommand("witcherscript-ide.debug.showScriptSymbols", commandShowScriptSymbols()),
+            vscode.commands.registerCommand("witcherscript-ide.debug.clearGlobalState", commandClearGlobalState(context))
         );
     }
 }
@@ -418,7 +419,7 @@ function commandContentGraphDot(): Cmd {
     }
 }
 
-function commandShowScriptSymbols() {
+function commandShowScriptSymbols(): Cmd {
     return async () => {
         const activeEditor = vscode.window.activeTextEditor;
         if (!activeEditor) {
@@ -441,6 +442,25 @@ function commandShowScriptSymbols() {
         
         vscode.window.showTextDocument(doc, options);
     };
+}
+
+
+
+function commandClearGlobalState(context: vscode.ExtensionContext): Cmd {
+    return async () => {
+        const keys = context.globalState.keys();
+
+        const selected = await vscode.window.showQuickPick([...keys, 'ALL']);
+        if (selected) {
+            if (selected == 'ALL') {
+                for (const key of keys) {
+                    await context.globalState.update(key, undefined);
+                }
+            } else {
+                await context.globalState.update(selected, undefined);
+            }
+        }
+    }
 }
 
 
