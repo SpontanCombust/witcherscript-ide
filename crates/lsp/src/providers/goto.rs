@@ -2,7 +2,7 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::ast::SyntaxNodeVisitorChain;
-use witcherscript_analysis::{model::{collections::{symbol_table::SymbolLocation, IntoSymbolTableMarcher}, symbol_path::SymbolPathBuf, symbol_variant::SymbolVariant, symbols::{BasicTypeSymbolPath, SymbolCategory}}, utils::PositionSeeker};
+use witcherscript_analysis::{model::{collections::{symbol_table::SymbolLocation, IntoSymbolTableMarcher}, symbol_path::SymbolPathBuf, symbol_variant::SymbolVariant, symbols::*}, utils::PositionSeeker};
 use crate::{providers::common::PositionTargetKind, Backend, ScriptState};
 use super::common::{PositionTarget, TextDocumentPositionResolver};
 
@@ -104,6 +104,9 @@ async fn inspect_symbol_at_position(backend: &Backend, doc_path: &AbsPath, posit
     let sympath: Option<SymbolPathBuf> = match position_target.kind {
         PositionTargetKind::TypeIdentifier(type_name) => {
             Some(BasicTypeSymbolPath::new(&type_name).into())
+        },
+        PositionTargetKind::StateIdentifier { state_name, parent_name } => {
+            Some(StateSymbolPath::new(&state_name, BasicTypeSymbolPath::new(&parent_name)).into())
         },
         // other stuff not reliably possible yet
         _ => {

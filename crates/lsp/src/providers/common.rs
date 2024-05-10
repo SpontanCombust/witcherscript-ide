@@ -22,7 +22,14 @@ pub(super) struct PositionTarget {
 #[derive(Debug, Clone)]
 pub(super) enum PositionTargetKind {
     TypeIdentifier(String),
-    StateBaseIdentifier(String),
+    StateIdentifier {
+        state_name: String,
+        parent_name: String
+    },
+    StateBaseIdentifier {
+        base_name: String,
+        parent_name: String
+    },
 
     DataIdentifier(String),
     CallableIdentifier(String),
@@ -51,10 +58,23 @@ impl<'a> TextDocumentPositionResolver<'a> {
         });
     }
 
-    fn found_state_base_ident(&mut self, n: &IdentifierNode) {
+    fn found_state_ident(&mut self, name: &IdentifierNode, parent: &IdentifierNode) {
         self.found_target = Some(PositionTarget { 
-            range: n.range(),
-            kind: PositionTargetKind::StateBaseIdentifier(n.value(self.doc).to_string())
+            range: name.range(),
+            kind: PositionTargetKind::StateIdentifier {
+                state_name: name.value(self.doc).to_string(),
+                parent_name: parent.value(self.doc).to_string()
+            }
+        });
+    }
+
+    fn found_state_base_ident(&mut self, base: &IdentifierNode, parent: &IdentifierNode) {
+        self.found_target = Some(PositionTarget { 
+            range: base.range(),
+            kind: PositionTargetKind::StateBaseIdentifier {
+                base_name: base.value(self.doc).to_string(),
+                parent_name: parent.value(self.doc).to_string()
+            }
         });
     }
 
@@ -142,14 +162,13 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let parent = n.parent();
 
             if name.spans_position(self.pos) {
-                // FIXME state name is not enough!
-                self.found_type_ident(&name);
+                self.found_state_ident(&name, &parent);
             }
             else if parent.spans_position(self.pos) {
                 self.found_type_ident(&parent);
             }
             else if let Some(base) = n.base().filter(|base| base.spans_position(self.pos)) {
-                self.found_state_base_ident(&base);
+                self.found_state_base_ident(&base, &parent);
             }
         }
 
