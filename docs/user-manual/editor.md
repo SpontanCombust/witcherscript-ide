@@ -44,8 +44,13 @@ Shows the graph in Graphviz .dot format representing the overall content depende
 Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
 
 ### `witcherscript-ide.debug.showScriptSymbols`
-*"Show script symbols"*
+*"Show script symbols"*  
 Shows code symbols that have been extracted from the currently focused on script file.  
+Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
+
+### `witcherscript-ide.debug.clearGlobalState`
+*"Clear global cache of the extension"*  
+Clears VSCode extension database entries created by the client. Useful mostly for testing.
 Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
 
 
@@ -58,4 +63,4 @@ Path to Witcher 3's root game directory (containing bin, content, Mods folders e
 Paths to custom directories containing WitcherScript contents. Useful when not having Witcher 3 installed on your local machine or when simply storing scripts outside of game directory.
 
 ### `witcherscript-ide.debug.enableDebugFeatures`
-Enables debug features. False by default. Requires extension reload when changed.
+Enables debug features used for development. False by default. Requires extension reload when changed.
