@@ -5,7 +5,8 @@ import * as lsp from 'vscode-languageclient/node';
 import * as commands from './commands';
 import * as state from './state';
 import * as config from './config';
-import * as providers from './providers'
+import * as providers from './providers';
+import * as handlers from './handlers';
 
 
 export let client: lsp.LanguageClient;
@@ -60,6 +61,8 @@ export function activate(context: vscode.ExtensionContext) {
 		serverOptions,
 		clientOptions
 	);
+
+	handlers.registerHandlers(client, context);
 
 	// Start the client. This will also launch the server
 	client.start().then(_ => {

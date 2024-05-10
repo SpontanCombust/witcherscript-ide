@@ -7,6 +7,10 @@ use crate::Backend;
 use super::requests::{self, ContentInfo};
 
 
+// CAUTION!!!
+// Do not change already existing ServerError codes.
+// If you have to, make sure to update them on the client side in they're explicitly checked for.
+
 impl Backend {
     pub async fn handle_projects_create_request(&self, params: requests::projects::create::Parameters) -> Result<requests::projects::create::Response> {
         let project_dir: AbsPath;

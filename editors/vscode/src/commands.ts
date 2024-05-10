@@ -237,7 +237,24 @@ function commandImportVanillaScripts(): Cmd {
             })).projectInfos;
 
             if (projectInfos.length == 0) {
-                return vscode.window.showErrorMessage("No project available to import scripts into!");
+                enum Answer {
+                    Close = "I understand",
+                    SeeManual = "See manual"
+                }
+
+                const manualUri = vscode.Uri.parse("https://spontancombust.github.io/witcherscript-ide/user-manual/project-system/");
+
+                const answer = await vscode.window.showErrorMessage(
+                    "No project available to import scripts into.\n" +
+                    "To learn about creating projects see the manual:\n" + manualUri.toString(),
+                    Answer.Close, Answer.SeeManual
+                );
+
+                if (answer == Answer.SeeManual) {
+                    await vscode.env.openExternal(manualUri);
+                }
+
+                return;
             } else {
                 const chosen = await chooseProject(projectInfos);
                 if (chosen) {

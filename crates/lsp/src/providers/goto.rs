@@ -3,7 +3,7 @@ use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::ast::SyntaxNodeVisitorChain;
 use witcherscript_analysis::{model::{collections::{symbol_table::SymbolLocation, IntoSymbolTableMarcher}, symbol_path::SymbolPathBuf, symbol_variant::SymbolVariant, symbols::*}, utils::{PositionSeeker, SymbolPathBuilder}};
-use crate::{providers::common::PositionTargetKind, Backend, ScriptState};
+use crate::{providers::common::PositionTargetKind, Backend, ScriptState, messaging::notifications};
 use super::common::{PositionTarget, TextDocumentPositionResolver};
 
 
@@ -11,7 +11,16 @@ use super::common::{PositionTarget, TextDocumentPositionResolver};
 pub async fn goto_definition(backend: &Backend, params: lsp::GotoDefinitionParams) -> Result<Option<lsp::GotoDefinitionResponse>> {
     let doc_path = AbsPath::try_from(params.text_document_position_params.text_document.uri.clone()).unwrap();
 
-    if let Some(inspected) = inspect_symbol_at_position(backend, &doc_path, params.text_document_position_params.position).await {
+    let content_path;
+    if let Some(path) = backend.source_trees.containing_content_path(&doc_path) {
+        content_path = path;
+    } 
+    else {
+        backend.client.send_notification::<notifications::client::show_foreign_script_warning::Type>(()).await;
+        return Ok(None);
+    }
+
+    if let Some(inspected) = inspect_symbol_at_position(backend, &content_path, &doc_path, params.text_document_position_params.position).await {
         Ok(Some(lsp::GotoDefinitionResponse::Link(vec![
             lsp::LocationLink {
                 origin_selection_range: Some(inspected.origin_selection_range),
@@ -29,7 +38,16 @@ pub async fn goto_definition(backend: &Backend, params: lsp::GotoDefinitionParam
 pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDeclarationParams) -> Result<Option<lsp::request::GotoDeclarationResponse>> {
     let doc_path = AbsPath::try_from(params.text_document_position_params.text_document.uri.clone()).unwrap();
 
-    if let Some(inspected) = inspect_symbol_at_position(backend, &doc_path, params.text_document_position_params.position).await {
+    let content_path;
+    if let Some(path) = backend.source_trees.containing_content_path(&doc_path) {
+        content_path = path;
+    } 
+    else {
+        backend.client.send_notification::<notifications::client::show_foreign_script_warning::Type>(()).await;
+        return Ok(None);
+    }
+
+    if let Some(inspected) = inspect_symbol_at_position(backend, &content_path, &doc_path, params.text_document_position_params.position).await {
         Ok(Some(lsp::request::GotoDeclarationResponse::Link(vec![
             lsp::LocationLink {
                 origin_selection_range: Some(inspected.origin_selection_range),
@@ -47,7 +65,16 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
 pub async fn goto_type_definition(backend: &Backend, params: lsp::request::GotoTypeDefinitionParams) -> Result<Option<lsp::request::GotoTypeDefinitionResponse>> {
     let doc_path = AbsPath::try_from(params.text_document_position_params.text_document.uri.clone()).unwrap();
 
-    if let Some(inspected) = inspect_symbol_at_position(backend, &doc_path, params.text_document_position_params.position).await {
+    let content_path;
+    if let Some(path) = backend.source_trees.containing_content_path(&doc_path) {
+        content_path = path;
+    } 
+    else {
+        backend.client.send_notification::<notifications::client::show_foreign_script_warning::Type>(()).await;
+        return Ok(None);
+    }
+
+    if let Some(inspected) = inspect_symbol_at_position(backend, &content_path, &doc_path, params.text_document_position_params.position).await {
         if inspected.symvar.as_ref().map(|symvar| symvar.as_dyn().typ().category() != SymbolCategory::Type).unwrap_or(false) {
             return Ok(None);
         }
@@ -73,15 +100,7 @@ struct Inspected {
     loc: Option<SymbolLocation>
 }
 
-async fn inspect_symbol_at_position(backend: &Backend, doc_path: &AbsPath, position: lsp::Position) -> Option<Inspected> {
-    let content_path;
-    if let Some(path) = backend.source_trees.containing_content_path(&doc_path) {
-        content_path = path;
-    } 
-    else {
-        return None;
-    }
-
+async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, doc_path: &AbsPath, position: lsp::Position) -> Option<Inspected> {
     let script_state = backend.scripts.get(doc_path)?;
     let position_target = resolve_position(position, &script_state)?;
 
