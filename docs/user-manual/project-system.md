@@ -113,7 +113,8 @@ content0 = true # added by default
 modMovement = { path = "../MovementMod" }
 ```
 
-Note that you do not have to create a manifest or even an entire project by hand. You can use *`"Initialize/Create WitcherScript project..."`* commands in the editor to either create a manifest in already existing directory or create an entirely new project directory.
+:material-information-outline: If you want to quickly create a new project or initialize one in an existing directory you can use *`"Initialize/Create WitcherScript project..."`* commands in the editor.
+<!-- TODO add a screenshot with the command being shown -->
 
 
 
