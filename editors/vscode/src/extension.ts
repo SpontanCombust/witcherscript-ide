@@ -33,8 +33,10 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	};
 
+	const cfg = config.getConfiguration();
 	const initializationOptions: InitializationOptions = {
-		config: config.getConfiguration()
+		gameDirectory: cfg.gameDirectory,
+		contentRepositories: cfg.contentRepositories
 	};
 
 	const clientOptions: lsp.LanguageClientOptions = {
@@ -94,5 +96,6 @@ export function deactivate(): Thenable<void> | undefined {
 
 
 interface InitializationOptions {
-	config: config.Config
+	gameDirectory: string,
+    contentRepositories: string[]
 }

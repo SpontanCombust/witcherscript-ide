@@ -1,16 +1,17 @@
+use std::path::PathBuf;
 use abs_path::AbsPath;
 use serde::Deserialize;
 use tower_lsp::lsp_types::notification::Notification;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
-use crate::config::Config;
 use crate::Backend;
 
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct InitializationOptions {
-    config: Config
+    game_directory: PathBuf,
+    content_repositories: Vec<PathBuf>
 }
 
 pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Result<lsp::InitializeResult> {
@@ -25,10 +26,11 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
         match serde_json::from_value::<InitializationOptions>(init_opts) {
             Ok(val) => {
                 let mut config = backend.config.write().await;
-                *config = val.config;
+                config.game_directory = val.game_directory;
+                config.content_repositories = val.content_repositories;
             },
             Err(err) => {
-                backend.reporter.log_error(format!("initializationOptions deserialization fail: {}", err)).await;
+                backend.reporter.log_error(format!("InitializationOptions deserialization fail: {}", err)).await;
             },
         }
     }
