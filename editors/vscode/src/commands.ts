@@ -6,6 +6,7 @@ import { client } from "./extension"
 import { getConfiguration } from './config';
 import * as requests from './requests';
 import * as state from './state';
+import * as utils from './utils';
 import * as tdcp from './providers/text_document_content_providers'
 
 
@@ -14,7 +15,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.projects.init", commandInitProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.projects.create", commandCreateProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.scripts.importVanilla", commandImportVanillaScripts()),
-        vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", commandDiffScriptWithVanilla()),
+        vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", commandDiffScriptWithVanilla(context)),
     );
 
     const cfg = getConfiguration();
@@ -353,7 +354,7 @@ function commandImportVanillaScripts(): Cmd {
     }
 }
 
-function commandDiffScriptWithVanilla(): Cmd {
+function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): Cmd {
     return async () => {
         if (!vscode.window.activeTextEditor) {
             vscode.window.showErrorMessage("No active editor available!");
@@ -373,7 +374,13 @@ function commandDiffScriptWithVanilla(): Cmd {
                 projectUri: currentContent.contentUri
             })).content0Info;
         } catch(error: any) {
-            return vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+            vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+
+            if (error.code == -1020) {
+                utils.showForeignScriptWarning(context);
+            }
+
+            return;
         }
 
         const currentScriptPath = currentScriptUri.fsPath;
