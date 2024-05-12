@@ -16,7 +16,7 @@ A WitcherScript project that WitcherScript IDE establishes is comprised of two t
 The manifest is a TOML file by convention called `witcherscript.toml`. It contains basic information about the project like its name and what are its dependencies. 
 The scripts directory is a subfolder literally called *"scripts"*, which contains all of project's WitcherScript files. The location of that folder can be configured in the manifest.
 
-Creating a manifest for your script mod is mandatory if you want to use more advanced code features like go to definition (available soon<!--TODO remove when ready-->). Without a manifest you are limited to syntax highlighting and syntax analysis.
+Creating a manifest for your script mod is mandatory if you want to use more advanced code features like go to definition. Without a manifest you are limited to syntax highlighting and basic syntax analysis.
 
 
 ## Manifest format
