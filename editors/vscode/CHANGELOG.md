@@ -3,6 +3,21 @@
 # Changelog
 
 
+## v0.3.0-dev.2
+
+### Features
+- Added go to definition feature, for now working for type identifiers and special vars (`this`, `super` in most cases, `parent`, `virtual_parent`). [#13](https://github.com/SpontanCombust/witcherscript-ide/issues/13)
+
+### Commands
+- Added `witcherscript-ide.debug.clearGlobalState` debug command, which clears global persistant data saved by the VSCode extension. Useful for testing by developers.
+
+### Configuration
+- Added "Enable debug features" setting, which prevents debug features such as commands from being available if not enabled. The default value is false. [#25](https://github.com/SpontanCombust/witcherscript-ide/issues/25)
+
+### Other
+- Trying to access more than very basic features such as go to definition outside of a script project should now result in showing a warning message explaining as to why that can't be done. [#33](https://github.com/SpontanCombust/witcherscript-ide/issues/33)
+
+
 ## v0.3.0-dev.1
 This is the first pre-release of the version that will finally bring "Go to" code features to the extension.
 If you find any criticial bugs make sure to submit an issue. Thank you!
@@ -21,7 +36,6 @@ If you find any criticial bugs make sure to submit an issue. Thank you!
 ### Other
 - Improved AST traversal and text retrieval performance through better memory management
 - Lessened the chance of code deadlock for diagnostics by using HashMap behind a Mutex instead of DashMap
-
 
 
 ## v0.2.1
