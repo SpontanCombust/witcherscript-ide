@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "abs-path"
-version = "0.3.0-dev.1"
+version = "0.3.0-dev.2"
 dependencies = [
  "lsp-types",
  "serde",
@@ -1273,7 +1273,7 @@ dependencies = [
 
 [[package]]
 name = "witcherscript"
-version = "0.3.0-dev.1"
+version = "0.3.0-dev.2"
 dependencies = [
  "encoding_rs_io",
  "lsp-types",
@@ -1288,7 +1288,7 @@ dependencies = [
 
 [[package]]
 name = "witcherscript-analysis"
-version = "0.3.0-dev.1"
+version = "0.3.0-dev.2"
 dependencies = [
  "abs-path",
  "lsp-types",
@@ -1303,7 +1303,7 @@ dependencies = [
 
 [[package]]
 name = "witcherscript-lsp"
-version = "0.3.0-dev.1"
+version = "0.3.0-dev.2"
 dependencies = [
  "abs-path",
  "bitmask-enum",
@@ -1323,7 +1323,7 @@ dependencies = [
 
 [[package]]
 name = "witcherscript-project"
-version = "0.3.0-dev.1"
+version = "0.3.0-dev.2"
 dependencies = [
  "abs-path",
  "dyn-clone",
@@ -1355,7 +1355,7 @@ checksum = "7e2c411759b501fb9501aac2b1b2d287a6e93e5bdcf13c25306b23e1b716dd0e"
 
 [[package]]
 name = "xtask"
-version = "0.3.0-dev.1"
+version = "0.3.0-dev.2"
 dependencies = [
  "anyhow",
  "clap",
