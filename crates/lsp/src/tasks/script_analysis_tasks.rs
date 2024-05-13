@@ -4,8 +4,8 @@ use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 use tokio::sync::mpsc;
 use abs_path::AbsPath;
 use witcherscript::Script;
-use witcherscript_analysis::diagnostics::AnalysisDiagnostic;
-use crate::{reporting::{DiagnosticGroup, IntoLspDiagnostic}, Backend, ScriptState};
+use witcherscript_diagnostics::*;
+use crate::{reporting::DiagnosticGroup, Backend, ScriptState};
 
 
 #[bitmask(u8)]
@@ -38,7 +38,7 @@ impl Backend {
                         let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
                         let diagnostics = diagnose_script(script, analysis_kinds)
                             .into_iter()
-                            .map(|d| d.into_lsp_diagnostic());
+                            .map(|d| d.into());
 
                         send.blocking_send((script_path, diagnostics)).expect("run_script_analysis mpsc::send fail");
                     }    
@@ -64,7 +64,7 @@ impl Backend {
                     let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
                     let diagnostics = diagnose_script(script, analysis_kinds)
                         .into_iter()
-                        .map(|d| d.into_lsp_diagnostic());
+                        .map(|d| d.into());
 
                     send.blocking_send((script_path, diagnostics)).expect("run_script_analysis mpsc::send fail");
                 });
@@ -77,8 +77,8 @@ impl Backend {
     }
 }
 
-fn diagnose_script(script: &Script, analysis_kinds: ScriptAnalysisKind) -> Vec<AnalysisDiagnostic> {
-    let mut diagnostics: Vec<AnalysisDiagnostic> = Vec::new();
+fn diagnose_script(script: &Script, analysis_kinds: ScriptAnalysisKind) -> Vec<Diagnostic> {
+    let mut diagnostics: Vec<Diagnostic> = Vec::new();
     
     if analysis_kinds.contains(ScriptAnalysisKind::SyntaxAnalysis) {
         witcherscript_analysis::jobs::syntax_analysis(script, &mut diagnostics);

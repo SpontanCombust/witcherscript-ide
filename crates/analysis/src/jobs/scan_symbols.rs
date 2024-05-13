@@ -1,17 +1,15 @@
 use std::path::Path;
 use abs_path::AbsPath;
 use lsp_types::Range;
-use witcherscript::attribs::AutobindSpecifier;
-use witcherscript::attribs::MemberFunctionSpecifier;
-use witcherscript::attribs::MemberVarSpecifier;
+use witcherscript::attribs::*;
 use witcherscript::script_document::ScriptDocument;
+use witcherscript::Script;
 use witcherscript::tokens::*;
 use witcherscript::ast::*;
-use witcherscript::Script;
+use witcherscript_diagnostics::*;
 use crate::model::collections::symbol_table::SymbolTable;
 use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
 use crate::model::symbols::*;
-use crate::diagnostics::*;
 
 
 pub fn scan_symbols(
@@ -20,7 +18,7 @@ pub fn scan_symbols(
     local_source_path: &Path,
     scripts_root: &AbsPath,
     symtab: &mut SymbolTable
-) -> Vec<AnalysisDiagnostic> {
+) -> Vec<Diagnostic> {
     let mut visitor = SymbolScannerVisitor {
         symtab,
         doc,
@@ -42,7 +40,7 @@ struct SymbolScannerVisitor<'a> {
     doc: &'a ScriptDocument,
     local_source_path: &'a Path,
     scripts_root: &'a AbsPath,
-    diagnostics: Vec<AnalysisDiagnostic>,
+    diagnostics: Vec<Diagnostic>,
 
     current_path: SymbolPathBuf,
     current_param_ordinal: usize,
@@ -60,9 +58,9 @@ impl SymbolScannerVisitor<'_> {
                     .map(|loc| (Some(self.scripts_root.join(loc.local_source_path).unwrap()), Some(loc.label_range)))
                     .unwrap_or((None, None));
     
-                self.diagnostics.push(AnalysisDiagnostic { 
+                self.diagnostics.push(Diagnostic { 
                     range, 
-                    body: AnalysisError::SymbolNameTaken { 
+                    kind: DiagnosticKind::SymbolNameTaken { 
                         name: err.occupied_path.components().last().unwrap().name.to_string(),
                         precursor_file_path,
                         precursor_range
@@ -80,9 +78,9 @@ impl SymbolScannerVisitor<'_> {
     fn check_type_from_identifier(&mut self, n: IdentifierNode) -> BasicTypeSymbolPath {
         let type_name = n.value(&self.doc);
         if type_name == ArrayTypeSymbol::TYPE_NAME {
-            self.diagnostics.push(AnalysisDiagnostic { 
+            self.diagnostics.push(Diagnostic { 
                 range: Range::new(n.range().end, n.range().end), 
-                body: AnalysisError::MissingTypeArg.into()
+                kind: DiagnosticKind::MissingTypeArg
             });
         } else {
             return BasicTypeSymbolPath::new(&type_name);
@@ -102,9 +100,9 @@ impl SymbolScannerVisitor<'_> {
                 }   
             } else {
                 // since only array type takes type argument, all other uses of type arg are invalid
-                self.diagnostics.push(AnalysisDiagnostic { 
+                self.diagnostics.push(Diagnostic { 
                     range: n.type_arg().unwrap().range(), 
-                    body: AnalysisError::UnnecessaryTypeArg.into()
+                    kind: DiagnosticKind::UnnecessaryTypeArg
                 });
 
                 return self.check_type_from_identifier(n.type_name()).into();
@@ -140,9 +138,9 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(AnalysisDiagnostic { 
+                    self.diagnostics.push(Diagnostic { 
                         range, 
-                        body: AnalysisError::RepeatedSpecifier.into()
+                        kind: DiagnosticKind::RepeatedSpecifier
                     });
                 }
             }
@@ -191,9 +189,9 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(AnalysisDiagnostic { 
+                    self.diagnostics.push(Diagnostic { 
                         range, 
-                        body: AnalysisError::RepeatedSpecifier.into()
+                        kind: DiagnosticKind::RepeatedSpecifier
                     });
                 }
             }
@@ -251,9 +249,9 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(AnalysisDiagnostic { 
+                    self.diagnostics.push(Diagnostic { 
                         range, 
-                        body: AnalysisError::RepeatedSpecifier.into()
+                        kind: DiagnosticKind::RepeatedSpecifier
                     });
                 }
             }
@@ -324,9 +322,9 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(AnalysisDiagnostic { 
+                    self.diagnostics.push(Diagnostic { 
                         range, 
-                        body: AnalysisError::RepeatedSpecifier.into()
+                        kind: DiagnosticKind::RepeatedSpecifier
                     });
                 }
             }
@@ -371,18 +369,18 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if matches!(spec, MemberFunctionSpecifier::AccessModifier(_)) {
                     if found_access_modif_before {
-                        self.diagnostics.push(AnalysisDiagnostic { 
+                        self.diagnostics.push(Diagnostic { 
                             range, 
-                            body: AnalysisError::MultipleAccessModifiers.into()
+                            kind: DiagnosticKind::MultipleAccessModifiers
                         })
                     }
                     found_access_modif_before = true;
                 }
 
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(AnalysisDiagnostic { 
+                    self.diagnostics.push(Diagnostic { 
                         range, 
-                        body: AnalysisError::RepeatedSpecifier.into()
+                        kind: DiagnosticKind::RepeatedSpecifier
                     });
                 }
             }
@@ -447,9 +445,9 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let mut specifiers = SpecifierBitmask::new();
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if !specifiers.insert(spec) {
-                self.diagnostics.push(AnalysisDiagnostic { 
+                self.diagnostics.push(Diagnostic { 
                     range, 
-                    body: AnalysisError::RepeatedSpecifier.into()
+                    kind: DiagnosticKind::RepeatedSpecifier
                 });
             }
         }
@@ -479,18 +477,18 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if matches!(spec, MemberVarSpecifier::AccessModifier(_)) {
                 if found_access_modif_before {
-                    self.diagnostics.push(AnalysisDiagnostic { 
+                    self.diagnostics.push(Diagnostic { 
                         range, 
-                        body: AnalysisError::MultipleAccessModifiers.into()
+                        kind: DiagnosticKind::MultipleAccessModifiers
                     })
                 }
                 found_access_modif_before = true;
             }
 
             if !specifiers.insert(spec) {
-                self.diagnostics.push(AnalysisDiagnostic { 
+                self.diagnostics.push(Diagnostic { 
                     range, 
-                    body: AnalysisError::RepeatedSpecifier.into()
+                    kind: DiagnosticKind::RepeatedSpecifier
                 });
             }
         }
@@ -525,18 +523,18 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if matches!(spec, AutobindSpecifier::AccessModifier(_)) {
                     if found_access_modif_before {
-                        self.diagnostics.push(AnalysisDiagnostic { 
+                        self.diagnostics.push(Diagnostic { 
                             range, 
-                            body: AnalysisError::MultipleAccessModifiers.into()
+                            kind: DiagnosticKind::MultipleAccessModifiers
                         })
                     }
                     found_access_modif_before = true;
                 }
 
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(AnalysisDiagnostic { 
+                    self.diagnostics.push(Diagnostic { 
                         range, 
-                        body: AnalysisError::RepeatedSpecifier.into()
+                        kind: DiagnosticKind::RepeatedSpecifier
                     });
                 }
             }

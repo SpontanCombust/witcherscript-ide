@@ -9,6 +9,7 @@ authors.workspace = true
 abs-path = { path = "../abs-path" }
 witcherscript = { path = "../core" }
 witcherscript-project = { path = "../project" }
+witcherscript-diagnostics = { path = "../diagnostics" }
 uuid.workspace = true
 thiserror.workspace = true
 lsp-types.workspace = true

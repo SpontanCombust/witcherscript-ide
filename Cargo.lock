@@ -1298,7 +1298,18 @@ dependencies = [
  "thiserror",
  "uuid",
  "witcherscript",
+ "witcherscript-diagnostics",
  "witcherscript-project",
+]
+
+[[package]]
+name = "witcherscript-diagnostics"
+version = "0.3.0-dev.2"
+dependencies = [
+ "abs-path",
+ "lsp-types",
+ "strum",
+ "strum_macros",
 ]
 
 [[package]]
@@ -1318,6 +1329,7 @@ dependencies = [
  "tower-lsp",
  "witcherscript",
  "witcherscript-analysis",
+ "witcherscript-diagnostics",
  "witcherscript-project",
 ]
 
