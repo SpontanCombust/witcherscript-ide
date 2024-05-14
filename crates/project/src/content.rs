@@ -223,7 +223,7 @@ pub enum ContentScanError {
     #[error(transparent)]
     Io(#[from] FileError<std::io::Error>),
     #[error(transparent)]
-    ManifestParse(#[from] FileError<manifest::Error>), //todo rename to ManifestRead
+    ManifestRead(#[from] FileError<manifest::Error>),
     #[error(transparent)]
     RedkitManifestRead(#[from] FileError<redkit::manifest::Error>),
     #[error("this is not content directory")]

@@ -47,6 +47,7 @@ pub enum ContentGraphError {
         manifest_path: AbsPath,
         // Location in the manifest where the name is present
         manifest_range: lsp::Range
+        //TODO list those matching
     }
 }
 
@@ -223,7 +224,7 @@ impl ContentGraph {
                     ContentScanError::Io(err) => {
                         self.errors.push(ContentGraphError::Io(err));
                     },
-                    ContentScanError::ManifestParse(err) => {
+                    ContentScanError::ManifestRead(err) => {
                         self.errors.push(ContentGraphError::ManifestRead(err))
                     },
                     ContentScanError::RedkitManifestRead(err) => {
@@ -256,7 +257,7 @@ impl ContentGraph {
                     ContentScanError::Io(err) => {
                         self.errors.push(ContentGraphError::Io(err));
                     },
-                    ContentScanError::ManifestParse(err) => {
+                    ContentScanError::ManifestRead(err) => {
                         self.errors.push(ContentGraphError::ManifestRead(err))
                     },
                     ContentScanError::RedkitManifestRead(err) => {
@@ -442,7 +443,7 @@ impl ContentGraph {
                         ContentScanError::Io(err) => {
                             self.errors.push(ContentGraphError::Io(err));
                         },
-                        ContentScanError::ManifestParse(err) => {
+                        ContentScanError::ManifestRead(err) => {
                             self.errors.push(ContentGraphError::ManifestRead(err));
                         },
                         ContentScanError::RedkitManifestRead(err) => {

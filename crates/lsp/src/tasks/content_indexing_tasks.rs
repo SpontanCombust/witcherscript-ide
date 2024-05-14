@@ -216,7 +216,7 @@ impl Backend {
             ContentScanError::Io(err) => {
                 self.reporter.log_warning(format!("Content scanning issue for \"{}\": {}", err.path, err.error)).await;
             },
-            ContentScanError::ManifestParse(err) => {
+            ContentScanError::ManifestRead(err) => {
                 self.report_manifest_read_error(err).await;
             },
             ContentScanError::RedkitManifestRead(err) => {
