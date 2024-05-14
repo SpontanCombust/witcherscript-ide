@@ -37,11 +37,13 @@ impl Into<lsp::Diagnostic> for Diagnostic {
     }
 }
 
-//TODO DiagnosticDomain here instead of DiagnosticGroup in lsp
-// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-// pub enum DiagnosticDomain {
 
-// }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DiagnosticDomain {
+    ProjectSystem,
+    SyntaxAnalysis,
+    SymbolAnalysis,
+}
 
 
 /// All diagnostics that will appear in the editor should be collected in this enum.
@@ -75,6 +77,28 @@ pub enum DiagnosticKind {
 }
 
 impl DiagnosticKind {
+    pub fn domain(&self) -> DiagnosticDomain {
+        use DiagnosticKind::*;
+
+        match self {
+            InvalidProjectManifest(_)
+            | InvalidProjectName
+            | InvalidRedkitProjectManifest(_)
+            | ProjectDependencyPathNotFound(_)
+            | ProjectDependencyNameNotFound(_)
+            | ProjectDependencyNameNotFoundAtPath(_)
+            | MultipleMatchingProjectDependencies(_) => DiagnosticDomain::ProjectSystem,
+            MissingSyntax(_)
+            | InvalidSyntax => DiagnosticDomain::SyntaxAnalysis,
+            SymbolNameTaken { .. }
+            | MissingTypeArg
+            | UnnecessaryTypeArg
+            | RepeatedSpecifier
+            | MultipleAccessModifiers => DiagnosticDomain::SymbolAnalysis,
+        }
+    }
+
+    
     fn severity(&self) -> lsp::DiagnosticSeverity {
         use DiagnosticKind::*;
 

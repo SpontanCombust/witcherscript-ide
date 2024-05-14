@@ -5,7 +5,7 @@ use tokio::sync::mpsc;
 use abs_path::AbsPath;
 use witcherscript::Script;
 use witcherscript_diagnostics::*;
-use crate::{reporting::DiagnosticGroup, Backend, ScriptState};
+use crate::{Backend, ScriptState};
 
 
 #[bitmask(u8)]
@@ -38,14 +38,14 @@ impl Backend {
                         let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
                         let diagnostics = diagnose_script(script, analysis_kinds);
 
-                        send.blocking_send((script_path, diagnostics)).expect("run_script_analysis mpsc::send fail");
+                        send.blocking_send((script_path, diagnostics, analysis_kinds)).expect("run_script_analysis mpsc::send fail");
                     }    
                 });
         });
 
-        while let Some((script_path, diags)) = recv.recv().await {
-            self.reporter.clear_diagnostics(script_path.as_ref(), DiagnosticGroup::Analysis).await;
-            self.reporter.push_diagnostics(script_path.as_ref(), diags,  DiagnosticGroup::Analysis).await;
+        while let Some((script_path, diags, kinds)) = recv.recv().await {
+            self.clear_diagnostics_for_analysis(script_path.as_ref(), kinds).await;
+            self.reporter.push_diagnostics(script_path.as_ref(), diags).await;
         }
     }
 
@@ -62,13 +62,19 @@ impl Backend {
                     let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
                     let diagnostics = diagnose_script(script, analysis_kinds);
 
-                    send.blocking_send((script_path, diagnostics)).expect("run_script_analysis mpsc::send fail");
+                    send.blocking_send((script_path, diagnostics, analysis_kinds)).expect("run_script_analysis mpsc::send fail");
                 });
         });
 
-        while let Some((script_path, diags)) = recv.recv().await {
-            self.reporter.clear_diagnostics(script_path.as_ref(), DiagnosticGroup::Analysis).await;
-            self.reporter.push_diagnostics(script_path.as_ref(), diags, DiagnosticGroup::Analysis).await;
+        while let Some((script_path, diags, kinds)) = recv.recv().await {
+            self.clear_diagnostics_for_analysis(script_path.as_ref(), kinds).await;
+            self.reporter.push_diagnostics(script_path.as_ref(), diags).await;
+        }
+    }
+
+    async fn clear_diagnostics_for_analysis(&self, path: &AbsPath, kind: ScriptAnalysisKind) {
+        if kind.contains(ScriptAnalysisKind::SyntaxAnalysis) {
+            self.reporter.clear_diagnostics(path, DiagnosticDomain::SyntaxAnalysis).await;
         }
     }
 }

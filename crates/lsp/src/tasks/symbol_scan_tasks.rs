@@ -5,7 +5,7 @@ use tokio::{sync::oneshot, time::Instant};
 use witcherscript_diagnostics::*;
 use witcherscript_analysis::{jobs, model::collections::SymbolTable};
 use witcherscript_project::SourceTreePath;
-use crate::{reporting::DiagnosticGroup, Backend, ScriptStates};
+use crate::{Backend, ScriptStates};
 
 
 impl Backend {
@@ -58,8 +58,8 @@ impl Backend {
         self.reporter.log_info(format!("Updated symbol table for content {} in {:.3}s", content_path, duration.as_secs_f32())).await;
 
         for (file_path, diagnostics) in scanning_diagnostis {
-            self.reporter.clear_diagnostics(&file_path, DiagnosticGroup::SymbolScan).await;
-            self.reporter.push_diagnostics(&file_path, diagnostics, DiagnosticGroup::SymbolScan).await;
+            self.reporter.clear_diagnostics(&file_path, DiagnosticDomain::SymbolAnalysis).await;
+            self.reporter.push_diagnostics(&file_path, diagnostics).await;
         }
     }
 }

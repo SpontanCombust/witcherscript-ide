@@ -1,6 +1,6 @@
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
-use witcherscript_diagnostics::Diagnostic;
+use witcherscript_diagnostics::{Diagnostic, DiagnosticDomain};
 use super::Reporter;
 
 
@@ -14,19 +14,12 @@ pub struct BufferedDiagnostics {
 #[derive(Debug)]
 struct BufferedDiagnostic {
     lsp_diag: lsp::Diagnostic,
-    group: DiagnosticGroup
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DiagnosticGroup {
-    ContentScan,
-    SymbolScan,
-    Analysis
+    domain: DiagnosticDomain
 }
 
 impl Reporter {
-    pub async fn push_diagnostic(&self, path: &AbsPath, diag: Diagnostic, group: DiagnosticGroup) {
-        let bd = BufferedDiagnostic { lsp_diag: diag.into(), group };
+    pub async fn push_diagnostic(&self, path: &AbsPath, diag: Diagnostic) {
+        let bd = BufferedDiagnostic { domain: diag.kind.domain(), lsp_diag: diag.into() };
         let mut diags = self.buffered_diagnostics.lock().await;
         if let Some(v) = diags.get_mut(path) {
             v.diags.push(bd);
@@ -40,8 +33,8 @@ impl Reporter {
         }
     }
 
-    pub async fn push_diagnostics(&self, path: &AbsPath, diags: impl IntoIterator<Item = Diagnostic>, group: DiagnosticGroup) {
-        let bds = diags.into_iter().map(|diag| BufferedDiagnostic { lsp_diag: diag.into(), group });
+    pub async fn push_diagnostics(&self, path: &AbsPath, diags: impl IntoIterator<Item = Diagnostic>) {
+        let bds = diags.into_iter().map(|diag| BufferedDiagnostic { domain: diag.kind.domain(), lsp_diag: diag.into() });
         let mut diags = self.buffered_diagnostics.lock().await;
         if let Some(v) = diags.get_mut(path) {
             v.diags.extend(bds);
@@ -55,10 +48,10 @@ impl Reporter {
         }
     }
 
-    pub async fn clear_diagnostics(&self, path: &AbsPath, source: DiagnosticGroup) {
+    pub async fn clear_diagnostics(&self, path: &AbsPath, domain: DiagnosticDomain) {
         let mut diags = self.buffered_diagnostics.lock().await;
         if let Some(v) = diags.get_mut(path) {
-            v.diags.retain(|d| d.group != source);
+            v.diags.retain(|d| d.domain != domain);
             v.changed = true;
         }
     }

@@ -3,12 +3,11 @@ use tokio::time::Instant;
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript_analysis::model::collections::SymbolTable;
-use witcherscript_diagnostics::{Diagnostic, DiagnosticKind};
+use witcherscript_diagnostics::*;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory, RedkitProjectDirectory};
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{ContentGraph, ContentScanner, FileError};
 use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphEdgeWithContent, GraphNode};
-use crate::reporting::DiagnosticGroup;
 use crate::Backend;
 
 
@@ -243,25 +242,25 @@ impl Backend {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::ProjectDependencyPathNotFound(content_path)
-                }, DiagnosticGroup::ContentScan).await;
+                }).await;
             },
             ContentGraphError::DependencyNameNotFound { content_name, manifest_path, manifest_range, .. } => {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::ProjectDependencyNameNotFound(content_name)
-                }, DiagnosticGroup::ContentScan).await;
+                }).await;
             },
             ContentGraphError::DependencyNameNotFoundAtPath { content_name, manifest_path, manifest_range } => {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::ProjectDependencyNameNotFoundAtPath(content_name)
-                }, DiagnosticGroup::ContentScan).await;
+                }).await;
             },
             ContentGraphError::MultipleMatchingDependencies { content_name, manifest_path, manifest_range } => {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::MultipleMatchingProjectDependencies(content_name)
-                }, DiagnosticGroup::ContentScan).await;
+                }).await;
             }
         }
     }
@@ -276,13 +275,13 @@ impl Backend {
                 self.reporter.push_diagnostic(&path, Diagnostic {
                     range: *range,
                     kind: DiagnosticKind::InvalidProjectManifest(msg.to_owned())
-                }, DiagnosticGroup::ContentScan).await;
+                }).await;
             },
             witcherscript_project::manifest::Error::InvalidNameField { range } => {
                 self.reporter.push_diagnostic(&path, Diagnostic {
                     range: *range,
                     kind: DiagnosticKind::InvalidProjectName
-                }, DiagnosticGroup::ContentScan).await;
+                }).await;
             },
         }
     }
@@ -297,7 +296,7 @@ impl Backend {
                 self.reporter.push_diagnostic(&path, Diagnostic {
                     range: lsp::Range::new(*position, *position),
                     kind: DiagnosticKind::InvalidRedkitProjectManifest(msg.to_owned())
-                }, DiagnosticGroup::ContentScan).await;
+                }).await;
             },
         }   
     }
