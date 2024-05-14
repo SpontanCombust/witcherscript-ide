@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::{Arc, Mutex}};
+use std::sync::{Arc, Mutex};
 use abs_path::AbsPath;
 use rayon::prelude::*;
 use tokio::{sync::oneshot, time::Instant};
@@ -19,6 +19,7 @@ impl Backend {
 
         for p in modified_source_paths.iter() {
             symtab.remove_for_source(p.local());
+            self.reporter.clear_diagnostics(p.absolute(), DiagnosticDomain::SymbolAnalysis).await;
         }
 
         let worker_count = std::cmp::min(rayon::current_num_threads(), modified_source_paths.len());
@@ -57,16 +58,15 @@ impl Backend {
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Updated symbol table for content {} in {:.3}s", content_path, duration.as_secs_f32())).await;
 
-        for (file_path, diagnostics) in scanning_diagnostis {
-            self.reporter.clear_diagnostics(&file_path, DiagnosticDomain::SymbolAnalysis).await;
-            self.reporter.push_diagnostics(&file_path, diagnostics).await;
+        for loc_diag in scanning_diagnostis {
+            self.reporter.push_diagnostic(&loc_diag.path, loc_diag.diagnostic).await;
         }
     }
 }
 
 struct SymbolScanWorker {
     symtab: SymbolTable,
-    diagnostics: HashMap<AbsPath, Vec<Diagnostic>>,
+    diagnostics: Vec<LocatedDiagnostic>,
     job_provider: SymbolScanJobProvider,
     scripts: Arc<ScriptStates>
 }
@@ -75,7 +75,7 @@ impl SymbolScanWorker {
     fn new(job_provider: SymbolScanJobProvider, scripts: Arc<ScriptStates>, scripts_root: Arc<AbsPath>) -> Self {
         Self {
             symtab: SymbolTable::new(scripts_root),
-            diagnostics: HashMap::new(),
+            diagnostics: Vec::new(),
             job_provider,
             scripts
         }
@@ -84,19 +84,18 @@ impl SymbolScanWorker {
     fn work(&mut self) {
         while let Some(job) = self.job_provider.poll() {
             let script_state = self.scripts.get(job.source_path.absolute()).unwrap();
-            let diagnostics = jobs::scan_symbols(
+            jobs::scan_symbols(
                 &script_state.script, 
                 &script_state.buffer, 
                 &job.source_path.local(),
                 &job.source_path.script_root(),
-                &mut self.symtab
+                &mut self.symtab,
+                &mut self.diagnostics
             );
-
-            self.diagnostics.insert(job.source_path.into_absolute(), diagnostics);
         }
     }
 
-    fn finish(self) -> (SymbolTable, HashMap<AbsPath, Vec<Diagnostic>>) {
+    fn finish(self) -> (SymbolTable, Vec<LocatedDiagnostic>) {
         (self.symtab, self.diagnostics)
     }
 }

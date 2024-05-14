@@ -156,16 +156,14 @@ impl SymbolTable {
 
 
 
-    pub(crate) fn merge(&mut self, mut other: Self) -> HashMap<PathBuf, Vec<MergeConflictError>> {
-        let mut errors = HashMap::new();
+    pub(crate) fn merge(&mut self, mut other: Self) -> Vec<MergeConflictError> {
+        let mut errors = Vec::new();
         if other.is_empty() {
             return errors;
         }
 
         let mut root_children_sympaths = Vec::new();
         for (file_path, sympath_roots) in other.source_path_assocs {
-            let mut file_errors = Vec::new();
-
             self.source_path_assocs.entry(file_path.clone())
                 .or_default();
 
@@ -174,7 +172,7 @@ impl SymbolTable {
                 if let Some(occupying_variant) = self.symbols.get(root) {
                     let occupying_sym = occupying_variant.as_dyn();
                     if !occupying_sym.path().has_missing() {
-                        file_errors.push(MergeConflictError {
+                        errors.push(MergeConflictError {
                             occupied_path: occupying_sym.path().to_sympath_buf(),
                             occupied_location: self.locate(root),
                             incoming_location: SymbolLocation { 
@@ -220,7 +218,7 @@ impl SymbolTable {
 
                         let occupying_sym = occupying_variant.as_dyn();
                         if !occupying_sym.path().has_missing() {
-                            file_errors.push(MergeConflictError {
+                            errors.push(MergeConflictError {
                                 occupied_path: occupying_sym.path().to_sympath_buf(),
                                 occupied_location: self.locate(&incoming_sympath),
                                 incoming_location: SymbolLocation { 
@@ -241,8 +239,6 @@ impl SymbolTable {
 
                 root_children_sympaths.clear();
             }
-
-            errors.insert(file_path.clone(), file_errors);
         }
 
         errors

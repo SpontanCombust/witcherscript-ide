@@ -17,21 +17,21 @@ pub fn scan_symbols(
     doc: &ScriptDocument, 
     local_source_path: &Path,
     scripts_root: &AbsPath,
-    symtab: &mut SymbolTable
-) -> Vec<Diagnostic> {
+    symtab: &mut SymbolTable,
+    diagnostics: &mut Vec<LocatedDiagnostic>
+) {
     let mut visitor = SymbolScannerVisitor {
         symtab,
         doc,
         local_source_path,
         scripts_root,
-        diagnostics: Vec::new(),
+        diagnostics,
         current_path: SymbolPathBuf::empty(),
         current_param_ordinal: 0,
         current_var_ordinal: 0
     };
 
     script.visit_nodes(&mut visitor);
-    visitor.diagnostics
 }
 
 
@@ -40,7 +40,7 @@ struct SymbolScannerVisitor<'a> {
     doc: &'a ScriptDocument,
     local_source_path: &'a Path,
     scripts_root: &'a AbsPath,
-    diagnostics: Vec<Diagnostic>,
+    diagnostics: &'a mut Vec<LocatedDiagnostic>,
 
     current_path: SymbolPathBuf,
     current_param_ordinal: usize,
@@ -58,13 +58,16 @@ impl SymbolScannerVisitor<'_> {
                     .map(|loc| (Some(self.scripts_root.join(loc.local_source_path).unwrap()), Some(loc.label_range)))
                     .unwrap_or((None, None));
     
-                self.diagnostics.push(Diagnostic { 
-                    range, 
-                    kind: DiagnosticKind::SymbolNameTaken { 
-                        name: err.occupied_path.components().last().unwrap().name.to_string(),
-                        precursor_file_path,
-                        precursor_range
-                    }.into()
+                self.diagnostics.push(LocatedDiagnostic { 
+                    path: self.symtab.script_root().join(self.local_source_path).unwrap(), 
+                    diagnostic: Diagnostic { 
+                        range, 
+                        kind: DiagnosticKind::SymbolNameTaken { 
+                            name: err.occupied_path.components().last().unwrap().name.to_string(),
+                            precursor_file_path,
+                            precursor_range
+                        }
+                    }
                 });
             }
             
@@ -78,9 +81,12 @@ impl SymbolScannerVisitor<'_> {
     fn check_type_from_identifier(&mut self, n: IdentifierNode) -> BasicTypeSymbolPath {
         let type_name = n.value(&self.doc);
         if type_name == ArrayTypeSymbol::TYPE_NAME {
-            self.diagnostics.push(Diagnostic { 
-                range: Range::new(n.range().end, n.range().end), 
-                kind: DiagnosticKind::MissingTypeArg
+            self.diagnostics.push(LocatedDiagnostic { 
+                path: self.symtab.script_root().join(self.local_source_path).unwrap(), 
+                diagnostic: Diagnostic { 
+                    range: n.range(), 
+                    kind: DiagnosticKind::MissingTypeArg
+                }
             });
         } else {
             return BasicTypeSymbolPath::new(&type_name);
@@ -100,9 +106,12 @@ impl SymbolScannerVisitor<'_> {
                 }   
             } else {
                 // since only array type takes type argument, all other uses of type arg are invalid
-                self.diagnostics.push(Diagnostic { 
-                    range: n.type_arg().unwrap().range(), 
-                    kind: DiagnosticKind::UnnecessaryTypeArg
+                self.diagnostics.push(LocatedDiagnostic { 
+                    path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                    diagnostic: Diagnostic { 
+                        range: n.type_arg().unwrap().range(), 
+                        kind: DiagnosticKind::UnnecessaryTypeArg
+                    }
                 });
 
                 return self.check_type_from_identifier(n.type_name()).into();
@@ -138,9 +147,12 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(Diagnostic { 
-                        range, 
-                        kind: DiagnosticKind::RepeatedSpecifier
+                    self.diagnostics.push(LocatedDiagnostic { 
+                        path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                        diagnostic: Diagnostic { 
+                            range, 
+                            kind: DiagnosticKind::RepeatedSpecifier
+                        }
                     });
                 }
             }
@@ -189,9 +201,12 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(Diagnostic { 
-                        range, 
-                        kind: DiagnosticKind::RepeatedSpecifier
+                    self.diagnostics.push(LocatedDiagnostic { 
+                        path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                        diagnostic: Diagnostic { 
+                            range, 
+                            kind: DiagnosticKind::RepeatedSpecifier
+                        }
                     });
                 }
             }
@@ -249,9 +264,12 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(Diagnostic { 
-                        range, 
-                        kind: DiagnosticKind::RepeatedSpecifier
+                    self.diagnostics.push(LocatedDiagnostic { 
+                        path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                        diagnostic: Diagnostic { 
+                            range, 
+                            kind: DiagnosticKind::RepeatedSpecifier
+                        }
                     });
                 }
             }
@@ -322,9 +340,12 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(Diagnostic { 
-                        range, 
-                        kind: DiagnosticKind::RepeatedSpecifier
+                    self.diagnostics.push(LocatedDiagnostic { 
+                        path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                        diagnostic: Diagnostic { 
+                            range, 
+                            kind: DiagnosticKind::RepeatedSpecifier
+                        }
                     });
                 }
             }
@@ -369,18 +390,24 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if matches!(spec, MemberFunctionSpecifier::AccessModifier(_)) {
                     if found_access_modif_before {
-                        self.diagnostics.push(Diagnostic { 
-                            range, 
-                            kind: DiagnosticKind::MultipleAccessModifiers
-                        })
+                        self.diagnostics.push(LocatedDiagnostic { 
+                            path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                            diagnostic: Diagnostic { 
+                                range, 
+                                kind: DiagnosticKind::MultipleAccessModifiers
+                            }
+                        });
                     }
                     found_access_modif_before = true;
                 }
 
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(Diagnostic { 
-                        range, 
-                        kind: DiagnosticKind::RepeatedSpecifier
+                    self.diagnostics.push(LocatedDiagnostic { 
+                        path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                        diagnostic: Diagnostic { 
+                            range, 
+                            kind: DiagnosticKind::RepeatedSpecifier
+                        }
                     });
                 }
             }
@@ -445,9 +472,12 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let mut specifiers = SpecifierBitmask::new();
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if !specifiers.insert(spec) {
-                self.diagnostics.push(Diagnostic { 
-                    range, 
-                    kind: DiagnosticKind::RepeatedSpecifier
+                self.diagnostics.push(LocatedDiagnostic { 
+                    path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                    diagnostic: Diagnostic { 
+                        range, 
+                        kind: DiagnosticKind::RepeatedSpecifier
+                    }
                 });
             }
         }
@@ -477,18 +507,24 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if matches!(spec, MemberVarSpecifier::AccessModifier(_)) {
                 if found_access_modif_before {
-                    self.diagnostics.push(Diagnostic { 
-                        range, 
-                        kind: DiagnosticKind::MultipleAccessModifiers
-                    })
+                    self.diagnostics.push(LocatedDiagnostic { 
+                        path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                        diagnostic: Diagnostic { 
+                            range, 
+                            kind: DiagnosticKind::MultipleAccessModifiers
+                        }
+                    });
                 }
                 found_access_modif_before = true;
             }
 
             if !specifiers.insert(spec) {
-                self.diagnostics.push(Diagnostic { 
-                    range, 
-                    kind: DiagnosticKind::RepeatedSpecifier
+                self.diagnostics.push(LocatedDiagnostic { 
+                    path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                    diagnostic: Diagnostic { 
+                        range, 
+                        kind: DiagnosticKind::RepeatedSpecifier
+                    }
                 });
             }
         }
@@ -523,18 +559,24 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if matches!(spec, AutobindSpecifier::AccessModifier(_)) {
                     if found_access_modif_before {
-                        self.diagnostics.push(Diagnostic { 
-                            range, 
-                            kind: DiagnosticKind::MultipleAccessModifiers
-                        })
+                        self.diagnostics.push(LocatedDiagnostic { 
+                            path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                            diagnostic: Diagnostic { 
+                                range, 
+                                kind: DiagnosticKind::MultipleAccessModifiers
+                            }
+                        });
                     }
                     found_access_modif_before = true;
                 }
 
                 if !sym.specifiers.insert(spec) {
-                    self.diagnostics.push(Diagnostic { 
-                        range, 
-                        kind: DiagnosticKind::RepeatedSpecifier
+                    self.diagnostics.push(LocatedDiagnostic { 
+                        path: self.symtab.script_root().join(self.local_source_path).unwrap(),  
+                        diagnostic: Diagnostic { 
+                            range, 
+                            kind: DiagnosticKind::RepeatedSpecifier
+                        }
                     });
                 }
             }
