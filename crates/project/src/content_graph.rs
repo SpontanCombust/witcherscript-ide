@@ -46,8 +46,9 @@ pub enum ContentGraphError {
         /// Manifest from which this error originated
         manifest_path: AbsPath,
         // Location in the manifest where the name is present
-        manifest_range: lsp::Range
-        //TODO list those matching
+        manifest_range: lsp::Range,
+
+        matching_paths: Vec<AbsPath>
     }
 }
 
@@ -325,8 +326,8 @@ impl ContentGraph {
             Ok(dep_idx) => {
                 self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
             },
-            Err(dep_count) => {
-                if dep_count == 0 {
+            Err(matching_paths) => {
+                if matching_paths.is_empty() {
                     self.errors.push(ContentGraphError::DependencyNameNotFound { 
                         content_name: dependency_name.to_owned(), 
                         manifest_path: manifest_path.to_owned(),
@@ -336,7 +337,8 @@ impl ContentGraph {
                     self.errors.push(ContentGraphError::MultipleMatchingDependencies { 
                         content_name: dependency_name.to_owned(), 
                         manifest_path: manifest_path.to_owned(), 
-                        manifest_range: dependency_name_range.to_owned()
+                        manifest_range: dependency_name_range.to_owned(),
+                        matching_paths
                     });
                 }
             }
@@ -344,9 +346,8 @@ impl ContentGraph {
     }
 
     /// If there is just one repository content with the name returns Ok with the index.
-    /// Otherwise returns Err with the number of contents encountered with that name.
-    /// So if it wasn't found returns Err(0) or if more than one with than name was found returns Err(2) for example. 
-    fn get_dependency_node_index_by_name(&mut self, name: &str, repo_nodes: &mut Vec<GraphNode>) -> Result<usize, usize> {
+    /// Otherwise returns Err with the Vec of matching content paths.
+    fn get_dependency_node_index_by_name(&mut self, name: &str, repo_nodes: &mut Vec<GraphNode>) -> Result<usize, Vec<AbsPath>> {
         let mut candidates = Vec::new();
         for (i, n) in self.nodes.iter().enumerate() {
             if n.in_repository && n.content.content_name() == name {
@@ -358,7 +359,9 @@ impl ContentGraph {
         if candidates_len == 1 {
             Ok(candidates[0])
         } else if candidates_len > 1 {
-            Err(candidates_len)
+            Err(candidates.into_iter()
+                .map(|i| self.nodes[i].content.path().to_owned())
+                .collect())
         } else {
             for (i, n) in repo_nodes.iter().enumerate() {
                 if n.content.content_name() == name {
@@ -368,13 +371,15 @@ impl ContentGraph {
 
             let candidates_len = candidates.len();
             if candidates_len == 0 {
-                Err(0)
+                Err(Vec::new())
             } else if candidates_len == 1 {
                 let target_node = repo_nodes.remove(candidates[0]);
                 let target_node_idx = self.insert_node(target_node);
                 Ok(target_node_idx)
             } else {
-                Err(candidates_len)
+                Err(candidates.into_iter()
+                    .map(|i| repo_nodes[i].content.path().to_owned())
+                    .collect())
             }
         }
     }

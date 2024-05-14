@@ -256,10 +256,10 @@ impl Backend {
                     kind: DiagnosticKind::ProjectDependencyNameNotFoundAtPath(content_name)
                 }).await;
             },
-            ContentGraphError::MultipleMatchingDependencies { content_name, manifest_path, manifest_range } => {
+            ContentGraphError::MultipleMatchingDependencies { content_name, manifest_path, manifest_range, matching_paths } => {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
-                    kind: DiagnosticKind::MultipleMatchingProjectDependencies(content_name)
+                    kind: DiagnosticKind::MultipleMatchingProjectDependencies { content_name, matching_paths }
                 }).await;
             }
         }

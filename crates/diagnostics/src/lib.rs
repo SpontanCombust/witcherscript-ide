@@ -58,7 +58,10 @@ pub enum DiagnosticKind {
     ProjectDependencyPathNotFound(PathBuf),
     ProjectDependencyNameNotFound(String),
     ProjectDependencyNameNotFoundAtPath(String),
-    MultipleMatchingProjectDependencies(String),
+    MultipleMatchingProjectDependencies {
+        content_name: String,
+        matching_paths: Vec<AbsPath>
+    },
 
     // syntax analysis
     MissingSyntax(String),
@@ -87,7 +90,7 @@ impl DiagnosticKind {
             | ProjectDependencyPathNotFound(_)
             | ProjectDependencyNameNotFound(_)
             | ProjectDependencyNameNotFoundAtPath(_)
-            | MultipleMatchingProjectDependencies(_) => DiagnosticDomain::ProjectSystem,
+            | MultipleMatchingProjectDependencies { .. } => DiagnosticDomain::ProjectSystem,
             MissingSyntax(_)
             | InvalidSyntax => DiagnosticDomain::SyntaxAnalysis,
             SymbolNameTaken { .. }
@@ -109,7 +112,7 @@ impl DiagnosticKind {
             ProjectDependencyPathNotFound(_) => lsp::DiagnosticSeverity::ERROR,
             ProjectDependencyNameNotFound(_) => lsp::DiagnosticSeverity::ERROR,
             ProjectDependencyNameNotFoundAtPath(_) => lsp::DiagnosticSeverity::ERROR,
-            MultipleMatchingProjectDependencies(_) => lsp::DiagnosticSeverity::ERROR,
+            MultipleMatchingProjectDependencies { .. } => lsp::DiagnosticSeverity::ERROR,
 
             MissingSyntax(_) => lsp::DiagnosticSeverity::ERROR,
             InvalidSyntax => lsp::DiagnosticSeverity::ERROR,
@@ -132,7 +135,7 @@ impl DiagnosticKind {
             ProjectDependencyPathNotFound(p) => format!("Dependency could not be found at path \"{}\"", p.display()),
             ProjectDependencyNameNotFound(n) => format!("Dependency could not be found with name \"{n}\""),
             ProjectDependencyNameNotFoundAtPath(n) => format!("Dependency with name \"{n}\" could not be found at specified path"),
-            MultipleMatchingProjectDependencies(n) => format!("Multiple matching contents for dependency with name \"{n}\""),
+            MultipleMatchingProjectDependencies { content_name: project_name, matching_paths } => format!("Multiple matching contents for dependency with name \"{project_name}\": {:?}", matching_paths.into_iter().map(|p| p.to_string()).collect::<Vec<_>>()),
 
             MissingSyntax(s) => format!("Syntax error: expected {}", s),
             InvalidSyntax => "Syntax error: unexpected syntax".into(),
