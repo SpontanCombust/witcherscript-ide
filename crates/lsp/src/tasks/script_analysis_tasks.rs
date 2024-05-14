@@ -36,9 +36,7 @@ impl Backend {
                         let script_state = kv.value();
                         let script = &script_state.script;
                         let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
-                        let diagnostics = diagnose_script(script, analysis_kinds)
-                            .into_iter()
-                            .map(|d| d.into());
+                        let diagnostics = diagnose_script(script, analysis_kinds);
 
                         send.blocking_send((script_path, diagnostics)).expect("run_script_analysis mpsc::send fail");
                     }    
@@ -62,9 +60,7 @@ impl Backend {
                     let script_state = kv.value();
                     let script = &script_state.script;
                     let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
-                    let diagnostics = diagnose_script(script, analysis_kinds)
-                        .into_iter()
-                        .map(|d| d.into());
+                    let diagnostics = diagnose_script(script, analysis_kinds);
 
                     send.blocking_send((script_path, diagnostics)).expect("run_script_analysis mpsc::send fail");
                 });

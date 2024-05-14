@@ -1,5 +1,6 @@
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
+use witcherscript_diagnostics::Diagnostic;
 use super::Reporter;
 
 
@@ -12,7 +13,7 @@ pub struct BufferedDiagnostics {
 
 #[derive(Debug)]
 struct BufferedDiagnostic {
-    diag: lsp::Diagnostic,
+    lsp_diag: lsp::Diagnostic,
     group: DiagnosticGroup
 }
 
@@ -24,8 +25,8 @@ pub enum DiagnosticGroup {
 }
 
 impl Reporter {
-    pub async fn push_diagnostic(&self, path: &AbsPath, diag: lsp::Diagnostic, group: DiagnosticGroup) {
-        let bd = BufferedDiagnostic { diag, group };
+    pub async fn push_diagnostic(&self, path: &AbsPath, diag: Diagnostic, group: DiagnosticGroup) {
+        let bd = BufferedDiagnostic { lsp_diag: diag.into(), group };
         let mut diags = self.buffered_diagnostics.lock().await;
         if let Some(v) = diags.get_mut(path) {
             v.diags.push(bd);
@@ -39,8 +40,8 @@ impl Reporter {
         }
     }
 
-    pub async fn push_diagnostics(&self, path: &AbsPath, diags: impl IntoIterator<Item = lsp::Diagnostic>, group: DiagnosticGroup) {
-        let bds = diags.into_iter().map(|diag| BufferedDiagnostic { diag, group });
+    pub async fn push_diagnostics(&self, path: &AbsPath, diags: impl IntoIterator<Item = Diagnostic>, group: DiagnosticGroup) {
+        let bds = diags.into_iter().map(|diag| BufferedDiagnostic { lsp_diag: diag.into(), group });
         let mut diags = self.buffered_diagnostics.lock().await;
         if let Some(v) = diags.get_mut(path) {
             v.diags.extend(bds);
@@ -88,7 +89,7 @@ impl Reporter {
             if v.changed {
                 let uri = path.to_uri();
     
-                let to_publish = v.diags.iter().map(|d| d.diag.clone()).collect();
+                let to_publish = v.diags.iter().map(|d| d.lsp_diag.clone()).collect();
                 v.changed = false;
         
                 self.client.publish_diagnostics(uri, to_publish, None).await;
@@ -107,7 +108,7 @@ impl Reporter {
         for (k, v) in diags.iter_mut().filter(|(_, v)| v.changed) {
             let uri = k.to_uri();
 
-            let to_publish = v.diags.iter().map(|d| d.diag.clone()).collect();
+            let to_publish = v.diags.iter().map(|d| d.lsp_diag.clone()).collect();
             v.changed = false;
 
             self.client.publish_diagnostics(uri, to_publish, None).await;

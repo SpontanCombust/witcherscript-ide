@@ -243,25 +243,25 @@ impl Backend {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::ProjectDependencyPathNotFound(content_path)
-                }.into(), DiagnosticGroup::ContentScan).await;
+                }, DiagnosticGroup::ContentScan).await;
             },
             ContentGraphError::DependencyNameNotFound { content_name, manifest_path, manifest_range, .. } => {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::ProjectDependencyNameNotFound(content_name)
-                }.into(), DiagnosticGroup::ContentScan).await;
+                }, DiagnosticGroup::ContentScan).await;
             },
             ContentGraphError::DependencyNameNotFoundAtPath { content_name, manifest_path, manifest_range } => {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::ProjectDependencyNameNotFoundAtPath(content_name)
-                }.into(), DiagnosticGroup::ContentScan).await;
+                }, DiagnosticGroup::ContentScan).await;
             },
             ContentGraphError::MultipleMatchingDependencies { content_name, manifest_path, manifest_range } => {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::MultipleMatchingProjectDependencies(content_name)
-                }.into(), DiagnosticGroup::ContentScan).await;
+                }, DiagnosticGroup::ContentScan).await;
             }
         }
     }
@@ -276,13 +276,13 @@ impl Backend {
                 self.reporter.push_diagnostic(&path, Diagnostic {
                     range: *range,
                     kind: DiagnosticKind::InvalidProjectManifest(msg.to_owned())
-                }.into(), DiagnosticGroup::ContentScan).await;
+                }, DiagnosticGroup::ContentScan).await;
             },
             witcherscript_project::manifest::Error::InvalidNameField { range } => {
                 self.reporter.push_diagnostic(&path, Diagnostic {
                     range: *range,
                     kind: DiagnosticKind::InvalidProjectName
-                }.into(), DiagnosticGroup::ContentScan).await;
+                }, DiagnosticGroup::ContentScan).await;
             },
         }
     }
@@ -297,7 +297,7 @@ impl Backend {
                 self.reporter.push_diagnostic(&path, Diagnostic {
                     range: lsp::Range::new(*position, *position),
                     kind: DiagnosticKind::InvalidRedkitProjectManifest(msg.to_owned())
-                }.into(), DiagnosticGroup::ContentScan).await;
+                }, DiagnosticGroup::ContentScan).await;
             },
         }   
     }

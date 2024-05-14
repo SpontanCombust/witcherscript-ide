@@ -59,7 +59,7 @@ impl Backend {
 
         for (file_path, diagnostics) in scanning_diagnostis {
             self.reporter.clear_diagnostics(&file_path, DiagnosticGroup::SymbolScan).await;
-            self.reporter.push_diagnostics(&file_path, diagnostics.into_iter().map(|diag| diag.into()),  DiagnosticGroup::SymbolScan).await;
+            self.reporter.push_diagnostics(&file_path, diagnostics, DiagnosticGroup::SymbolScan).await;
         }
     }
 }
