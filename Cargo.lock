@@ -1348,6 +1348,7 @@ dependencies = [
  "shrinkwraprs",
  "thiserror",
  "toml",
+ "witcherscript-diagnostics",
 ]
 
 [[package]]

@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 use tokio::time::Instant;
+use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript_analysis::model::collections::SymbolTable;
+use witcherscript_diagnostics::{Diagnostic, DiagnosticKind};
 use witcherscript_project::content::{ContentScanError, ProjectDirectory, RedkitProjectDirectory};
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{ContentGraph, ContentScanner, FileError};
 use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphEdgeWithContent, GraphNode};
 use crate::reporting::DiagnosticGroup;
-use crate::{reporting::IntoLspDiagnostic, Backend};
+use crate::Backend;
 
 
 impl Backend {
@@ -213,46 +215,94 @@ impl Backend {
     async fn report_content_scan_error(&self, err: ContentScanError) {
         match err {
             ContentScanError::Io(err) => {
-                self.reporter.log_warning(format!("Content scanning issue for {}: {}", err.path.display(), err.error)).await;
+                self.reporter.log_warning(format!("Content scanning issue for \"{}\": {}", err.path, err.error)).await;
             },
             ContentScanError::ManifestParse(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
+                self.report_manifest_read_error(err).await;
             },
             ContentScanError::RedkitManifestRead(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
+                self.report_redkit_manifest_read_error(err).await;
             },
             ContentScanError::NotContent => {},
         }
     }
 
     async fn report_content_graph_error(&self, err: ContentGraphError) {
-        let err_str = err.to_string();
         match err {
             ContentGraphError::Io(err) => {
-                self.reporter.log_warning(format!("Content scanning issue at {}: {}", err.path.display(), err.error)).await;
+                let (path, err) = (err.path, err.error);
+                self.reporter.log_warning(format!("Content graph building issue for \"{path}\": {err}")).await;
             },
             ContentGraphError::ManifestRead(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
+                self.report_manifest_read_error(err).await;
             },
             ContentGraphError::RedkitManifestRead(err) => {
-                self.reporter.push_diagnostic(&err.path, err.clone().into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
+                self.report_redkit_manifest_read_error(err).await;
             },
-            ContentGraphError::DependencyPathNotFound { content_path: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
+            ContentGraphError::DependencyPathNotFound { content_path, manifest_path, manifest_range } => {
+                self.reporter.push_diagnostic(&manifest_path, Diagnostic {
+                    range: manifest_range,
+                    kind: DiagnosticKind::ProjectDependencyPathNotFound(content_path)
+                }.into(), DiagnosticGroup::ContentScan).await;
             },
-            ContentGraphError::DependencyNameNotFound { content_name: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
+            ContentGraphError::DependencyNameNotFound { content_name, manifest_path, manifest_range, .. } => {
+                self.reporter.push_diagnostic(&manifest_path, Diagnostic {
+                    range: manifest_range,
+                    kind: DiagnosticKind::ProjectDependencyNameNotFound(content_name)
+                }.into(), DiagnosticGroup::ContentScan).await;
             },
-            ContentGraphError::DependencyNameNotFoundAtPath { content_name: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
+            ContentGraphError::DependencyNameNotFoundAtPath { content_name, manifest_path, manifest_range } => {
+                self.reporter.push_diagnostic(&manifest_path, Diagnostic {
+                    range: manifest_range,
+                    kind: DiagnosticKind::ProjectDependencyNameNotFoundAtPath(content_name)
+                }.into(), DiagnosticGroup::ContentScan).await;
             },
-            ContentGraphError::MultipleMatchingDependencies { content_name: _, manifest_path, manifest_range } => {
-                self.reporter.push_diagnostic(&manifest_path, (err_str, manifest_range).into_lsp_diagnostic(), DiagnosticGroup::ContentScan).await;
+            ContentGraphError::MultipleMatchingDependencies { content_name, manifest_path, manifest_range } => {
+                self.reporter.push_diagnostic(&manifest_path, Diagnostic {
+                    range: manifest_range,
+                    kind: DiagnosticKind::MultipleMatchingProjectDependencies(content_name)
+                }.into(), DiagnosticGroup::ContentScan).await;
             }
         }
     }
 
+    async fn report_manifest_read_error(&self, err: FileError<witcherscript_project::manifest::Error>) {
+        let (path, err) = (err.path, err.error);
+        match err.as_ref() {
+            witcherscript_project::manifest::Error::Io(io_err) => {
+                self.reporter.log_error(format!("Error reading project manifest at \"{path}\": {io_err}")).await;
+            },
+            witcherscript_project::manifest::Error::Toml { range, msg } => {
+                self.reporter.push_diagnostic(&path, Diagnostic {
+                    range: *range,
+                    kind: DiagnosticKind::InvalidProjectManifest(msg.to_owned())
+                }.into(), DiagnosticGroup::ContentScan).await;
+            },
+            witcherscript_project::manifest::Error::InvalidNameField { range } => {
+                self.reporter.push_diagnostic(&path, Diagnostic {
+                    range: *range,
+                    kind: DiagnosticKind::InvalidProjectName
+                }.into(), DiagnosticGroup::ContentScan).await;
+            },
+        }
+    }
+
+    async fn report_redkit_manifest_read_error(&self, err: FileError<witcherscript_project::redkit::manifest::Error>) {
+        let (path, err) = (err.path, err.error);
+        match err.as_ref() {
+            witcherscript_project::redkit::manifest::Error::Io(io_err) =>{
+                self.reporter.log_error(format!("Error reading REDKit project manifest at \"{path}\": {io_err}")).await;
+            },
+            witcherscript_project::redkit::manifest::Error::Json { position, msg } => {
+                self.reporter.push_diagnostic(&path, Diagnostic {
+                    range: lsp::Range::new(*position, *position),
+                    kind: DiagnosticKind::InvalidRedkitProjectManifest(msg.to_owned())
+                }.into(), DiagnosticGroup::ContentScan).await;
+            },
+        }   
+    }
+
     async fn report_source_tree_scan_error(&self, err: FileError<std::io::Error>) {
-        self.reporter.log_warning(format!("Source tree scanning issue for {}: {}", err.path.display(), err.error)).await
+        self.reporter.log_error(format!("Source tree scanning issue for {}: {}", err.path, err.error)).await
     }
 }

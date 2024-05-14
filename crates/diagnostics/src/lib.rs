@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use lsp_types as lsp;
 use abs_path::AbsPath;
 use strum_macros::IntoStaticStr;
@@ -48,6 +49,15 @@ impl Into<lsp::Diagnostic> for Diagnostic {
 #[derive(Debug, Clone, IntoStaticStr)]
 #[strum(serialize_all = "kebab-case")]
 pub enum DiagnosticKind {
+    // project system
+    InvalidProjectManifest(String),
+    InvalidProjectName,
+    InvalidRedkitProjectManifest(String),
+    ProjectDependencyPathNotFound(PathBuf),
+    ProjectDependencyNameNotFound(String),
+    ProjectDependencyNameNotFoundAtPath(String),
+    MultipleMatchingProjectDependencies(String),
+
     // syntax analysis
     MissingSyntax(String),
     InvalidSyntax, // for all other syntax cases when it's impossible to determine
@@ -69,6 +79,14 @@ impl DiagnosticKind {
         use DiagnosticKind::*;
 
         match self {
+            InvalidProjectManifest(_) => lsp::DiagnosticSeverity::ERROR,
+            InvalidProjectName => lsp::DiagnosticSeverity::ERROR,
+            InvalidRedkitProjectManifest(_) => lsp::DiagnosticSeverity::ERROR,
+            ProjectDependencyPathNotFound(_) => lsp::DiagnosticSeverity::ERROR,
+            ProjectDependencyNameNotFound(_) => lsp::DiagnosticSeverity::ERROR,
+            ProjectDependencyNameNotFoundAtPath(_) => lsp::DiagnosticSeverity::ERROR,
+            MultipleMatchingProjectDependencies(_) => lsp::DiagnosticSeverity::ERROR,
+
             MissingSyntax(_) => lsp::DiagnosticSeverity::ERROR,
             InvalidSyntax => lsp::DiagnosticSeverity::ERROR,
 
@@ -84,6 +102,14 @@ impl DiagnosticKind {
         use DiagnosticKind::*;
 
         match self {
+            InvalidProjectManifest(err) => err.clone(),
+            InvalidProjectName => "This project name is not valid".into(),
+            InvalidRedkitProjectManifest(err) => err.clone(),
+            ProjectDependencyPathNotFound(p) => format!("Dependency could not be found at path \"{}\"", p.display()),
+            ProjectDependencyNameNotFound(n) => format!("Dependency could not be found with name \"{n}\""),
+            ProjectDependencyNameNotFoundAtPath(n) => format!("Dependency with name \"{n}\" could not be found at specified path"),
+            MultipleMatchingProjectDependencies(n) => format!("Multiple matching contents for dependency with name \"{n}\""),
+
             MissingSyntax(s) => format!("Syntax error: expected {}", s),
             InvalidSyntax => "Syntax error: unexpected syntax".into(),
 
@@ -116,8 +142,8 @@ struct DiagnosticRelatedInfo {
 }
 
 
-#[test]
-fn test() {
-    let s: &str = DiagnosticKind::MissingTypeArg.into();
-    println!("{}", s);
+#[derive(Debug, Clone)]
+pub struct LocatedDiagnostic {
+    pub path: AbsPath,
+    pub diagnostic: Diagnostic
 }
