@@ -2,7 +2,10 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::ast::SyntaxNodeVisitorChain;
-use witcherscript_analysis::{model::{collections::{symbol_table::SymbolLocation, IntoSymbolTableMarcher}, symbol_path::SymbolPathBuf, symbol_variant::SymbolVariant, symbols::*}, utils::{PositionSeeker, SymbolPathBuilder}};
+use witcherscript_analysis::symbol_analysis::symbol_table::{SymbolLocation, marcher::IntoSymbolTableMarcher};
+use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
+use witcherscript_analysis::symbol_analysis::symbols::*;
+use witcherscript_analysis::utils::{PositionSeeker, SymbolPathBuilder};
 use crate::{providers::common::PositionTargetKind, Backend, ScriptState, messaging::notifications};
 use super::common::{PositionTarget, TextDocumentPositionResolver};
 

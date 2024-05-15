@@ -2,9 +2,8 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::attribs::MemberVarSpecifier;
-use witcherscript_analysis::model::symbol_path::SymbolPathBuf;
-use witcherscript_analysis::model::symbol_variant::SymbolVariant;
-use witcherscript_analysis::model::symbols::*;
+use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
+use witcherscript_analysis::symbol_analysis::symbols::*;
 use crate::Backend;
 
 

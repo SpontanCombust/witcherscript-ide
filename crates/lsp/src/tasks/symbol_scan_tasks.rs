@@ -3,7 +3,7 @@ use abs_path::AbsPath;
 use rayon::prelude::*;
 use tokio::{sync::oneshot, time::Instant};
 use witcherscript_diagnostics::*;
-use witcherscript_analysis::{jobs, model::collections::SymbolTable};
+use witcherscript_analysis::{jobs, symbol_analysis::symbol_table::SymbolTable};
 use witcherscript_project::SourceTreePath;
 use crate::{Backend, ScriptStates};
 

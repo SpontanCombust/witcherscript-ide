@@ -1,5 +1,5 @@
 use witcherscript_diagnostics::*;
-use crate::model::collections::SymbolTable;
+use crate::symbol_analysis::symbol_table::SymbolTable;
 
 
 pub fn merge_symbol_tables(

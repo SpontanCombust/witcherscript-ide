@@ -1,6 +1,6 @@
 use std::path::Path;
 use lsp_types as lsp;
-use crate::model::symbol_path::SymbolPath;
+use crate::symbol_analysis::symbol_path::SymbolPath;
 
 
 pub trait Symbol {

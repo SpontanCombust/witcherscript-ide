@@ -1,23 +1,20 @@
 use std::path::{Path, PathBuf};
 use lsp_types as lsp;
-use witcherscript::attribs::{ClassSpecifier, AutobindSpecifier};
-use crate::model::symbol_path::SymbolPath;
+use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
 #[derive(Debug, Clone)]
-pub struct ClassSymbol {
+pub struct EnumSymbol {
     path: BasicTypeSymbolPath,
     local_source_path: PathBuf,
     range: lsp::Range,
-    label_range: lsp::Range,
-    pub specifiers: SpecifierBitmask<ClassSpecifier>,
-    pub base_path: Option<BasicTypeSymbolPath>
+    label_range: lsp::Range
 }
 
-impl Symbol for ClassSymbol {
+impl Symbol for EnumSymbol {
     fn typ(&self) -> SymbolType {
-        SymbolType::Class
+        SymbolType::Enum
     }
 
     fn path(&self) -> &SymbolPath {
@@ -25,13 +22,13 @@ impl Symbol for ClassSymbol {
     }
 }
 
-impl PrimarySymbol for ClassSymbol {
+impl PrimarySymbol for EnumSymbol {
     fn local_source_path(&self) -> &Path {
         &self.local_source_path
     }
 }
 
-impl LocatableSymbol for ClassSymbol {
+impl LocatableSymbol for EnumSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
@@ -41,15 +38,13 @@ impl LocatableSymbol for ClassSymbol {
     }
 }
 
-impl ClassSymbol {
+impl EnumSymbol {
     pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             local_source_path,
             range,
-            label_range,
-            specifiers: SpecifierBitmask::new(),
-            base_path: None
+            label_range
         }
     }
 }
@@ -57,17 +52,15 @@ impl ClassSymbol {
 
 
 #[derive(Debug, Clone)]
-pub struct AutobindSymbol {
+pub struct EnumVariantSymbol {
     path: DataSymbolPath,
     range: lsp::Range,
-    label_range: lsp::Range,
-    pub specifiers: SpecifierBitmask<AutobindSpecifier>,
-    pub type_path: TypeSymbolPath,
+    label_range: lsp::Range
 }
 
-impl Symbol for AutobindSymbol {
+impl Symbol for EnumVariantSymbol {
     fn typ(&self) -> SymbolType {
-        SymbolType::Autobind
+        SymbolType::EnumVariant
     }
 
     fn path(&self) -> &SymbolPath {
@@ -75,7 +68,7 @@ impl Symbol for AutobindSymbol {
     }
 }
 
-impl LocatableSymbol for AutobindSymbol {
+impl LocatableSymbol for EnumVariantSymbol {
     fn range(&self) -> lsp::Range {
         self.range
     }
@@ -85,14 +78,12 @@ impl LocatableSymbol for AutobindSymbol {
     }
 }
 
-impl AutobindSymbol {
+impl EnumVariantSymbol {
     pub fn new(path: DataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,
-            label_range,
-            specifiers: SpecifierBitmask::new(),
-            type_path: TypeSymbolPath::empty()
+            label_range
         }
     }
 }

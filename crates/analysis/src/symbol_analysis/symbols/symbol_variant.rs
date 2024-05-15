@@ -1,7 +1,7 @@
 use std::path::Path;
 use strum_macros::{EnumIs, EnumTryAs};
 use lsp_types as lsp;
-use super::symbols::*;
+use super::*;
 
 
 #[derive(Clone, EnumIs, EnumTryAs)]

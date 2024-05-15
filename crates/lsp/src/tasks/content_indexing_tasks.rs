@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use tokio::time::Instant;
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
-use witcherscript_analysis::model::collections::SymbolTable;
+use witcherscript_analysis::symbol_analysis::symbol_table::SymbolTable;
 use witcherscript_diagnostics::*;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory, RedkitProjectDirectory};
 use witcherscript_project::source_tree::SourceTreeDifference;

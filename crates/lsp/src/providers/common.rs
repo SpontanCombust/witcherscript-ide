@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 use tower_lsp::lsp_types as lsp;
 use witcherscript::{ast::*, script_document::ScriptDocument, tokens::*};
-use witcherscript_analysis::{model::symbol_path::SymbolPathBuf, utils::{PositionSeekerPayload, SymbolPathBuilderPayload}};
+use witcherscript_analysis::{symbol_analysis::symbol_path::SymbolPathBuf, utils::{PositionSeekerPayload, SymbolPathBuilderPayload}};
 
 
 /// A node visitor that can resolve a code identifier/symbol if a specified position points to such.

@@ -1,5 +1,5 @@
-use crate::model::symbols::*;
-use crate::model::collections::symbol_table::SymbolTable;
+use crate::symbol_analysis::symbols::*;
+use crate::symbol_analysis::symbol_table::SymbolTable;
 
 
 /// Should be called at the start, before parsing WS files.

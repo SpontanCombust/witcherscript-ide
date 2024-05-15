@@ -1,5 +1,5 @@
 use std::{collections::HashMap, borrow::Borrow, hash::Hash};
-use crate::model::{symbols::*, symbol_path::SymbolPathBuf};
+use crate::symbol_analysis::{symbols::*, symbol_path::SymbolPathBuf};
 
 
 // All of this just to not have to allocate String on every map lookup and to not use lifetime annotations on the type

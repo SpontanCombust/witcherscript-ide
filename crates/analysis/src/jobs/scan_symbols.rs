@@ -7,9 +7,9 @@ use witcherscript::Script;
 use witcherscript::tokens::*;
 use witcherscript::ast::*;
 use witcherscript_diagnostics::*;
-use crate::model::collections::symbol_table::SymbolTable;
-use crate::model::symbol_path::{SymbolPath, SymbolPathBuf};
-use crate::model::symbols::*;
+use crate::symbol_analysis::symbol_table::SymbolTable;
+use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
+use crate::symbol_analysis::symbols::*;
 
 
 pub fn scan_symbols(

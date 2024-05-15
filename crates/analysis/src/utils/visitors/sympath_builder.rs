@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 use witcherscript::{ast::*, script_document::ScriptDocument};
-use crate::model::{symbol_path::SymbolPathBuf, symbols::*};
+use crate::symbol_analysis::{symbol_path::SymbolPathBuf, symbols::*};
 
 
 /// A visitor that builds a symbol path as it traverses the syntax tree.

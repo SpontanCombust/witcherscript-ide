@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 use tower_lsp::Client;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
-use witcherscript_analysis::model::collections::SymbolTable;
+use witcherscript_analysis::symbol_analysis::symbol_table::SymbolTable;
 use witcherscript_project::{ContentGraph, SourceTree, SourceTreeFile, SourceTreePath};
 use crate::{config::Config, reporting::Reporter};
 
