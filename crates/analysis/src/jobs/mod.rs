@@ -1,4 +1,5 @@
 mod inject_native_symbols;
+pub use inject_native_symbols::{inject_primitives, inject_globals, inject_array_type};
 
 mod scan_symbols;
 pub use scan_symbols::scan_symbols;

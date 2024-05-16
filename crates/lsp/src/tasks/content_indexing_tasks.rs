@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use tokio::time::Instant;
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
+use witcherscript_analysis::jobs;
 use witcherscript_analysis::symbol_analysis::symbol_table::SymbolTable;
 use witcherscript_diagnostics::*;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory, RedkitProjectDirectory};
@@ -143,7 +144,14 @@ impl Backend {
             self.source_trees.insert(added_content_path.clone(), source_tree);
 
             let mut symtabs = self.symtabs.write().await;
-            symtabs.insert(added_content_path.clone(), SymbolTable::new(scripts_root));
+            let mut symtab = SymbolTable::new(scripts_root);
+
+            if added_node.is_native {
+                jobs::inject_primitives(&mut symtab);
+                jobs::inject_globals(&mut symtab);
+            }
+
+            symtabs.insert(added_content_path.clone(), symtab);
         }
 
         // handling source tree changes in a seperate step to not lock resources for too long

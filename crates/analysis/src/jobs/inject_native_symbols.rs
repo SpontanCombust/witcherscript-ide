@@ -2,8 +2,6 @@ use crate::symbol_analysis::symbols::*;
 use crate::symbol_analysis::symbol_table::SymbolTable;
 
 
-/// Should be called at the start, before parsing WS files.
-/// 
 /// Making assumptions that actual types start with capital letter and aliases are always lower case.
 /// If only lower case can be found in vanilla code, then the type name is a guess.
 pub fn inject_primitives(symtab: &mut SymbolTable) {
@@ -20,7 +18,7 @@ pub fn inject_primitives(symtab: &mut SymbolTable) {
 
     ].into_iter()
     .for_each(|sym| {
-        symtab.insert(sym);
+        symtab.insert_primitive(sym);
     });
 }
 

@@ -72,6 +72,14 @@ impl SymbolTable {
         self.symbols.insert(sym.path().to_owned(), sym.into());
     }
 
+    pub(crate) fn insert_primitive(&mut self, sym: PrimitiveTypeSymbol) {
+        if let Some(alias) = &sym.alias {
+            self.symbols.insert(alias.to_owned(), sym.clone().into());
+        }
+        self.symbols.insert(sym.path().to_owned(), sym.into());
+    }
+
+
     pub fn is_empty(&self) -> bool {
         self.symbols.is_empty()
     }
