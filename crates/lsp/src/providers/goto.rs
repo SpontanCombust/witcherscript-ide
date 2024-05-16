@@ -1,7 +1,9 @@
+use std::str::FromStr;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::ast::SyntaxNodeVisitorChain;
+use witcherscript::tokens::Keyword;
 use witcherscript_analysis::symbol_analysis::symbol_table::{SymbolLocation, marcher::IntoSymbolTableMarcher};
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbols::*;
@@ -154,6 +156,17 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
                 .and_then(|v| v.try_as_special_var_ref())
                 .map(|sym| sym.type_path().clone())
         },
+        PositionTargetKind::DataIdentifier(name) => {
+            if Keyword::from_str(&name).map(|kw| kw.is_global_var()).unwrap_or(false) {
+                symtabs_marcher.clone()
+                    .get(&SymbolPathBuf::new(&name, SymbolCategory::Data))
+                    .and_then(|v| v.try_as_global_var_ref())
+                    .map(|sym| sym.type_path().clone())
+            } else {
+                // not ready yet
+                None
+            }
+        }
         // other stuff not reliably possible yet
         _ => {
             None

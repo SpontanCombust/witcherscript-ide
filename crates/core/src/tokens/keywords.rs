@@ -81,3 +81,22 @@ pub enum Keyword {
 	VirtualParent,
     While,
 }
+
+impl Keyword {
+    pub fn is_global_var(&self) -> bool {
+        use Keyword::*;
+        match self {
+            TheCamera 
+            | TheDebug
+            | TheGame
+            | TheInput
+            | ThePlayer
+            | TheServer
+            | TheSound
+            | TheTelemetry
+            | TheTimer
+            | TheUI => true,
+            _ => false
+        }
+    }
+}
