@@ -10,6 +10,7 @@ use crate::Backend;
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct InitializationOptions {
+    native_content_uri: lsp::Url,
     game_directory: PathBuf,
     content_repositories: Vec<PathBuf>
 }
@@ -25,6 +26,16 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
     if let Some(init_opts) = params.initialization_options {
         match serde_json::from_value::<InitializationOptions>(init_opts) {
             Ok(val) => {
+                match AbsPath::try_from(val.native_content_uri) {
+                    Ok(native_content_path) => {
+                        let mut graph = backend.content_graph.write().await;
+                        graph.set_native_content_path(&native_content_path);
+                    },
+                    Err(_) => {
+                        backend.reporter.log_error("Invalid native_content_path URI").await;
+                    }
+                }
+
                 let mut config = backend.config.write().await;
                 config.game_directory = val.game_directory;
                 config.content_repositories = val.content_repositories;
@@ -33,6 +44,8 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
                 backend.reporter.log_error(format!("InitializationOptions deserialization fail: {}", err)).await;
             },
         }
+    } else {
+        backend.reporter.log_error("Initialization options missing!").await;
     }
 
     Ok(lsp::InitializeResult {

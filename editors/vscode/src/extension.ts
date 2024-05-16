@@ -24,6 +24,9 @@ export function activate(context: vscode.ExtensionContext) {
 	const serverPath = context.asAbsolutePath(
 		path.join('server', 'bin', `witcherscript-lsp${ext}`)
 	);
+	const nativeContentUri = vscode.Uri.joinPath(
+		context.extensionUri, 'server', 'assets', 'native_content'
+	).toString();
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
@@ -39,6 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
 	};
 
 	const initializationOptions: InitializationOptions = {
+		nativeContentUri: nativeContentUri,
 		gameDirectory: cfg.gameDirectory,
 		contentRepositories: cfg.contentRepositories
 	};
@@ -100,6 +104,7 @@ export function deactivate(): Thenable<void> | undefined {
 
 
 interface InitializationOptions {
+	nativeContentUri: string,
 	gameDirectory: string,
     contentRepositories: string[]
 }

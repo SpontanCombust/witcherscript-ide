@@ -25,17 +25,6 @@ pub fn inject_primitives(symtab: &mut SymbolTable) {
 }
 
 
-/// Should be called after injecting primitives.
-pub fn inject_misc_native_types(symtab: &mut SymbolTable) {
-    //TODO put the rest that could actually be declared in a script file; include!() that file and parse it to get symbols 
-    todo!()
-    // "CGUID",
-    // "EngineQsTransform",
-    // "ISerializable",
-    // "EInputKey"
-}
-
-
 /// Globally available script variables with "the" prefix.
 /// Not all of them are used in scripts, but they're all written down in bin/config/redscripts.ini.
 pub fn inject_globals(symtab: &mut SymbolTable) {
