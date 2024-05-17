@@ -6,7 +6,7 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub struct MemberVarSymbol {
-    path: DataSymbolPath,
+    path: MemberDataSymbolPath,
     range: lsp::Range,
     label_range: lsp::Range,
     pub specifiers: SpecifierBitmask<MemberVarSpecifier>,
@@ -35,7 +35,7 @@ impl LocatableSymbol for MemberVarSymbol {
 }
 
 impl MemberVarSymbol {
-    pub fn new(path: DataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: MemberDataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,
@@ -51,7 +51,7 @@ impl MemberVarSymbol {
 
 #[derive(Debug, Clone)]
 pub struct LocalVarSymbol {
-    path: DataSymbolPath,
+    path: MemberDataSymbolPath,
     range: lsp::Range,
     label_range: lsp::Range,
     pub type_path: TypeSymbolPath,
@@ -78,7 +78,7 @@ impl LocatableSymbol for LocalVarSymbol {
 }
 
 impl LocalVarSymbol {
-    pub fn new(path: DataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: MemberDataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,

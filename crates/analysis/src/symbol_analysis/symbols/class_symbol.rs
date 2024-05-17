@@ -58,7 +58,7 @@ impl ClassSymbol {
 
 #[derive(Debug, Clone)]
 pub struct AutobindSymbol {
-    path: DataSymbolPath,
+    path: MemberDataSymbolPath,
     range: lsp::Range,
     label_range: lsp::Range,
     pub specifiers: SpecifierBitmask<AutobindSpecifier>,
@@ -86,7 +86,7 @@ impl LocatableSymbol for AutobindSymbol {
 }
 
 impl AutobindSymbol {
-    pub fn new(path: DataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: MemberDataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,

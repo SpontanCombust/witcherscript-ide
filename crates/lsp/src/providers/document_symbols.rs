@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
@@ -32,6 +34,10 @@ pub async fn document_symbol(backend: &Backend, params: lsp::DocumentSymbolParam
     
     let mut doc_syms = Vec::new();
     
+    // enums are an exception to the symbol path system
+    let mut doc_enums = HashMap::<SymbolPathBuf, lsp::DocumentSymbol>::new();
+    let mut doc_enum_variants = Vec::<(SymbolPathBuf, lsp::DocumentSymbol)>::new();
+
     type DocSymStack = Vec<(SymbolPathBuf, lsp::DocumentSymbol)>;
     let mut doc_sym_stack: DocSymStack = Vec::with_capacity(4);
 
@@ -46,32 +52,39 @@ pub async fn document_symbol(backend: &Backend, params: lsp::DocumentSymbolParam
     };
     
     for sym_variant in symtab_ref.get_for_source(source_file.path.local()) {
-        if let Some(doc_sym) = sym_variant.to_doc_sym() {
-            let sympath = sym_variant.as_dyn().path();
-
-            // if the symbol is not primary, then we need to reduce the stack to a form
-            // in which the top element if the parent symbol of the current
-            if let Some(parent_sympath) = sympath.parent() {
-                while doc_sym_stack.last().map(|(p, _)| p != parent_sympath).unwrap_or(false) {
-                    reduce_stack(&mut doc_sym_stack, &mut doc_syms);
-                }
-            // ...if it is primary we reduce the stack until it's empty,
-            // because the current symbol has no parent symbols
-            } else {
-                while !doc_sym_stack.is_empty() {
-                    reduce_stack(&mut doc_sym_stack, &mut doc_syms);
-                }
+        if let Some(doc_sym) = sym_variant.to_doc_sym() {    
+            if let Some(enum_sym) = sym_variant.try_as_enum_ref() {
+                doc_enums.insert(enum_sym.path().to_owned(), doc_sym);
             }
-
-            // after the stack is reduced to an appropriate ancestor
-            // we push the current symbol onto stack
-            let can_have_children = doc_sym.children.is_some();
-            doc_sym_stack.push((sympath.to_owned(), doc_sym));
-
-            // if this current symbol cannot have children we can immediately reduce the stack
-            // otherwise the symbol stays on top and will have other symbols added as its children
-            if !can_have_children {
-                reduce_stack(&mut doc_sym_stack, &mut doc_syms);
+            else if let Some(enum_variant_sym) = sym_variant.try_as_enum_variant_ref() {
+                doc_enum_variants.push((enum_variant_sym.parent_enum_path.clone().into(), doc_sym));
+            }
+            else {
+                let sympath = sym_variant.as_dyn().path();
+                // if the symbol is not primary, then we need to reduce the stack to a form
+                // in which the top element if the parent symbol of the current
+                if let Some(parent_sympath) = sympath.parent() {
+                    while doc_sym_stack.last().map(|(p, _)| p != parent_sympath).unwrap_or(false) {
+                        reduce_stack(&mut doc_sym_stack, &mut doc_syms);
+                    }
+                // ...if it is primary we reduce the stack until it's empty,
+                // because the current symbol has no parent symbols
+                } else {
+                    while !doc_sym_stack.is_empty() {
+                        reduce_stack(&mut doc_sym_stack, &mut doc_syms);
+                    }
+                }
+    
+                // after the stack is reduced to an appropriate ancestor
+                // we push the current symbol onto stack
+                let can_have_children = doc_sym.children.is_some();
+                doc_sym_stack.push((sympath.to_owned(), doc_sym));
+    
+                // if this current symbol cannot have children we can immediately reduce the stack
+                // otherwise the symbol stays on top and will have other symbols added as its children
+                if !can_have_children {
+                    reduce_stack(&mut doc_sym_stack, &mut doc_syms);
+                }
             }
         }
     }
@@ -79,6 +92,16 @@ pub async fn document_symbol(backend: &Backend, params: lsp::DocumentSymbolParam
     while !doc_sym_stack.is_empty() {
         reduce_stack(&mut doc_sym_stack, &mut doc_syms);
     }
+
+    for (parent_enum_sympath, doc_enum_variant) in doc_enum_variants {
+        doc_enums.entry(parent_enum_sympath)
+            .and_modify(|doc_enum| {
+                doc_enum.children.as_mut()
+                    .map(|ch| ch.push(doc_enum_variant));
+            });
+    }
+
+    doc_syms.extend(doc_enums.into_values());
 
     Ok(Some(lsp::DocumentSymbolResponse::Nested(doc_syms)))
 }

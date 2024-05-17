@@ -6,7 +6,7 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub struct FunctionParameterSymbol {
-    path: DataSymbolPath,
+    path: MemberDataSymbolPath,
     range: lsp::Range,
     label_range: lsp::Range,
     pub specifiers: SpecifierBitmask<FunctionParameterSpecifier>,
@@ -35,7 +35,7 @@ impl LocatableSymbol for FunctionParameterSymbol {
 }
 
 impl FunctionParameterSymbol {
-    pub fn new(path: DataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: MemberDataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,

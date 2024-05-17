@@ -127,7 +127,7 @@ impl SymbolVariant {
             SymbolVariant::MemberFunc(_) => None,
             SymbolVariant::Event(_) => None,
             SymbolVariant::Primitive(_) => None,
-            SymbolVariant::EnumVariant(_) => None,
+            SymbolVariant::EnumVariant(s) => Some(s.local_source_path()),
             SymbolVariant::FuncParam(_) => None,
             SymbolVariant::GlobalVar(_) => None,
             SymbolVariant::MemberVar(_) => None,

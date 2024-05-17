@@ -321,11 +321,12 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
         let name_node = n.name();
         let enum_variant_name = name_node.value(&self.doc);
-        let path = DataSymbolPath::new(&self.current_path, &enum_variant_name);
+        let path = GlobalDataSymbolPath::new(&enum_variant_name);
         if self.check_contains(&path, name_node.range()) {
-            let sym = EnumVariantSymbol::new(path, n.range(), name_node.range());
+            let mut sym = EnumVariantSymbol::new(path, self.local_source_path.to_owned(), n.range(), name_node.range());
+            sym.parent_enum_path = BasicTypeSymbolPath::new(self.current_path.components().next().unwrap().name);
 
-            self.symtab.insert(sym);
+            self.symtab.insert_primary(sym);
         }
     }
 
@@ -487,7 +488,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
         for name_node in n.names() {
             let param_name = name_node.value(&self.doc);
-            let path = DataSymbolPath::new(&self.current_path, &param_name);
+            let path = MemberDataSymbolPath::new(&self.current_path, &param_name);
             if self.check_contains(&path, name_node.range()) {
                 let mut sym = FunctionParameterSymbol::new(path, n.range(), name_node.range());
                 sym.specifiers = specifiers.clone();
@@ -534,7 +535,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         
         for name_node in n.names() {
             let var_name = name_node.value(&self.doc);
-            let path = DataSymbolPath::new(&self.current_path, &var_name);
+            let path = MemberDataSymbolPath::new(&self.current_path, &var_name);
             if self.check_contains(&path, name_node.range()) {
                 let mut sym = MemberVarSymbol::new(path, n.range(), name_node.range());
                 sym.specifiers = specifiers.clone();
@@ -551,7 +552,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: PropertyTraversalContext) {
         let name_node = n.name();
         let autobind_name = name_node.value(&self.doc);
-        let path = DataSymbolPath::new(&self.current_path, &autobind_name);
+        let path = MemberDataSymbolPath::new(&self.current_path, &autobind_name);
         if self.check_contains(&path, name_node.range()) {
             let mut sym = AutobindSymbol::new(path, n.range(), name_node.range());
 
@@ -594,7 +595,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     
         for name_node in n.names() {
             let var_name = name_node.value(&self.doc);
-            let path = DataSymbolPath::new(&self.current_path, &var_name);
+            let path = MemberDataSymbolPath::new(&self.current_path, &var_name);
             if self.check_contains(&path, name_node.range()) {
                 let mut sym = LocalVarSymbol::new(path, n.range(), name_node.range());
                 sym.type_path = type_path.clone();

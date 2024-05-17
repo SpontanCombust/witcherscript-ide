@@ -19,10 +19,26 @@ use super::{SpecialVarSymbolKind, SymbolCategory};
 
 
 #[derive(Debug, Clone, Shrinkwrap)]
-pub struct DataSymbolPath(SymbolPathBuf);
+pub struct GlobalDataSymbolPath(SymbolPathBuf);
 
-impl DataSymbolPath {
-    /// Data is always a child of some data structure or function (except globals)
+impl GlobalDataSymbolPath {
+    pub fn new(name: &str) -> Self {
+        let path = SymbolPathBuf::new(name, SymbolCategory::Data);
+        Self(path)
+    }
+}
+
+impl From<GlobalDataSymbolPath> for SymbolPathBuf {
+    fn from(value: GlobalDataSymbolPath) -> Self {
+        value.0
+    }
+}
+
+
+#[derive(Debug, Clone, Shrinkwrap)]
+pub struct MemberDataSymbolPath(SymbolPathBuf);
+
+impl MemberDataSymbolPath {
     pub fn new(parent_path: &SymbolPath, name: &str) -> Self {
         let mut path = parent_path.to_owned();
         path.push(name, SymbolCategory::Data);
@@ -30,8 +46,8 @@ impl DataSymbolPath {
     }
 }
 
-impl From<DataSymbolPath> for SymbolPathBuf {
-    fn from(value: DataSymbolPath) -> Self {
+impl From<MemberDataSymbolPath> for SymbolPathBuf {
+    fn from(value: MemberDataSymbolPath) -> Self {
         value.0
     }
 }
