@@ -222,7 +222,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 //TODO super_path can only be evaluated after all states of all base classes are known
             } else {
                 let super_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Super);
-                let super_sym = SpecialVarSymbol::new(super_path, BasicTypeSymbolPath::new("CScriptableState"));
+                let super_sym = SpecialVarSymbol::new(super_path, BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME));
                 self.symtab.insert(super_sym);
             }
 
@@ -356,7 +356,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             sym.return_type_path = if let Some(ret_typn) = n.return_type() {
                 self.check_type_from_type_annot(ret_typn)
             } else {
-                TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"))
+                TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new(GlobalFunctionSymbol::DEFAULT_RETURN_TYPE_NAME))
             };
 
             sym.path().clone_into(&mut self.current_path);
@@ -418,7 +418,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             sym.return_type_path = if let Some(ret_typn) = n.return_type() {
                 self.check_type_from_type_annot(ret_typn)
             } else {
-                TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"))
+                TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new(MemberFunctionSymbol::DEFAULT_RETURN_TYPE_NAME))
             };
 
             sym.path().clone_into(&mut self.current_path);

@@ -43,6 +43,8 @@ impl LocatableSymbol for GlobalFunctionSymbol {
 }
 
 impl GlobalFunctionSymbol {
+    pub const DEFAULT_RETURN_TYPE_NAME: &'static str = "void";
+
     pub fn new(path: GlobalCallableSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
@@ -89,6 +91,8 @@ impl LocatableSymbol for MemberFunctionSymbol {
 }
 
 impl MemberFunctionSymbol {
+    pub const DEFAULT_RETURN_TYPE_NAME: &'static str = "void";
+
     pub fn new(path: MemberCallableSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,

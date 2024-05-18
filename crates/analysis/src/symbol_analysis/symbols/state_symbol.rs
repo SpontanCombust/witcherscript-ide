@@ -46,6 +46,10 @@ impl LocatableSymbol for StateSymbol {
 }
 
 impl StateSymbol {
+    // CScriptableState is not actually a state, but a class!
+    // I know, confusing as hell, just like this entire language...
+    pub const DEFAULT_STATE_BASE_NAME: &'static str = "CScriptableState";
+
     pub fn new(path: StateSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
