@@ -1,7 +1,7 @@
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
-use super::{ClassSymbol, PathOccupiedError, StateSymbol, SymbolLocation, SymbolTable, SymbolVariant};
+use super::{ClassSymbol, PathOccupiedError, StateSymbol, Symbol, SymbolLocation, SymbolTable, SymbolVariant};
 
-
+//TODO needs additional symbol masking mechanism - search only in paths not present in previous symtabs
 /// A type that can perform data fetching operations on many symbol tables
 /// until that data is found.
 /// Can be created from a iterator over symbol tables.
@@ -19,7 +19,7 @@ where It: Clone {
 }
 
 impl<'a, It> SymbolTableMarcher<It> 
-where It: Iterator<Item = &'a SymbolTable> {
+where It: Iterator<Item = &'a SymbolTable> + 'a {
     pub fn contains(mut self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         while let Some(symtab) = self.it.next() {
             symtab.contains(path)?;
@@ -44,13 +44,19 @@ where It: Iterator<Item = &'a SymbolTable> {
     }
 
     #[inline]
-    pub fn class_hierarchy(self, sympath: &SymbolPath) -> ClassHierarchy<It> {
-        ClassHierarchy::new(self, sympath)
+    pub fn class_hierarchy(self, class_path: &SymbolPath) -> ClassHierarchy<It> {
+        ClassHierarchy::new(self, class_path)
     }
 
     #[inline]
-    pub fn state_hierarchy(self, sympath: &SymbolPath) -> StateHierarchy<It> {
-        StateHierarchy::new(self, sympath)
+    pub fn class_states(self, class_path: &SymbolPath) -> ClassStates<'a>
+    where It: 'a {
+        ClassStates::new(self, class_path)
+    }
+
+    #[inline]
+    pub fn state_hierarchy(self, state_path: &SymbolPath) -> StateHierarchy<It> {
+        StateHierarchy::new(self, state_path)
     }
 
 
@@ -95,7 +101,7 @@ impl<It> ClassHierarchy<It> {
 }
 
 impl<'a, It> Iterator for ClassHierarchy<It> 
-where It: Iterator<Item = &'a SymbolTable> + Clone {
+where It: Iterator<Item = &'a SymbolTable> + 'a + Clone {
     type Item = &'a ClassSymbol;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -111,31 +117,75 @@ where It: Iterator<Item = &'a SymbolTable> + Clone {
 }
 
 
+pub struct ClassStates<'st> {
+    it: Box<dyn Iterator<Item = &'st StateSymbol> + 'st>
+}
+
+impl<'st> ClassStates<'st> {
+    fn new<It>(marcher: SymbolTableMarcher<It>, class_path: &SymbolPath) -> Self 
+    where It: Iterator<Item = &'st SymbolTable> + 'st {
+        let class_path = class_path.to_owned();
+        let it = marcher.it.map(move |symtab| {
+            let class_path = class_path.to_owned();
+            symtab.symbols.iter()
+                .filter_map(|(_, symvar)| symvar.try_as_state_ref())
+                .filter(move |state_sym| state_sym.parent_class_path() == &class_path)
+            })
+            .flatten();
+
+        Self { it: Box::new(it) }
+    }
+}
+
+impl<'st> Iterator for ClassStates<'st> {
+    type Item = &'st StateSymbol;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.it.next()
+    }
+}
+
+
+/// Iterator over base states of the given state starting from it.
+/// Does not include the CScriptableState class, which all state types derive from.
 #[derive(Clone)]
 pub struct StateHierarchy<It> {
     marcher: SymbolTableMarcher<It>,
-    current_path: SymbolPathBuf
+    current_state_path: SymbolPathBuf
 }
 
 impl<It> StateHierarchy<It> {
-    fn new(marcher: SymbolTableMarcher<It>, start_path: &SymbolPath) -> Self {
+    fn new(marcher: SymbolTableMarcher<It>, state_path: &SymbolPath) -> Self {
         Self {
             marcher,
-            current_path: start_path.to_owned()
+            current_state_path: state_path.to_owned()
         }
     }
 }
 
 impl<'a, It> Iterator for StateHierarchy<It> 
-where It: Iterator<Item = &'a SymbolTable> + Clone {
+where It: Iterator<Item = &'a SymbolTable> + 'a + Clone {
     type Item = &'a StateSymbol;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current_path.is_empty() {
-            None
-        } else if let Some(state) = self.marcher.clone().get(&self.current_path).and_then(|v| v.try_as_state_ref()) {
-            self.current_path = state.base_state_path.as_ref().map(|p| p.clone().into()).unwrap_or_default();
-            Some(state)
+        if self.current_state_path.is_empty() {
+            return None;
+        } 
+        
+        if let Some(current_state_sym) = self.marcher.clone().get(&self.current_state_path).and_then(|v| v.try_as_state_ref()) {
+            self.current_state_path.clear();
+
+            if let Some(base_state_name) = &current_state_sym.base_state_name {
+                for class in self.marcher.clone().class_hierarchy(current_state_sym.parent_class_path()) {
+                    for state in self.marcher.clone().class_states(class.path()) {
+                        if state.state_name() == base_state_name {
+                            state.path().clone_into(&mut self.current_state_path);
+                        }
+                    }
+                }
+            }
+
+            Some(current_state_sym)
         } else {
             None
         }
