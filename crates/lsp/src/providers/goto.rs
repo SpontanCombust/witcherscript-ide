@@ -132,6 +132,19 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
         PositionTargetKind::StateIdentifier { state_name, parent_name } => {
             Some(StateSymbolPath::new(&state_name, &parent_name).into())
         },
+        PositionTargetKind::StateBaseIdentifier { base_name, parent_name } => {
+            let mut state_base_path = None;
+            'ancestors: for class in symtabs_marcher.clone().class_hierarchy(&BasicTypeSymbolPath::new(&parent_name)) {
+                for state in symtabs_marcher.clone().class_states(class.path()) {
+                    if state.state_name() == base_name {
+                        state_base_path = Some(state.path().to_owned());
+                        break 'ancestors;
+                    }
+                }
+            }
+            
+            state_base_path
+        },
         PositionTargetKind::ThisKeyword => {
             symtabs_marcher.clone()
                 .get(&SpecialVarSymbolPath::new(&position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::This))
