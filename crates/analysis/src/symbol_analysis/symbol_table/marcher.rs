@@ -44,13 +44,13 @@ where It: Iterator<Item = &'a SymbolTable> {
     }
 
     #[inline]
-    pub fn class_hierarchy(self, sympath: &SymbolPath) -> ClassHierarchyMarched<It> {
-        ClassHierarchyMarched::new(self, sympath)
+    pub fn class_hierarchy(self, sympath: &SymbolPath) -> ClassHierarchy<It> {
+        ClassHierarchy::new(self, sympath)
     }
 
     #[inline]
-    pub fn state_hierarchy(self, sympath: &SymbolPath) -> StateHierarchyMarched<It> {
-        StateHierarchyMarched::new(self, sympath)
+    pub fn state_hierarchy(self, sympath: &SymbolPath) -> StateHierarchy<It> {
+        StateHierarchy::new(self, sympath)
     }
 
 
@@ -79,14 +79,13 @@ where It: Iterator<Item = &'a SymbolTable> {
 }
 
 
-/// Marcher variant of [`ClassHierarchy`]
 #[derive(Clone)]
-pub struct ClassHierarchyMarched<It> {
+pub struct ClassHierarchy<It> {
     marcher: SymbolTableMarcher<It>,
     current_path: SymbolPathBuf
 }
 
-impl<It> ClassHierarchyMarched<It> {
+impl<It> ClassHierarchy<It> {
     fn new(marcher: SymbolTableMarcher<It>, start_path: &SymbolPath) -> Self {
         Self {
             marcher,
@@ -95,7 +94,7 @@ impl<It> ClassHierarchyMarched<It> {
     }
 }
 
-impl<'a, It> Iterator for ClassHierarchyMarched<It> 
+impl<'a, It> Iterator for ClassHierarchy<It> 
 where It: Iterator<Item = &'a SymbolTable> + Clone {
     type Item = &'a ClassSymbol;
 
@@ -112,14 +111,13 @@ where It: Iterator<Item = &'a SymbolTable> + Clone {
 }
 
 
-/// Marcher variant of [`StateHierarchy`]
 #[derive(Clone)]
-pub struct StateHierarchyMarched<It> {
+pub struct StateHierarchy<It> {
     marcher: SymbolTableMarcher<It>,
     current_path: SymbolPathBuf
 }
 
-impl<It> StateHierarchyMarched<It> {
+impl<It> StateHierarchy<It> {
     fn new(marcher: SymbolTableMarcher<It>, start_path: &SymbolPath) -> Self {
         Self {
             marcher,
@@ -128,7 +126,7 @@ impl<It> StateHierarchyMarched<It> {
     }
 }
 
-impl<'a, It> Iterator for StateHierarchyMarched<It> 
+impl<'a, It> Iterator for StateHierarchy<It> 
 where It: Iterator<Item = &'a SymbolTable> + Clone {
     type Item = &'a StateSymbol;
 

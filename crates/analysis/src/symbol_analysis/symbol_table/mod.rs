@@ -155,19 +155,6 @@ impl SymbolTable {
         FileSymbols::new(self, local_source_path)
     }
 
-    /// Returns an iterator going through all base classes of a given class symbol.
-    /// The first symbol is the one pointed to by the starting path (if it points to an existing class symbol).
-    pub fn class_hierarchy<'a>(&'a self, sympath: &SymbolPath) -> ClassHierarchy<'a> {
-        ClassHierarchy::new(self, sympath)
-    }
-
-    /// Iterator going through all base states of a given state symbol.
-    /// The first symbol is the one pointed to by the starting path (if it points to an existing state symbol).
-    pub fn state_hierarchy<'a>(&'a self, sympath: &SymbolPath) -> StateHierarchy<'a> {
-        StateHierarchy::new(self, sympath)
-    }
-
-
 
     pub(crate) fn merge(&mut self, mut other: Self) -> Vec<MergeConflictError> {
         let mut errors = Vec::new();
