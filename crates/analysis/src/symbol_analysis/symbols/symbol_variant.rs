@@ -1,6 +1,7 @@
 use std::path::Path;
 use strum_macros::{EnumIs, EnumTryAs};
 use lsp_types as lsp;
+use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
@@ -53,24 +54,66 @@ impl std::fmt::Debug for SymbolVariant {
 }
 
 impl SymbolVariant {
-    pub fn as_dyn(&self) -> &dyn Symbol {
+    pub fn typ(&self) -> SymbolType {
         match self {
-            SymbolVariant::Primitive(v) => v,
-            SymbolVariant::Enum(v) => v,
-            SymbolVariant::EnumVariant(v) => v,
-            SymbolVariant::Struct(v) => v,
-            SymbolVariant::Class(v) => v,
-            SymbolVariant::State(v) => v,
-            SymbolVariant::Array(v) => v,
-            SymbolVariant::GlobalFunc(v) => v,
-            SymbolVariant::MemberFunc(v) => v,
-            SymbolVariant::Event(v) => v,
-            SymbolVariant::FuncParam(v) => v,
-            SymbolVariant::GlobalVar(v) => v,
-            SymbolVariant::MemberVar(v) => v,
-            SymbolVariant::Autobind(v) => v,
-            SymbolVariant::LocalVar(v) => v,
-            SymbolVariant::SpecialVar(v) => v
+            SymbolVariant::Class(s) => s.typ(),
+            SymbolVariant::State(s) => s.typ(),
+            SymbolVariant::Struct(s) => s.typ(),
+            SymbolVariant::Enum(s) => s.typ(),
+            SymbolVariant::Array(s) => s.typ(),
+            SymbolVariant::GlobalFunc(s) => s.typ(),
+            SymbolVariant::MemberFunc(s) => s.typ(),
+            SymbolVariant::Event(s) => s.typ(),
+            SymbolVariant::Primitive(s) => s.typ(),
+            SymbolVariant::EnumVariant(s) => s.typ(),
+            SymbolVariant::FuncParam(s) => s.typ(),
+            SymbolVariant::GlobalVar(s) => s.typ(),
+            SymbolVariant::MemberVar(s) => s.typ(),
+            SymbolVariant::Autobind(s) => s.typ(),
+            SymbolVariant::LocalVar(s) => s.typ(),
+            SymbolVariant::SpecialVar(s) => s.typ(),
+        }
+    }
+
+    pub fn path(&self) -> &SymbolPath {
+        match self {
+            SymbolVariant::Class(s) => s.path(),
+            SymbolVariant::State(s) => s.path(),
+            SymbolVariant::Struct(s) => s.path(),
+            SymbolVariant::Enum(s) => s.path(),
+            SymbolVariant::Array(s) => s.path(),
+            SymbolVariant::GlobalFunc(s) => s.path(),
+            SymbolVariant::MemberFunc(s) => s.path(),
+            SymbolVariant::Event(s) => s.path(),
+            SymbolVariant::Primitive(s) => s.path(),
+            SymbolVariant::EnumVariant(s) => s.path(),
+            SymbolVariant::FuncParam(s) => s.path(),
+            SymbolVariant::GlobalVar(s) => s.path(),
+            SymbolVariant::MemberVar(s) => s.path(),
+            SymbolVariant::Autobind(s) => s.path(),
+            SymbolVariant::LocalVar(s) => s.path(),
+            SymbolVariant::SpecialVar(s) => s.path(),
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        match self {
+            SymbolVariant::Class(s) => s.name(),
+            SymbolVariant::State(s) => s.name(),
+            SymbolVariant::Struct(s) => s.name(),
+            SymbolVariant::Enum(s) => s.name(),
+            SymbolVariant::Array(s) => s.name(),
+            SymbolVariant::GlobalFunc(s) => s.name(),
+            SymbolVariant::MemberFunc(s) => s.name(),
+            SymbolVariant::Event(s) => s.name(),
+            SymbolVariant::Primitive(s) => s.name(),
+            SymbolVariant::EnumVariant(s) => s.name(),
+            SymbolVariant::FuncParam(s) => s.name(),
+            SymbolVariant::GlobalVar(s) => s.name(),
+            SymbolVariant::MemberVar(s) => s.name(),
+            SymbolVariant::Autobind(s) => s.name(),
+            SymbolVariant::LocalVar(s) => s.name(),
+            SymbolVariant::SpecialVar(s) => s.name(),
         }
     }
 

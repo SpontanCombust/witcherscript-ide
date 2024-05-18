@@ -86,9 +86,8 @@ impl SymbolTable {
 
     pub fn contains(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         if let Some(occupying) = self.symbols.get(path) {
-            let occupying_sym = occupying.as_dyn();
             Err(PathOccupiedError {
-                occupied_path: occupying_sym.path().to_sympath_buf(),
+                occupied_path: occupying.path().to_sympath_buf(),
                 occupied_location: self.locate(path)
             })
         } else {
@@ -130,7 +129,7 @@ impl SymbolTable {
     pub fn remove_for_source(&mut self, local_source_path: &Path) {
         let for_removal: Vec<_> = 
             self.get_for_source(local_source_path)
-            .map(|sym| sym.as_dyn().path().to_owned())
+            .map(|sym| sym.path().to_owned())
             .collect();
 
         for sympath in for_removal {
@@ -170,10 +169,9 @@ impl SymbolTable {
             for root in &sympath_roots {
                 let root_variant = other.symbols.remove(root).unwrap();
                 if let Some(occupying_variant) = self.symbols.get(root) {
-                    let occupying_sym = occupying_variant.as_dyn();
-                    if !occupying_sym.path().has_missing() {
+                    if !occupying_variant.path().has_missing() {
                         errors.push(MergeConflictError {
-                            occupied_path: occupying_sym.path().to_sympath_buf(),
+                            occupied_path: occupying_variant.path().to_sympath_buf(),
                             occupied_location: self.locate(root),
                             incoming_location: SymbolLocation { 
                                 abs_source_path: self.script_root.join(&file_path).unwrap(),
@@ -216,10 +214,9 @@ impl SymbolTable {
                             continue;
                         }
 
-                        let occupying_sym = occupying_variant.as_dyn();
-                        if !occupying_sym.path().has_missing() {
+                        if !occupying_variant.path().has_missing() {
                             errors.push(MergeConflictError {
-                                occupied_path: occupying_sym.path().to_sympath_buf(),
+                                occupied_path: occupying_variant.path().to_sympath_buf(),
                                 occupied_location: self.locate(&incoming_sympath),
                                 incoming_location: SymbolLocation { 
                                     abs_source_path: self.script_root.join(&file_path).unwrap(),

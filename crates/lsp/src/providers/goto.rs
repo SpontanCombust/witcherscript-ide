@@ -80,7 +80,7 @@ pub async fn goto_type_definition(backend: &Backend, params: lsp::request::GotoT
     }
 
     if let Some(inspected) = inspect_symbol_at_position(backend, &content_path, &doc_path, params.text_document_position_params.position).await {
-        if inspected.symvar.as_ref().map(|symvar| symvar.as_dyn().typ().category() != SymbolCategory::Type).unwrap_or(false) {
+        if inspected.symvar.as_ref().map(|symvar| symvar.typ().category() != SymbolCategory::Type).unwrap_or(false) {
             return Ok(None);
         }
 
