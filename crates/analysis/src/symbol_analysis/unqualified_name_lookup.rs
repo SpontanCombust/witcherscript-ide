@@ -1,8 +1,6 @@
 use std::{collections::HashMap, borrow::Borrow, hash::Hash};
-use crate::symbol_analysis::{symbols::*, symbol_path::SymbolPathBuf};
+use super::{symbol_path::{SymbolPath, SymbolPathBuf}, symbols::SymbolCategory};
 
-
-// All of this just to not have to allocate String on every map lookup and to not use lifetime annotations on the type
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Key {
@@ -18,6 +16,7 @@ impl Key {
         }
     }
 }
+
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct BorrowedKey<'s> {
@@ -73,25 +72,7 @@ impl Hash for (dyn AsBorrowedKey + '_) {
 }
 
 
-
-#[derive(Debug, Clone)]
-pub struct SymbolPointer {
-    /// Symbol path
-    pub path: SymbolPathBuf,
-    /// Type of the symbol
-    pub typ: SymbolType,
-}
-
-impl SymbolPointer {
-    pub fn new(path: SymbolPathBuf, typ: SymbolType) -> Self {
-        Self {
-            path, typ
-        }
-    }
-}
-
-
-type Scope = HashMap<Key, SymbolPointer>;
+type Scope = HashMap<Key, SymbolPathBuf>;
 
 
 /// Keeps track of all unqualified symbol identifiers that are valid and accessible in the current context.
@@ -99,11 +80,11 @@ type Scope = HashMap<Key, SymbolPointer>;
 /// It is used during function analysis, where identifiers may be used in an ambiguous way,
 /// e.g. member var can be used without prefixing it with `this.`.
 #[derive(Debug, Clone)]
-pub struct SymbolContext {
+pub struct UnqualifiedNameLookup {
     stack: Vec<Scope>
 }
 
-impl SymbolContext {
+impl UnqualifiedNameLookup {
     pub fn new() -> Self {
         Self {
             stack: vec![Scope::new()]
@@ -124,40 +105,35 @@ impl SymbolContext {
         }
     }
     
-    /// Get the value and relative scope it is contained in (0 means this scope, higher means parent scopes)
-    fn get_with_rel_scope(&self, name: &str, category: SymbolCategory) -> Option<(&SymbolPointer, usize)> {
+    pub fn contains(&self, name: &str, category: SymbolCategory) -> bool {
         let k = BorrowedKey::new(name, category);
-        for (i, level) in self.stack.iter().rev().enumerate() {
-            let v = level.get(&k as &dyn AsBorrowedKey);
-            if v.is_some() {
-                return v.map(|opt| (opt, i));
+        for level in self.stack.iter().rev() {
+            if level.contains_key(&k as &dyn AsBorrowedKey) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn get(&self, name: &str, category: SymbolCategory) -> Option<&SymbolPath> {
+        let k = BorrowedKey::new(name, category);
+        for level in self.stack.iter().rev() {
+            if let Some(path) = level.get(&k as &dyn AsBorrowedKey) {
+                return Some(path);
             }
         }
 
         None
     }
 
-    pub fn contains(&self, name: &str, category: SymbolCategory) -> bool {
-        self.get_with_rel_scope(name, category).is_some()
-    }
-
-    pub fn get(&self, name: &str, category: SymbolCategory) -> Option<&SymbolPointer> {
-        self.get_with_rel_scope(name, category).map(|v| v.0)
-    }
-
     /// Inserts a symbol name mapping into the stack.
-    pub fn insert(&mut self, sym: &impl Symbol) {
-        self.stack.last_mut().unwrap().insert(
-            Key::new(sym.name().to_string(), sym.typ().category()), 
-            SymbolPointer::new(sym.path().to_sympath_buf(), sym.typ())
-        );
-    }
+    pub fn insert(&mut self, path: &SymbolPath) {
+        let comp = path.components().last().unwrap();
 
-    /// Inserts a name alias for a symbol. Used for primitive type aliases.
-    pub fn insert_alias(&mut self, sym: &impl Symbol, alias: SymbolPathBuf) {
         self.stack.last_mut().unwrap().insert(
-            Key::new(alias.to_string(), sym.typ().category()), 
-            SymbolPointer::new(sym.path().to_sympath_buf(), sym.typ())
+            Key::new(comp.name.to_string(), comp.category),
+            path.to_owned()
         );
     }
 }
