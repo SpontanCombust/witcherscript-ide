@@ -1291,6 +1291,7 @@ name = "witcherscript-analysis"
 version = "0.3.0-dev.2"
 dependencies = [
  "abs-path",
+ "dyn-clone",
  "lsp-types",
  "shrinkwraprs",
  "smallvec",

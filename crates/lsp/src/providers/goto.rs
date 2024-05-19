@@ -4,7 +4,7 @@ use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::ast::SyntaxNodeVisitorChain;
 use witcherscript::tokens::Keyword;
-use witcherscript_analysis::symbol_analysis::symbol_table::{SymbolTable, SymbolLocation, marcher::{SymbolTableMarcher, IntoSymbolTableMarcher}};
+use witcherscript_analysis::symbol_analysis::symbol_table::{SymbolLocation, marcher::{SymbolTableMarcher, IntoSymbolTableMarcher}};
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbols::*;
 use witcherscript_analysis::symbol_analysis::unqualified_name_lookup::UnqualifiedNameLookupBuilder;
@@ -231,8 +231,7 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
     })
 }
 
-fn resolve_position<'a, It>(position: lsp::Position, script_state: &'a ScriptState, symtab_marcher: SymbolTableMarcher<It>) -> Option<PositionTarget> 
-where It: Iterator<Item = &'a SymbolTable> + Clone + 'a {
+fn resolve_position<'a>(position: lsp::Position, script_state: &'a ScriptState, symtab_marcher: SymbolTableMarcher<'a>) -> Option<PositionTarget> {
     let (mut main_pos_filter, _) = PositionFilter::new(position);
     main_pos_filter.filter_statements = false;
 

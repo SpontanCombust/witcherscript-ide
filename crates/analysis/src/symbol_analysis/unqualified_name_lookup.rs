@@ -3,7 +3,7 @@ use witcherscript::{ast::*, attribs::*, script_document::ScriptDocument};
 use crate::utils::SymbolPathBuilderPayload;
 use super::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::symbols::{BasicTypeSymbolPath, MemberDataSymbolPath, StateSymbol, Symbol, SymbolCategory};
-use super::symbol_table::{SymbolTable, iter::*, marcher::SymbolTableMarcher};
+use super::symbol_table::{iter::*, marcher::SymbolTableMarcher};
 
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -147,19 +147,19 @@ impl UnqualifiedNameLookup {
 
 
 #[derive(Clone)]
-pub struct UnqualifiedNameLookupBuilder<'a, It> {
+pub struct UnqualifiedNameLookupBuilder<'a> {
     doc: &'a ScriptDocument,
     payload: Rc<RefCell<UnqualifiedNameLookup>>,
     sympath_ctx: Rc<RefCell<SymbolPathBuilderPayload>>,
-    symtab_marcher: SymbolTableMarcher<It>
+    symtab_marcher: SymbolTableMarcher<'a>
 }
 
-impl<'a, It> UnqualifiedNameLookupBuilder<'a, It> {
+impl<'a> UnqualifiedNameLookupBuilder<'a> {
     /// The first symbol table in `symtab_marcher` should be the one corresponding to the currently visited document
     pub fn new(
         doc: &'a ScriptDocument, 
         sympath_ctx: Rc<RefCell<SymbolPathBuilderPayload>>,
-        symtab_marcher: SymbolTableMarcher<It>
+        symtab_marcher: SymbolTableMarcher<'a>
     ) -> (Self, Rc<RefCell<UnqualifiedNameLookup>>) {
         let payload = Rc::new(RefCell::new(UnqualifiedNameLookup::new()));
 
@@ -177,15 +177,14 @@ impl<'a, It> UnqualifiedNameLookupBuilder<'a, It> {
     pub fn new_rc(
         doc: &'a ScriptDocument, 
         sympath_ctx: Rc<RefCell<SymbolPathBuilderPayload>>,
-        symtab_marcher: SymbolTableMarcher<It>
+        symtab_marcher: SymbolTableMarcher<'a>
     ) -> (Rc<RefCell<Self>>, Rc<RefCell<UnqualifiedNameLookup>>) {
         let (self_, payload) = Self::new(doc, sympath_ctx, symtab_marcher);
         (Rc::new(RefCell::new(self_)), payload)
     }
 }
 
-impl<'a, It> SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'a, It> 
-where It: Iterator<Item = &'a SymbolTable> + Clone + 'a {
+impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
     fn traversal_policy_default(&self) -> bool {
         true
     }
@@ -419,5 +418,4 @@ where It: Iterator<Item = &'a SymbolTable> + Clone + 'a {
     }
 }
 
-impl<'a, It> SyntaxNodeVisitorChainLink for UnqualifiedNameLookupBuilder<'a, It> 
-where It: Iterator<Item = &'a SymbolTable> + Clone + 'a {}
+impl SyntaxNodeVisitorChainLink for UnqualifiedNameLookupBuilder<'_> {}

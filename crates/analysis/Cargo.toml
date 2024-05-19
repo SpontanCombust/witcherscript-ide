@@ -17,3 +17,4 @@ shrinkwraprs.workspace = true
 strum.workspace = true
 strum_macros.workspace = true
 smallvec.workspace = true
+dyn-clone.workspace = true

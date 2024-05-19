@@ -1,25 +1,26 @@
+use dyn_clone::{clone_trait_object, DynClone};
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::{ClassSymbol, PathOccupiedError, StateSymbol, Symbol, SymbolLocation, SymbolTable, SymbolVariant};
+
+
+trait SymbolTableIter<'a>: Iterator<Item = &'a SymbolTable> + 'a + DynClone {}
+clone_trait_object!(SymbolTableIter<'_>);
+
+impl<'a, It> SymbolTableIter<'a> for It
+where It: Iterator<Item = &'a SymbolTable> + 'a + Clone {}
+
 
 //TODO needs additional symbol masking mechanism - search only in paths not present in previous symtabs
 /// A type that can perform data fetching operations on many symbol tables
 /// until that data is found.
 /// Can be created from a iterator over symbol tables.
 /// Values are attempted to be fetched from symbol tables in the order that they are in the iterator.
-pub struct SymbolTableMarcher<It> {
-    it : It
+#[derive(Clone)]
+pub struct SymbolTableMarcher<'a> {
+    it : Box<dyn SymbolTableIter<'a>>
 }
 
-impl<It> Clone for SymbolTableMarcher<It>
-where It: Clone {
-    #[inline]
-    fn clone(&self) -> Self {
-        Self { it: self.it.clone() }
-    }
-}
-
-impl<'a, It> SymbolTableMarcher<It> 
-where It: Iterator<Item = &'a SymbolTable> + 'a {
+impl<'a> SymbolTableMarcher<'a> {
     pub fn test_contains(mut self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         while let Some(symtab) = self.it.next() {
             symtab.test_contains(path)?;
@@ -52,20 +53,19 @@ where It: Iterator<Item = &'a SymbolTable> + 'a {
     }
 
     #[inline]
-    pub fn class_hierarchy(self, class_path: &SymbolPath) -> ClassHierarchy<It> {
+    pub fn class_hierarchy(self, class_path: &SymbolPath) -> ClassHierarchy<'a> {
         ClassHierarchy::new(self, class_path)
     }
 
     #[inline]
-    pub fn class_states(self, class_path: &SymbolPath) -> ClassStates<'a>
-    where It: 'a {
+    pub fn class_states(self, class_path: &SymbolPath) -> ClassStates<'a> {
         ClassStates::new(self, class_path)
     }
 
     /// Iterator over base states of the given state starting from it.
     /// Does not include the CScriptableState class, which all state types derive from.
     #[inline]
-    pub fn state_hierarchy(self, state_path: &SymbolPath) -> StateHierarchy<It> {
+    pub fn state_hierarchy(self, state_path: &SymbolPath) -> StateHierarchy<'a> {
         StateHierarchy::new(self, state_path)
     }
 
@@ -83,26 +83,26 @@ where It: Iterator<Item = &'a SymbolTable> + 'a {
 }
 
 
-pub trait IntoSymbolTableMarcher {
-    fn into_marcher(self) -> SymbolTableMarcher<Self> where Self: Sized;
+pub trait IntoSymbolTableMarcher<'a> {
+    fn into_marcher(self) -> SymbolTableMarcher<'a> where Self: Sized;
 }
 
-impl<'a, It> IntoSymbolTableMarcher for It
-where It: Iterator<Item = &'a SymbolTable> {
-    fn into_marcher(self) -> SymbolTableMarcher<Self> where Self: Sized {
-        SymbolTableMarcher { it: self }
+impl<'a, It> IntoSymbolTableMarcher<'a> for It
+where It: SymbolTableIter<'a> {
+    fn into_marcher(self) -> SymbolTableMarcher<'a> where Self: Sized {
+        SymbolTableMarcher { it: Box::new(self) }
     }
 }
 
 
 #[derive(Clone)]
-pub struct ClassHierarchy<It> {
-    marcher: SymbolTableMarcher<It>,
+pub struct ClassHierarchy<'a> {
+    marcher: SymbolTableMarcher<'a>,
     current_path: SymbolPathBuf
 }
 
-impl<It> ClassHierarchy<It> {
-    fn new(marcher: SymbolTableMarcher<It>, start_path: &SymbolPath) -> Self {
+impl<'a> ClassHierarchy<'a> {
+    fn new(marcher: SymbolTableMarcher<'a>, start_path: &SymbolPath) -> Self {
         Self {
             marcher,
             current_path: start_path.to_owned()
@@ -110,8 +110,7 @@ impl<It> ClassHierarchy<It> {
     }
 }
 
-impl<'a, It> Iterator for ClassHierarchy<It> 
-where It: Iterator<Item = &'a SymbolTable> + 'a + Clone {
+impl<'a> Iterator for ClassHierarchy<'a> {
     type Item = &'a ClassSymbol;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -127,13 +126,12 @@ where It: Iterator<Item = &'a SymbolTable> + 'a + Clone {
 }
 
 
-pub struct ClassStates<'st> {
-    it: Box<dyn Iterator<Item = &'st StateSymbol> + 'st>
+pub struct ClassStates<'a> {
+    it: Box<dyn Iterator<Item = &'a StateSymbol> + 'a>
 }
 
-impl<'st> ClassStates<'st> {
-    fn new<It>(marcher: SymbolTableMarcher<It>, class_path: &SymbolPath) -> Self 
-    where It: Iterator<Item = &'st SymbolTable> + 'st {
+impl<'a> ClassStates<'a> {
+    fn new(marcher: SymbolTableMarcher<'a>, class_path: &SymbolPath) -> Self {
         let class_path = class_path.to_owned();
         let it = marcher.it.map(move |symtab| {
             let class_path = class_path.to_owned();
@@ -147,8 +145,8 @@ impl<'st> ClassStates<'st> {
     }
 }
 
-impl<'st> Iterator for ClassStates<'st> {
-    type Item = &'st StateSymbol;
+impl<'a> Iterator for ClassStates<'a> {
+    type Item = &'a StateSymbol;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.it.next()
@@ -159,13 +157,13 @@ impl<'st> Iterator for ClassStates<'st> {
 /// Iterator over base states of the given state starting from it.
 /// Does not include the CScriptableState class, which all state types derive from.
 #[derive(Clone)]
-pub struct StateHierarchy<It> {
-    marcher: SymbolTableMarcher<It>,
+pub struct StateHierarchy<'a> {
+    marcher: SymbolTableMarcher<'a>,
     current_state_path: SymbolPathBuf
 }
 
-impl<It> StateHierarchy<It> {
-    fn new(marcher: SymbolTableMarcher<It>, state_path: &SymbolPath) -> Self {
+impl<'a> StateHierarchy<'a> {
+    fn new(marcher: SymbolTableMarcher<'a>, state_path: &SymbolPath) -> Self {
         Self {
             marcher,
             current_state_path: state_path.to_owned()
@@ -173,8 +171,7 @@ impl<It> StateHierarchy<It> {
     }
 }
 
-impl<'a, It> Iterator for StateHierarchy<It> 
-where It: Iterator<Item = &'a SymbolTable> + 'a + Clone {
+impl<'a> Iterator for StateHierarchy<'a> {
     type Item = &'a StateSymbol;
 
     fn next(&mut self) -> Option<Self::Item> {
