@@ -4,9 +4,10 @@ use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::ast::SyntaxNodeVisitorChain;
 use witcherscript::tokens::Keyword;
-use witcherscript_analysis::symbol_analysis::symbol_table::{SymbolLocation, marcher::IntoSymbolTableMarcher};
+use witcherscript_analysis::symbol_analysis::symbol_table::{SymbolTable, SymbolLocation, marcher::{SymbolTableMarcher, IntoSymbolTableMarcher}};
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbols::*;
+use witcherscript_analysis::symbol_analysis::unqualified_name_lookup::UnqualifiedNameLookupBuilder;
 use witcherscript_analysis::utils::{PositionSeeker, SymbolPathBuilder};
 use crate::{providers::common::PositionTargetKind, Backend, ScriptState, messaging::notifications};
 use super::common::{PositionTarget, TextDocumentPositionResolver};
@@ -51,7 +52,7 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
         backend.client.send_notification::<notifications::client::show_foreign_script_warning::Type>(()).await;
         return Ok(None);
     }
-
+    //TODO if it's a member function it should get the first declaration in the most base class possible
     if let Some(inspected) = inspect_symbol_at_position(backend, &content_path, &doc_path, params.text_document_position_params.position).await {
         Ok(Some(lsp::request::GotoDeclarationResponse::Link(vec![
             lsp::LocationLink {
@@ -107,7 +108,6 @@ struct Inspected {
 
 async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, doc_path: &AbsPath, position: lsp::Position) -> Option<Inspected> {
     let script_state = backend.scripts.get(doc_path)?;
-    let position_target = resolve_position(position, &script_state)?;
 
     let content_dependency_paths: Vec<_> = 
         [content_path.clone()].into_iter()
@@ -123,6 +123,8 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
         content_dependency_paths.iter()
         .filter_map(|p| symtabs.get(p))
         .into_marcher();
+
+    let position_target = resolve_position(position, &script_state, symtabs_marcher.clone())?;
 
     
     let sympath: Option<SymbolPathBuf> = match position_target.kind {
@@ -188,18 +190,30 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
                 .and_then(|v| v.try_as_special_var_ref())
                 .map(|sym| sym.type_path().clone())
         },
-        PositionTargetKind::DataIdentifier(name) => {
+        PositionTargetKind::UnqualifiedDataIdentifier(name) => {
             if Keyword::from_str(&name).map(|kw| kw.is_global_var()).unwrap_or(false) {
                 symtabs_marcher.clone()
                     .get(&SymbolPathBuf::new(&name, SymbolCategory::Data))
                     .and_then(|v| v.try_as_global_var_ref())
                     .map(|sym| sym.type_path().clone())
-            } else {
-                // not ready yet
-                None
+            } 
+            else if let Some(path) = position_target.unl_ctx.get(&name, SymbolCategory::Data) {
+                Some(path.to_owned())
+            }
+            else {
+                Some(GlobalDataSymbolPath::new(&name).into())
+            }
+        }
+        PositionTargetKind::UnqualifiedCallableIdentifier(name) => {
+            if let Some(path) = position_target.unl_ctx.get(&name, SymbolCategory::Callable) {
+                Some(path.to_owned())
+            }
+            else {
+                Some(GlobalCallableSymbolPath::new(&name).into())
             }
         }
         // other stuff not reliably possible yet
+        //TODO expression evaluator
         _ => {
             None
         }
@@ -217,14 +231,23 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
     })
 }
 
-fn resolve_position(position: lsp::Position, script_state: &ScriptState) -> Option<PositionTarget> {
+fn resolve_position<'a, It>(position: lsp::Position, script_state: &'a ScriptState, symtab_marcher: SymbolTableMarcher<It>) -> Option<PositionTarget> 
+where It: Iterator<Item = &'a SymbolTable> + Clone + 'a {
     let (pos_seeker, pos_seeker_payload) = PositionSeeker::new(position);
     let (sympath_builder, sympath_builder_payload) = SymbolPathBuilder::new(&script_state.buffer);
-    let resolver = TextDocumentPositionResolver::new_rc(position, &script_state.buffer, pos_seeker_payload.clone(), sympath_builder_payload.clone());
+    let (unl_builder, unl_payload) = UnqualifiedNameLookupBuilder::new(&script_state.buffer, sympath_builder_payload.clone(), symtab_marcher);
+    let resolver = TextDocumentPositionResolver::new_rc(
+        position, 
+        &script_state.buffer, 
+        pos_seeker_payload.clone(), 
+        sympath_builder_payload.clone(),
+        unl_payload.clone(),
+    );
 
     let mut chain = SyntaxNodeVisitorChain::new()
-        .link(pos_seeker)
+        .link(pos_seeker) //FIXME finding local vars doesn't work, because PositionSeeker blocks visits to local var declarations
         .link(sympath_builder)
+        .link(unl_builder)
         .link_rc(resolver.clone());
 
     script_state.script.visit_nodes(&mut chain);

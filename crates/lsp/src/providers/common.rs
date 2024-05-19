@@ -1,7 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 use tower_lsp::lsp_types as lsp;
 use witcherscript::{ast::*, script_document::ScriptDocument, tokens::*};
-use witcherscript_analysis::{symbol_analysis::symbol_path::SymbolPathBuf, utils::{PositionSeekerPayload, SymbolPathBuilderPayload}};
+use witcherscript_analysis::symbol_analysis::{symbol_path::SymbolPathBuf, unqualified_name_lookup::UnqualifiedNameLookup};
+use witcherscript_analysis::utils::{PositionSeekerPayload, SymbolPathBuilderPayload};
 
 
 /// A node visitor that can resolve a code identifier/symbol if a specified position points to such.
@@ -11,6 +12,7 @@ pub(super) struct TextDocumentPositionResolver<'a> {
     doc: &'a ScriptDocument,
     pos_seeker_payload: Rc<RefCell<PositionSeekerPayload>>,
     sympath_builder_payload: Rc<RefCell<SymbolPathBuilderPayload>>,
+    unl_builder_payload: Rc<RefCell<UnqualifiedNameLookup>>,
     pub found_target: Option<PositionTarget>
 }
 
@@ -18,7 +20,8 @@ pub(super) struct TextDocumentPositionResolver<'a> {
 pub(super) struct PositionTarget {
     pub range: lsp::Range,
     pub kind: PositionTargetKind,
-    pub sympath_ctx: SymbolPathBuf
+    pub sympath_ctx: SymbolPathBuf,
+    pub unl_ctx: UnqualifiedNameLookup
 }
 
 #[derive(Debug, Clone)]
@@ -30,8 +33,13 @@ pub(super) enum PositionTargetKind {
     DataDeclarationNameIdentifier(String),
     CallableDeclarationNameIdentifier, // more info can be fetched using sympath_ctx 
 
-    DataIdentifier(String),
-    CallableIdentifier(String),
+    // unqualified - a freely present identifier in the code
+    UnqualifiedDataIdentifier(String),
+    UnqualifiedCallableIdentifier(String),
+
+    // qualified - an identifier with an additional context of an accessor from `MemberFieldExpression`
+    QualifiedDataIdentifier(String),
+    QualifiedCallableIdentifier(String),
 
     ThisKeyword,
     SuperKeyword,
@@ -44,13 +52,15 @@ impl<'a> TextDocumentPositionResolver<'a> {
         pos: lsp::Position, 
         doc: &'a ScriptDocument, 
         pos_seeker_payload: Rc<RefCell<PositionSeekerPayload>>,
-        sympath_builder_payload: Rc<RefCell<SymbolPathBuilderPayload>>
+        sympath_builder_payload: Rc<RefCell<SymbolPathBuilderPayload>>,
+        unl_builder_payload: Rc<RefCell<UnqualifiedNameLookup>>
     ) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self {
             pos,
             doc,
             pos_seeker_payload,
             sympath_builder_payload,
+            unl_builder_payload,
             found_target: None
         }))
     }
@@ -60,7 +70,8 @@ impl<'a> TextDocumentPositionResolver<'a> {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
             kind: PositionTargetKind::TypeIdentifier(n.value(self.doc).to_string()),
-            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
         });
     }
 
@@ -68,7 +79,8 @@ impl<'a> TextDocumentPositionResolver<'a> {
         self.found_target = Some(PositionTarget { 
             range: name.range(),
             kind: PositionTargetKind::StateDeclarationNameIdentifier,
-            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
         });
     }
 
@@ -76,7 +88,8 @@ impl<'a> TextDocumentPositionResolver<'a> {
         self.found_target = Some(PositionTarget { 
             range: base.range(),
             kind: PositionTargetKind::StateDeclarationBaseIdentifier,
-            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
         });
     }
 
@@ -84,7 +97,8 @@ impl<'a> TextDocumentPositionResolver<'a> {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
             kind: PositionTargetKind::DataDeclarationNameIdentifier(n.value(self.doc).to_string()),
-            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
         });
     }
 
@@ -92,23 +106,44 @@ impl<'a> TextDocumentPositionResolver<'a> {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
             kind: PositionTargetKind::CallableDeclarationNameIdentifier,
-            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
         });
     }
 
-    fn found_data_ident(&mut self, n: &IdentifierNode) {
+    fn found_unqualified_data_ident(&mut self, n: &IdentifierNode) {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
-            kind: PositionTargetKind::DataIdentifier(n.value(self.doc).to_string()),
-            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+            kind: PositionTargetKind::UnqualifiedDataIdentifier(n.value(self.doc).to_string()),
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
         });
     }
 
-    fn found_callable_ident(&mut self, n: &IdentifierNode) {
+    fn found_unqualified_callable_ident(&mut self, n: &IdentifierNode) {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
-            kind: PositionTargetKind::CallableIdentifier(n.value(self.doc).to_string()),
-            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+            kind: PositionTargetKind::UnqualifiedCallableIdentifier(n.value(self.doc).to_string()),
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
+        });
+    }
+    
+    fn found_qualified_data_ident(&mut self, n: &IdentifierNode) {
+        self.found_target = Some(PositionTarget { 
+            range: n.range(),
+            kind: PositionTargetKind::QualifiedDataIdentifier(n.value(self.doc).to_string()),
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
+        });
+    }
+
+    fn found_qualified_callable_ident(&mut self, n: &IdentifierNode) {
+        self.found_target = Some(PositionTarget { 
+            range: n.range(),
+            kind: PositionTargetKind::QualifiedCallableIdentifier(n.value(self.doc).to_string()),
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
         });
     }
 
@@ -116,7 +151,8 @@ impl<'a> TextDocumentPositionResolver<'a> {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
             kind: PositionTargetKind::ThisKeyword,
-            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
         });
     }
 
@@ -124,7 +160,8 @@ impl<'a> TextDocumentPositionResolver<'a> {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
             kind: PositionTargetKind::SuperKeyword,
-            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
         });
     }
 
@@ -132,7 +169,8 @@ impl<'a> TextDocumentPositionResolver<'a> {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
             kind: PositionTargetKind::ParentKeyword,
-            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
         });
     }
 
@@ -140,7 +178,8 @@ impl<'a> TextDocumentPositionResolver<'a> {
         self.found_target = Some(PositionTarget { 
             range: n.range(),
             kind: PositionTargetKind::VirtualParentKeyword,
-            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
+            unl_ctx: self.unl_builder_payload.borrow().clone()
         });
     }
 
@@ -262,7 +301,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let member = n.member();
 
             if member.spans_position(self.pos) {
-                self.found_data_ident(&member);
+                self.found_unqualified_data_ident(&member);
             }
         }
 
@@ -274,7 +313,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let member = n.member();
 
             if member.spans_position(self.pos) {
-                self.found_data_ident(&member);
+                self.found_unqualified_data_ident(&member);
             }
         }
 
@@ -285,7 +324,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         let member = n.member();
 
         if member.spans_position(self.pos) {
-            self.found_data_ident(&member);
+            self.found_unqualified_data_ident(&member);
         }
     }
 
@@ -381,9 +420,9 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
     fn visit_identifier_expr(&mut self, n: &IdentifierNode, cx: ExpressionTraversalContext) {
         if cx == ExpressionTraversalContext::FunctionCallExpressionFunc {
-            self.found_callable_ident(n);
+            self.found_unqualified_callable_ident(n);
         } else {
-            self.found_data_ident(n);
+            self.found_unqualified_data_ident(n);
         };
     }
 
@@ -393,9 +432,9 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
             if member.spans_position(self.pos) {
                 if cx == ExpressionTraversalContext::FunctionCallExpressionFunc {
-                    self.found_callable_ident(&member);
+                    self.found_qualified_callable_ident(&member);
                 } else {
-                    self.found_data_ident(&member);
+                    self.found_qualified_data_ident(&member);
                 };
             }
         }
