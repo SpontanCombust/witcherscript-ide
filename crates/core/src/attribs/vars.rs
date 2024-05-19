@@ -14,6 +14,12 @@ pub enum MemberVarSpecifier {
     Saved,
 }
 
+impl From<AccessModifier> for MemberVarSpecifier {
+    fn from(value: AccessModifier) -> Self {
+        Self::AccessModifier(value)
+    }
+}
+
 pub type MemberVarSpecifierNode<'script> = SyntaxNode<'script, MemberVarSpecifier>;
 
 impl NamedSyntaxNode for MemberVarSpecifierNode<'_> {

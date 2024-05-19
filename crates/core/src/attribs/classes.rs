@@ -65,6 +65,12 @@ pub enum AutobindSpecifier {
     Optional
 }
 
+impl From<AccessModifier> for AutobindSpecifier {
+    fn from(value: AccessModifier) -> Self {
+        Self::AccessModifier(value)
+    }
+}
+
 pub type AutobindSpecifierNode<'script> = SyntaxNode<'script, AutobindSpecifier>;
 
 impl NamedSyntaxNode for AutobindSpecifierNode<'_> {

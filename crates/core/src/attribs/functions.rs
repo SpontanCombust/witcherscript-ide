@@ -158,6 +158,12 @@ pub enum MemberFunctionSpecifier {
     Latent,
 }
 
+impl From<AccessModifier> for MemberFunctionSpecifier {
+    fn from(value: AccessModifier) -> Self {
+        Self::AccessModifier(value)
+    }
+}
+
 pub type MemberFunctionSpecifierNode<'script> = SyntaxNode<'script, MemberFunctionSpecifier>;
 
 impl NamedSyntaxNode for MemberFunctionSpecifierNode<'_> {
