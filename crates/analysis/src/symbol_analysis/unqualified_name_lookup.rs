@@ -349,7 +349,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         if let Some(func_symtab) = self.symtab_marcher.clone().find_containing(&sympath_ctx.current_sympath) {
             for ch in func_symtab.get_callable_children(&sympath_ctx.current_sympath) {
-                if let FunctionSymbolChild::Param(s) = ch {
+                if let CallableSymbolChild::Param(s) = ch {
                     unl.insert(s.path().to_owned());
                 }
                 // local vars will be pushed dynamically as a function will go on
@@ -371,7 +371,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         if let Some(func_symtab) = self.symtab_marcher.clone().find_containing(&sympath_ctx.current_sympath) {
             for ch in func_symtab.get_callable_children(&sympath_ctx.current_sympath) {
-                if let FunctionSymbolChild::Param(s) = ch {
+                if let CallableSymbolChild::Param(s) = ch {
                     unl.insert(s.path().to_owned());
                 }
             }
@@ -392,7 +392,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         if let Some(func_symtab) = self.symtab_marcher.clone().find_containing(&sympath_ctx.current_sympath) {
             for ch in func_symtab.get_callable_children(&sympath_ctx.current_sympath) {
-                if let FunctionSymbolChild::Param(s) = ch {
+                if let CallableSymbolChild::Param(s) = ch {
                     unl.insert(s.path().to_owned());
                 }
             }

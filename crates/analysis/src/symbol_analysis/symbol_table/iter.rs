@@ -95,7 +95,7 @@ impl<'st> Iterator for StructSymbolChildren<'st> {
 }
 
 
-pub enum FunctionSymbolChild<'st> {
+pub enum CallableSymbolChild<'st> {
     Param(&'st FunctionParameterSymbol),
     LocalVar(&'st LocalVarSymbol)
 }
@@ -114,13 +114,13 @@ impl<'st> CallableSymbolChildren<'st> {
 }
 
 impl<'st> Iterator for CallableSymbolChildren<'st> {
-    type Item = FunctionSymbolChild<'st>;
+    type Item = CallableSymbolChild<'st>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.iter
             .find_map(|v| match v {
-                SymbolVariant::FuncParam(s) => Some(FunctionSymbolChild::Param(s)),
-                SymbolVariant::LocalVar(s) => Some(FunctionSymbolChild::LocalVar(s)),
+                SymbolVariant::FuncParam(s) => Some(CallableSymbolChild::Param(s)),
+                SymbolVariant::LocalVar(s) => Some(CallableSymbolChild::LocalVar(s)),
                 _ => None
             })
     }
