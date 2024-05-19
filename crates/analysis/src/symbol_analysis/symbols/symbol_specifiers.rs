@@ -1,20 +1,21 @@
 use std::marker::PhantomData;
+use smallvec::SmallVec;
 use witcherscript::attribs::*;
 
 
-/// Cheap to store and copy bitmask type that can contain symbol specifier information
-#[derive(Clone, Copy, PartialEq, Eq)]
+/// Cheap to store and clone type that can contain symbol specifier information
+#[derive(Clone, PartialEq, Eq)]
 pub struct SymbolSpecifiers<S: SymbolSpecifier> {
-    bits: u8,
+    vec: SmallVec<S::BackingArray>,
     phantom: PhantomData<S>
 }
 
 impl<S: SymbolSpecifier> SymbolSpecifiers<S> {
-    /// Returns an empty bitmask
+    /// Returns an empty container
     #[inline]
     pub fn new() -> Self {
         Self {
-            bits: 0u8,
+            vec: SmallVec::new(),
             phantom: PhantomData
         }
     }
@@ -22,183 +23,60 @@ impl<S: SymbolSpecifier> SymbolSpecifiers<S> {
     /// Returns whether the value was newly inserted
     #[inline]
     pub fn insert(&mut self, spec: S) -> bool {
-        let b = spec.into_bitmask();
-        let had = (self.bits & b) == b;
-        self.bits |= b;
-        !had
+        if self.vec.contains(&spec) {
+            false
+        } else {
+            self.vec.push(spec);
+            true
+        }
     }
 
     #[inline]
     pub fn contains(&self, spec: S) -> bool {
-        let b = spec.into_bitmask();
-        (self.bits & b) == b
+        self.vec.contains(&spec)
     }
 }
 
-pub trait SymbolSpecifier {
-    fn into_bitmask(self) -> u8;
-}
-
-macro_rules! debug_specifier_bitmask {
-    ($spec_ty:ty, $($specs:expr),+) => {
-        impl std::fmt::Debug for SymbolSpecifiers<$spec_ty> {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                let mut v = Vec::with_capacity(8);
-                $(if self.contains($specs) { v.push($specs); })+
-                v.fmt(f)
-            }
-        }
+impl<S> std::fmt::Debug for SymbolSpecifiers<S> 
+where S: SymbolSpecifier + std::fmt::Debug {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.vec.fmt(f)
     }
 }
 
+
+pub trait SymbolSpecifier: std::cmp::PartialEq {
+    type BackingArray: smallvec::Array<Item = Self>;
+}
 
 impl SymbolSpecifier for ClassSpecifier {
-    #[inline]
-    fn into_bitmask(self) -> u8 {
-        match self {
-            ClassSpecifier::Import       => 1 << 0,
-            ClassSpecifier::Abstract     => 1 << 1,
-            ClassSpecifier::Statemachine => 1 << 2,
-        }
-    }
+    type BackingArray = [Self; 3];
 }
-
-debug_specifier_bitmask!(ClassSpecifier,
-    ClassSpecifier::Import,
-    ClassSpecifier::Abstract,
-    ClassSpecifier::Statemachine
-);
-
 
 impl SymbolSpecifier for AutobindSpecifier {
-    #[inline]
-    fn into_bitmask(self) -> u8 {
-        match self {
-            AutobindSpecifier::AccessModifier(AccessModifier::Private)   => 1 << 0,
-            AutobindSpecifier::AccessModifier(AccessModifier::Protected) => 1 << 1,
-            AutobindSpecifier::AccessModifier(AccessModifier::Public)    => 1 << 2,
-            AutobindSpecifier::Optional                                  => 1 << 3,
-        }
-    }
+    type BackingArray = [Self; 2];
 }
-
-debug_specifier_bitmask!(AutobindSpecifier,
-    AutobindSpecifier::AccessModifier(AccessModifier::Private),
-    AutobindSpecifier::AccessModifier(AccessModifier::Protected), 
-    AutobindSpecifier::AccessModifier(AccessModifier::Public),
-    AutobindSpecifier::Optional    
-);
-
 
 impl SymbolSpecifier for FunctionParameterSpecifier {
-    #[inline]
-    fn into_bitmask(self) -> u8 {
-        match self {
-            FunctionParameterSpecifier::Optional => 1 << 0,
-            FunctionParameterSpecifier::Out      => 1 << 1,
-        }
-    }
+    type BackingArray = [Self; 2];
 }
-
-debug_specifier_bitmask!(FunctionParameterSpecifier,
-    FunctionParameterSpecifier::Optional,
-    FunctionParameterSpecifier::Out
-);
-
 
 impl SymbolSpecifier for GlobalFunctionSpecifier {
-    #[inline]
-    fn into_bitmask(self) -> u8 {
-        match self {
-            GlobalFunctionSpecifier::Import => 1 << 0,
-            GlobalFunctionSpecifier::Latent => 1 << 1,
-        }
-    }
+    type BackingArray = [Self; 2];
 }
-
-debug_specifier_bitmask!(GlobalFunctionSpecifier,
-    GlobalFunctionSpecifier::Import,
-    GlobalFunctionSpecifier::Latent
-);
-
 
 impl SymbolSpecifier for MemberFunctionSpecifier {
-    #[inline]
-    fn into_bitmask(self) -> u8 {
-        match self {
-            MemberFunctionSpecifier::AccessModifier(AccessModifier::Private)   => 1 << 0,
-            MemberFunctionSpecifier::AccessModifier(AccessModifier::Protected) => 1 << 1,
-            MemberFunctionSpecifier::AccessModifier(AccessModifier::Public)    => 1 << 2,
-            MemberFunctionSpecifier::Import                                    => 1 << 3,
-            MemberFunctionSpecifier::Final                                     => 1 << 4,
-            MemberFunctionSpecifier::Latent                                    => 1 << 5,
-        }
-    }
+    type BackingArray = [Self; 4];
 }
-
-debug_specifier_bitmask!(MemberFunctionSpecifier,
-    MemberFunctionSpecifier::AccessModifier(AccessModifier::Private),
-    MemberFunctionSpecifier::AccessModifier(AccessModifier::Protected),
-    MemberFunctionSpecifier::AccessModifier(AccessModifier::Public),
-    MemberFunctionSpecifier::Import,  
-    MemberFunctionSpecifier::Final,
-    MemberFunctionSpecifier::Latent
-);
-
 
 impl SymbolSpecifier for StateSpecifier {
-    #[inline]
-    fn into_bitmask(self) -> u8 {
-        match self {
-            StateSpecifier::Import   => 1 << 0,
-            StateSpecifier::Abstract => 1 << 1,
-        }
-    }
+    type BackingArray = [Self; 2];
 }
-
-debug_specifier_bitmask!(StateSpecifier,
-    StateSpecifier::Import,
-    StateSpecifier::Abstract
-);
-
 
 impl SymbolSpecifier for StructSpecifier {
-    #[inline]
-    fn into_bitmask(self) -> u8 {
-        match self {
-            StructSpecifier::Import => 1 << 0,
-        }
-    }
+    type BackingArray = [Self; 1];
 }
-
-debug_specifier_bitmask!(StructSpecifier,
-    StructSpecifier::Import
-);
-
 
 impl SymbolSpecifier for MemberVarSpecifier {
-    #[inline]
-    fn into_bitmask(self) -> u8 {
-        match self {
-            MemberVarSpecifier::AccessModifier(AccessModifier::Private)   => 1 << 0,
-            MemberVarSpecifier::AccessModifier(AccessModifier::Protected) => 1 << 1,
-            MemberVarSpecifier::AccessModifier(AccessModifier::Public)    => 1 << 2,
-            MemberVarSpecifier::Const                                     => 1 << 3,
-            MemberVarSpecifier::Editable                                  => 1 << 4,
-            MemberVarSpecifier::Import                                    => 1 << 5,
-            MemberVarSpecifier::Inlined                                   => 1 << 6,
-            MemberVarSpecifier::Saved                                     => 1 << 7,
-        }
-    }
+    type BackingArray = [Self; 6];
 }
-
-debug_specifier_bitmask!(MemberVarSpecifier,
-    MemberVarSpecifier::AccessModifier(AccessModifier::Private),
-    MemberVarSpecifier::AccessModifier(AccessModifier::Protected),
-    MemberVarSpecifier::AccessModifier(AccessModifier::Public),
-    MemberVarSpecifier::Const,
-    MemberVarSpecifier::Editable,
-    MemberVarSpecifier::Import,
-    MemberVarSpecifier::Inlined,
-    MemberVarSpecifier::Saved
-);

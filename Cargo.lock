@@ -1293,6 +1293,7 @@ dependencies = [
  "abs-path",
  "lsp-types",
  "shrinkwraprs",
+ "smallvec",
  "strum",
  "strum_macros",
  "thiserror",
