@@ -20,16 +20,20 @@ where It: Clone {
 
 impl<'a, It> SymbolTableMarcher<It> 
 where It: Iterator<Item = &'a SymbolTable> + 'a {
-    pub fn contains(mut self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
+    pub fn test_contains(mut self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         while let Some(symtab) = self.it.next() {
-            symtab.contains(path)?;
+            symtab.test_contains(path)?;
         }
 
         Ok(())
     }
 
+    pub fn contains(mut self, path: &SymbolPath) -> bool {
+        self.it.find(|symtab| symtab.contains(path)).is_some()
+    }
+
     pub fn find_containing(self, path: &SymbolPath) -> Option<&'a SymbolTable> {
-        self.march(|symtab| if symtab.contains_ok(path) { Some(symtab) } else { None })   
+        self.march(|symtab| if symtab.contains(path) { Some(symtab) } else { None })   
     }
 
     #[inline]

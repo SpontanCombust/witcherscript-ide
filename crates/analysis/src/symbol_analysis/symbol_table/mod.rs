@@ -84,10 +84,10 @@ impl SymbolTable {
         self.symbols.is_empty()
     }
 
-    //TODO rename to is_occupied
     /// If the path is occupied returns Err(PathOccupiedError).
     /// Otherwise if the path was not found returns Ok.
-    pub fn contains(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
+    /// If you only want to know if the path exists in the symbol table without extra info, use [`Self::contains`] instead.
+    pub fn test_contains(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         if let Some(occupying) = self.symbols.get(path) {
             Err(PathOccupiedError {
                 occupied_path: occupying.path().to_sympath_buf(),
@@ -98,9 +98,10 @@ impl SymbolTable {
         }
     }
 
-    //TODO rename to contains
+    /// Returns whether the given symbol path exists in the symbol table.
+    /// If you want to know more about the occupying symbol, use [`Self::test_contains`] instead.
     #[inline]
-    pub fn contains_ok(&self, path: &SymbolPath) -> bool {
+    pub fn contains(&self, path: &SymbolPath) -> bool {
         self.symbols.contains_key(path)
     }
 

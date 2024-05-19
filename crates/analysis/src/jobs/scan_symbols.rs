@@ -50,7 +50,7 @@ struct SymbolScannerVisitor<'a> {
 impl SymbolScannerVisitor<'_> {
     // Returns whether the symbol is not a duplicate
     fn check_contains(&mut self, path: &SymbolPath, range: Range) -> bool {
-        if let Err(err) = self.symtab.contains(path) {
+        if let Err(err) = self.symtab.test_contains(path) {
             // missing nodes don't get an error, as it's the job of syntax analysis to detect them and inform the user about them
             // these situations are very rare anyways, so doing anything aside from showing a diagnostic is an overkill
             if !path.has_missing() {
