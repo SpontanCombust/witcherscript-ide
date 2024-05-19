@@ -233,21 +233,27 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
 
 fn resolve_position<'a, It>(position: lsp::Position, script_state: &'a ScriptState, symtab_marcher: SymbolTableMarcher<It>) -> Option<PositionTarget> 
 where It: Iterator<Item = &'a SymbolTable> + Clone + 'a {
-    let (pos_filter, pos_filter_payload) = PositionFilter::new(position);
+    let (mut main_pos_filter, _) = PositionFilter::new(position);
+    main_pos_filter.filter_statements = false;
+
+    let (mut detail_pos_filter, detail_pos_filter_payload) = PositionFilter::new(position);
+    detail_pos_filter.filter_statements = true;
+
     let (sympath_builder, sympath_builder_payload) = SymbolPathBuilder::new(&script_state.buffer);
     let (unl_builder, unl_payload) = UnqualifiedNameLookupBuilder::new(&script_state.buffer, sympath_builder_payload.clone(), symtab_marcher);
     let resolver = TextDocumentPositionResolver::new_rc(
         position, 
         &script_state.buffer, 
-        pos_filter_payload.clone(), 
+        detail_pos_filter_payload.clone(), 
         sympath_builder_payload.clone(),
         unl_payload.clone(),
     );
 
     let mut chain = SyntaxNodeVisitorChain::new()
-        .link(pos_filter) //FIXME finding local vars doesn't work, because PositionSeeker blocks visits to local var declarations
+        .link(main_pos_filter)
         .link(sympath_builder)
         .link(unl_builder)
+        .link(detail_pos_filter)
         .link_rc(resolver.clone());
 
     script_state.script.visit_nodes(&mut chain);

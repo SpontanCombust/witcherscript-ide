@@ -12,7 +12,16 @@ use witcherscript::{ast::*, tokens::*};
 pub struct PositionFilter {
     pos: lsp::Position,
     currently_in_range: bool,
-    payload: Rc<RefCell<PositionFilterPayload>>
+    payload: Rc<RefCell<PositionFilterPayload>>,
+
+    /// Set whether statements should be checked against the position.
+    /// 
+    /// If false will set and exception for statements inside callables 
+    /// and always allow the next link in the chain to see the node even if it doesn't span the position.
+    /// 
+    /// True by default.
+    pub filter_statements: bool,
+    currently_in_callable_range: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -31,7 +40,10 @@ impl PositionFilter {
         let self_ = Self {
             pos: position,
             currently_in_range: false,
-            payload: payload.clone()
+            payload: payload.clone(),
+
+            filter_statements: true,
+            currently_in_callable_range: false
         };
 
         (self_, payload)
@@ -139,6 +151,7 @@ impl SyntaxNodeVisitor for PositionFilter {
 
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
+            self.currently_in_callable_range = true;
             if n.params().spans_position(self.pos) {
                 tp.traverse_params = true;
             }
@@ -151,6 +164,10 @@ impl SyntaxNodeVisitor for PositionFilter {
         }
 
         tp
+    }
+
+    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
+        self.currently_in_callable_range = false;
     }
 
 
@@ -161,6 +178,7 @@ impl SyntaxNodeVisitor for PositionFilter {
 
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
+            self.currently_in_callable_range = true;
             if n.params().spans_position(self.pos) {
                 tp.traverse_params = true;
             }
@@ -174,12 +192,17 @@ impl SyntaxNodeVisitor for PositionFilter {
 
         tp
     }
+
+    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) {
+        self.currently_in_callable_range = false;
+    }
     
     fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
         let mut tp = EventDeclarationTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
+            self.currently_in_callable_range = true;
             if n.params().spans_position(self.pos) {
                 tp.traverse_params = true;
             }
@@ -192,6 +215,10 @@ impl SyntaxNodeVisitor for PositionFilter {
         }
 
         tp
+    }
+
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: PropertyTraversalContext) {
+        self.currently_in_callable_range = false;
     }
 
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: FunctionTraversalContext) {
@@ -736,6 +763,6 @@ impl SyntaxNodeVisitor for PositionFilter {
 
 impl SyntaxNodeVisitorChainLink for PositionFilter {
     fn pass_onto_next_link(&self) -> bool { 
-        self.currently_in_range
+        self.currently_in_range || (self.currently_in_callable_range && !self.filter_statements)
     }
 }
