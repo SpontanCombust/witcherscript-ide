@@ -11,7 +11,7 @@ pub struct GlobalFunctionSymbol {
     local_source_path: PathBuf,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: SpecifierBitmask<GlobalFunctionSpecifier>,
+    pub specifiers: SymbolSpecifiers<GlobalFunctionSpecifier>,
     pub flavour: Option<GlobalFunctionFlavour>,
     pub return_type_path: TypeSymbolPath
 }
@@ -51,7 +51,7 @@ impl GlobalFunctionSymbol {
             local_source_path,
             range,
             label_range,
-            specifiers: SpecifierBitmask::new(),
+            specifiers: SymbolSpecifiers::new(),
             flavour: None,
             return_type_path: TypeSymbolPath::empty()
         }
@@ -65,7 +65,7 @@ pub struct MemberFunctionSymbol {
     path: MemberCallableSymbolPath,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: SpecifierBitmask<MemberFunctionSpecifier>,
+    pub specifiers: SymbolSpecifiers<MemberFunctionSpecifier>,
     pub flavour: Option<MemberFunctionFlavour>,
     pub return_type_path: TypeSymbolPath
 }
@@ -98,7 +98,7 @@ impl MemberFunctionSymbol {
             path,
             range,
             label_range,
-            specifiers: SpecifierBitmask::new(),
+            specifiers: SymbolSpecifiers::new(),
             flavour: None,
             return_type_path: TypeSymbolPath::empty()
         }

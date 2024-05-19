@@ -9,7 +9,7 @@ mod function_symbol;
 mod class_symbol;
 mod state_symbol;
 mod array_type_symbol;
-mod specifier_bitmask;
+mod symbol_specifiers;
 mod symbol_variant;
 
 pub use symbol::*;
@@ -23,5 +23,5 @@ pub use function_symbol::*;
 pub use class_symbol::*;
 pub use array_type_symbol::*;
 pub use state_symbol::*;
-pub use specifier_bitmask::*;
+pub use symbol_specifiers::*;
 pub use symbol_variant::*;

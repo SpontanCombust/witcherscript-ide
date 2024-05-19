@@ -11,7 +11,7 @@ pub struct StructSymbol {
     local_source_path: PathBuf,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: SpecifierBitmask<StructSpecifier>
+    pub specifiers: SymbolSpecifiers<StructSpecifier>
 }
 
 impl Symbol for StructSymbol {
@@ -47,7 +47,7 @@ impl StructSymbol {
             range,
             label_range,
             local_source_path,
-            specifiers: SpecifierBitmask::new()
+            specifiers: SymbolSpecifiers::new()
         }
     }
 }

@@ -11,7 +11,7 @@ pub struct ClassSymbol {
     local_source_path: PathBuf,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: SpecifierBitmask<ClassSpecifier>,
+    pub specifiers: SymbolSpecifiers<ClassSpecifier>,
     pub base_path: Option<BasicTypeSymbolPath>
 }
 
@@ -48,7 +48,7 @@ impl ClassSymbol {
             local_source_path,
             range,
             label_range,
-            specifiers: SpecifierBitmask::new(),
+            specifiers: SymbolSpecifiers::new(),
             base_path: None
         }
     }
@@ -61,7 +61,7 @@ pub struct AutobindSymbol {
     path: MemberDataSymbolPath,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: SpecifierBitmask<AutobindSpecifier>,
+    pub specifiers: SymbolSpecifiers<AutobindSpecifier>,
     pub type_path: TypeSymbolPath,
 }
 
@@ -91,7 +91,7 @@ impl AutobindSymbol {
             path,
             range,
             label_range,
-            specifiers: SpecifierBitmask::new(),
+            specifiers: SymbolSpecifiers::new(),
             type_path: TypeSymbolPath::empty()
         }
     }

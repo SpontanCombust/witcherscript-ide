@@ -4,12 +4,12 @@ use witcherscript::attribs::*;
 
 /// Cheap to store and copy bitmask type that can contain symbol specifier information
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct SpecifierBitmask<S: IntoSpecifierBitmask> {
+pub struct SymbolSpecifiers<S: IntoSpecifierBitmask> {
     bits: u8,
     phantom: PhantomData<S>
 }
 
-impl<S: IntoSpecifierBitmask> SpecifierBitmask<S> {
+impl<S: IntoSpecifierBitmask> SymbolSpecifiers<S> {
     /// Returns an empty bitmask
     #[inline]
     pub fn new() -> Self {
@@ -41,7 +41,7 @@ pub trait IntoSpecifierBitmask {
 
 macro_rules! debug_specifier_bitmask {
     ($spec_ty:ty, $($specs:expr),+) => {
-        impl std::fmt::Debug for SpecifierBitmask<$spec_ty> {
+        impl std::fmt::Debug for SymbolSpecifiers<$spec_ty> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 let mut v = Vec::with_capacity(8);
                 $(if self.contains($specs) { v.push($specs); })+

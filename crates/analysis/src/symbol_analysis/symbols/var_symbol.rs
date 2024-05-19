@@ -9,7 +9,7 @@ pub struct MemberVarSymbol {
     path: MemberDataSymbolPath,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: SpecifierBitmask<MemberVarSpecifier>,
+    pub specifiers: SymbolSpecifiers<MemberVarSpecifier>,
     pub type_path: TypeSymbolPath,
     pub ordinal: usize // used in the context of struct constructors
 }
@@ -40,7 +40,7 @@ impl MemberVarSymbol {
             path,
             range,
             label_range,
-            specifiers: SpecifierBitmask::new(),
+            specifiers: SymbolSpecifiers::new(),
             type_path: TypeSymbolPath::empty(),
             ordinal: 0
         }

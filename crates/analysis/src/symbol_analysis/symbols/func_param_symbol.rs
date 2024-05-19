@@ -9,7 +9,7 @@ pub struct FunctionParameterSymbol {
     path: MemberDataSymbolPath,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub specifiers: SpecifierBitmask<FunctionParameterSpecifier>,
+    pub specifiers: SymbolSpecifiers<FunctionParameterSpecifier>,
     pub type_path: TypeSymbolPath,
     pub ordinal: usize
 }
@@ -40,7 +40,7 @@ impl FunctionParameterSymbol {
             path,
             range,
             label_range,
-            specifiers: SpecifierBitmask::new(),
+            specifiers: SymbolSpecifiers::new(),
             type_path: TypeSymbolPath::empty(),
             ordinal: 0
         }

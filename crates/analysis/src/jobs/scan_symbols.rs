@@ -470,7 +470,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: FunctionTraversalContext) {
-        let mut specifiers = SpecifierBitmask::new();
+        let mut specifiers = SymbolSpecifiers::new();
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if !specifiers.insert(spec) {
                 self.diagnostics.push(LocatedDiagnostic { 
@@ -503,7 +503,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: PropertyTraversalContext) {
-        let mut specifiers = SpecifierBitmask::new();
+        let mut specifiers = SymbolSpecifiers::new();
         let mut found_access_modif_before = false;
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if matches!(spec, MemberVarSpecifier::AccessModifier(_)) {
