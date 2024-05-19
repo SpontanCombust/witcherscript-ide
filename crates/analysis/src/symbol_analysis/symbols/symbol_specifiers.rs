@@ -4,12 +4,12 @@ use witcherscript::attribs::*;
 
 /// Cheap to store and copy bitmask type that can contain symbol specifier information
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct SymbolSpecifiers<S: IntoSpecifierBitmask> {
+pub struct SymbolSpecifiers<S: SymbolSpecifier> {
     bits: u8,
     phantom: PhantomData<S>
 }
 
-impl<S: IntoSpecifierBitmask> SymbolSpecifiers<S> {
+impl<S: SymbolSpecifier> SymbolSpecifiers<S> {
     /// Returns an empty bitmask
     #[inline]
     pub fn new() -> Self {
@@ -35,7 +35,7 @@ impl<S: IntoSpecifierBitmask> SymbolSpecifiers<S> {
     }
 }
 
-pub trait IntoSpecifierBitmask {
+pub trait SymbolSpecifier {
     fn into_bitmask(self) -> u8;
 }
 
@@ -52,7 +52,7 @@ macro_rules! debug_specifier_bitmask {
 }
 
 
-impl IntoSpecifierBitmask for ClassSpecifier {
+impl SymbolSpecifier for ClassSpecifier {
     #[inline]
     fn into_bitmask(self) -> u8 {
         match self {
@@ -70,7 +70,7 @@ debug_specifier_bitmask!(ClassSpecifier,
 );
 
 
-impl IntoSpecifierBitmask for AutobindSpecifier {
+impl SymbolSpecifier for AutobindSpecifier {
     #[inline]
     fn into_bitmask(self) -> u8 {
         match self {
@@ -90,7 +90,7 @@ debug_specifier_bitmask!(AutobindSpecifier,
 );
 
 
-impl IntoSpecifierBitmask for FunctionParameterSpecifier {
+impl SymbolSpecifier for FunctionParameterSpecifier {
     #[inline]
     fn into_bitmask(self) -> u8 {
         match self {
@@ -106,7 +106,7 @@ debug_specifier_bitmask!(FunctionParameterSpecifier,
 );
 
 
-impl IntoSpecifierBitmask for GlobalFunctionSpecifier {
+impl SymbolSpecifier for GlobalFunctionSpecifier {
     #[inline]
     fn into_bitmask(self) -> u8 {
         match self {
@@ -122,7 +122,7 @@ debug_specifier_bitmask!(GlobalFunctionSpecifier,
 );
 
 
-impl IntoSpecifierBitmask for MemberFunctionSpecifier {
+impl SymbolSpecifier for MemberFunctionSpecifier {
     #[inline]
     fn into_bitmask(self) -> u8 {
         match self {
@@ -146,7 +146,7 @@ debug_specifier_bitmask!(MemberFunctionSpecifier,
 );
 
 
-impl IntoSpecifierBitmask for StateSpecifier {
+impl SymbolSpecifier for StateSpecifier {
     #[inline]
     fn into_bitmask(self) -> u8 {
         match self {
@@ -162,7 +162,7 @@ debug_specifier_bitmask!(StateSpecifier,
 );
 
 
-impl IntoSpecifierBitmask for StructSpecifier {
+impl SymbolSpecifier for StructSpecifier {
     #[inline]
     fn into_bitmask(self) -> u8 {
         match self {
@@ -176,7 +176,7 @@ debug_specifier_bitmask!(StructSpecifier,
 );
 
 
-impl IntoSpecifierBitmask for MemberVarSpecifier {
+impl SymbolSpecifier for MemberVarSpecifier {
     #[inline]
     fn into_bitmask(self) -> u8 {
         match self {
