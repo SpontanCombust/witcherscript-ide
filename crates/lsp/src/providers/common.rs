@@ -24,14 +24,11 @@ pub(super) struct PositionTarget {
 #[derive(Debug, Clone)]
 pub(super) enum PositionTargetKind {
     TypeIdentifier(String),
-    StateIdentifier {
-        state_name: String,
-        parent_name: String
-    },
-    StateBaseIdentifier {
-        base_name: String,
-        parent_name: String
-    },
+    StateDeclarationNameIdentifier, // more info can be fetched using sympath_ctx 
+    StateDeclarationBaseIdentifier, // more info can be fetched using sympath_ctx 
+
+    DataDeclarationNameIdentifier(String),
+    CallableDeclarationNameIdentifier, // more info can be fetched using sympath_ctx 
 
     DataIdentifier(String),
     CallableIdentifier(String),
@@ -67,24 +64,34 @@ impl<'a> TextDocumentPositionResolver<'a> {
         });
     }
 
-    fn found_state_ident(&mut self, name: &IdentifierNode, parent: &IdentifierNode) {
+    fn found_state_ident(&mut self, name: &IdentifierNode) {
         self.found_target = Some(PositionTarget { 
             range: name.range(),
-            kind: PositionTargetKind::StateIdentifier {
-                state_name: name.value(self.doc).to_string(),
-                parent_name: parent.value(self.doc).to_string(),
-            },
+            kind: PositionTargetKind::StateDeclarationNameIdentifier,
             sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
         });
     }
 
-    fn found_state_base_ident(&mut self, base: &IdentifierNode, parent: &IdentifierNode) {
+    fn found_state_base_ident(&mut self, base: &IdentifierNode) {
         self.found_target = Some(PositionTarget { 
             range: base.range(),
-            kind: PositionTargetKind::StateBaseIdentifier {
-                base_name: base.value(self.doc).to_string(),
-                parent_name: parent.value(self.doc).to_string()
-            },
+            kind: PositionTargetKind::StateDeclarationBaseIdentifier,
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+        });
+    }
+
+    fn found_data_decl_ident(&mut self, n: &IdentifierNode) {
+        self.found_target = Some(PositionTarget { 
+            range: n.range(),
+            kind: PositionTargetKind::DataDeclarationNameIdentifier(n.value(self.doc).to_string()),
+            sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
+        });
+    }
+
+    fn found_callable_decl_ident(&mut self, n: &IdentifierNode) {
+        self.found_target = Some(PositionTarget { 
+            range: n.range(),
+            kind: PositionTargetKind::CallableDeclarationNameIdentifier,
             sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone()
         });
     }
@@ -179,13 +186,13 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let parent = n.parent();
 
             if name.spans_position(self.pos) {
-                self.found_state_ident(&name, &parent);
+                self.found_state_ident(&name);
             }
             else if parent.spans_position(self.pos) {
                 self.found_type_ident(&parent);
             }
             else if let Some(base) = n.base().filter(|base| base.spans_position(self.pos)) {
-                self.found_state_base_ident(&base, &parent);
+                self.found_state_base_ident(&base);
             }
         }
 
@@ -222,7 +229,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let name = n.name();
 
             if name.spans_position(self.pos) {
-                self.found_data_ident(&name);
+                self.found_data_decl_ident(&name);
             }
         }
     }
@@ -234,7 +241,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             self.visit_type_annotation(&var_type);
         }
         else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-            self.found_data_ident(&name);
+            self.found_data_decl_ident(&name);
         }
     }
 
@@ -243,7 +250,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         let autobind_type = n.autobind_type();
 
         if name.spans_position(self.pos) {
-            self.found_data_ident(&name);
+            self.found_data_decl_ident(&name);
         }
         else if autobind_type.spans_position(self.pos) {
             self.visit_type_annotation(&autobind_type);
@@ -288,7 +295,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let name = n.name();
 
             if name.spans_position(self.pos) {
-                self.found_callable_ident(&name);
+                self.found_callable_decl_ident(&name);
             }
             else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
                 self.visit_type_annotation(&rt);
@@ -303,7 +310,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let name = n.name();
 
             if name.spans_position(self.pos) {
-                self.found_callable_ident(&name);
+                self.found_callable_decl_ident(&name);
             }
             else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
                 self.visit_type_annotation(&rt);
@@ -318,7 +325,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let name = n.name();
 
             if name.spans_position(self.pos) {
-                self.found_callable_ident(&name);
+                self.found_callable_decl_ident(&name);
             }
             else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
                 self.visit_type_annotation(&rt);
@@ -335,7 +342,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             self.visit_type_annotation(&param_type);
         } 
         else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-            self.found_data_ident(&name);
+            self.found_data_decl_ident(&name);
         }
     }
 
@@ -348,7 +355,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
                 self.visit_type_annotation(&var_type);
             } 
             else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-                self.found_data_ident(&name);
+                self.found_data_decl_ident(&name);
             }
         }
 

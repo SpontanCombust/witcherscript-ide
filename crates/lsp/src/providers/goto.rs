@@ -129,43 +129,62 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
         PositionTargetKind::TypeIdentifier(type_name) => {
             Some(BasicTypeSymbolPath::new(&type_name).into())
         },
-        PositionTargetKind::StateIdentifier { state_name, parent_name } => {
-            Some(StateSymbolPath::new(&state_name, &parent_name).into())
+        PositionTargetKind::StateDeclarationNameIdentifier => {
+            Some(position_target.sympath_ctx)
         },
-        PositionTargetKind::StateBaseIdentifier { base_name, parent_name } => {
+        PositionTargetKind::StateDeclarationBaseIdentifier => {
             let mut state_base_path = None;
-            'ancestors: for class in symtabs_marcher.clone().class_hierarchy(&BasicTypeSymbolPath::new(&parent_name)) {
-                for state in symtabs_marcher.clone().class_states(class.path()) {
-                    if state.state_name() == base_name {
-                        state_base_path = Some(state.path().to_owned());
-                        break 'ancestors;
+
+            if let Some(target_state_sym) = symtabs_marcher.clone().get(&position_target.sympath_ctx).and_then(|v| v.try_as_state_ref()) {
+                let base_state_name = target_state_sym.base_state_name.as_ref().map(|s| s.as_str()).unwrap_or_default();
+
+                'ancestors: for class in symtabs_marcher.clone().class_hierarchy(target_state_sym.parent_class_path()) {
+                    for state in symtabs_marcher.clone().class_states(class.path()) {
+                        if state.state_name() == base_state_name {
+                            state_base_path = Some(state.path().to_owned());
+                            break 'ancestors;
+                        }
                     }
                 }
             }
             
             state_base_path
         },
+        PositionTargetKind::DataDeclarationNameIdentifier(name) => {
+            if let Some(ctx_sym) = symtabs_marcher.clone().get(&position_target.sympath_ctx) {
+                if ctx_sym.is_enum() {
+                    Some(GlobalDataSymbolPath::new(&name).into())
+                } else {
+                    Some(MemberDataSymbolPath::new(&position_target.sympath_ctx, &name).into())
+                }
+            } else {
+                None
+            }
+        },
+        PositionTargetKind::CallableDeclarationNameIdentifier => {
+            Some(position_target.sympath_ctx)
+        },
         PositionTargetKind::ThisKeyword => {
             symtabs_marcher.clone()
-                .get(&SpecialVarSymbolPath::new(&position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::This))
+                .get(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::This))
                 .and_then(|v| v.try_as_special_var_ref())
                 .map(|sym| sym.type_path().clone())
         },
         PositionTargetKind::SuperKeyword => {
             symtabs_marcher.clone()
-                .get(&SpecialVarSymbolPath::new(&position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::Super))
+                .get(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::Super))
                 .and_then(|v| v.try_as_special_var_ref())
                 .map(|sym| sym.type_path().clone())
         },
         PositionTargetKind::ParentKeyword => {
             symtabs_marcher.clone()
-                .get(&SpecialVarSymbolPath::new(&position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::Parent))
+                .get(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::Parent))
                 .and_then(|v| v.try_as_special_var_ref())
                 .map(|sym| sym.type_path().clone())
         },
         PositionTargetKind::VirtualParentKeyword => {
             symtabs_marcher.clone()
-                .get(&SpecialVarSymbolPath::new(&position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::VirtualParent))
+                .get(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::VirtualParent))
                 .and_then(|v| v.try_as_special_var_ref())
                 .map(|sym| sym.type_path().clone())
         },
