@@ -1,6 +1,6 @@
 use std::{collections::btree_map, path::Path};
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
-use super::{SymbolTable, SymbolVariant};
+use super::*;
 
 
 /// Iterate over direct children of a symbol in a symbol hierarchy
@@ -25,11 +25,107 @@ impl<'st> Iterator for SymbolChildren<'st> {
     type Item = &'st SymbolVariant;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next()
-            .filter(|(sympath, _)| sympath.starts_with(&self.parent_sympath) && sympath.components().count() == self.children_comp_count)
+        self.iter
+            .find(|(sympath, _)| sympath.starts_with(&self.parent_sympath) && sympath.components().count() == self.children_comp_count)
             .map(|(_, variant)| variant)
     }
 }
+
+
+pub enum ClassSymbolChild<'st> {
+    Var(&'st MemberVarSymbol),
+    Autobind(&'st AutobindSymbol),
+    Method(&'st MemberFunctionSymbol),
+    Event(&'st EventSymbol)
+}
+
+#[derive(Clone)]
+pub struct ClassSymbolChildren<'st> {
+    iter: SymbolChildren<'st>
+}
+
+impl<'st> ClassSymbolChildren<'st> {
+    pub(super) fn new(symtab: &'st SymbolTable, class_sympath: &SymbolPath) -> Self {
+        Self {
+            iter: SymbolChildren::new(symtab, class_sympath)
+        }
+    }
+}
+
+impl<'st> Iterator for ClassSymbolChildren<'st> {
+    type Item = ClassSymbolChild<'st>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter
+            .find_map(|v| match v {
+                SymbolVariant::MemberVar(s) => Some(ClassSymbolChild::Var(s)),
+                SymbolVariant::Autobind(s) => Some(ClassSymbolChild::Autobind(s)),
+                SymbolVariant::MemberFunc(s) => Some(ClassSymbolChild::Method(s)),
+                SymbolVariant::Event(s) => Some(ClassSymbolChild::Event(s)),
+                _ => None
+            })
+    }
+}
+
+
+pub type StateSymbolChild<'st> = ClassSymbolChild<'st>;
+pub type StateSymbolChildren<'st> = ClassSymbolChildren<'st>;
+
+
+#[derive(Clone)]
+pub struct StructSymbolChildren<'st> {
+    iter: SymbolChildren<'st>
+}
+
+impl<'st> StructSymbolChildren<'st> {
+    pub(super) fn new(symtab: &'st SymbolTable, struct_sympath: &SymbolPath) -> Self {
+        Self {
+            iter: SymbolChildren::new(symtab, struct_sympath)
+        }
+    }
+}
+
+impl<'st> Iterator for StructSymbolChildren<'st> {
+    type Item = &'st MemberVarSymbol;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter
+            .find_map(|v| v.try_as_member_var_ref())
+    }
+}
+
+
+pub enum FunctionSymbolChild<'st> {
+    Param(&'st FunctionParameterSymbol),
+    LocalVar(&'st LocalVarSymbol)
+}
+
+#[derive(Clone)]
+pub struct CallableSymbolChildren<'st> {
+    iter: SymbolChildren<'st>
+}
+
+impl<'st> CallableSymbolChildren<'st> {
+    pub(super) fn new(symtab: &'st SymbolTable, func_sympath: &SymbolPath) -> Self {
+        Self {
+            iter: SymbolChildren::new(symtab, func_sympath)
+        }
+    }
+}
+
+impl<'st> Iterator for CallableSymbolChildren<'st> {
+    type Item = FunctionSymbolChild<'st>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter
+            .find_map(|v| match v {
+                SymbolVariant::FuncParam(s) => Some(FunctionSymbolChild::Param(s)),
+                SymbolVariant::LocalVar(s) => Some(FunctionSymbolChild::LocalVar(s)),
+                _ => None
+            })
+    }
+}
+
 
 
 /// Iterate over symbols associated with a script file at a given path

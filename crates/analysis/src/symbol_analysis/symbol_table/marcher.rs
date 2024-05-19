@@ -28,6 +28,10 @@ where It: Iterator<Item = &'a SymbolTable> + 'a {
         Ok(())
     }
 
+    pub fn find_containing(self, path: &SymbolPath) -> Option<&'a SymbolTable> {
+        self.march(|symtab| if symtab.contains_ok(path) { Some(symtab) } else { None })   
+    }
+
     #[inline]
     pub fn get(self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
         self.march(|symtab| symtab.get(path))
@@ -54,6 +58,8 @@ where It: Iterator<Item = &'a SymbolTable> + 'a {
         ClassStates::new(self, class_path)
     }
 
+    /// Iterator over base states of the given state starting from it.
+    /// Does not include the CScriptableState class, which all state types derive from.
     #[inline]
     pub fn state_hierarchy(self, state_path: &SymbolPath) -> StateHierarchy<It> {
         StateHierarchy::new(self, state_path)

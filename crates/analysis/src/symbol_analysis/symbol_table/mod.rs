@@ -84,6 +84,9 @@ impl SymbolTable {
         self.symbols.is_empty()
     }
 
+    //TODO rename to is_occupied
+    /// If the path is occupied returns Err(PathOccupiedError).
+    /// Otherwise if the path was not found returns Ok.
     pub fn contains(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         if let Some(occupying) = self.symbols.get(path) {
             Err(PathOccupiedError {
@@ -95,10 +98,18 @@ impl SymbolTable {
         }
     }
 
+    //TODO rename to contains
+    #[inline]
+    pub fn contains_ok(&self, path: &SymbolPath) -> bool {
+        self.symbols.contains_key(path)
+    }
+
+    #[inline]
     pub fn get<'a>(&'a self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
         self.symbols.get(path)
     }
 
+    #[inline]
     pub(crate) fn get_mut<'a>(&'a mut self, path: &SymbolPath) -> Option<&'a mut SymbolVariant> {
         self.symbols.get_mut(path)
     }
@@ -144,12 +155,43 @@ impl SymbolTable {
 
     /// Iterate over direct children of a symbol in a symbol hierarchy.
     /// Symbols are returned ordered by their symbol path.
+    #[inline]
     pub fn get_children<'a>(&'a self, path: &SymbolPath) -> SymbolChildren<'a> {
         SymbolChildren::new(self, path)
     }
 
+    /// Iterate over direct children of a class symbol in a symbol hierarchy.
+    /// Symbols are returned ordered by their symbol path.
+    #[inline]
+    pub fn get_class_children<'a>(&'a self, class_path: &SymbolPath) -> ClassSymbolChildren<'a> {
+        ClassSymbolChildren::new(self, class_path)
+    }
+
+    /// Iterate over direct children of a state symbol in a symbol hierarchy.
+    /// Symbols are returned ordered by their symbol path.
+    #[inline]
+    pub fn get_state_children<'a>(&'a self, state_path: &SymbolPath) -> StateSymbolChildren<'a> {
+        StateSymbolChildren::new(self, state_path)
+    }
+
+    /// Iterate over direct children of a struct symbol in a symbol hierarchy.
+    /// Symbols are returned ordered by their symbol path.
+    #[inline]
+    pub fn get_struct_children<'a>(&'a self, struct_path: &SymbolPath) -> StructSymbolChildren<'a> {
+        StructSymbolChildren::new(self, struct_path)
+    }
+
+    /// Iterate over direct children of any callable symbol in a symbol hierarchy.
+    /// Symbols are returned ordered by their symbol path.
+    #[inline]
+    pub fn get_callable_children<'a>(&'a self, callable_path: &SymbolPath) -> CallableSymbolChildren<'a> {
+        CallableSymbolChildren::new(self, callable_path)
+    }
+
+
     /// Iterate over symbols attributed to a given local source path.
     /// Symbols are returned ordered by their symbol path.
+    #[inline]
     pub fn get_for_source<'a>(&'a self, local_source_path: &Path) -> FileSymbols<'a> {
         FileSymbols::new(self, local_source_path)
     }
