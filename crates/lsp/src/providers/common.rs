@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 use tower_lsp::lsp_types as lsp;
 use witcherscript::{ast::*, script_document::ScriptDocument, tokens::*};
 use witcherscript_analysis::symbol_analysis::{symbol_path::SymbolPathBuf, unqualified_name_lookup::UnqualifiedNameLookup};
-use witcherscript_analysis::utils::{PositionSeekerPayload, SymbolPathBuilderPayload};
+use witcherscript_analysis::utils::{PositionFilterPayload, SymbolPathBuilderPayload};
 
 
 /// A node visitor that can resolve a code identifier/symbol if a specified position points to such.
@@ -10,7 +10,7 @@ use witcherscript_analysis::utils::{PositionSeekerPayload, SymbolPathBuilderPayl
 pub(super) struct TextDocumentPositionResolver<'a> {
     pos: lsp::Position,
     doc: &'a ScriptDocument,
-    pos_seeker_payload: Rc<RefCell<PositionSeekerPayload>>,
+    pos_filter_payload: Rc<RefCell<PositionFilterPayload>>,
     sympath_builder_payload: Rc<RefCell<SymbolPathBuilderPayload>>,
     unl_builder_payload: Rc<RefCell<UnqualifiedNameLookup>>,
     pub found_target: Option<PositionTarget>
@@ -51,14 +51,14 @@ impl<'a> TextDocumentPositionResolver<'a> {
     pub fn new_rc(
         pos: lsp::Position, 
         doc: &'a ScriptDocument, 
-        pos_seeker_payload: Rc<RefCell<PositionSeekerPayload>>,
+        pos_filter_payload: Rc<RefCell<PositionFilterPayload>>,
         sympath_builder_payload: Rc<RefCell<SymbolPathBuilderPayload>>,
         unl_builder_payload: Rc<RefCell<UnqualifiedNameLookup>>
     ) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self {
             pos,
             doc,
-            pos_seeker_payload,
+            pos_filter_payload,
             sympath_builder_payload,
             unl_builder_payload,
             found_target: None
@@ -205,7 +205,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
 
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -220,7 +220,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> StateDeclarationTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let name = n.name();
             let parent = n.parent();
 
@@ -239,7 +239,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> StructDeclarationTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -251,7 +251,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> EnumDeclarationTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -264,7 +264,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
     
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -297,7 +297,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let member = n.member();
 
             if member.spans_position(self.pos) {
@@ -309,7 +309,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) -> MemberDefaultValueTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let member = n.member();
 
             if member.spans_position(self.pos) {
@@ -330,7 +330,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
 
     fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -345,7 +345,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -360,7 +360,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
@@ -387,7 +387,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
 
     fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let var_type = n.var_type();
 
             if var_type.spans_position(self.pos) {
@@ -427,7 +427,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, cx: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let member = n.member();
 
             if member.spans_position(self.pos) {
@@ -443,7 +443,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_new_expr(&mut self, n: &NewExpressionNode, _: ExpressionTraversalContext) -> NewExpressionTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let class = n.class();
 
             if class.spans_position(self.pos) {
@@ -455,7 +455,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, _: ExpressionTraversalContext) -> TypeCastExpressionTraversalPolicy {
-        if self.pos_seeker_payload.borrow().done {
+        if self.pos_filter_payload.borrow().done {
             let target_type = n.target_type();
 
             if n.target_type().spans_position(self.pos) {

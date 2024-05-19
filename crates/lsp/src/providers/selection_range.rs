@@ -3,7 +3,7 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::{ast::*, tokens::*};
-use witcherscript_analysis::utils::{PositionSeeker, PositionSeekerPayload};
+use witcherscript_analysis::utils::{PositionFilter, PositionFilterPayload};
 use crate::Backend;
 
 
@@ -12,15 +12,15 @@ pub async fn selection_range(backend: &Backend, params: lsp::SelectionRangeParam
     if let Some(script_state) = backend.scripts.get(&doc_path) {
         let mut found_ranges = Vec::with_capacity(params.positions.len());
 
-        let (pos_seeker, payload) = PositionSeeker::new_rc(lsp::Position::default());
+        let (pos_filter, payload) = PositionFilter::new_rc(lsp::Position::default());
         let resolver = SelectionRangeResolver::new_rc(payload.clone());
 
         for pos in params.positions {
             resolver.borrow_mut().reset(pos);
-            pos_seeker.borrow_mut().reset(pos);
+            pos_filter.borrow_mut().reset(pos);
 
             let mut chain = SyntaxNodeVisitorChain::new()
-                .link_rc(pos_seeker.clone())
+                .link_rc(pos_filter.clone())
                 .link_rc(resolver.clone());
 
             script_state.script.visit_nodes(&mut chain);
@@ -59,15 +59,15 @@ pub async fn selection_range(backend: &Backend, params: lsp::SelectionRangeParam
 struct SelectionRangeResolver {
     pos: lsp::Position,
     range_stack: Vec<lsp::Range>,
-    payload: Rc<RefCell<PositionSeekerPayload>>
+    payload: Rc<RefCell<PositionFilterPayload>>
 }
 
 impl SelectionRangeResolver {
-    fn new_rc(point_seeker_payload: Rc<RefCell<PositionSeekerPayload>>) -> Rc<RefCell<Self>> {
+    fn new_rc(pos_filter_payload: Rc<RefCell<PositionFilterPayload>>) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self {
             pos: lsp::Position::default(),
             range_stack: Vec::new(),
-            payload: point_seeker_payload
+            payload: pos_filter_payload
         }))
     }
 

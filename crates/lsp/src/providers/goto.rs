@@ -8,7 +8,7 @@ use witcherscript_analysis::symbol_analysis::symbol_table::{SymbolTable, SymbolL
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbols::*;
 use witcherscript_analysis::symbol_analysis::unqualified_name_lookup::UnqualifiedNameLookupBuilder;
-use witcherscript_analysis::utils::{PositionSeeker, SymbolPathBuilder};
+use witcherscript_analysis::utils::{PositionFilter, SymbolPathBuilder};
 use crate::{providers::common::PositionTargetKind, Backend, ScriptState, messaging::notifications};
 use super::common::{PositionTarget, TextDocumentPositionResolver};
 
@@ -233,19 +233,19 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
 
 fn resolve_position<'a, It>(position: lsp::Position, script_state: &'a ScriptState, symtab_marcher: SymbolTableMarcher<It>) -> Option<PositionTarget> 
 where It: Iterator<Item = &'a SymbolTable> + Clone + 'a {
-    let (pos_seeker, pos_seeker_payload) = PositionSeeker::new(position);
+    let (pos_filter, pos_filter_payload) = PositionFilter::new(position);
     let (sympath_builder, sympath_builder_payload) = SymbolPathBuilder::new(&script_state.buffer);
     let (unl_builder, unl_payload) = UnqualifiedNameLookupBuilder::new(&script_state.buffer, sympath_builder_payload.clone(), symtab_marcher);
     let resolver = TextDocumentPositionResolver::new_rc(
         position, 
         &script_state.buffer, 
-        pos_seeker_payload.clone(), 
+        pos_filter_payload.clone(), 
         sympath_builder_payload.clone(),
         unl_payload.clone(),
     );
 
     let mut chain = SyntaxNodeVisitorChain::new()
-        .link(pos_seeker) //FIXME finding local vars doesn't work, because PositionSeeker blocks visits to local var declarations
+        .link(pos_filter) //FIXME finding local vars doesn't work, because PositionSeeker blocks visits to local var declarations
         .link(sympath_builder)
         .link(unl_builder)
         .link_rc(resolver.clone());

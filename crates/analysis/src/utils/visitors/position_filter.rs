@@ -9,22 +9,22 @@ use witcherscript::{ast::*, tokens::*};
 /// It is not guaranteed that the `done` flag will be eventually set.
 /// This visitor can be used in a visitor chain.
 #[derive(Debug, Clone)]
-pub struct PositionSeeker {
+pub struct PositionFilter {
     pos: lsp::Position,
     currently_in_range: bool,
-    payload: Rc<RefCell<PositionSeekerPayload>>
+    payload: Rc<RefCell<PositionFilterPayload>>
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct PositionSeekerPayload {
+pub struct PositionFilterPayload {
     /// Signals that the given node likely directly contains a node, 
     /// which spans the specified position 
     pub done: bool
 }
 
-impl PositionSeeker {
-    pub fn new(position: lsp::Position) -> (Self, Rc<RefCell<PositionSeekerPayload>>) {
-        let payload = Rc::new(RefCell::new(PositionSeekerPayload {
+impl PositionFilter {
+    pub fn new(position: lsp::Position) -> (Self, Rc<RefCell<PositionFilterPayload>>) {
+        let payload = Rc::new(RefCell::new(PositionFilterPayload {
             done: false
         }));
 
@@ -37,7 +37,7 @@ impl PositionSeeker {
         (self_, payload)
     }
 
-    pub fn new_rc(position: lsp::Position) -> (Rc<RefCell<Self>>, Rc<RefCell<PositionSeekerPayload>>) {
+    pub fn new_rc(position: lsp::Position) -> (Rc<RefCell<Self>>, Rc<RefCell<PositionFilterPayload>>) {
         let (self_, payload) = Self::new(position);
         (Rc::new(RefCell::new(self_)), payload)
     }
@@ -49,7 +49,7 @@ impl PositionSeeker {
     }
 }
 
-impl SyntaxNodeVisitor for PositionSeeker {
+impl SyntaxNodeVisitor for PositionFilter {
     fn traversal_policy_default(&self) -> bool {
         false
     }
@@ -734,7 +734,7 @@ impl SyntaxNodeVisitor for PositionSeeker {
 }
 
 
-impl SyntaxNodeVisitorChainLink for PositionSeeker {
+impl SyntaxNodeVisitorChainLink for PositionFilter {
     fn pass_onto_next_link(&self) -> bool { 
         self.currently_in_range
     }
