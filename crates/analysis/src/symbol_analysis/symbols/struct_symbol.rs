@@ -51,3 +51,50 @@ impl StructSymbol {
         }
     }
 }
+
+
+/// Struct constructor
+#[derive(Debug, Clone)]
+pub struct ConstructorSymbol {
+    path: BasicTypeSymbolPath,
+    local_source_path: PathBuf,
+    range: lsp::Range,
+    label_range: lsp::Range
+}
+
+impl Symbol for ConstructorSymbol {
+    fn typ(&self) -> SymbolType {
+        SymbolType::Constructor
+    }
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
+
+impl PrimarySymbol for ConstructorSymbol {
+    fn local_source_path(&self) -> &Path {
+        &self.local_source_path
+    }
+}
+
+impl LocatableSymbol for ConstructorSymbol {
+    fn range(&self) -> lsp::Range {
+        self.range
+    }
+
+    fn label_range(&self) -> lsp::Range {
+        self.label_range
+    }
+}
+
+impl ConstructorSymbol {
+    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
+        Self {
+            path,
+            range,
+            label_range,
+            local_source_path
+        }
+    }
+}

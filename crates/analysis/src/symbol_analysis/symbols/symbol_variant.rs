@@ -18,6 +18,7 @@ pub enum SymbolVariant {
     GlobalFunc(GlobalFunctionSymbol),
     MemberFunc(MemberFunctionSymbol),
     Event(EventSymbol),
+    Constructor(ConstructorSymbol),
 
     // data
     Primitive(PrimitiveTypeSymbol),
@@ -41,6 +42,7 @@ impl std::fmt::Debug for SymbolVariant {
             Self::GlobalFunc(s) => s.fmt(f),
             Self::MemberFunc(s) => s.fmt(f),
             Self::Event(s) => s.fmt(f),
+            Self::Constructor(s) => s.fmt(f),
             Self::Primitive(s) => s.fmt(f),
             Self::EnumVariant(s) => s.fmt(f),
             Self::FuncParam(s) => s.fmt(f),
@@ -64,6 +66,7 @@ impl SymbolVariant {
             SymbolVariant::GlobalFunc(s) => s.typ(),
             SymbolVariant::MemberFunc(s) => s.typ(),
             SymbolVariant::Event(s) => s.typ(),
+            SymbolVariant::Constructor(s) => s.typ(),
             SymbolVariant::Primitive(s) => s.typ(),
             SymbolVariant::EnumVariant(s) => s.typ(),
             SymbolVariant::FuncParam(s) => s.typ(),
@@ -85,6 +88,7 @@ impl SymbolVariant {
             SymbolVariant::GlobalFunc(s) => s.path(),
             SymbolVariant::MemberFunc(s) => s.path(),
             SymbolVariant::Event(s) => s.path(),
+            SymbolVariant::Constructor(s) => s.path(),
             SymbolVariant::Primitive(s) => s.path(),
             SymbolVariant::EnumVariant(s) => s.path(),
             SymbolVariant::FuncParam(s) => s.path(),
@@ -106,6 +110,7 @@ impl SymbolVariant {
             SymbolVariant::GlobalFunc(s) => s.name(),
             SymbolVariant::MemberFunc(s) => s.name(),
             SymbolVariant::Event(s) => s.name(),
+            SymbolVariant::Constructor(s) => s.name(),
             SymbolVariant::Primitive(s) => s.name(),
             SymbolVariant::EnumVariant(s) => s.name(),
             SymbolVariant::FuncParam(s) => s.name(),
@@ -127,6 +132,7 @@ impl SymbolVariant {
             SymbolVariant::GlobalFunc(s) => Some(s.range()),
             SymbolVariant::MemberFunc(s) => Some(s.range()),
             SymbolVariant::Event(s) => Some(s.range()),
+            SymbolVariant::Constructor(s) => Some(s.range()),
             SymbolVariant::Primitive(_) => None,
             SymbolVariant::EnumVariant(s) => Some(s.range()),
             SymbolVariant::FuncParam(s) => Some(s.range()),
@@ -148,6 +154,7 @@ impl SymbolVariant {
             SymbolVariant::GlobalFunc(s) => Some(s.label_range()),
             SymbolVariant::MemberFunc(s) => Some(s.label_range()),
             SymbolVariant::Event(s) => Some(s.label_range()),
+            SymbolVariant::Constructor(s) => Some(s.label_range()),
             SymbolVariant::Primitive(_) => None,
             SymbolVariant::EnumVariant(s) => Some(s.label_range()),
             SymbolVariant::FuncParam(s) => Some(s.label_range()),
@@ -169,6 +176,7 @@ impl SymbolVariant {
             SymbolVariant::GlobalFunc(s) => Some(s.local_source_path()),
             SymbolVariant::MemberFunc(_) => None,
             SymbolVariant::Event(_) => None,
+            SymbolVariant::Constructor(s) => Some(s.local_source_path()),
             SymbolVariant::Primitive(_) => None,
             SymbolVariant::EnumVariant(s) => Some(s.local_source_path()),
             SymbolVariant::FuncParam(_) => None,
@@ -239,6 +247,12 @@ impl From<MemberFunctionSymbol> for SymbolVariant {
 impl From<EventSymbol> for SymbolVariant {
     fn from(value: EventSymbol) -> Self {
         Self::Event(value)
+    }
+}
+
+impl From<ConstructorSymbol> for SymbolVariant {
+    fn from(value: ConstructorSymbol) -> Self {
+        Self::Constructor(value)
     }
 }
 

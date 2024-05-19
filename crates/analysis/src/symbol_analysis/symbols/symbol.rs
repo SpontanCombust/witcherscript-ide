@@ -41,6 +41,7 @@ pub enum SymbolType {
     GlobalFunction,
     MemberFunction,
     Event,
+    Constructor,
     
     // data
     EnumVariant,
@@ -65,7 +66,7 @@ impl SymbolType {
         match self {
             Type | Enum | Struct | Class | State | Array => SymbolCategory::Type,
             EnumVariant | Parameter | GlobalVar | MemberVar | Autobind | LocalVar | SpecialVar => SymbolCategory::Data,
-            GlobalFunction | MemberFunction | Event => SymbolCategory::Callable,
+            GlobalFunction | MemberFunction | Event | Constructor => SymbolCategory::Callable,
         }
     }
 }

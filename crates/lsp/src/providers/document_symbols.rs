@@ -337,6 +337,12 @@ impl ToDocumentSymbol for SpecialVarSymbol {
     }
 }
 
+impl ToDocumentSymbol for ConstructorSymbol {
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        None
+    }
+}
+
 impl ToDocumentSymbol for SymbolVariant {
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         match self {
@@ -356,6 +362,7 @@ impl ToDocumentSymbol for SymbolVariant {
             SymbolVariant::Autobind(s) => s.to_doc_sym(),
             SymbolVariant::LocalVar(s) => s.to_doc_sym(),
             SymbolVariant::SpecialVar(s) => s.to_doc_sym(),
+            SymbolVariant::Constructor(s) => s.to_doc_sym()
         }
     }
 }
