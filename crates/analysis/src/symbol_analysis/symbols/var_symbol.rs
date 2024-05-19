@@ -41,7 +41,7 @@ impl MemberVarSymbol {
             range,
             label_range,
             specifiers: SymbolSpecifiers::new(),
-            type_path: TypeSymbolPath::empty(),
+            type_path: TypeSymbolPath::unknown(),
             ordinal: 0
         }
     }
@@ -83,7 +83,7 @@ impl LocalVarSymbol {
             path,
             range,
             label_range,
-            type_path: TypeSymbolPath::empty()
+            type_path: TypeSymbolPath::unknown()
         }
     }
 }

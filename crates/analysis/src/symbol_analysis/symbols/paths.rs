@@ -97,8 +97,8 @@ impl BasicTypeSymbolPath {
         Self(path)
     }
 
-    pub fn empty() -> Self {
-        Self(SymbolPathBuf::empty())
+    pub fn unknown() -> Self {
+        Self(SymbolPathBuf::unknown(SymbolCategory::Type))
     }
 }
 
@@ -110,7 +110,7 @@ impl From<BasicTypeSymbolPath> for SymbolPathBuf {
 
 impl Default for BasicTypeSymbolPath {
     fn default() -> Self {
-        Self::empty()
+        Self::unknown()
     }
 }
 
@@ -169,10 +169,10 @@ impl ArrayTypeSymbolPath {
         }
     }
 
-    pub fn empty() -> Self {
+    pub fn unknown() -> Self {
         Self {
-            path: SymbolPathBuf::empty(),
-            type_arg_path: Box::new(TypeSymbolPath::empty())
+            path: SymbolPathBuf::unknown(SymbolCategory::Type),
+            type_arg_path: Box::new(TypeSymbolPath::unknown())
         }
     }
 }
@@ -193,8 +193,8 @@ pub enum TypeSymbolPath {
 }
 
 impl TypeSymbolPath {
-    pub fn empty() -> Self {
-        Self::BasicOrState(BasicTypeSymbolPath::empty())
+    pub fn unknown() -> Self {
+        Self::BasicOrState(BasicTypeSymbolPath::unknown())
     }
 }
 

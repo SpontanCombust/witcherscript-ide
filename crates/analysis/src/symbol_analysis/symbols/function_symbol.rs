@@ -53,7 +53,7 @@ impl GlobalFunctionSymbol {
             label_range,
             specifiers: SymbolSpecifiers::new(),
             flavour: None,
-            return_type_path: TypeSymbolPath::empty()
+            return_type_path: TypeSymbolPath::unknown()
         }
     }
 }
@@ -100,7 +100,7 @@ impl MemberFunctionSymbol {
             label_range,
             specifiers: SymbolSpecifiers::new(),
             flavour: None,
-            return_type_path: TypeSymbolPath::empty()
+            return_type_path: TypeSymbolPath::unknown()
         }
     }
 }

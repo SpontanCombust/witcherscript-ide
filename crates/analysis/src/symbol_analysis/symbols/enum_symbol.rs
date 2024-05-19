@@ -96,7 +96,7 @@ impl EnumVariantSymbol {
             local_source_path,
             range,
             label_range,
-            parent_enum_path: BasicTypeSymbolPath::empty()
+            parent_enum_path: BasicTypeSymbolPath::unknown()
         }
     }
 }

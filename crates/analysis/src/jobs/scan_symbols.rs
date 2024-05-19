@@ -92,7 +92,7 @@ impl SymbolScannerVisitor<'_> {
             return BasicTypeSymbolPath::new(&type_name);
         }
 
-        BasicTypeSymbolPath::empty()
+        BasicTypeSymbolPath::unknown()
     }
 
     /// Returns type path and type name, if it's invalid returns empty path
@@ -117,7 +117,7 @@ impl SymbolScannerVisitor<'_> {
                 return self.check_type_from_identifier(n.type_name()).into();
             }
 
-            TypeSymbolPath::empty()
+            TypeSymbolPath::unknown()
         } else {
             self.check_type_from_identifier(n.type_name()).into()
         }   

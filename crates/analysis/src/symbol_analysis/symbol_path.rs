@@ -13,6 +13,7 @@ const COMPONENT_TAG_SEP: char = ':';
 const COMPONENT_TAG_TYPE: char = 'T';
 const COMPONENT_TAG_DATA: char = 'D';
 const COMPONENT_TAG_CALLABLE: char = 'C';
+const UNKNOWN_PATH_NAME: &'static str = "{unknown}";
 
 /// The path is divided into components seperated by a slash '/'.
 /// Each component looks like {name}:{tag}, where name is the proper name of the symbol.
@@ -29,6 +30,11 @@ impl SymbolPathBuf {
         let mut p = Self::empty();
         p.push(name, category);
         p
+    }
+
+    /// Constructs a symbol path indicating an unknown symbol
+    pub fn unknown(category: SymbolCategory) -> Self {
+        Self::new(UNKNOWN_PATH_NAME, category)
     }
 
 
@@ -155,6 +161,11 @@ impl SymbolPath {
     /// Returns if any of path's components is [`witcherscript::MISSING_TEXT`] indicating that its name node was missing in AST
     pub fn has_missing(&self) -> bool {
         self.components().any(|c| c.name == MISSING_TEXT)
+    }
+
+    /// Returns if this path indicates an unknown symbol
+    pub fn has_unknown(&self) -> bool {
+        self.components().any(|c| c.name == UNKNOWN_PATH_NAME)
     }
 
     pub fn starts_with(&self, other: &Self) -> bool {
