@@ -1,5 +1,9 @@
-use std::{collections::HashMap, borrow::Borrow, hash::Hash};
-use super::{symbol_path::{SymbolPath, SymbolPathBuf}, symbols::SymbolCategory};
+use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
+use witcherscript::{ast::*, attribs::*, script_document::ScriptDocument};
+use crate::utils::SymbolPathBuilderPayload;
+use super::symbol_path::{SymbolPath, SymbolPathBuf};
+use super::symbols::{BasicTypeSymbolPath, MemberDataSymbolPath, StateSymbol, Symbol, SymbolCategory};
+use super::symbol_table::{SymbolTable, iter::*, marcher::SymbolTableMarcher};
 
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -51,7 +55,7 @@ impl AsBorrowedKey for BorrowedKey<'_> {
     }
 }
 
-impl<'s> Borrow<dyn AsBorrowedKey + 's> for Key {
+impl<'s> std::borrow::Borrow<dyn AsBorrowedKey + 's> for Key {
     fn borrow(&self) -> &(dyn AsBorrowedKey + 's) {
         self
     }
@@ -75,27 +79,28 @@ impl Hash for (dyn AsBorrowedKey + '_) {
 type Scope = HashMap<Key, SymbolPathBuf>;
 
 
-/// Keeps track of all unqualified symbol identifiers that are valid and accessible in the current context.
+/// Keeps track of all unqualified symbol identifiers that are valid and accessible in the current context.  
+/// "Unqualified" means that the name/identifier appears freely in the code and is ambiguous without a greater context,
+/// e.g. a member var can be used without `this` keyword and thus becomes ambiguous
+/// without the context of inherited properties, local vars and global constants (enum variants).  
 /// Names on each deeper scope layer can overshadow the same name from higher layers.
-/// It is used during function analysis, where identifiers may be used in an ambiguous way,
-/// e.g. member var can be used without prefixing it with `this.`.
 #[derive(Debug, Clone)]
 pub struct UnqualifiedNameLookup {
     stack: Vec<Scope>
 }
 
 impl UnqualifiedNameLookup {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             stack: vec![Scope::new()]
         }
     }
 
-    pub fn push_scope(&mut self) {
+    fn push_scope(&mut self) {
         self.stack.push(Scope::new())
     }
 
-    pub fn pop_scope(&mut self) {
+    fn pop_scope(&mut self) {
         // always keep at least one scope level
         if self.stack.len() > 1 {
             self.stack.pop();
@@ -128,7 +133,7 @@ impl UnqualifiedNameLookup {
     }
 
     /// Inserts a symbol name mapping into the stack.
-    pub fn insert(&mut self, path: &SymbolPath) {
+    fn insert(&mut self, path: SymbolPathBuf) {
         let comp = path.components().last().unwrap();
 
         self.stack.last_mut().unwrap().insert(
@@ -137,3 +142,282 @@ impl UnqualifiedNameLookup {
         );
     }
 }
+
+
+
+
+#[derive(Clone)]
+pub struct UnqualifiedNameLookupBuilder<'a, It> {
+    doc: &'a ScriptDocument,
+    payload: Rc<RefCell<UnqualifiedNameLookup>>,
+    sympath_ctx: Rc<RefCell<SymbolPathBuilderPayload>>,
+    symtab_marcher: SymbolTableMarcher<It>
+}
+
+impl<'a, It> UnqualifiedNameLookupBuilder<'a, It> {
+    /// The first symbol table in `symtab_marcher` should be the one corresponding to the currently visited document
+    pub fn new(
+        doc: &'a ScriptDocument, 
+        sympath_ctx: Rc<RefCell<SymbolPathBuilderPayload>>,
+        symtab_marcher: SymbolTableMarcher<It>
+    ) -> (Self, Rc<RefCell<UnqualifiedNameLookup>>) {
+        let payload = Rc::new(RefCell::new(UnqualifiedNameLookup::new()));
+
+        let self_ = Self {
+            doc,
+            payload: payload.clone(),
+            sympath_ctx,
+            symtab_marcher
+        };
+
+        (self_, payload)
+    }
+
+    /// The first symbol table in `symtab_marcher` should be the one corresponding to the currently visited document
+    pub fn new_rc(
+        doc: &'a ScriptDocument, 
+        sympath_ctx: Rc<RefCell<SymbolPathBuilderPayload>>,
+        symtab_marcher: SymbolTableMarcher<It>
+    ) -> (Rc<RefCell<Self>>, Rc<RefCell<UnqualifiedNameLookup>>) {
+        let (self_, payload) = Self::new(doc, sympath_ctx, symtab_marcher);
+        (Rc::new(RefCell::new(self_)), payload)
+    }
+}
+
+impl<'a, It> SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'a, It> 
+where It: Iterator<Item = &'a SymbolTable> + Clone + 'a {
+    fn traversal_policy_default(&self) -> bool {
+        true
+    }
+
+
+    fn visit_class_decl(&mut self, _: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
+        let mut unl = self.payload.borrow_mut();
+        let sympath_ctx = self.sympath_ctx.borrow();
+
+        unl.push_scope();
+
+        let mut inherit_chain = self.symtab_marcher.clone()
+            .class_hierarchy(&sympath_ctx.current_sympath)
+            .collect::<Vec<_>>();
+
+        // we want to iterate classes starting from the most base class
+        inherit_chain.reverse();
+
+        // with each class in the inheritance chain we add properties to the UNL that `this` inherits from
+        // if any functions are overriden in child classes, the record gets overwritten
+        for class in inherit_chain {
+            if let Some(class_symtab) = self.symtab_marcher.clone().find_containing(class.path()) {
+                for ch in class_symtab.get_class_children(class.path()) {
+                    match ch {
+                        ClassSymbolChild::Var(s) => {
+                            if class.path() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path().to_owned());
+                            }
+                        },
+                        ClassSymbolChild::Autobind(s) => {
+                            if class.path() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path().to_owned());
+                            }
+                        },
+                        ClassSymbolChild::Method(s) => {
+                            if class.path() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path().to_owned());
+                            }
+                        },
+                        ClassSymbolChild::Event(s) => {
+                            unl.insert(s.path().to_owned());
+                        },
+                    }
+                }
+            }
+        }
+
+        TraversalPolicy::default_to(true)
+    }
+
+    fn exit_class_decl(&mut self, _: &ClassDeclarationNode) {
+        self.payload.borrow_mut().pop_scope();
+    }
+
+    fn visit_state_decl(&mut self, _: &StateDeclarationNode) -> StateDeclarationTraversalPolicy {
+        let mut unl = self.payload.borrow_mut();
+        let sympath_ctx = self.sympath_ctx.borrow();
+
+        unl.push_scope(); 
+
+        // all state types inherit properties from this one class
+        let base_type_path = BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME);
+        if let Some(base_type_symtab) = self.symtab_marcher.clone().find_containing(&base_type_path) {
+            for ch in base_type_symtab.get_class_children(&base_type_path) {
+                match ch {
+                    ClassSymbolChild::Var(s) => {
+                        if !s.specifiers.contains(AccessModifier::Private.into()) {
+                            unl.insert(s.path().to_owned());
+                        }
+                    },
+                    ClassSymbolChild::Autobind(s) => {
+                        if !s.specifiers.contains(AccessModifier::Private.into()) {
+                            unl.insert(s.path().to_owned());
+                        }
+                    },
+                    ClassSymbolChild::Method(s) => {
+                        if !s.specifiers.contains(AccessModifier::Private.into()) {
+                            unl.insert(s.path().to_owned());
+                        }
+                    },
+                    ClassSymbolChild::Event(s) => {
+                        unl.insert(s.path().to_owned());
+                    },
+                }
+            }
+        }
+
+        let mut inherit_chain = self.symtab_marcher.clone()
+            .state_hierarchy(&sympath_ctx.current_sympath)
+            .collect::<Vec<_>>();
+
+        inherit_chain.reverse();
+
+        for state in inherit_chain {
+            if let Some(state_symtab) = self.symtab_marcher.clone().find_containing(state.path()) {
+                for ch in state_symtab.get_state_children(state.path()) {
+                    match ch {
+                        StateSymbolChild::Var(s) => {
+                            if state.path() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path().to_owned());
+                            }
+                        },
+                        StateSymbolChild::Autobind(s) => {
+                            if state.path() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path().to_owned());
+                            }
+                        },
+                        StateSymbolChild::Method(s) => {
+                            if state.path() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path().to_owned());
+                            }
+                        },
+                        StateSymbolChild::Event(s) => {
+                            unl.insert(s.path().to_owned());
+                        },
+                    }
+                }
+            }
+        }
+
+        TraversalPolicy::default_to(true)
+    }
+
+    fn exit_state_decl(&mut self, _: &StateDeclarationNode) {
+        self.payload.borrow_mut().pop_scope();
+    }
+
+    fn visit_struct_decl(&mut self, _: &StructDeclarationNode) -> StructDeclarationTraversalPolicy {
+        let mut unl = self.payload.borrow_mut();
+        let sympath_ctx = self.sympath_ctx.borrow();
+
+        unl.push_scope();
+
+        if let Some(struct_symtab) = self.symtab_marcher.clone().find_containing(&sympath_ctx.current_sympath) {
+            for s in struct_symtab.get_struct_children(&sympath_ctx.current_sympath) {
+                unl.insert(s.path().to_owned());
+            }
+        }
+
+        TraversalPolicy::default_to(true)
+    }
+
+    fn exit_struct_decl(&mut self, _: &StructDeclarationNode) {
+        self.payload.borrow_mut().pop_scope();
+    }
+
+    fn visit_enum_decl(&mut self, _: &EnumDeclarationNode) -> EnumDeclarationTraversalPolicy {
+        // no point in adding anything here as enum variants are already exposed in the global scope
+
+        TraversalPolicy::default_to(true)
+    }
+
+    fn exit_enum_decl(&mut self, _: &EnumDeclarationNode) {
+        
+    }
+
+    fn visit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+        let mut unl = self.payload.borrow_mut();
+        let sympath_ctx = self.sympath_ctx.borrow();
+
+        unl.push_scope();
+
+        if let Some(func_symtab) = self.symtab_marcher.clone().find_containing(&sympath_ctx.current_sympath) {
+            for ch in func_symtab.get_callable_children(&sympath_ctx.current_sympath) {
+                if let FunctionSymbolChild::Param(s) = ch {
+                    unl.insert(s.path().to_owned());
+                }
+                // local vars will be pushed dynamically as a function will go on
+            }
+        }
+
+        TraversalPolicy::default_to(true)
+    }
+
+    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
+        self.payload.borrow_mut().pop_scope();
+    }
+
+    fn visit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
+        let mut unl = self.payload.borrow_mut();
+        let sympath_ctx = self.sympath_ctx.borrow();
+
+        unl.push_scope();
+
+        if let Some(func_symtab) = self.symtab_marcher.clone().find_containing(&sympath_ctx.current_sympath) {
+            for ch in func_symtab.get_callable_children(&sympath_ctx.current_sympath) {
+                if let FunctionSymbolChild::Param(s) = ch {
+                    unl.insert(s.path().to_owned());
+                }
+            }
+        }
+
+        TraversalPolicy::default_to(true)
+    }
+
+    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) {
+        self.payload.borrow_mut().pop_scope();
+    }
+
+    fn visit_event_decl(&mut self, _: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
+        let mut unl = self.payload.borrow_mut();
+        let sympath_ctx = self.sympath_ctx.borrow();
+
+        unl.push_scope();
+
+        if let Some(func_symtab) = self.symtab_marcher.clone().find_containing(&sympath_ctx.current_sympath) {
+            for ch in func_symtab.get_callable_children(&sympath_ctx.current_sympath) {
+                if let FunctionSymbolChild::Param(s) = ch {
+                    unl.insert(s.path().to_owned());
+                }
+            }
+        }
+
+        TraversalPolicy::default_to(true)
+    }
+
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: PropertyTraversalContext) {
+        self.payload.borrow_mut().pop_scope();
+    }
+
+    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+        let mut unl = self.payload.borrow_mut();
+        let sympath_ctx = self.sympath_ctx.borrow();
+
+        for name in n.names().map(|n| n.value(self.doc)) {
+            let path = MemberDataSymbolPath::new(&sympath_ctx.current_sympath, &name);
+            unl.insert(path.into());
+        }
+
+        TraversalPolicy::default_to(true)
+    }
+}
+
+impl<'a, It> SyntaxNodeVisitorChainLink for UnqualifiedNameLookupBuilder<'a, It> 
+where It: Iterator<Item = &'a SymbolTable> + Clone + 'a {}
