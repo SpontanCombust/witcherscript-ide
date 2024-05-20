@@ -52,6 +52,9 @@ impl Backend {
             self.on_source_tree_files_modified(diff_modified.clone()).await;
         }
 
+        let duration = Instant::now() - start;
+        self.reporter.log_info(format!("Handled source tree related changes to {} in {:.3}s", content_path.display(), duration.as_secs_f32())).await;
+
         let added_or_modified: Vec<_> = 
             diff_added.into_iter()
             .chain(diff_modified.into_iter())
@@ -77,10 +80,6 @@ impl Backend {
                 self.run_script_analysis(paths).await;
             }
         }
-
-
-        let duration = Instant::now() - start;
-        self.reporter.log_info(format!("Handled source tree related changes to {} in {:.3}s", content_path.display(), duration.as_secs_f32())).await;
     }
 
     async fn on_source_tree_files_added(&self, added_files: Vec<SourceTreeFile>) {

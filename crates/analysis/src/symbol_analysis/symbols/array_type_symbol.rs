@@ -23,6 +23,7 @@ impl Symbol for ArrayTypeSymbol {
 
 impl ArrayTypeSymbol {
     pub const TYPE_NAME: &'static str = "array";
+    pub const INDEX_OPERATOR_NAME: &'static str = "operator[]";
 
     pub fn new(path: ArrayTypeSymbolPath) -> Self {
         Self {
@@ -39,7 +40,7 @@ impl ArrayTypeSymbol {
         let mut params = Vec::new();
 
         {
-            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, "operator[]"), lsp::Range::default(), lsp::Range::default());
+            let mut f = MemberFunctionSymbol::new(MemberCallableSymbolPath::new(&self.path, Self::INDEX_OPERATOR_NAME), lsp::Range::default(), lsp::Range::default());
             f.return_type_path = self.data_type_path().clone();
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "index"), lsp::Range::default(), lsp::Range::default());
             p.type_path = int_path.clone();
