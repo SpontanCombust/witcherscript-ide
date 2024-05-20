@@ -1,9 +1,7 @@
-use std::str::FromStr;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::ast::SyntaxNodeVisitorChain;
-use witcherscript::tokens::Keyword;
 use witcherscript_analysis::symbol_analysis::symbol_table::{SymbolLocation, marcher::{SymbolTableMarcher, IntoSymbolTableMarcher}};
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbols::*;
@@ -190,39 +188,30 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
                 .and_then(|v| v.try_as_special_var_ref())
                 .map(|sym| sym.type_path().clone())
         },
-        PositionTargetKind::UnqualifiedDataIdentifier(name) => {
-            if Keyword::from_str(&name).map(|kw| kw.is_global_var()).unwrap_or(false) {
-                symtabs_marcher.clone()
-                    .get(&SymbolPathBuf::new(&name, SymbolCategory::Data))
-                    .and_then(|v| v.try_as_global_var_ref())
-                    .map(|sym| sym.type_path().clone())
-            } 
-            else if let Some(path) = position_target.unl_ctx.get(&name, SymbolCategory::Data) {
-                Some(path.to_owned())
-            }
-            else {
-                Some(GlobalDataSymbolPath::new(&name).into())
-            }
-        }
-        PositionTargetKind::UnqualifiedCallableIdentifier(name) => {
-            if let Some(path) = position_target.unl_ctx.get(&name, SymbolCategory::Callable) {
-                Some(path.to_owned())
-            }
-            else {
-                Some(GlobalCallableSymbolPath::new(&name).into())
-            }
-        }
-        // other stuff not reliably possible yet
-        //TODO expression evaluator
-        _ => {
-            None
+        PositionTargetKind::ExpressionIdentifier(expr_type_path) => {
+            Some(expr_type_path)
         }
     };
 
-    let (symvar, loc) = sympath
-        .and_then(|sympath| symtabs_marcher.get_with_location(&sympath))
-        .map(|(symvar, loc)| (symvar.to_owned(), loc))
-        .unzip();
+    let symvar = sympath
+        .and_then(|sympath| symtabs_marcher.clone().get(&sympath))
+        .and_then(|symvar| {
+            let rerouted_path = match symvar {
+                SymbolVariant::Constructor(s) => Some(s.parent_type_path.as_sympath()),
+                SymbolVariant::GlobalVar(s) => Some(s.type_path().as_sympath()),
+                SymbolVariant::SpecialVar(s) => Some(s.type_path().as_sympath()),
+                _ => None
+            };
+
+            if let Some(rerouted_path) = rerouted_path {
+                symtabs_marcher.clone().get(rerouted_path)
+            } else {
+                Some(symvar)
+            }
+        })
+        .map(|symvar| symvar.to_owned());
+
+    let loc = symvar.as_ref().and_then(|symvar| symtabs_marcher.clone().locate(symvar.path()));
 
     Some(Inspected {
         origin_selection_range: position_target.range,
@@ -239,11 +228,12 @@ fn resolve_position<'a>(position: lsp::Position, script_state: &'a ScriptState, 
     detail_pos_filter.filter_statements = true;
 
     let (sympath_builder, sympath_builder_payload) = SymbolPathBuilder::new(&script_state.buffer);
-    let (unl_builder, unl_payload) = UnqualifiedNameLookupBuilder::new(&script_state.buffer, sympath_builder_payload.clone(), symtab_marcher);
+    let (unl_builder, unl_payload) = UnqualifiedNameLookupBuilder::new(&script_state.buffer, sympath_builder_payload.clone(), symtab_marcher.clone());
     let resolver = TextDocumentPositionResolver::new_rc(
         position, 
         &script_state.buffer, 
-        detail_pos_filter_payload.clone(), 
+        detail_pos_filter_payload.clone(),
+        symtab_marcher,
         sympath_builder_payload.clone(),
         unl_payload.clone(),
     );
