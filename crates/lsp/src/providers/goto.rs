@@ -71,18 +71,60 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
     if let Some(inspected) = inspect_symbol_at_position(backend, &content_path, &doc_path, params.text_document_position_params.position).await {
         let origin_selection_range = Some(inspected.origin_selection_range);
 
-        let target_uri = inspected
-            .loc.as_ref()
+        let mut loc = inspected.loc;
+        if let (Some(symvar), Some(loc)) = (inspected.symvar, &mut loc) {
+            // if the inspected symbol is a method or an event
+            // attempt to find the very first declaration of the callable
+            // because normally you get the location of the last override of the function
+            if symvar.is_member_func() || symvar.is_event() {
+                let func_path = symvar.path().to_owned();
+                let mut parent_path = func_path.clone();
+                parent_path.pop();
+
+                let func_name = symvar.name();
+
+                let content_dependency_paths = backend.get_content_dependency_paths(&content_path).await;
+                let symtabs = backend.symtabs.read().await;
+                let symtabs_marcher = symtabs.march(&content_dependency_paths);
+
+                let parent_sym_typ = symtabs_marcher.clone()
+                    .get(&parent_path)
+                    .map(|v| v.typ())
+                    .unwrap_or(SymbolType::Type);
+
+                if parent_sym_typ == SymbolType::Class {
+                    for class in symtabs_marcher.clone().class_hierarchy(&parent_path).skip(1) {
+                        let base_func_path = class.path().join_component(func_name, SymbolCategory::Callable);
+                        if let Some(base_func_loc) = symtabs_marcher.clone().locate(&base_func_path) {
+                            *loc = base_func_loc;
+                        }
+                    }
+                } 
+                else if parent_sym_typ == SymbolType::State {
+                    for state in symtabs_marcher.clone().state_hierarchy(&parent_path).skip(1) {
+                        let base_func_path = state.path().join_component(func_name, SymbolCategory::Callable);
+                        if let Some(base_func_loc) = symtabs_marcher.clone().locate(&base_func_path) {
+                            *loc = base_func_loc;
+                        }
+                    }
+
+                    let base_func_path = BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME).join_component(func_name, SymbolCategory::Callable);
+                    if let Some(base_func_loc) = symtabs_marcher.clone().locate(&base_func_path) {
+                        *loc = base_func_loc;
+                    }
+                }
+            }
+        }
+
+        let target_uri = loc.as_ref()
             .map(|loc| loc.abs_source_path.to_uri())
             .unwrap_or(params.text_document_position_params.text_document.uri.clone());
 
-        let target_range = inspected
-            .loc.as_ref()
+        let target_range = loc.as_ref()
             .map(|loc| loc.range)
             .unwrap_or(inspected.origin_selection_range);
 
-        let target_selection_range = inspected
-            .loc.as_ref()
+        let target_selection_range = loc.as_ref()
             .map(|loc| loc.label_range)
             .unwrap_or(inspected.origin_selection_range);
 

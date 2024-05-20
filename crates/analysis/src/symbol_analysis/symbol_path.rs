@@ -220,6 +220,12 @@ impl SymbolPath {
         joined
     }
 
+    pub fn join_component(&self, name: &str, category: SymbolCategory) -> SymbolPathBuf {
+        let mut joined = self.to_sympath_buf();
+        joined.push(name, category);
+        joined
+    }
+
     /// Make this symbol path owned
     pub fn to_sympath_buf(&self) -> SymbolPathBuf {
         SymbolPathBuf {
