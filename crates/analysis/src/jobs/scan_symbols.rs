@@ -104,7 +104,11 @@ impl SymbolScannerVisitor<'_> {
             if type_name == ArrayTypeSymbol::TYPE_NAME {
                 let type_arg_path = self.check_type_from_type_annot(type_arg_node);
                 if !type_arg_path.is_empty() {
-                    return TypeSymbolPath::Array(ArrayTypeSymbolPath::new(type_arg_path));
+                    let array_path = ArrayTypeSymbolPath::new(type_arg_path);
+                    if !self.symtab.contains(&array_path) {
+                        self.inject_array_type(array_path.clone());
+                    }
+                    return TypeSymbolPath::Array(array_path);
                 }   
             } else {
                 // since only array type takes type argument, all other uses of type arg are invalid
@@ -123,6 +127,18 @@ impl SymbolScannerVisitor<'_> {
         } else {
             self.check_type_from_identifier(n.type_name()).into()
         }   
+    }
+
+    fn inject_array_type(&mut self, array_sympath: ArrayTypeSymbolPath) {
+        let void_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"));
+        let int_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("int"));
+        let bool_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("bool"));
+    
+        let arr = ArrayTypeSymbol::new(array_sympath);
+        let (funcs, params) = arr.make_functions(&void_path, &int_path, &bool_path);
+        self.symtab.insert_array(arr, self.local_source_path);
+        funcs.into_iter().for_each(|f| { self.symtab.insert(f); } );
+        params.into_iter().for_each(|p| { self.symtab.insert(p); } );
     }
 }
 

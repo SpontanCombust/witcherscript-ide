@@ -3,7 +3,6 @@ use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
-//TODO for later: remember to remove array type symbol when type from type arg is changed 
 #[derive(Debug, Clone)]
 pub struct ArrayTypeSymbol {
     path: ArrayTypeSymbolPath
@@ -44,6 +43,7 @@ impl ArrayTypeSymbol {
             f.return_type_path = self.data_type_path().clone();
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "index"), lsp::Range::default(), lsp::Range::default());
             p.type_path = int_path.clone();
+            p.ordinal = 0;
             params.push(p);
             funcs.push(f);
         }
@@ -62,6 +62,7 @@ impl ArrayTypeSymbol {
             f.return_type_path = self.data_type_path().clone();
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "element"), lsp::Range::default(), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
+            p.ordinal = 0;
             params.push(p);
             funcs.push(f);
         }
@@ -70,6 +71,7 @@ impl ArrayTypeSymbol {
             f.return_type_path = void_path.clone();
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "newSize"), lsp::Range::default(), lsp::Range::default());
             p.type_path = int_path.clone();
+            p.ordinal = 0;
             params.push(p);
             funcs.push(f);
         }
@@ -78,6 +80,7 @@ impl ArrayTypeSymbol {
             f.return_type_path = bool_path.clone();
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "element"), lsp::Range::default(), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
+            p.ordinal = 0;
             params.push(p);
             funcs.push(f);
         }
@@ -86,6 +89,7 @@ impl ArrayTypeSymbol {
             f.return_type_path = bool_path.clone();
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "element"), lsp::Range::default(), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
+            p.ordinal = 0;
             params.push(p);
             funcs.push(f);
         }
@@ -94,6 +98,7 @@ impl ArrayTypeSymbol {
             f.return_type_path = int_path.clone();
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "element"), lsp::Range::default(), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
+            p.ordinal = 0;
             params.push(p);
             funcs.push(f);
         }
@@ -102,6 +107,7 @@ impl ArrayTypeSymbol {
             f.return_type_path = int_path.clone();
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "element"), lsp::Range::default(), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
+            p.ordinal = 0;
             params.push(p);
             funcs.push(f);
         }
@@ -110,6 +116,7 @@ impl ArrayTypeSymbol {
             f.return_type_path = int_path.clone();
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "numElements"), lsp::Range::default(), lsp::Range::default());
             p.type_path = int_path.clone();
+            p.ordinal = 0;
             params.push(p);
             funcs.push(f);
         }
@@ -118,6 +125,7 @@ impl ArrayTypeSymbol {
             f.return_type_path = void_path.clone();
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "index"), lsp::Range::default(), lsp::Range::default());
             p.type_path = int_path.clone();
+            p.ordinal = 0;
             params.push(p);
             funcs.push(f);
         }
@@ -126,9 +134,11 @@ impl ArrayTypeSymbol {
             f.return_type_path = void_path.clone();
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "index"), lsp::Range::default(), lsp::Range::default());
             p.type_path = int_path.clone();
+            p.ordinal = 0;
             params.push(p);
             let mut p = FunctionParameterSymbol::new(MemberDataSymbolPath::new(&f.path(), "element"), lsp::Range::default(), lsp::Range::default());
             p.type_path = self.data_type_path().clone();
+            p.ordinal = 1;
             params.push(p);
             funcs.push(f);
         }

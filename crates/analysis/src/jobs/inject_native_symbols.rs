@@ -46,19 +46,3 @@ pub fn inject_globals(symtab: &mut SymbolTable) {
         symtab.insert(gv); 
     });
 }
-
-
-/// Should be called when coming accross an array type that hasn't been inserted into symtab yet.
-/// Assumes the data type is not some error type and corresponding array type does not yet exist in the symbol table.
-/// Use ArrayTypeSymbol::path_for to get the path to array's symbol.
-pub fn inject_array_type(symtab: &mut SymbolTable, data_type_path: ArrayTypeSymbolPath) {
-    let void_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"));
-    let int_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("int"));
-    let bool_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("bool"));
-
-    let arr = ArrayTypeSymbol::new(data_type_path);
-    let (funcs, params) = arr.make_functions(&void_path, &int_path, &bool_path);
-    symtab.insert(arr);
-    funcs.into_iter().for_each(|f| { symtab.insert(f); } );
-    params.into_iter().for_each(|p| { symtab.insert(p); } );
-}

@@ -12,7 +12,7 @@ pub enum SymbolVariant {
     State(StateSymbol),
     Struct(StructSymbol),
     Enum(EnumSymbol),
-    Array(ArrayTypeSymbol), //TODO maybe rework array symbol so only one set of symbols has to persist and specialized types get generated dynamically
+    Array(ArrayTypeSymbol),
 
     // callables
     GlobalFunc(GlobalFunctionSymbol),

@@ -197,7 +197,8 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
 
         if self.top().map(|e| e.ctx == ExpressionTraversalContext::ArrayExpressionAccessor).unwrap_or(false) {
             let accessor_path = self.pop().unwrap().path;
-            let op_path = MemberCallableSymbolPath::new(&accessor_path, ArrayTypeSymbol::INDEX_OPERATOR_NAME);
+            let accessor_type = self.produce_type(&accessor_path);
+            let op_path = MemberCallableSymbolPath::new(&accessor_type, ArrayTypeSymbol::INDEX_OPERATOR_NAME);
             self.push(self.produce_type(&op_path), ctx);
         } else {
             self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx);

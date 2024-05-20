@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use thiserror::Error;
@@ -21,7 +21,9 @@ pub struct SymbolTable {
     script_root: Arc<AbsPath>,
     symbols: BTreeMap<SymbolPathBuf, SymbolVariant>,
     /// SymbolPath roots of symbols associated with given local paths in a source tree
-    source_path_assocs: HashMap<PathBuf, Vec<SymbolPathBuf>>
+    source_path_assocs: HashMap<PathBuf, Vec<SymbolPathBuf>>,
+    /// Keeps track of where array type symbols have been referenced
+    array_type_refs: HashMap<SymbolPathBuf, HashSet<PathBuf>>
 }
 
 #[derive(Debug, Clone, Error)]
@@ -45,7 +47,8 @@ impl SymbolTable {
         Self {
             script_root: scripts_root,
             symbols: BTreeMap::new(),
-            source_path_assocs: HashMap::new()
+            source_path_assocs: HashMap::new(),
+            array_type_refs: HashMap::new()
         }
     }
 
@@ -76,6 +79,15 @@ impl SymbolTable {
         if let Some(alias) = &sym.alias {
             self.symbols.insert(alias.to_owned(), sym.clone().into());
         }
+        self.symbols.insert(sym.path().to_owned(), sym.into());
+    }
+
+    pub(crate) fn insert_array(&mut self, sym: ArrayTypeSymbol, ref_local_source_path: &Path) {
+        self.array_type_refs
+            .entry(sym.path().to_owned())
+            .or_default()
+            .insert(ref_local_source_path.to_owned());
+
         self.symbols.insert(sym.path().to_owned(), sym.into());
     }
 
@@ -151,6 +163,10 @@ impl SymbolTable {
         self.source_path_assocs
             .get_mut(local_source_path)
             .map(|assocs| assocs.clear());
+
+        for (_, refs) in self.array_type_refs.iter_mut() {
+            refs.remove(local_source_path);
+        }
     }
 
 
@@ -209,13 +225,13 @@ impl SymbolTable {
             self.source_path_assocs.entry(file_path.clone())
                 .or_default();
 
-            for root in &sympath_roots {
-                let root_variant = other.symbols.remove(root).unwrap();
-                if let Some(occupying_variant) = self.symbols.get(root) {
+            for root in sympath_roots {
+                let root_variant = other.symbols.remove(&root).unwrap();
+                if let Some(occupying_variant) = self.symbols.get(&root) {
                     if !occupying_variant.path().has_missing() {
                         errors.push(MergeConflictError {
                             occupied_path: occupying_variant.path().to_sympath_buf(),
-                            occupied_location: self.locate(root),
+                            occupied_location: self.locate(&root),
                             incoming_location: SymbolLocation { 
                                 abs_source_path: self.script_root.join(&file_path).unwrap(),
                                 local_source_path: file_path.to_owned(),
@@ -250,12 +266,7 @@ impl SymbolTable {
                     }
 
                     if let Some(occupying_variant) = self.symbols.get(incoming_sympath) {
-                        // array symbols do not get declared in a normal sense
-                        // they get dynamically created when coming accross an array var declaration
-                        // so testing for duplicate for an array in perticular doesn't make sense
-                        if occupying_variant.is_array() {
-                            continue;
-                        }
+                        incoming_sympath.clone_into(&mut sympath_to_skip);
 
                         if !occupying_variant.path().has_missing() {
                             errors.push(MergeConflictError {
@@ -269,8 +280,6 @@ impl SymbolTable {
                                 }
                             });
                         }
-
-                        incoming_sympath.clone_into(&mut sympath_to_skip);
                     } else {
                         self.symbols.insert(incoming_sympath.to_owned(), incoming_variant);
                         sympath_to_skip.clear();
@@ -279,6 +288,30 @@ impl SymbolTable {
 
                 root_children_sympaths.clear();
             }
+        }
+
+        // The rest is symbols that cannot be pin-pointed in a file
+        // for example, array type symbols
+        //
+        // Array symbols do not get declared in a normal sense.
+        // They get dynamically created when coming accross an array var declaration,
+        // so testing for duplicate for an array in perticular doesn't make sense.
+        // Instead of that, silently skip those symbols if they're already present.
+        let mut sympath_to_skip = SymbolPathBuf::empty();
+        for (sympath, symvar) in other.symbols {
+            if self.symbols.contains_key(&sympath) {
+                sympath.clone_into(&mut sympath_to_skip);
+            } else {
+                self.symbols.insert(sympath, symvar);
+                sympath_to_skip.clear();
+            }
+        }
+
+        for (array_sympath, array_refs) in other.array_type_refs {
+            self.array_type_refs
+                .entry(array_sympath)
+                .or_default()
+                .extend(array_refs);
         }
 
         errors
