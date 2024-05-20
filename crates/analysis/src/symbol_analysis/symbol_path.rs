@@ -228,6 +228,12 @@ impl SymbolPath {
     }
 }
 
+impl Default for &SymbolPath {
+    fn default() -> Self {
+        SymbolPath::new("")
+    }
+}
+
 impl ToOwned for SymbolPath {
     type Owned = SymbolPathBuf;
 

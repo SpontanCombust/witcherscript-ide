@@ -935,6 +935,102 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
     }
 }
 
+impl<'script> From<NestedExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: NestedExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<LiteralNode<'script>> for ExpressionNode<'script> {
+    fn from(value: LiteralNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<ThisExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: ThisExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<SuperExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: SuperExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<ParentExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: ParentExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<VirtualParentExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: VirtualParentExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<IdentifierNode<'script>> for ExpressionNode<'script> {
+    fn from(value: IdentifierNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<FunctionCallExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: FunctionCallExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<ArrayExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: ArrayExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<MemberFieldExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: MemberFieldExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<NewExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: NewExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<TypeCastExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: TypeCastExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<UnaryOperationExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: UnaryOperationExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<BinaryOperationExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: BinaryOperationExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<AssignmentOperationExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: AssignmentOperationExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
+impl<'script> From<TernaryConditionalExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: TernaryConditionalExpressionNode<'script>) -> Self {
+        value.into()
+    }
+}
+
 impl SyntaxNodeTraversal for ExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
