@@ -2,7 +2,7 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::ast::SyntaxNodeVisitorChain;
-use witcherscript_analysis::symbol_analysis::symbol_table::{SymbolLocation, marcher::{SymbolTableMarcher, IntoSymbolTableMarcher}};
+use witcherscript_analysis::symbol_analysis::symbol_table::{SymbolLocation, marcher::SymbolTableMarcher};
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbols::*;
 use witcherscript_analysis::symbol_analysis::unqualified_name_lookup::UnqualifiedNameLookupBuilder;
@@ -25,12 +25,29 @@ pub async fn goto_definition(backend: &Backend, params: lsp::GotoDefinitionParam
     }
 
     if let Some(inspected) = inspect_symbol_at_position(backend, &content_path, &doc_path, params.text_document_position_params.position).await {
+        let origin_selection_range = Some(inspected.origin_selection_range);
+
+        let target_uri = inspected
+            .loc.as_ref()
+            .map(|loc| loc.abs_source_path.to_uri())
+            .unwrap_or(params.text_document_position_params.text_document.uri.clone());
+
+        let target_range = inspected
+            .loc.as_ref()
+            .map(|loc| loc.range)
+            .unwrap_or(inspected.origin_selection_range);
+
+        let target_selection_range = inspected
+            .loc.as_ref()
+            .map(|loc| loc.label_range)
+            .unwrap_or(inspected.origin_selection_range);
+
         Ok(Some(lsp::GotoDefinitionResponse::Link(vec![
             lsp::LocationLink {
-                origin_selection_range: Some(inspected.origin_selection_range),
-                target_uri: inspected.loc.as_ref().map(|loc| loc.abs_source_path.to_uri()).unwrap_or(params.text_document_position_params.text_document.uri.clone()),
-                target_range: inspected.loc.as_ref().map(|loc| loc.range).unwrap_or(inspected.origin_selection_range),
-                target_selection_range: inspected.loc.as_ref().map(|loc| loc.label_range).unwrap_or(inspected.origin_selection_range)
+                origin_selection_range,
+                target_uri,
+                target_range,
+                target_selection_range,
             }
         ])))
     } else {
@@ -50,14 +67,31 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
         backend.client.send_notification::<notifications::client::show_foreign_script_warning::Type>(()).await;
         return Ok(None);
     }
-    //TODO if it's a member function it should get the first declaration in the most base class possible
+
     if let Some(inspected) = inspect_symbol_at_position(backend, &content_path, &doc_path, params.text_document_position_params.position).await {
+        let origin_selection_range = Some(inspected.origin_selection_range);
+
+        let target_uri = inspected
+            .loc.as_ref()
+            .map(|loc| loc.abs_source_path.to_uri())
+            .unwrap_or(params.text_document_position_params.text_document.uri.clone());
+
+        let target_range = inspected
+            .loc.as_ref()
+            .map(|loc| loc.range)
+            .unwrap_or(inspected.origin_selection_range);
+
+        let target_selection_range = inspected
+            .loc.as_ref()
+            .map(|loc| loc.label_range)
+            .unwrap_or(inspected.origin_selection_range);
+
         Ok(Some(lsp::request::GotoDeclarationResponse::Link(vec![
             lsp::LocationLink {
-                origin_selection_range: Some(inspected.origin_selection_range),
-                target_uri: inspected.loc.as_ref().map(|loc| loc.abs_source_path.to_uri()).unwrap_or(params.text_document_position_params.text_document.uri.clone()),
-                target_range: inspected.loc.as_ref().map(|loc| loc.range).unwrap_or(inspected.origin_selection_range),
-                target_selection_range: inspected.loc.as_ref().map(|loc| loc.label_range).unwrap_or(inspected.origin_selection_range)
+                origin_selection_range,
+                target_uri,
+                target_range,
+                target_selection_range
             }
         ])))
     } else {
@@ -83,12 +117,29 @@ pub async fn goto_type_definition(backend: &Backend, params: lsp::request::GotoT
             return Ok(None);
         }
 
+        let origin_selection_range = Some(inspected.origin_selection_range);
+
+        let target_uri = inspected
+            .loc.as_ref()
+            .map(|loc| loc.abs_source_path.to_uri())
+            .unwrap_or(params.text_document_position_params.text_document.uri.clone());
+
+        let target_range = inspected
+            .loc.as_ref()
+            .map(|loc| loc.range)
+            .unwrap_or(inspected.origin_selection_range);
+
+        let target_selection_range = inspected
+            .loc.as_ref()
+            .map(|loc| loc.label_range)
+            .unwrap_or(inspected.origin_selection_range);
+
         Ok(Some(lsp::request::GotoTypeDefinitionResponse::Link(vec![
             lsp::LocationLink {
-                origin_selection_range: Some(inspected.origin_selection_range),
-                target_uri: inspected.loc.as_ref().map(|loc| loc.abs_source_path.to_uri()).unwrap_or(params.text_document_position_params.text_document.uri.clone()),
-                target_range: inspected.loc.as_ref().map(|loc| loc.range).unwrap_or(inspected.origin_selection_range),
-                target_selection_range: inspected.loc.as_ref().map(|loc| loc.label_range).unwrap_or(inspected.origin_selection_range)
+                origin_selection_range,
+                target_uri,
+                target_range,
+                target_selection_range
             }
         ])))
     } else {
@@ -107,20 +158,9 @@ struct Inspected {
 async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, doc_path: &AbsPath, position: lsp::Position) -> Option<Inspected> {
     let script_state = backend.scripts.get(doc_path)?;
 
-    let content_dependency_paths: Vec<_> = 
-        [content_path.clone()].into_iter()
-        .chain(backend.content_graph
-            .read().await
-            .walk_dependencies(&content_path)
-            .map(|n| n.content.path().to_owned()))
-        .collect();
-        
+    let content_dependency_paths = backend.get_content_dependency_paths(content_path).await;
     let symtabs = backend.symtabs.read().await;
-
-    let symtabs_marcher = 
-        content_dependency_paths.iter()
-        .filter_map(|p| symtabs.get(p))
-        .into_marcher();
+    let symtabs_marcher = symtabs.march(&content_dependency_paths);
 
     let position_target = resolve_position(position, &script_state, symtabs_marcher.clone())?;
 

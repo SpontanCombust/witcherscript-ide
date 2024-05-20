@@ -7,7 +7,8 @@ pub trait Symbol {
     fn typ(&self) -> SymbolType;
     fn path(&self) -> &SymbolPath;
 
-    /// If path is empty returns empty string
+    /// Returns name of the last path component.
+    /// If path is empty returns empty string.
     fn name(&self) -> &str {
         self.path().components().last().map(|c| c.name).unwrap_or("")
     }

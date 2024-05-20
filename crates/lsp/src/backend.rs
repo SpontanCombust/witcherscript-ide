@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 use tower_lsp::Client;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
-use witcherscript_analysis::symbol_analysis::symbol_table::SymbolTable;
+use witcherscript_analysis::symbol_analysis::symbol_table::{marcher::{IntoSymbolTableMarcher, SymbolTableMarcher}, SymbolTable};
 use witcherscript_project::{ContentGraph, SourceTree, SourceTreeFile, SourceTreePath};
 use crate::{config::Config, reporting::Reporter};
 
@@ -103,6 +103,13 @@ impl SymbolTables {
             inner: HashMap::new()
         }
     }
+
+    pub fn march<'a, 'p>(&'a self, content_dependency_paths: &'p [AbsPath]) -> SymbolTableMarcher<'a> 
+    where 'p: 'a {
+        content_dependency_paths.iter()
+            .filter_map(|p| self.get(p))
+            .into_marcher()
+    }
 }
 
 impl Backend {
@@ -121,5 +128,17 @@ impl Backend {
             scripts: Arc::new(ScriptStates::new()),
             symtabs: RwLock::new(SymbolTables::new())
         }
+    }
+
+
+    /// Use with [`SymbolTables::make_marcher_from_paths`] to create a sumbol table marcher over the dependency tree
+    /// Paths include the path from the parameter.
+    pub async fn get_content_dependency_paths(&self, content_path: &AbsPath) -> Vec<AbsPath> {
+        [content_path.clone()].into_iter()
+        .chain(self.content_graph
+            .read().await
+            .walk_dependencies(&content_path)
+            .map(|n| n.content.path().to_owned()))
+        .collect()
     }
 }
