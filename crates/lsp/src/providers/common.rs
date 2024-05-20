@@ -2,8 +2,10 @@ use std::{cell::RefCell, rc::Rc};
 use tower_lsp::lsp_types as lsp;
 use witcherscript::{ast::*, script_document::ScriptDocument, tokens::*};
 use witcherscript_analysis::symbol_analysis::symbol_table::marcher::SymbolTableMarcher;
-use witcherscript_analysis::symbol_analysis::{symbol_path::SymbolPathBuf, unqualified_name_lookup::UnqualifiedNameLookup};
-use witcherscript_analysis::utils::{evaluate_expression, PositionFilterPayload, SymbolPathBuilderPayload};
+use witcherscript_analysis::symbol_analysis::unqualified_name_lookup::*;
+use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
+use witcherscript_analysis::utils::*;
+use crate::ScriptState;
 
 
 /// A node visitor that can resolve a code identifier/symbol if a specified position points to such.
@@ -446,3 +448,36 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 }
 
 impl SyntaxNodeVisitorChainLink for TextDocumentPositionResolver<'_> {}
+
+
+
+pub(super) fn resolve_text_document_position<'a>(position: lsp::Position, script_state: &'a ScriptState, symtab_marcher: SymbolTableMarcher<'a>) -> Option<PositionTarget> {
+    let (mut main_pos_filter, _) = PositionFilter::new(position);
+    main_pos_filter.filter_statements = false;
+
+    let (mut detail_pos_filter, detail_pos_filter_payload) = PositionFilter::new(position);
+    detail_pos_filter.filter_statements = true;
+
+    let (sympath_builder, sympath_builder_payload) = SymbolPathBuilder::new(&script_state.buffer);
+    let (unl_builder, unl_payload) = UnqualifiedNameLookupBuilder::new(&script_state.buffer, sympath_builder_payload.clone(), symtab_marcher.clone());
+    let resolver = TextDocumentPositionResolver::new_rc(
+        position, 
+        &script_state.buffer, 
+        detail_pos_filter_payload.clone(),
+        symtab_marcher,
+        sympath_builder_payload.clone(),
+        unl_payload.clone(),
+    );
+
+    let mut chain = SyntaxNodeVisitorChain::new()
+        .link(main_pos_filter)
+        .link(sympath_builder)
+        .link(unl_builder)
+        .link(detail_pos_filter)
+        .link_rc(resolver.clone());
+
+    script_state.script.visit_nodes(&mut chain);
+
+    let resolver_ref = resolver.borrow();
+    resolver_ref.found_target.clone()
+}

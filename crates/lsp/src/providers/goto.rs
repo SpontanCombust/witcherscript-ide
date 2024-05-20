@@ -1,14 +1,11 @@
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
-use witcherscript::ast::SyntaxNodeVisitorChain;
-use witcherscript_analysis::symbol_analysis::symbol_table::{SymbolLocation, marcher::SymbolTableMarcher};
+use witcherscript_analysis::symbol_analysis::symbol_table::SymbolLocation;
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbols::*;
-use witcherscript_analysis::symbol_analysis::unqualified_name_lookup::UnqualifiedNameLookupBuilder;
-use witcherscript_analysis::utils::{PositionFilter, SymbolPathBuilder};
-use crate::{providers::common::PositionTargetKind, Backend, ScriptState, messaging::notifications};
-use super::common::{PositionTarget, TextDocumentPositionResolver};
+use crate::{providers::common::PositionTargetKind, Backend, messaging::notifications};
+use super::common::resolve_text_document_position;
 
 
 
@@ -204,7 +201,7 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
     let symtabs = backend.symtabs.read().await;
     let symtabs_marcher = symtabs.march(&content_dependency_paths);
 
-    let position_target = resolve_position(position, &script_state, symtabs_marcher.clone())?;
+    let position_target = resolve_text_document_position(position, &script_state, symtabs_marcher.clone())?;
 
     
     let sympath: Option<SymbolPathBuf> = match position_target.kind {
@@ -300,35 +297,4 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
         symvar,
         loc
     })
-}
-
-fn resolve_position<'a>(position: lsp::Position, script_state: &'a ScriptState, symtab_marcher: SymbolTableMarcher<'a>) -> Option<PositionTarget> {
-    let (mut main_pos_filter, _) = PositionFilter::new(position);
-    main_pos_filter.filter_statements = false;
-
-    let (mut detail_pos_filter, detail_pos_filter_payload) = PositionFilter::new(position);
-    detail_pos_filter.filter_statements = true;
-
-    let (sympath_builder, sympath_builder_payload) = SymbolPathBuilder::new(&script_state.buffer);
-    let (unl_builder, unl_payload) = UnqualifiedNameLookupBuilder::new(&script_state.buffer, sympath_builder_payload.clone(), symtab_marcher.clone());
-    let resolver = TextDocumentPositionResolver::new_rc(
-        position, 
-        &script_state.buffer, 
-        detail_pos_filter_payload.clone(),
-        symtab_marcher,
-        sympath_builder_payload.clone(),
-        unl_payload.clone(),
-    );
-
-    let mut chain = SyntaxNodeVisitorChain::new()
-        .link(main_pos_filter)
-        .link(sympath_builder)
-        .link(unl_builder)
-        .link(detail_pos_filter)
-        .link_rc(resolver.clone());
-
-    script_state.script.visit_nodes(&mut chain);
-
-    let resolver_ref = resolver.borrow();
-    resolver_ref.found_target.clone()
 }
