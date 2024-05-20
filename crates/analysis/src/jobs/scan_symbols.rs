@@ -27,6 +27,7 @@ pub fn scan_symbols(
         scripts_root,
         diagnostics,
         current_path: SymbolPathBuf::empty(),
+        current_constr_path: None,
         current_param_ordinal: 0,
         current_var_ordinal: 0
     };
@@ -43,6 +44,7 @@ struct SymbolScannerVisitor<'a> {
     diagnostics: &'a mut Vec<LocatedDiagnostic>,
 
     current_path: SymbolPathBuf,
+    current_constr_path: Option<SymbolPathBuf>,
     current_param_ordinal: usize,
     current_var_ordinal: usize
 }
@@ -260,7 +262,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let struct_name = name_node.value(&self.doc);
         let path = BasicTypeSymbolPath::new(&struct_name);
         if self.check_contains(&path, name_node.range()) {
-            let mut sym = StructSymbol::new(path, self.local_source_path.to_owned(), n.range(), name_node.range());
+            let mut sym = StructSymbol::new(path.clone(), self.local_source_path.to_owned(), n.range(), name_node.range());
 
             for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
                 if !sym.specifiers.insert(spec) {
@@ -277,6 +279,13 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             sym.path().clone_into(&mut self.current_path);
             self.symtab.insert_primary(sym);
 
+            let constr_path = GlobalCallableSymbolPath::new(&struct_name);
+            let mut constr_sym = ConstructorSymbol::new(constr_path, self.local_source_path.to_owned(), n.range(), name_node.range());
+            constr_sym.parent_type_path = path;
+
+            self.current_constr_path = Some(constr_sym.path().to_owned());
+            self.symtab.insert_primary(constr_sym);
+
             traverse_definition = true;
         }
 
@@ -287,6 +296,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
     fn exit_struct_decl(&mut self, _: &StructDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Type).unwrap_or(false)  {
+            self.current_constr_path = None;
             self.current_path.pop();
             self.current_var_ordinal = 0;
         }
@@ -536,6 +546,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         for name_node in n.names() {
             let var_name = name_node.value(&self.doc);
             let path = MemberDataSymbolPath::new(&self.current_path, &var_name);
+            let constr_param_path = self.current_constr_path.as_ref().map(|constr_path| MemberDataSymbolPath::new(constr_path, &var_name));
             if self.check_contains(&path, name_node.range()) {
                 let mut sym = MemberVarSymbol::new(path, n.range(), name_node.range());
                 sym.specifiers = specifiers.clone();
@@ -543,6 +554,14 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 sym.ordinal = self.current_var_ordinal;
 
                 self.symtab.insert(sym);
+
+                if let Some(constr_param_path) = constr_param_path {
+                    let mut constr_param_sym = FunctionParameterSymbol::new(constr_param_path, n.range(), name_node.range());
+                    constr_param_sym.type_path = type_path.clone();
+                    constr_param_sym.ordinal = self.current_var_ordinal;
+
+                    self.symtab.insert(constr_param_sym);
+                }
             }
 
             self.current_var_ordinal += 1;

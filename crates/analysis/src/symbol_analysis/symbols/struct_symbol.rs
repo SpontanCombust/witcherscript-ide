@@ -56,10 +56,11 @@ impl StructSymbol {
 /// Struct constructor
 #[derive(Debug, Clone)]
 pub struct ConstructorSymbol {
-    path: BasicTypeSymbolPath,
+    path: GlobalCallableSymbolPath,
     local_source_path: PathBuf,
     range: lsp::Range,
-    label_range: lsp::Range
+    label_range: lsp::Range,
+    pub parent_type_path: BasicTypeSymbolPath
 }
 
 impl Symbol for ConstructorSymbol {
@@ -89,12 +90,13 @@ impl LocatableSymbol for ConstructorSymbol {
 }
 
 impl ConstructorSymbol {
-    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: GlobalCallableSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
         Self {
             path,
             range,
             label_range,
-            local_source_path
+            local_source_path,
+            parent_type_path: BasicTypeSymbolPath::unknown()
         }
     }
 }
