@@ -8,4 +8,5 @@ Float - float
 Bool - bool
 String - string
 CName - name
+NULL - can be thought of as both a value and any object type
 */

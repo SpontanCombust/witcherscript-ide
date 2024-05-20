@@ -15,6 +15,7 @@ pub fn inject_primitives(symtab: &mut SymbolTable) {
         PrimitiveTypeSymbol::new("Bool", Some("bool")),
         PrimitiveTypeSymbol::new("String", Some("string")),
         PrimitiveTypeSymbol::new("CName", Some("name")),
+        PrimitiveTypeSymbol::new("NULL", None),
 
     ].into_iter()
     .for_each(|sym| {
