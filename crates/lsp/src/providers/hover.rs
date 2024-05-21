@@ -36,6 +36,9 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
     
     if let Some(position_target) = resolve_text_document_position(params.text_document_position_params.position, &script_state, symtabs_marcher.clone()) {
         let sympath: Option<SymbolPathBuf> = match position_target.kind {
+            PositionTargetKind::ArrayTypeIdentifier => {
+                None
+            },
             PositionTargetKind::TypeIdentifier(type_name) => {
                 Some(BasicTypeSymbolPath::new(&type_name).into())
             },
@@ -92,9 +95,15 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
         };
 
         if let Some(sympath) = sympath {
+            let category = sympath
+                .components().last()
+                .map(|c| c.category)
+                .unwrap_or(SymbolCategory::Type);
+
             let mut buf = String::new();
             symtabs_marcher.get_with_containing(&sympath)
-                .map(|(symtab, symvar)| symvar.render(&mut buf, symtab));
+                .map(|(symtab, symvar)| symvar.render(&mut buf, symtab))
+                .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
 
             Ok(Some(lsp::Hover {
                 contents: lsp::HoverContents::Scalar(lsp::MarkedString::LanguageString(lsp::LanguageString {
@@ -112,7 +121,6 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
 }
 
 //FIXME less bloat in multi-line tooltips
-//FIXME tooltip for "array" identifier
 
 trait RenderTooltip {
     fn render(&self, buf: &mut String, symtab: &SymbolTable);

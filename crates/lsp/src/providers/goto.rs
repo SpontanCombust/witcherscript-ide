@@ -205,6 +205,9 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
 
     
     let sympath: Option<SymbolPathBuf> = match position_target.kind {
+        PositionTargetKind::ArrayTypeIdentifier => {
+            None
+        },
         PositionTargetKind::TypeIdentifier(type_name) => {
             Some(BasicTypeSymbolPath::new(&type_name).into())
         },

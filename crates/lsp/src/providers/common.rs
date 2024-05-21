@@ -2,6 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 use tower_lsp::lsp_types as lsp;
 use witcherscript::{ast::*, script_document::ScriptDocument, tokens::*};
 use witcherscript_analysis::symbol_analysis::symbol_table::marcher::SymbolTableMarcher;
+use witcherscript_analysis::symbol_analysis::symbols::ArrayTypeSymbol;
 use witcherscript_analysis::symbol_analysis::unqualified_name_lookup::*;
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::utils::*;
@@ -29,6 +30,7 @@ pub(super) struct PositionTarget {
 
 #[derive(Debug, Clone)]
 pub(super) enum PositionTargetKind {
+    ArrayTypeIdentifier,
     TypeIdentifier(String),
     StateDeclarationNameIdentifier, // more info can be fetched using sympath_ctx 
     StateDeclarationBaseIdentifier, // more info can be fetched using sympath_ctx 
@@ -66,11 +68,17 @@ impl<'a> TextDocumentPositionResolver<'a> {
 
 
     fn found_type_ident(&mut self, n: &IdentifierNode) {
+        let name = n.value(self.doc);
+        let kind = if name == ArrayTypeSymbol::TYPE_NAME {
+            PositionTargetKind::ArrayTypeIdentifier
+        } else {
+            PositionTargetKind::TypeIdentifier(name.to_string())
+        };
+
         self.found_target = Some(PositionTarget { 
             range: n.range(),
-            kind: PositionTargetKind::TypeIdentifier(n.value(self.doc).to_string()),
+            kind,
             sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
-            
         });
     }
 
@@ -79,7 +87,6 @@ impl<'a> TextDocumentPositionResolver<'a> {
             range: name.range(),
             kind: PositionTargetKind::StateDeclarationNameIdentifier,
             sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
-            
         });
     }
 
@@ -88,7 +95,6 @@ impl<'a> TextDocumentPositionResolver<'a> {
             range: base.range(),
             kind: PositionTargetKind::StateDeclarationBaseIdentifier,
             sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
-            
         });
     }
 
@@ -97,7 +103,6 @@ impl<'a> TextDocumentPositionResolver<'a> {
             range: n.range(),
             kind: PositionTargetKind::DataDeclarationNameIdentifier(n.value(self.doc).to_string()),
             sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
-            
         });
     }
 
@@ -106,7 +111,6 @@ impl<'a> TextDocumentPositionResolver<'a> {
             range: n.range(),
             kind: PositionTargetKind::CallableDeclarationNameIdentifier,
             sympath_ctx: self.sympath_builder_payload.borrow().current_sympath.clone(),
-            
         });
     }
 
