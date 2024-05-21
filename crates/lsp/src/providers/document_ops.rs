@@ -87,7 +87,7 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
             // Do a fresh reparse without caring about the previous state.
             // This is a fail-safe in case of bad edits or document having been changed outside of the editor.
             script_state.script.refresh(&doc_buff).expect("Script refresh error!");
-
+            script_state.buffer = doc_buff;
             script_state.modified_timestamp = FileTime::now();
         }
 
