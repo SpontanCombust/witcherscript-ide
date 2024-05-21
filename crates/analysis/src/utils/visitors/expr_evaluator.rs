@@ -74,6 +74,11 @@ impl<'a> ExpressionEvaluator<'a> {
     }
 
     #[inline]
+    fn top_mut(&mut self) -> Option<&mut TypeStackElement> {
+        self.type_stack.last_mut()
+    }
+
+    #[inline]
     fn pop(&mut self) -> Option<TypeStackElement> {
         self.type_stack.pop()
     }
@@ -106,8 +111,8 @@ impl<'a> ExpressionEvaluator<'a> {
 }
 
 impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
-    fn exit_nested_expr(&mut self, _: &NestedExpressionNode, _: ExpressionTraversalContext) {
-        // do nothing and let the type stay on stack
+    fn exit_nested_expr(&mut self, _: &NestedExpressionNode, ctx: ExpressionTraversalContext) {
+        self.top_mut().map(|e| e.ctx = ctx );
     }
 
     fn visit_literal_expr(&mut self, n: &LiteralNode, ctx: ExpressionTraversalContext) {
@@ -283,11 +288,19 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
         self.push(BasicTypeSymbolPath::new(&n.class().value(self.doc)).into(), ctx);
     }
 
+    fn exit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, ctx: ExpressionTraversalContext) {
+        if self.top().map(|e| e.ctx == ExpressionTraversalContext::TypeCastExpressionValue).unwrap_or(false) {
+            self.pop();
+        }
+
+        let target_type = n.target_type().value(self.doc);
+        self.push(BasicTypeSymbolPath::new(&target_type).into(), ctx);
+    }
+
     fn exit_unary_op_expr(&mut self, _: &UnaryOperationExpressionNode, ctx: ExpressionTraversalContext) {
         if self.top().map(|e| e.ctx == ExpressionTraversalContext::UnaryOperationExpressionRight).unwrap_or(false) {
             // there is no operator overloading as far as I'm aware, so this propagation is probably ok
-            let right_path = self.pop().unwrap().path;
-            self.push(right_path, ctx);
+            self.top_mut().map(|e| e.ctx = ctx );
         } else {
             self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx);
         }
@@ -332,8 +345,7 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
         }
 
         if self.top().map(|e| e.ctx == ExpressionTraversalContext::AssignmentOperationExpressionLeft).unwrap_or(false) {
-            let left_path = self.pop().unwrap().path;
-            self.push(left_path, ctx);
+            self.top_mut().map(|e| e.ctx = ctx );
         } else {
             self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx);
         }
