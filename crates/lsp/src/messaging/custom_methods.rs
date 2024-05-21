@@ -104,6 +104,7 @@ impl Backend {
         })?;
 
         let ast = format!("{:#?}", script_entry.value().script.root_node());
+        drop(script_entry);
 
         Ok(requests::debug::script_ast::Response { 
             ast

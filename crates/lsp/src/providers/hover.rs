@@ -33,8 +33,11 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
     } else {
         return Ok(None);
     }
+
+    let position_target = resolve_text_document_position(params.text_document_position_params.position, &script_state, symtabs_marcher.clone());
+    drop(script_state);
     
-    if let Some(position_target) = resolve_text_document_position(params.text_document_position_params.position, &script_state, symtabs_marcher.clone()) {
+    if let Some(position_target) = position_target {
         let sympath: Option<SymbolPathBuf> = match position_target.kind {
             PositionTargetKind::ArrayTypeIdentifier => {
                 None

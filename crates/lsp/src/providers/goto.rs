@@ -202,6 +202,7 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
     let script_state = backend.scripts.get(doc_path)?;
 
     let position_target = resolve_text_document_position(position, &script_state, symtabs_marcher.clone())?;
+    drop(script_state);
 
     
     let sympath: Option<SymbolPathBuf> = match position_target.kind {

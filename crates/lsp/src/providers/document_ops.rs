@@ -44,9 +44,7 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
             script_state.buffer.edit(&edit);
         }
 
-        if let Err(err) = script_state.script.update(&mut script_state.buffer) {
-            backend.reporter.log_error(err).await;
-        }
+        script_state.script.update(&mut script_state.buffer).expect("Script update error!");
 
         script_state.modified_timestamp = FileTime::now();
 
@@ -88,9 +86,7 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
 
             // Do a fresh reparse without caring about the previous state.
             // This is a fail-safe in case of bad edits or document having been changed outside of the editor.
-            if let Err(err) = script_state.script.refresh(&doc_buff) {
-                backend.reporter.log_error(err).await;
-            }
+            script_state.script.refresh(&doc_buff).expect("Script refresh error!");
 
             script_state.modified_timestamp = FileTime::now();
         }
@@ -112,14 +108,10 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
     if doc_path.extension().map(|ext| ext == "ws").unwrap_or(false) {
         let mut should_remove_script = false;
-        if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
-            let script_state = entry.value_mut();
-
-            if script_state.source_tree_path.is_none() {
-                backend.reporter.purge_diagnostics(&doc_path).await;
-                backend.reporter.commit_diagnostics(&doc_path).await;
-                should_remove_script = true;
-            }
+        if backend.scripts.get(&doc_path).map(|s| s.source_tree_path.is_none()).unwrap_or(false) {
+            backend.reporter.purge_diagnostics(&doc_path).await;
+            backend.reporter.commit_diagnostics(&doc_path).await;
+            should_remove_script = true;
         }
 
         if should_remove_script {

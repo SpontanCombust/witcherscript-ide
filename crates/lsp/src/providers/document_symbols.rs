@@ -89,6 +89,8 @@ pub async fn document_symbol(backend: &Backend, params: lsp::DocumentSymbolParam
         }
     }
 
+    drop(symtabs);
+
     while !doc_sym_stack.is_empty() {
         reduce_stack(&mut doc_sym_stack, &mut doc_syms);
     }
