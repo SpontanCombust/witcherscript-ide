@@ -43,6 +43,17 @@ impl<'a> SymbolTableMarcher<'a> {
     }
 
     #[inline]
+    pub fn get_with_containing(self, path: &SymbolPath) -> Option<(&'a SymbolTable, &'a SymbolVariant)> {
+        self.march(|symtab| {
+            if let Some(symvar) = symtab.get(path) {
+                Some((symtab, symvar))
+            } else {
+                None
+            }
+        })
+    }
+
+    #[inline]
     pub fn locate(self, path: &SymbolPath) -> Option<SymbolLocation> {
         self.march(|symtab| symtab.locate(path))
     }
@@ -181,7 +192,7 @@ impl<'a> Iterator for StateHierarchy<'a> {
         
         if let Some(current_state_sym) = self.marcher.clone().get(&self.current_state_path).and_then(|v| v.try_as_state_ref()) {
             self.current_state_path.clear();
-
+            //FIXME switch to using `base_state_path` when that is possible
             if let Some(base_state_name) = &current_state_sym.base_state_name {
                 for class in self.marcher.clone().class_hierarchy(current_state_sym.parent_class_path()) {
                     for state in self.marcher.clone().class_states(class.path()) {

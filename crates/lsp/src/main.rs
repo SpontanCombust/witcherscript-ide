@@ -75,6 +75,11 @@ impl LanguageServer for Backend {
     async fn goto_type_definition(&self, params: lsp::request::GotoTypeDefinitionParams) -> Result<Option<lsp::request::GotoTypeDefinitionResponse>> {
         providers::goto::goto_type_definition(self, params).await
     }
+
+
+    async fn hover(&self, params: lsp::HoverParams) -> Result<Option<lsp::Hover>> {
+        providers::hover::hover(self, params).await
+    }
 }
 
 

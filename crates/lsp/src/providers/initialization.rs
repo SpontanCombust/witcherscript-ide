@@ -76,6 +76,7 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
             declaration_provider: Some(lsp::DeclarationCapability::Simple(true)),
             type_definition_provider: Some(lsp::TypeDefinitionProviderCapability::Simple(true)),
             implementation_provider: None,
+            hover_provider: Some(lsp::HoverProviderCapability::Simple(true)),
             ..lsp::ServerCapabilities::default()
         }
     })
