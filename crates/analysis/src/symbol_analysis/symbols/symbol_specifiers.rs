@@ -35,6 +35,11 @@ impl<S: SymbolSpecifier> SymbolSpecifiers<S> {
     pub fn contains(&self, spec: S) -> bool {
         self.vec.contains(&spec)
     }
+
+    #[inline]
+    pub fn iter(&self) -> impl Iterator<Item = S> + '_ {
+        self.vec.iter().map(|s| *s)
+    }
 }
 
 impl<S> std::fmt::Debug for SymbolSpecifiers<S> 
@@ -45,7 +50,7 @@ where S: SymbolSpecifier + std::fmt::Debug {
 }
 
 
-pub trait SymbolSpecifier: std::cmp::PartialEq {
+pub trait SymbolSpecifier: std::cmp::PartialEq + Copy {
     type BackingArray: smallvec::Array<Item = Self>;
 }
 
