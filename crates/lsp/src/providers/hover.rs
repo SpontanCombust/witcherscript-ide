@@ -23,17 +23,17 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
         return Ok(None);
     }
 
+    let content_dependency_paths = backend.get_content_dependency_paths(&content_path).await;
+    let symtabs = backend.symtabs.read().await;
+    let symtabs_marcher = symtabs.march(&content_dependency_paths);
+    
     let script_state;
     if let Some(ss) = backend.scripts.get(&doc_path) {
         script_state = ss;
     } else {
         return Ok(None);
     }
-
-    let content_dependency_paths = backend.get_content_dependency_paths(&content_path).await;
-    let symtabs = backend.symtabs.read().await;
-    let symtabs_marcher = symtabs.march(&content_dependency_paths);
-
+    
     if let Some(position_target) = resolve_text_document_position(params.text_document_position_params.position, &script_state, symtabs_marcher.clone()) {
         let sympath: Option<SymbolPathBuf> = match position_target.kind {
             PositionTargetKind::TypeIdentifier(type_name) => {
@@ -45,11 +45,11 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
             PositionTargetKind::StateDeclarationBaseIdentifier => {
                 let mut state_base_path = None;
     
-                if let Some(target_state_sym) = symtabs_marcher.clone().get(&position_target.sympath_ctx).and_then(|v| v.try_as_state_ref()) {
+                if let Some(target_state_sym) = symtabs_marcher.get(&position_target.sympath_ctx).and_then(|v| v.try_as_state_ref()) {
                     let base_state_name = target_state_sym.base_state_name.as_ref().map(|s| s.as_str()).unwrap_or_default();
     
-                    'ancestors: for class in symtabs_marcher.clone().class_hierarchy(target_state_sym.parent_class_path()) {
-                        for state in symtabs_marcher.clone().class_states(class.path()) {
+                    'ancestors: for class in symtabs_marcher.class_hierarchy(target_state_sym.parent_class_path()) {
+                        for state in symtabs_marcher.class_states(class.path()) {
                             if state.state_name() == base_state_name {
                                 state_base_path = Some(state.path().to_owned());
                                 break 'ancestors;
@@ -61,7 +61,7 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
                 state_base_path
             },
             PositionTargetKind::DataDeclarationNameIdentifier(name) => {
-                if let Some(ctx_sym) = symtabs_marcher.clone().get(&position_target.sympath_ctx) {
+                if let Some(ctx_sym) = symtabs_marcher.get(&position_target.sympath_ctx) {
                     if ctx_sym.is_enum() {
                         Some(GlobalDataSymbolPath::new(&name).into())
                     } else {

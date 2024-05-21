@@ -84,29 +84,29 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
                 let symtabs = backend.symtabs.read().await;
                 let symtabs_marcher = symtabs.march(&content_dependency_paths);
 
-                let parent_sym_typ = symtabs_marcher.clone()
+                let parent_sym_typ = symtabs_marcher
                     .get(&parent_path)
                     .map(|v| v.typ())
                     .unwrap_or(SymbolType::Type);
 
                 if parent_sym_typ == SymbolType::Class {
-                    for class in symtabs_marcher.clone().class_hierarchy(&parent_path).skip(1) {
+                    for class in symtabs_marcher.class_hierarchy(&parent_path).skip(1) {
                         let base_func_path = class.path().join_component(func_name, SymbolCategory::Callable);
-                        if let Some(base_func_loc) = symtabs_marcher.clone().locate(&base_func_path) {
+                        if let Some(base_func_loc) = symtabs_marcher.locate(&base_func_path) {
                             *loc = base_func_loc;
                         }
                     }
                 } 
                 else if parent_sym_typ == SymbolType::State {
-                    for state in symtabs_marcher.clone().state_hierarchy(&parent_path).skip(1) {
+                    for state in symtabs_marcher.state_hierarchy(&parent_path).skip(1) {
                         let base_func_path = state.path().join_component(func_name, SymbolCategory::Callable);
-                        if let Some(base_func_loc) = symtabs_marcher.clone().locate(&base_func_path) {
+                        if let Some(base_func_loc) = symtabs_marcher.locate(&base_func_path) {
                             *loc = base_func_loc;
                         }
                     }
 
                     let base_func_path = BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME).join_component(func_name, SymbolCategory::Callable);
-                    if let Some(base_func_loc) = symtabs_marcher.clone().locate(&base_func_path) {
+                    if let Some(base_func_loc) = symtabs_marcher.locate(&base_func_path) {
                         *loc = base_func_loc;
                     }
                 }
@@ -195,11 +195,11 @@ struct Inspected {
 }
 
 async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, doc_path: &AbsPath, position: lsp::Position) -> Option<Inspected> {
-    let script_state = backend.scripts.get(doc_path)?;
-
     let content_dependency_paths = backend.get_content_dependency_paths(content_path).await;
     let symtabs = backend.symtabs.read().await;
     let symtabs_marcher = symtabs.march(&content_dependency_paths);
+    
+    let script_state = backend.scripts.get(doc_path)?;
 
     let position_target = resolve_text_document_position(position, &script_state, symtabs_marcher.clone())?;
 
@@ -214,11 +214,11 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
         PositionTargetKind::StateDeclarationBaseIdentifier => {
             let mut state_base_path = None;
 
-            if let Some(target_state_sym) = symtabs_marcher.clone().get(&position_target.sympath_ctx).and_then(|v| v.try_as_state_ref()) {
+            if let Some(target_state_sym) = symtabs_marcher.get(&position_target.sympath_ctx).and_then(|v| v.try_as_state_ref()) {
                 let base_state_name = target_state_sym.base_state_name.as_ref().map(|s| s.as_str()).unwrap_or_default();
 
-                'ancestors: for class in symtabs_marcher.clone().class_hierarchy(target_state_sym.parent_class_path()) {
-                    for state in symtabs_marcher.clone().class_states(class.path()) {
+                'ancestors: for class in symtabs_marcher.class_hierarchy(target_state_sym.parent_class_path()) {
+                    for state in symtabs_marcher.class_states(class.path()) {
                         if state.state_name() == base_state_name {
                             state_base_path = Some(state.path().to_owned());
                             break 'ancestors;
@@ -230,7 +230,7 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
             state_base_path
         },
         PositionTargetKind::DataDeclarationNameIdentifier(name) => {
-            if let Some(ctx_sym) = symtabs_marcher.clone().get(&position_target.sympath_ctx) {
+            if let Some(ctx_sym) = symtabs_marcher.get(&position_target.sympath_ctx) {
                 if ctx_sym.is_enum() {
                     Some(GlobalDataSymbolPath::new(&name).into())
                 } else {
@@ -244,25 +244,25 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
             Some(position_target.sympath_ctx)
         },
         PositionTargetKind::ThisKeyword => {
-            symtabs_marcher.clone()
+            symtabs_marcher
                 .get(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::This))
                 .and_then(|v| v.try_as_special_var_ref())
                 .map(|sym| sym.type_path().clone())
         },
         PositionTargetKind::SuperKeyword => {
-            symtabs_marcher.clone()
+            symtabs_marcher
                 .get(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::Super))
                 .and_then(|v| v.try_as_special_var_ref())
                 .map(|sym| sym.type_path().clone())
         },
         PositionTargetKind::ParentKeyword => {
-            symtabs_marcher.clone()
+            symtabs_marcher
                 .get(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::Parent))
                 .and_then(|v| v.try_as_special_var_ref())
                 .map(|sym| sym.type_path().clone())
         },
         PositionTargetKind::VirtualParentKeyword => {
-            symtabs_marcher.clone()
+            symtabs_marcher
                 .get(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::VirtualParent))
                 .and_then(|v| v.try_as_special_var_ref())
                 .map(|sym| sym.type_path().clone())
@@ -273,7 +273,7 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
     };
 
     let symvar = sympath
-        .and_then(|sympath| symtabs_marcher.clone().get(&sympath))
+        .and_then(|sympath| symtabs_marcher.get(&sympath))
         .and_then(|symvar| {
             let rerouted_path = match symvar {
                 SymbolVariant::Constructor(s) => Some(s.parent_type_path.as_sympath()),
@@ -283,14 +283,14 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
             };
 
             if let Some(rerouted_path) = rerouted_path {
-                symtabs_marcher.clone().get(rerouted_path)
+                symtabs_marcher.get(rerouted_path)
             } else {
                 Some(symvar)
             }
         })
         .map(|symvar| symvar.to_owned());
 
-    let loc = symvar.as_ref().and_then(|symvar| symtabs_marcher.clone().locate(symvar.path()));
+    let loc = symvar.as_ref().and_then(|symvar| symtabs_marcher.locate(symvar.path()));
 
     Some(Inspected {
         origin_selection_range: position_target.range,

@@ -79,7 +79,7 @@ impl<'a> ExpressionEvaluator<'a> {
     }
 
     fn produce_type(&self, path: &SymbolPath) -> SymbolPathBuf {
-        if let Some(symvar) = self.symtab_marcher.clone().get(path) {
+        if let Some(symvar) = self.symtab_marcher.get(path) {
             match symvar {
                 SymbolVariant::Class(s) => s.path().to_owned(),
                 SymbolVariant::State(s) => s.path().to_owned(),
@@ -217,15 +217,15 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
             };
         
             let accessor_type = self.produce_type(&accessor_path);
-            if let Some(accessor_symvar) = self.symtab_marcher.clone().get(&accessor_type) {
+            if let Some(accessor_symvar) = self.symtab_marcher.get(&accessor_type) {
                 let member_path = match accessor_symvar {
                     SymbolVariant::Class(s) => {
                         let mut member_path = SymbolPathBuf::unknown(member_category);
 
-                        for class in self.symtab_marcher.clone().class_hierarchy(s.path()) {
+                        for class in self.symtab_marcher.class_hierarchy(s.path()) {
                             let path = class.path().join(&SymbolPathBuf::new(&member, member_category));
 
-                            if self.symtab_marcher.clone().contains(&path) {
+                            if self.symtab_marcher.contains(&path) {
                                 member_path = path;
                                 break;
                             }
@@ -236,10 +236,10 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
                     SymbolVariant::State(s) => {
                         let mut member_path = SymbolPathBuf::unknown(member_category);
 
-                        for state in self.symtab_marcher.clone().state_hierarchy(s.path()) {
+                        for state in self.symtab_marcher.state_hierarchy(s.path()) {
                             let path = state.path().join(&SymbolPathBuf::new(&member, member_category));
 
-                            if self.symtab_marcher.clone().contains(&path) {
+                            if self.symtab_marcher.contains(&path) {
                                 member_path = path;
                                 break;
                             }
@@ -249,7 +249,7 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
                             let mut path = SymbolPathBuf::new(StateSymbol::DEFAULT_STATE_BASE_NAME, SymbolCategory::Type);
                             path.push(&member, member_category);
 
-                            if self.symtab_marcher.clone().contains(&path) {
+                            if self.symtab_marcher.contains(&path) {
                                 member_path = path;
                             }
                         }
