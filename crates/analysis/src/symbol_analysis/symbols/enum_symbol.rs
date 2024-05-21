@@ -60,7 +60,8 @@ pub struct EnumVariantSymbol {
     local_source_path: PathBuf,
     range: lsp::Range,
     label_range: lsp::Range,
-    pub parent_enum_path: BasicTypeSymbolPath
+    pub parent_enum_path: BasicTypeSymbolPath,
+    pub value: i32
 }
 
 impl Symbol for EnumVariantSymbol {
@@ -96,7 +97,8 @@ impl EnumVariantSymbol {
             local_source_path,
             range,
             label_range,
-            parent_enum_path: BasicTypeSymbolPath::unknown()
+            parent_enum_path: BasicTypeSymbolPath::unknown(),
+            value: 0
         }
     }
 }

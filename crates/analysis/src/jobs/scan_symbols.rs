@@ -29,7 +29,8 @@ pub fn scan_symbols(
         current_path: SymbolPathBuf::empty(),
         current_constr_path: None,
         current_param_ordinal: 0,
-        current_var_ordinal: 0
+        current_var_ordinal: 0,
+        current_enum_variant_value: 0
     };
 
     script.visit_nodes(&mut visitor);
@@ -46,7 +47,8 @@ struct SymbolScannerVisitor<'a> {
     current_path: SymbolPathBuf,
     current_constr_path: Option<SymbolPathBuf>,
     current_param_ordinal: usize,
-    current_var_ordinal: usize
+    current_var_ordinal: usize,
+    current_enum_variant_value: i32
 }
 
 impl SymbolScannerVisitor<'_> {
@@ -341,6 +343,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     fn exit_enum_decl(&mut self, _: &EnumDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Type).unwrap_or(false)  {
             self.current_path.pop();
+            self.current_enum_variant_value = 0;
         }
     }
 
@@ -351,6 +354,20 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         if self.check_contains(&path, name_node.range()) {
             let mut sym = EnumVariantSymbol::new(path, self.local_source_path.to_owned(), n.range(), name_node.range());
             sym.parent_enum_path = BasicTypeSymbolPath::new(self.current_path.components().next().unwrap().name);
+
+            let value = n.value()
+                .and_then(|v| match v {
+                    EnumVariantValue::Int(i) => {
+                        i.value(self.doc).ok().map(|i| *i)
+                    },
+                    EnumVariantValue::Hex(h) => {
+                        h.value(self.doc).ok().map(|h| *h).map(|h| i32::from_le_bytes(h.to_le_bytes()))
+                    }
+                })
+                .unwrap_or(self.current_enum_variant_value);
+
+            sym.value = value;
+            self.current_enum_variant_value = value + 1;
 
             self.symtab.insert_primary(sym);
         }

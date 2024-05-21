@@ -120,7 +120,6 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
     }
 }
 
-//FIXME less bloat in multi-line tooltips
 
 trait RenderTooltip {
     fn render(&self, buf: &mut String, symtab: &SymbolTable);
@@ -493,6 +492,10 @@ impl RenderTooltip for EnumVariantSymbol {
             });
 
         buf.push_str(self.name());
+        buf.push(' ');
+        buf.push('=');
+        buf.push(' ');
+        buf.push_str(&self.value.to_string());
     }
 }
 
