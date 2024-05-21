@@ -358,6 +358,70 @@ enum EShowFlags
 
 
 
+// game/actorsStorage.ws
+
+enum EScriptQueryFlags {
+	FLAG_ExcludePlayer		= 1,  	 // FLAG( 0 ),
+	FLAG_OnlyActors			= 2,  	 // FLAG( 1 ),
+	FLAG_OnlyAliveActors	= 4,  	 // FLAG( 2 ),
+	FLAG_WindEmitters		= 8,  	 // FLAG( 3 ),
+	FLAG_Vehicles			= 16, 	 // FLAG( 4 ),
+	FLAG_ExcludeTarget		= 32, 	 // FLAG( 5 ),
+	FLAG_Attitude_Neutral	= 64, 	 // FLAG( 6 ),		towards actor specfied as 'target' param
+	FLAG_Attitude_Friendly	= 128, 	 // FLAG( 7 ),		towards actor specfied as 'target' param
+	FLAG_Attitude_Hostile	= 256, 	 // FLAG( 8 ),		towards actor specfied as 'target' param
+	FLAG_ZDiff_3			= 512, 	 // FLAG( 9 ),
+	FLAG_ZDiff_5			= 1024,  // FLAG( 10 ),
+	FLAG_ZDiff_Range		= 2048,  // FLAG( 11 ),
+	FLAG_PathLibTest		= 4096,  // FLAG( 12 ),
+	FLAG_NotVehicles		= 8192,  // FLAG( 13 ),
+	FLAG_TestLineOfSight	= 16384, // FLAG( 14 ),		broken: with 5 enemies with clear line of sight it finds 0
+}
+
+
+
+// game/characterStats.ws
+
+enum EBaseCharacterStats
+{
+	BCS_Vitality,
+	BCS_Essence,
+	BCS_Stamina,
+	BCS_Toxicity,
+	BCS_Focus,
+	BCS_Morale,
+	BCS_Air,
+	BCS_Panic,			// default panic val is now 100
+	BCS_PanicStatic,	// Used when reducing BCS_Panic. BCS_Panic can't go below BCS_PanicStatic value
+	BCS_SwimmingStamina,
+	BCS_Undefined
+}
+
+enum ECharacterDefenseStats
+{
+	CDS_None,
+	CDS_PhysicalRes,
+	CDS_BleedingRes,
+	CDS_PoisonRes,
+	CDS_FireRes,
+	CDS_FrostRes,
+	CDS_ShockRes,
+	CDS_ForceRes,
+	CDS_FreezeRes,	// #B deprecated
+	CDS_WillRes,
+	CDS_BurningRes,
+	CDS_SlashingRes,
+	CDS_PiercingRes,
+	CDS_BludgeoningRes,
+	CDS_RendingRes,
+	CDS_ElementalRes,
+	CDS_DoTBurningDamageRes,
+	CDS_DoTPoisonDamageRes,
+	CDS_DoTBleedingDamageRes
+}
+
+
+
 // game/types.ws
 
 enum EAnimationEventType
