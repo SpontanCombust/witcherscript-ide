@@ -322,10 +322,11 @@ impl RenderTooltip for GlobalFunctionSymbol {
 
         params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
 
-        if let Some(param) = params.pop() {
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
             param.render(buf, symtab);
         }
-        for param in params {
+        for param in params_iter {
             buf.push_str(", ");
             param.render(buf, symtab);
         }
@@ -396,10 +397,11 @@ impl RenderTooltip for MemberFunctionSymbol {
 
         params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
 
-        if let Some(param) = params.pop() {
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
             param.render(buf, symtab);
         }
-        for param in params {
+        for param in params_iter {
             buf.push_str(", ");
             param.render(buf, symtab);
         }
@@ -457,10 +459,11 @@ impl RenderTooltip for EventSymbol {
 
         params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
 
-        if let Some(param) = params.pop() {
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
             param.render(buf, symtab);
         }
-        for param in params {
+        for param in params_iter {
             buf.push_str(", ");
             param.render(buf, symtab);
         }
