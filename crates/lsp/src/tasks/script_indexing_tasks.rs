@@ -96,9 +96,12 @@ impl Backend {
                 .for_each(|result| send.blocking_send(result).expect("on_source_tree_paths_added mpsc::send fail"));
         });
 
-        while let Some((source_tree_path, buffer, script, modified_timestamp)) = recv.recv().await {
-            // Doing to many logs at once puts a strain on the connection, better to do this through a Progress or something...
-            // self.log_info(format!("Discovered script: {}", source_tree_path.absolute())).await;
+        let mut results = Vec::new();
+        while let Some(res) = recv.recv().await {
+            results.push(res);
+        }
+
+        for (source_tree_path, buffer, script, modified_timestamp) in results {
             self.scripts.insert(source_tree_path.absolute().to_owned(), ScriptState { 
                 script, 
                 buffer,

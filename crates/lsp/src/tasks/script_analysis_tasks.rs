@@ -43,7 +43,12 @@ impl Backend {
                 });
         });
 
-        while let Some((script_path, diags, kinds)) = recv.recv().await {
+        let mut results = Vec::new();
+        while let Some(res) = recv.recv().await {
+            results.push(res);
+        }
+
+        for (script_path, diags, kinds) in results {
             self.clear_diagnostics_for_analysis(script_path.as_ref(), kinds).await;
             self.reporter.push_diagnostics(script_path.as_ref(), diags).await;
         }
@@ -66,7 +71,12 @@ impl Backend {
                 });
         });
 
-        while let Some((script_path, diags, kinds)) = recv.recv().await {
+        let mut results = Vec::new();
+        while let Some(res) = recv.recv().await {
+            results.push(res);
+        }
+
+        for (script_path, diags, kinds) in results {
             self.clear_diagnostics_for_analysis(script_path.as_ref(), kinds).await;
             self.reporter.push_diagnostics(script_path.as_ref(), diags).await;
         }
