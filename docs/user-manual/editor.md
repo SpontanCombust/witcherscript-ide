@@ -8,6 +8,7 @@
 - creating and initializing [script projects](./project-system.md)
 - importing and comparing scripts with their vanilla counterparts
 - go to definition/declaration
+- hover tooltips
 - support for REDKit projects
 
 **More coming soon!**

@@ -9,6 +9,7 @@ Provides support for Witcher 3's scripting language WitcherScript.
 - creating and initializing script projects
 - importing and comparing scripts with their vanilla counterparts
 - go to definition/declaration
+- hover tooltips
 - support for REDKit projects
 
 **More coming soon!**
