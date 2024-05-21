@@ -311,7 +311,7 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
             self.pop();
         }
 
-        let left_path = if self.top().map(|e| e.ctx == ExpressionTraversalContext::AssignmentOperationExpressionLeft).unwrap_or(false) {
+        let left_path = if self.top().map(|e| e.ctx == ExpressionTraversalContext::BinaryOperationExpressionLeft).unwrap_or(false) {
             self.pop().unwrap().path
         } else {
             SymbolPathBuf::unknown(SymbolCategory::Type)
