@@ -126,6 +126,10 @@ trait RenderTooltip {
     fn render(&self, buf: &mut String, symtab: &SymbolTable);
 }
 
+trait RenderShortTooltip {
+    fn render_short(&self, buf: &mut String);
+}
+
 
 impl RenderTooltip for SymbolVariant {
     fn render(&self, buf: &mut String, symtab: &SymbolTable) {
@@ -174,6 +178,15 @@ impl RenderTooltip for ClassSymbol {
     }
 }
 
+impl RenderShortTooltip for ClassSymbol {
+    fn render_short(&self, buf: &mut String) {
+        buf.push_str(Keyword::Class.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+    }
+}
+
 impl RenderTooltip for StateSymbol {
     fn render(&self, buf: &mut String, _: &SymbolTable) {
         for spec in self.specifiers.iter() {
@@ -202,6 +215,21 @@ impl RenderTooltip for StateSymbol {
     }
 }
 
+impl RenderShortTooltip for StateSymbol {
+    fn render_short(&self, buf: &mut String) {
+        buf.push_str(Keyword::State.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.state_name());
+        buf.push(' ');
+
+        buf.push_str(Keyword::In.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.parent_class_name());
+    }
+}
+
 impl RenderTooltip for StructSymbol {
     fn render(&self, buf: &mut String, _: &SymbolTable) {
         for spec in self.specifiers.iter() {
@@ -210,6 +238,15 @@ impl RenderTooltip for StructSymbol {
             buf.push(' ');
         }
 
+        buf.push_str(Keyword::Struct.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+    }
+}
+
+impl RenderShortTooltip for StructSymbol {
+    fn render_short(&self, buf: &mut String) {
         buf.push_str(Keyword::Struct.as_ref());
         buf.push(' ');
 
@@ -226,8 +263,23 @@ impl RenderTooltip for EnumSymbol {
     }
 }
 
+impl RenderShortTooltip for EnumSymbol {
+    fn render_short(&self, buf: &mut String) {
+        buf.push_str(Keyword::Enum.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+    }
+}
+
 impl RenderTooltip for ArrayTypeSymbol {
     fn render(&self, buf: &mut String, _: &SymbolTable) {
+        buf.push_str(self.name())
+    }
+}
+
+impl RenderShortTooltip for ArrayTypeSymbol {
+    fn render_short(&self, buf: &mut String) {
         buf.push_str(self.name())
     }
 }
@@ -294,17 +346,19 @@ impl RenderTooltip for MemberFunctionSymbol {
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {
                 SymbolVariant::Class(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 SymbolVariant::State(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 SymbolVariant::Array(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 _ => {}
             }
-            buf.push('\n');
         }
 
 
@@ -366,17 +420,19 @@ impl RenderTooltip for EventSymbol {
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {
                 SymbolVariant::Class(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 SymbolVariant::State(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 SymbolVariant::Array(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 _ => {}
             }
-            buf.push('\n');
         }
 
         buf.push_str(Keyword::Event.as_ref());
@@ -432,7 +488,7 @@ impl RenderTooltip for EnumVariantSymbol {
         symtab.get(&self.parent_enum_path)
             .and_then(|s| s.try_as_enum_ref())
             .map(|s| {
-                s.render(buf, symtab);
+                s.render_short(buf);
                 buf.push('\n');
             });
 
@@ -475,20 +531,23 @@ impl RenderTooltip for MemberVarSymbol {
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {
                 SymbolVariant::Class(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 SymbolVariant::State(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 SymbolVariant::Array(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 SymbolVariant::Struct(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 _ => {}
             }
-            buf.push('\n');
         }
         
 
@@ -517,14 +576,15 @@ impl RenderTooltip for AutobindSymbol {
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {
                 SymbolVariant::Class(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 SymbolVariant::State(s) => {
-                    s.render(buf, symtab);
+                    s.render_short(buf);
+                    buf.push('\n');
                 },
                 _ => {}
             }
-            buf.push('\n');
         }
         
 
