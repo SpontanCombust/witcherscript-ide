@@ -8,6 +8,14 @@ pub enum StructSpecifier {
     Import
 }
 
+impl From<StructSpecifier> for Keyword {
+    fn from(value: StructSpecifier) -> Self {
+        match value {
+            StructSpecifier::Import => Keyword::Import,
+        }
+    }
+}
+
 pub type StructSpecifierNode<'script> = SyntaxNode<'script, StructSpecifier>;
 
 impl NamedSyntaxNode for StructSpecifierNode<'_> {

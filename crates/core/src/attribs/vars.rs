@@ -14,6 +14,19 @@ pub enum MemberVarSpecifier {
     Saved,
 }
 
+impl From<MemberVarSpecifier> for Keyword {
+    fn from(value: MemberVarSpecifier) -> Self {
+        match value {
+            MemberVarSpecifier::AccessModifier(am) => am.into(),
+            MemberVarSpecifier::Const => Keyword::Const,
+            MemberVarSpecifier::Editable => Keyword::Editable,
+            MemberVarSpecifier::Import => Keyword::Import,
+            MemberVarSpecifier::Inlined => Keyword::Inlined,
+            MemberVarSpecifier::Saved => Keyword::Saved,
+        }
+    }
+}
+
 impl From<AccessModifier> for MemberVarSpecifier {
     fn from(value: AccessModifier) -> Self {
         Self::AccessModifier(value)

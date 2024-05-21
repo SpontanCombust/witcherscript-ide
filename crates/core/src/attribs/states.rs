@@ -9,6 +9,15 @@ pub enum StateSpecifier {
     Abstract
 }
 
+impl From<StateSpecifier> for Keyword {
+    fn from(value: StateSpecifier) -> Self {
+        match value {
+            StateSpecifier::Import => Keyword::Import,
+            StateSpecifier::Abstract => Keyword::Abstract,
+        }
+    }
+}
+
 pub type StateSpecifierNode<'script> = SyntaxNode<'script, StateSpecifier>;
 
 impl NamedSyntaxNode for StateSpecifierNode<'_> {
