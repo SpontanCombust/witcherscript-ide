@@ -27,4 +27,10 @@ impl PrimitiveTypeSymbol {
             alias: alias.map(|a| SymbolPathBuf::new(a, SymbolCategory::Type))
         }
     }
+
+    pub fn alias_name(&self) -> Option<&str> {
+        self.alias.as_ref()
+            .and_then(|alias| alias.components().next())
+            .map(|comp| comp.name)
+    }
 }

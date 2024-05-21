@@ -52,6 +52,10 @@ impl ClassSymbol {
             base_path: None
         }
     }
+
+    pub fn base_name(&self) -> Option<&str> {
+        self.base_path.as_ref().and_then(|p| p.components().next().map(|c| c.name))
+    }
 }
 
 
@@ -94,5 +98,9 @@ impl AutobindSymbol {
             specifiers: SymbolSpecifiers::new(),
             type_path: TypeSymbolPath::unknown()
         }
+    }
+
+    pub fn type_name(&self) -> &str {
+        self.type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
 }

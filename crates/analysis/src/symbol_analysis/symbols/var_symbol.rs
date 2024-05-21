@@ -1,5 +1,5 @@
 use lsp_types as lsp;
-use witcherscript::attribs::MemberVarSpecifier;
+use witcherscript::{attribs::MemberVarSpecifier, tokens::Keyword};
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::*;
 
@@ -45,6 +45,10 @@ impl MemberVarSymbol {
             ordinal: 0
         }
     }
+
+    pub fn type_name(&self) -> &str {
+        self.type_path.components().next().map(|c| c.name).unwrap_or_default()
+    }
 }
 
 
@@ -86,6 +90,10 @@ impl LocalVarSymbol {
             type_path: TypeSymbolPath::unknown()
         }
     }
+
+    pub fn type_name(&self) -> &str {
+        self.type_path.components().next().map(|c| c.name).unwrap_or_default()
+    }
 }
 
 
@@ -118,6 +126,10 @@ impl GlobalVarSymbol {
     pub fn type_path(&self) -> &SymbolPathBuf {
         &self.type_path
     }
+
+    pub fn type_name(&self) -> &str {
+        self.type_path.components().next().map(|c| c.name).unwrap_or_default()
+    }
 }
 
 
@@ -134,6 +146,17 @@ pub enum SpecialVarSymbolKind {
     Super,
     Parent,
     VirtualParent
+}
+
+impl From<SpecialVarSymbolKind> for Keyword {
+    fn from(value: SpecialVarSymbolKind) -> Self {
+        match value {
+            SpecialVarSymbolKind::This => Keyword::This,
+            SpecialVarSymbolKind::Super => Keyword::Super,
+            SpecialVarSymbolKind::Parent => Keyword::Parent,
+            SpecialVarSymbolKind::VirtualParent => Keyword::VirtualParent,
+        }
+    }
 }
 
 impl Symbol for SpecialVarSymbol {
@@ -156,6 +179,10 @@ impl SpecialVarSymbol {
 
     pub fn type_path(&self) -> &SymbolPathBuf {
         &self.type_path
+    }
+
+    pub fn type_name(&self) -> &str {
+        &self.type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
 
     pub fn kind(&self) -> SpecialVarSymbolKind {

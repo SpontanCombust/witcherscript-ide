@@ -56,6 +56,10 @@ impl GlobalFunctionSymbol {
             return_type_path: TypeSymbolPath::unknown()
         }
     }
+
+    pub fn return_type_name(&self) -> &str {
+        self.return_type_path.components().next().map(|c| c.name).unwrap_or_default()
+    }
 }
 
 
@@ -102,6 +106,10 @@ impl MemberFunctionSymbol {
             flavour: None,
             return_type_path: TypeSymbolPath::unknown()
         }
+    }
+
+    pub fn return_type_name(&self) -> &str {
+        self.return_type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
 }
 

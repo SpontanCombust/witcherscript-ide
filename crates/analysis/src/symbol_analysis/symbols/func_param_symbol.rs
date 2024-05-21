@@ -45,4 +45,8 @@ impl FunctionParameterSymbol {
             ordinal: 0
         }
     }
+
+    pub fn type_name(&self) -> &str {
+        self.type_path.components().next().map(|c| c.name).unwrap_or_default()
+    }
 }
