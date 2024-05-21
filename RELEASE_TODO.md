@@ -20,6 +20,6 @@ List of all the tasks that are to be done during a release.
 12. Bump version in client `package.json`
 13. Create a version tag and the release 
 
-14. Verify VS Marketplace and Open VSX Registry
+14. (If main release) Verify VS Marketplace and Open VSX Registry
 15. (If main release) Move tasks on the board to `Shipped`
 16. (If main release) Close tasks and milestone
