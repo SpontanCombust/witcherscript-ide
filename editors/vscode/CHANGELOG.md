@@ -3,6 +3,24 @@
 # Changelog
 
 
+## v0.3.0-dev.3
+
+Almost feature complete "go to definition" & hover tooltips
+
+### Features
+- Expanded "Go to definition" to almost all code symbols including expressions (only missing handling of state base types) [#13](https://github.com/SpontanCombust/witcherscript-ide/issues/13)
+- Added "Go to declaration" pointing to the first declaration of the function in the inheritance tree [#13](https://github.com/SpontanCombust/witcherscript-ide/issues/13)
+- Added hover feature displaying code symbol information [#7](https://github.com/SpontanCombust/witcherscript-ide/issues/7)
+- Made `{unknown}` the default text to display for unknown code symbols
+- Added native content directory, which contains all symbols available in WitcherScript, but not explicitly declared. This directory is shipped together with the Language Server.
+- Diagnostics are now published together with an identifier, e.g. `symbol-name-taken`
+
+### Fixes
+- Fixed code text not synchronizing properly when saving a file
+- Lessened the chance of deadlocking by freeing resources earlier
+
+
+
 ## v0.3.0-dev.2
 
 ### Features
@@ -27,11 +45,10 @@ If you find any criticial bugs make sure to submit an issue. Thank you!
 - Added Document Symbols feature [#26](https://github.com/SpontanCombust/witcherscript-ide/issues/26)
 - Added Selection Range feature [#27](https://github.com/SpontanCombust/witcherscript-ide/issues/27)
 - Added `witcherscript.toml` schema, which can be used by [`Even Better TOML`](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) extension if you have it installed [#16](https://github.com/SpontanCombust/witcherscript-ide/issues/16)
-
+- Some diagnostics now have linked information to them, e.g. diagnostic for multiple definitions will point to the original declaration
 
 ### Commands
 - Added debug command "Show script symbols" to get a view of all symbols coming from current script file
-
 
 ### Other
 - Improved AST traversal and text retrieval performance through better memory management
