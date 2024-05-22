@@ -438,19 +438,22 @@ impl ContentGraph {
         dependency_path_range: &lsp::Range
     ) {
         let dependant_path = self.nodes[node_idx].content.path();
-        let abs_dependency_path = AbsPath::resolve(&dependency_path, Some(dependant_path));
 
-        if abs_dependency_path.is_err() {
-            self.errors.push(ContentGraphError::DependencyPathNotFound { 
-                content_path: dependency_path.to_owned(), 
-                manifest_path: manifest_path.to_owned(),
-                manifest_range: dependency_path_range.to_owned()
-            });
-
-            return;
+        let dep_path;
+        match AbsPath::resolve(&dependency_path, Some(dependant_path)) {
+            Ok(p) if p.exists() => {
+                dep_path = p;
+            },
+            _ => {
+                self.errors.push(ContentGraphError::DependencyPathNotFound { 
+                    content_path: dependency_path.to_owned(), 
+                    manifest_path: manifest_path.to_owned(),
+                    manifest_range: dependency_path_range.to_owned()
+                });
+    
+                return;
+            }
         }
-
-        let dep_path = abs_dependency_path.unwrap();
 
         if let Some(dep_idx) = self.get_dependency_node_index_by_path(&dep_path, repo_nodes) {
             if self.nodes[dep_idx].content.content_name() == dependency_name {
