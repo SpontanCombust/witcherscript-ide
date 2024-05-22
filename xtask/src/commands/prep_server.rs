@@ -2,7 +2,7 @@ use std::path::{Path, MAIN_SEPARATOR_STR};
 use xshell::{Shell, cmd};
 
 
-const LSP_ASSETS: &str = "crates/lsp/assets";
+const LSP_ASSETS: &str = "crates/lsp/assets/include";
 const LSP_BIN_DST: &str = "editors/vscode/server/bin";
 const LSP_ASSETS_DST: &str = "editors/vscode/server/assets";
 
