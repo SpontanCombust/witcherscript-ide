@@ -402,7 +402,9 @@ function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): Cmd {
         }
 
         const vanillaScriptUri = vscode.Uri.file(vanillaScriptPath);
-        return await vscode.commands.executeCommand("vscode.diff", vanillaScriptUri, currentScriptUri);
+        const scriptName = path.basename(vanillaScriptPath);
+        const title = `${scriptName} (vanilla) ↔ ${scriptName} (modded)`;
+        return await vscode.commands.executeCommand("vscode.diff", vanillaScriptUri, currentScriptUri, title);
     }
 }
 
