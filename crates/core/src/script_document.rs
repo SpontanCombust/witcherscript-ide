@@ -145,7 +145,7 @@ fn string_point_offset(s: &str) -> ts::Point {
 /// https://github.com/SpontanCombust/witcherscript-ide/issues/31
 fn fix_line_endings(mut text: String) -> String {
     // line is valid if it either is a LF-only line or CR is the second-to-last character
-    if text.find('\r').map(|i| i == text.len() - 2).unwrap_or(true) {
+    if text.find('\r').map(|i| i == text.len().checked_sub(2).unwrap_or(0)).unwrap_or(true) {
         text
     }
     // otherwise for all occurances of orphaned CR characters need to be replaced with CRLF
