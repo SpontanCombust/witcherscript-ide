@@ -13,7 +13,6 @@
       ]
     },
     "RepoDependency": {
-      "description": "Dependency coming from a repository",
       "type": "boolean",
       "default": "true"
     },
