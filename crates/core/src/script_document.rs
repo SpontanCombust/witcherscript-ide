@@ -33,6 +33,8 @@ impl ScriptDocument {
             if b == 0 {
                 break;
             }
+
+            line = fix_line_endings(line);
             builder.append(&line);
             line.clear();
         }
@@ -136,6 +138,33 @@ fn string_point_offset(s: &str) -> ts::Point {
 
     ts::Point {
         row, column
+    }
+}
+
+/// The parser does not like weird, CR-only line endings and it just so happens that some vanilla scripts shipped with the game have them.
+/// https://github.com/SpontanCombust/witcherscript-ide/issues/31
+fn fix_line_endings(mut text: String) -> String {
+    // line is valid if it either is a LF-only line or CR is the second-to-last character
+    if text.find('\r').map(|i| i == text.len() - 2).unwrap_or(true) {
+        text
+    }
+    // otherwise for all occurances of orphaned CR characters need to be replaced with CRLF
+    else {
+        let mut orphan_cr_indices = Vec::new();
+        let mut bytes = text.bytes().enumerate().peekable();
+        while let Some((i, b)) = bytes.next() {
+            let nb = bytes.peek().map(|(_, nb)| *nb).unwrap_or_default();
+            if b == b'\r' && nb != b'\n' {
+                orphan_cr_indices.push(i);
+            }
+        }
+
+        // goin in reverse so indices stay valid as we replace the text
+        for i in orphan_cr_indices.into_iter().rev() {
+            text.insert(i + 1, '\n');
+        }
+
+        text
     }
 }
 
@@ -282,5 +311,11 @@ exec function player_getter() {
             old_end_position: ts::Point::new(1, 18), 
             new_end_position: ts::Point::new(1, 27) 
         });
+    }
+
+
+    #[test]
+    fn line_endings() {
+        
     }
 }
