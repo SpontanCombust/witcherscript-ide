@@ -14,6 +14,10 @@ use super::common::PositionTargetKind;
 pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option<lsp::Hover>> {
     let doc_path = AbsPath::try_from(params.text_document_position_params.text_document.uri.clone()).unwrap();
 
+    if doc_path.extension().unwrap_or_default() != "ws" {
+        return Ok(None);
+    }
+
     let content_path;
     if let Some(path) = backend.source_trees.containing_content_path(&doc_path) {
         content_path = path;

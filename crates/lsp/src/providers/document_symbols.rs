@@ -11,6 +11,10 @@ use crate::Backend;
 
 pub async fn document_symbol(backend: &Backend, params: lsp::DocumentSymbolParams) -> Result<Option<lsp::DocumentSymbolResponse>> {
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
+
+    if doc_path.extension().unwrap_or_default() != "ws" {
+        return Ok(None);
+    }
     
     let (content_path, source_file);
     if let Some((path, file)) = backend.source_trees.find_source_file(&doc_path) {

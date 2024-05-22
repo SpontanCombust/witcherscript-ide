@@ -9,6 +9,11 @@ use crate::Backend;
 
 pub async fn selection_range(backend: &Backend, params: lsp::SelectionRangeParams) -> Result<Option<Vec<lsp::SelectionRange>>> {
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
+
+    if doc_path.extension().unwrap_or_default() != "ws" {
+        return Ok(None);
+    }
+    
     if let Some(script_state) = backend.scripts.get(&doc_path) {
         let mut found_ranges = Vec::with_capacity(params.positions.len());
 

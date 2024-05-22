@@ -12,6 +12,10 @@ use super::common::resolve_text_document_position;
 pub async fn goto_definition(backend: &Backend, params: lsp::GotoDefinitionParams) -> Result<Option<lsp::GotoDefinitionResponse>> {
     let doc_path = AbsPath::try_from(params.text_document_position_params.text_document.uri.clone()).unwrap();
 
+    if doc_path.extension().unwrap_or_default() != "ws" {
+        return Ok(None);
+    }
+
     let content_path;
     if let Some(path) = backend.source_trees.containing_content_path(&doc_path) {
         content_path = path;
@@ -55,6 +59,10 @@ pub async fn goto_definition(backend: &Backend, params: lsp::GotoDefinitionParam
 
 pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDeclarationParams) -> Result<Option<lsp::request::GotoDeclarationResponse>> {
     let doc_path = AbsPath::try_from(params.text_document_position_params.text_document.uri.clone()).unwrap();
+
+    if doc_path.extension().unwrap_or_default() != "ws" {
+        return Ok(None);
+    }
 
     let content_path;
     if let Some(path) = backend.source_trees.containing_content_path(&doc_path) {
@@ -141,6 +149,10 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
 
 pub async fn goto_type_definition(backend: &Backend, params: lsp::request::GotoTypeDefinitionParams) -> Result<Option<lsp::request::GotoTypeDefinitionResponse>> {
     let doc_path = AbsPath::try_from(params.text_document_position_params.text_document.uri.clone()).unwrap();
+
+    if doc_path.extension().unwrap_or_default() != "ws" {
+        return Ok(None);
+    }
 
     let content_path;
     if let Some(path) = backend.source_trees.containing_content_path(&doc_path) {
