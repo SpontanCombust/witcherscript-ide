@@ -1,4 +1,5 @@
-use std::{borrow::Cow, fs::File, io::{self, BufRead, BufReader}, path::Path};
+use std::{borrow::Cow, fs::File, io::{self, BufRead, BufReader}};
+use abs_path::AbsPath;
 use encoding_rs_io::DecodeReaderBytes;
 use ropey::{Rope, RopeBuilder};
 use tree_sitter as ts;
@@ -21,8 +22,7 @@ impl ScriptDocument {
         }
     }
 
-    pub fn from_file<P>(path: P) -> Result<Self, io::Error> 
-    where P: AsRef<Path> {
+    pub fn from_file(path: &AbsPath) -> Result<Self, io::Error> {
         let f = File::open(&path)?;
         let decoder = DecodeReaderBytes::new(f);
         let mut reader = BufReader::new(decoder);
@@ -51,6 +51,7 @@ impl ScriptDocument {
         self.rope.slice(start_char..end_char).into()
     }
 
+    /// Replace a part of the document, e.g. add a new line of text
     pub fn edit(&mut self, event: &lsp::TextDocumentContentChangeEvent) {
         let point_offset = string_point_offset(&event.text);
 
@@ -86,6 +87,12 @@ impl ScriptDocument {
 
             self.rope = Rope::from_str(&event.text);
         }
+    }
+
+    /// Replace the entire parsed content of the document
+    pub fn replace(&mut self, new_text: &str) {
+        self.rope = Rope::from_str(new_text);
+        self.edits.clear();
     }
 }
 

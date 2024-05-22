@@ -79,17 +79,17 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
 
     
     if doc_path.extension().map(|ext| ext == "ws").unwrap_or(false) {
-        if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
-            let script_state = entry.value_mut();
+        if let Some(text) = params.text {
+            if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
+                let script_state = entry.value_mut();
 
-            let doc_buff = ScriptDocument::from_str(&params.text.unwrap());
-
-            // Do a fresh reparse without caring about the previous state.
-            // This is a fail-safe in case of bad edits or document having been changed outside of the editor.
-            script_state.script.refresh(&doc_buff).expect("Script refresh error!");
-            script_state.buffer = doc_buff;
-            script_state.modified_timestamp = FileTime::now();
-        }
+                // Do a fresh reparse without caring about the previous state.
+                // This is a fail-safe in case of bad edits or document having been changed outside of the editor.
+                script_state.buffer.replace(&text);
+                script_state.script.refresh(&mut script_state.buffer).expect("Script refresh error!");
+                script_state.modified_timestamp = FileTime::now();
+            }
+        } 
 
         if let Some(containing_content_path) = backend.source_trees.containing_content_path(&doc_path) {
             backend.scan_source_tree(&containing_content_path).await;

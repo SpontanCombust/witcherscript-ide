@@ -1249,6 +1249,7 @@ dependencies = [
 name = "witcherscript"
 version = "0.3.0-dev.3"
 dependencies = [
+ "abs-path",
  "encoding_rs_io",
  "lsp-types",
  "ropey",
