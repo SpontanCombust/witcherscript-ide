@@ -40,10 +40,29 @@ impl Backend {
         }
 
 
-        let scripts_path = project_dir.join("scripts").unwrap();
-        //TODO try content/scripts and workspace/scripts
-        if !scripts_path.exists() {
-            if let Err(err) = std::fs::create_dir(scripts_path) {
+        let scripts_root_candidates_rel = [
+            "scripts",
+            "content/scripts",
+            "workspace/scripts",
+        ];
+        
+        let scripts_root_candidates_abs = 
+            scripts_root_candidates_rel.iter()
+            .map(|rel| project_dir.join(rel).unwrap())
+            .collect::<Vec<_>>();
+
+        let candidate_idx =
+            scripts_root_candidates_abs.iter()
+            .enumerate()
+            .find(|(_, abs)| abs.exists())
+            .map(|(i, _)| i)
+            .unwrap_or(0);
+
+        let scripts_root_rel = scripts_root_candidates_rel[candidate_idx];
+        let scripts_root_abs = &scripts_root_candidates_abs[candidate_idx];
+
+        if !scripts_root_abs.exists() {
+            if let Err(err) = std::fs::create_dir(scripts_root_abs) {
                 return Err(jsonrpc::Error { 
                     code: jsonrpc::ErrorCode::ServerError(-1002), 
                     message: format!("File system error: {err}").into(), 
@@ -51,6 +70,7 @@ impl Backend {
                 })
             }
         }
+
 
         let mut manifest_file;
         match std::fs::File::create(&manifest_path) {
@@ -74,7 +94,7 @@ impl Backend {
             })
         }
 
-        let template = manifest_template(&params.project_name);
+        let template = manifest_template(&params.project_name, scripts_root_rel);
 
         if let Err(err) = manifest_file.write_all(template.as_bytes()) {
             return Err(jsonrpc::Error { 
@@ -307,7 +327,7 @@ impl Backend {
 }
 
 
-fn manifest_template(project_name: &str) -> String {
+fn manifest_template(project_name: &str, scripts_root: &str) -> String {
     // Serialization would've been better if not for the fact that the default behaviour for inline tables
     // is to instead create a new table with a dotted key. 
     // So it would require extra effort to make something small look better when you can just write the template by hand.
@@ -319,6 +339,7 @@ description = ""
 version = "1.0.0"
 authors = []
 game_version = "4.04"
+scripts_root = "{scripts_root}"
 
 # Any dependencies that this project might need
 [dependencies]
@@ -342,7 +363,7 @@ mod test {
 
     #[test]
     fn test_manifest_template() {
-        let template = manifest_template("modFoo_Bar");
+        let template = manifest_template("modFoo_Bar", "scripts");
         let manifest = Manifest::from_str(&template);
         assert!(manifest.is_ok());
     }
