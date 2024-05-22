@@ -322,7 +322,7 @@ mod test {
         static TEST_ASSETS: OnceLock<AbsPath> = OnceLock::new();
         TEST_ASSETS.get_or_init(|| {
             let manifest_dir = AbsPath::resolve(env!("CARGO_MANIFEST_DIR"), None).unwrap();
-            manifest_dir.join("../../test_assets/project").unwrap()
+            manifest_dir.join("assets/tests").unwrap()
         })
     }
 
