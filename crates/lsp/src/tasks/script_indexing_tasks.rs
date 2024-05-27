@@ -25,14 +25,20 @@ impl Backend {
         
         if let Some(diff) = diff {
             if !diff.is_empty() {
-                self.on_source_tree_changed(content_path, diff, true).await;
+                let paths_for_analysis: Vec<_> = 
+                    diff.added.iter().map(|f| f.path.absolute().to_owned())
+                    .chain(diff.modified.iter().map(|f| f.path.absolute().to_owned()))
+                    .collect();
+
+                self.on_source_tree_changed(content_path, diff).await;
+                self.run_script_analysis(paths_for_analysis).await;
             } else {
                 self.reporter.log_info("Found no source tree changes.").await;
             }
         }
     }
 
-    pub async fn on_source_tree_changed(&self, content_path: &AbsPath, diff: SourceTreeDifference, run_diagnostics: bool) {
+    pub async fn on_source_tree_changed(&self, content_path: &AbsPath, diff: SourceTreeDifference) {
         let (added_count, removed_count, modified_count) = (diff.added.len(), diff.removed.len(), diff.modified.len());
         self.reporter.log_info(format!(
             "Changes to source tree in {}: {} script(s) discovered, {} to be deprecated, {} modified", 
@@ -61,23 +67,13 @@ impl Backend {
             .collect();
 
         if !added_or_modified.is_empty() {
-            {
-                let mut symtabs = self.symtabs.write().await;
-                if let Some(mut content_symtab) = symtabs.get_mut(content_path) {
-                    let paths = added_or_modified.iter()
+            let mut symtabs = self.symtabs.write().await;
+            if let Some(mut content_symtab) = symtabs.get_mut(content_path) {
+                let paths = added_or_modified.into_iter()
                         .map(|f| f.path.clone())
                         .collect();
 
-                    self.scan_symbols(&mut content_symtab, content_path, paths).await;
-                }
-            }
-
-            if run_diagnostics {
-                let paths = added_or_modified.into_iter()
-                    .map(|f| f.path.into_absolute())
-                    .par_bridge();
-
-                self.run_script_analysis(paths).await;
+                self.scan_symbols(&mut content_symtab, content_path, paths).await;
             }
         }
     }

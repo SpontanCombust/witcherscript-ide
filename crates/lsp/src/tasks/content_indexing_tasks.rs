@@ -156,7 +156,7 @@ impl Backend {
 
         // handling source tree changes in a seperate step to not lock resources for too long
         for (content_path, diff) in source_tree_diffs {
-            self.on_source_tree_changed(&content_path, diff, false).await;
+            self.on_source_tree_changed(&content_path, diff).await;
         }
     }
 
@@ -194,7 +194,7 @@ impl Backend {
         }
 
         for (content_path, diff) in source_tree_diffs {
-            self.on_source_tree_changed(&content_path, diff, false).await;
+            self.on_source_tree_changed(&content_path, diff).await;
         }
     }
 
