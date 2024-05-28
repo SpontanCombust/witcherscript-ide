@@ -205,6 +205,16 @@ impl SymbolTable {
         CallableSymbolChildren::new(self, callable_path)
     }
 
+    #[inline]
+    pub fn get_array_type_children<'a>(&'a self, array_type_path: &SymbolPath) -> ArrayTypeSymbolChildren<'a> {
+        ArrayTypeSymbolChildren::new(self, array_type_path)
+    }
+
+    #[inline]
+    pub fn get_array_type_function_children<'a>(&'a self, array_type_func_path: &SymbolPath) -> ArrayTypeFunctionSymbolChildren<'a> {
+        ArrayTypeFunctionSymbolChildren::new(self, array_type_func_path)
+    }
+
 
     /// Iterate over symbols attributed to a given local source path.
     /// Symbols are returned ordered by their symbol path.

@@ -91,6 +91,8 @@ impl<'a> ExpressionEvaluator<'a> {
                 SymbolVariant::Struct(s) => s.path().to_owned(),
                 SymbolVariant::Enum(s) => s.path().to_owned(),
                 SymbolVariant::Array(s) => s.path().to_owned(),
+                SymbolVariant::ArrayFunc(s) => s.return_type_path.clone().into(),
+                SymbolVariant::ArrayFuncParam(s) => s.type_path.clone().into(),
                 SymbolVariant::GlobalFunc(s) => s.return_type_path.clone().into(),
                 SymbolVariant::MemberFunc(s) => s.return_type_path.clone().into(),
                 SymbolVariant::Event(_) => BasicTypeSymbolPath::new("void").into(), // I guess??

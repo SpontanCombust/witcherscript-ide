@@ -127,6 +127,58 @@ impl<'st> Iterator for CallableSymbolChildren<'st> {
 }
 
 
+#[derive(Clone)]
+pub struct ArrayTypeSymbolChildren<'st> {
+    iter: SymbolChildren<'st>
+}
+
+impl<'st> ArrayTypeSymbolChildren<'st> {
+    pub(super) fn new(symtab: &'st SymbolTable, array_sympath: &SymbolPath) -> Self {
+        Self {
+            iter: SymbolChildren::new(symtab, array_sympath)
+        }
+    }
+}
+
+impl<'st> Iterator for ArrayTypeSymbolChildren<'st> {
+    type Item = &'st ArrayTypeFunctionSymbol;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter
+            .find_map(|v| match v {
+                SymbolVariant::ArrayFunc(s) => Some(s),
+                _ => None
+            })
+    }
+}
+
+
+#[derive(Clone)]
+pub struct ArrayTypeFunctionSymbolChildren<'st> {
+    iter: SymbolChildren<'st>
+}
+
+impl<'st> ArrayTypeFunctionSymbolChildren<'st> {
+    pub(super) fn new(symtab: &'st SymbolTable, array_func_sympath: &SymbolPath) -> Self {
+        Self {
+            iter: SymbolChildren::new(symtab, array_func_sympath)
+        }
+    }
+}
+
+impl<'st> Iterator for ArrayTypeFunctionSymbolChildren<'st> {
+    type Item = &'st ArrayTypeFunctionParameterSymbol;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter
+            .find_map(|v| match v {
+                SymbolVariant::ArrayFuncParam(s) => Some(s),
+                _ => None
+            })
+    }
+}
+
+
 
 /// Iterate over symbols associated with a script file at a given path
 pub struct FileSymbols<'st> {

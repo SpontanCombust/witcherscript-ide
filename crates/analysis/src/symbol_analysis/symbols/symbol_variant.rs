@@ -12,7 +12,10 @@ pub enum SymbolVariant {
     State(StateSymbol),
     Struct(StructSymbol),
     Enum(EnumSymbol),
+
     Array(ArrayTypeSymbol),
+    ArrayFunc(ArrayTypeFunctionSymbol),
+    ArrayFuncParam(ArrayTypeFunctionParameterSymbol),
 
     // callables
     GlobalFunc(GlobalFunctionSymbol),
@@ -39,6 +42,8 @@ impl std::fmt::Debug for SymbolVariant {
             Self::Struct(s) => s.fmt(f),
             Self::Enum(s) => s.fmt(f),
             Self::Array(s) => s.fmt(f),
+            Self::ArrayFunc(s) => s.fmt(f),
+            Self::ArrayFuncParam(s) => s.fmt(f),
             Self::GlobalFunc(s) => s.fmt(f),
             Self::MemberFunc(s) => s.fmt(f),
             Self::Event(s) => s.fmt(f),
@@ -63,6 +68,8 @@ impl SymbolVariant {
             SymbolVariant::Struct(s) => s.typ(),
             SymbolVariant::Enum(s) => s.typ(),
             SymbolVariant::Array(s) => s.typ(),
+            SymbolVariant::ArrayFunc(s) => s.typ(),
+            SymbolVariant::ArrayFuncParam(s) => s.typ(),
             SymbolVariant::GlobalFunc(s) => s.typ(),
             SymbolVariant::MemberFunc(s) => s.typ(),
             SymbolVariant::Event(s) => s.typ(),
@@ -85,6 +92,8 @@ impl SymbolVariant {
             SymbolVariant::Struct(s) => s.path(),
             SymbolVariant::Enum(s) => s.path(),
             SymbolVariant::Array(s) => s.path(),
+            SymbolVariant::ArrayFunc(s) => s.path(),
+            SymbolVariant::ArrayFuncParam(s) => s.path(),
             SymbolVariant::GlobalFunc(s) => s.path(),
             SymbolVariant::MemberFunc(s) => s.path(),
             SymbolVariant::Event(s) => s.path(),
@@ -107,6 +116,8 @@ impl SymbolVariant {
             SymbolVariant::Struct(s) => s.name(),
             SymbolVariant::Enum(s) => s.name(),
             SymbolVariant::Array(s) => s.name(),
+            SymbolVariant::ArrayFunc(s) => s.name(),
+            SymbolVariant::ArrayFuncParam(s) => s.name(),
             SymbolVariant::GlobalFunc(s) => s.name(),
             SymbolVariant::MemberFunc(s) => s.name(),
             SymbolVariant::Event(s) => s.name(),
@@ -129,6 +140,8 @@ impl SymbolVariant {
             SymbolVariant::Struct(s) => Some(s.range()),
             SymbolVariant::Enum(s) => Some(s.range()),
             SymbolVariant::Array(_) => None,
+            SymbolVariant::ArrayFunc(_) => None,
+            SymbolVariant::ArrayFuncParam(_) => None,
             SymbolVariant::GlobalFunc(s) => Some(s.range()),
             SymbolVariant::MemberFunc(s) => Some(s.range()),
             SymbolVariant::Event(s) => Some(s.range()),
@@ -151,6 +164,8 @@ impl SymbolVariant {
             SymbolVariant::Struct(s) => Some(s.label_range()),
             SymbolVariant::Enum(s) => Some(s.label_range()),
             SymbolVariant::Array(_) => None,
+            SymbolVariant::ArrayFunc(_) => None,
+            SymbolVariant::ArrayFuncParam(_) => None,
             SymbolVariant::GlobalFunc(s) => Some(s.label_range()),
             SymbolVariant::MemberFunc(s) => Some(s.label_range()),
             SymbolVariant::Event(s) => Some(s.label_range()),
@@ -173,6 +188,8 @@ impl SymbolVariant {
             SymbolVariant::Struct(s) => Some(s.local_source_path()),
             SymbolVariant::Enum(s) => Some(s.local_source_path()),
             SymbolVariant::Array(_) => None,
+            SymbolVariant::ArrayFunc(_) => None,
+            SymbolVariant::ArrayFuncParam(_) => None,
             SymbolVariant::GlobalFunc(s) => Some(s.local_source_path()),
             SymbolVariant::MemberFunc(_) => None,
             SymbolVariant::Event(_) => None,
@@ -229,6 +246,18 @@ impl From<StateSymbol> for SymbolVariant {
 impl From<ArrayTypeSymbol> for SymbolVariant {
     fn from(value: ArrayTypeSymbol) -> Self {
         Self::Array(value)
+    }
+}
+
+impl From<ArrayTypeFunctionSymbol> for SymbolVariant {
+    fn from(value: ArrayTypeFunctionSymbol) -> Self {
+        Self::ArrayFunc(value)
+    }
+}
+
+impl From<ArrayTypeFunctionParameterSymbol> for SymbolVariant {
+    fn from(value: ArrayTypeFunctionParameterSymbol) -> Self {
+        Self::ArrayFuncParam(value)
     }
 }
 

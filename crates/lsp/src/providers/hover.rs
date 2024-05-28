@@ -145,6 +145,8 @@ impl RenderTooltip for SymbolVariant {
             SymbolVariant::Struct(s) => s.render(buf, symtab),
             SymbolVariant::Enum(s) => s.render(buf, symtab),
             SymbolVariant::Array(s) => s.render(buf, symtab),
+            SymbolVariant::ArrayFunc(s) => s.render(buf, symtab),
+            SymbolVariant::ArrayFuncParam(s) => s.render(buf, symtab),
             SymbolVariant::GlobalFunc(s) => s.render(buf, symtab),
             SymbolVariant::MemberFunc(s) => s.render(buf, symtab),
             SymbolVariant::Event(s) => s.render(buf, symtab),
@@ -287,6 +289,61 @@ impl RenderTooltip for ArrayTypeSymbol {
 impl RenderShortTooltip for ArrayTypeSymbol {
     fn render_short(&self, buf: &mut String) {
         buf.push_str(self.name())
+    }
+}
+
+impl RenderTooltip for ArrayTypeFunctionSymbol {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable) {
+        buf.push_str(&format!("{}<T>\n", ArrayTypeSymbol::TYPE_NAME));
+        
+        buf.push_str(Keyword::Function.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+
+        buf.push('(');
+
+        let mut params = symtab
+            .get_array_type_function_children(self.path())
+            .collect::<Vec<_>>();
+
+        params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
+
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
+            param.render(buf, symtab);
+        }
+        for param in params_iter {
+            buf.push_str(", ");
+            param.render(buf, symtab);
+        }
+        
+        buf.push(')');
+
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+
+        if self.was_return_type_generic {
+            buf.push_str("T");
+        } else {
+            buf.push_str(self.return_type_name());
+        }
+    }
+}
+
+impl RenderTooltip for ArrayTypeFunctionParameterSymbol {
+    fn render(&self, buf: &mut String, _: &SymbolTable) {
+        buf.push_str(self.name());
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+
+        if self.was_type_generic {
+            buf.push_str("T");
+        } else {
+            buf.push_str(self.type_name());
+        }
     }
 }
 

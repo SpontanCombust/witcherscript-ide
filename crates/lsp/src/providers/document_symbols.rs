@@ -205,6 +205,18 @@ impl ToDocumentSymbol for ArrayTypeSymbol {
     }
 }
 
+impl ToDocumentSymbol for ArrayTypeFunctionSymbol {
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        None
+    }
+}
+
+impl ToDocumentSymbol for ArrayTypeFunctionParameterSymbol {
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        None
+    }
+}
+
 impl ToDocumentSymbol for GlobalFunctionSymbol {
     #[allow(deprecated)]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
@@ -357,6 +369,8 @@ impl ToDocumentSymbol for SymbolVariant {
             SymbolVariant::Struct(s) => s.to_doc_sym(),
             SymbolVariant::Enum(s) => s.to_doc_sym(),
             SymbolVariant::Array(s) => s.to_doc_sym(),
+            SymbolVariant::ArrayFunc(s) => s.to_doc_sym(),
+            SymbolVariant::ArrayFuncParam(s) => s.to_doc_sym(),
             SymbolVariant::GlobalFunc(s) => s.to_doc_sym(),
             SymbolVariant::MemberFunc(s) => s.to_doc_sym(),
             SymbolVariant::Event(s) => s.to_doc_sym(),

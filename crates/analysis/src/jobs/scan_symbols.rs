@@ -132,12 +132,8 @@ impl SymbolScannerVisitor<'_> {
     }
 
     fn inject_array_type(&mut self, array_sympath: ArrayTypeSymbolPath) {
-        let void_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("void"));
-        let int_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("int"));
-        let bool_path = TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new("bool"));
-    
         let arr = ArrayTypeSymbol::new(array_sympath);
-        let (funcs, params) = arr.make_functions(&void_path, &int_path, &bool_path);
+        let (funcs, params) = arr.make_functions();
         self.symtab.insert_array(arr, self.local_source_path);
         funcs.into_iter().for_each(|f| { self.symtab.insert(f); } );
         params.into_iter().for_each(|p| { self.symtab.insert(p); } );
