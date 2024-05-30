@@ -13,6 +13,17 @@ pub struct SymbolTableMarcher<'a> {
 }
 
 impl<'a> SymbolTableMarcher<'a> {
+    pub fn new() -> Self {
+        Self {
+            inner: Vec::new()
+        }
+    }
+
+    pub fn add_step(&mut self, symtab: &'a SymbolTable) {
+        self.inner.push(symtab)
+    }
+
+
     pub fn test_contains(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         for symtab in &self.inner {
             symtab.test_contains_symbol(path)?;
@@ -82,18 +93,6 @@ impl<'a> SymbolTableMarcher<'a> {
         }
 
         None
-    }
-}
-
-
-pub trait IntoSymbolTableMarcher<'a> {
-    fn into_marcher(self) -> SymbolTableMarcher<'a> where Self: Sized;
-}
-
-impl<'a, It> IntoSymbolTableMarcher<'a> for It
-where It: Iterator<Item = &'a SymbolTable> + 'a {
-    fn into_marcher(self) -> SymbolTableMarcher<'a> where Self: Sized {
-        SymbolTableMarcher { inner: self.collect() }
     }
 }
 

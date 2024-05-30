@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 use tower_lsp::Client;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
-use witcherscript_analysis::symbol_analysis::symbol_table::{marcher::{IntoSymbolTableMarcher, SymbolTableMarcher}, SymbolTable};
+use witcherscript_analysis::symbol_analysis::symbol_table::{marcher::SymbolTableMarcher, SymbolTable};
 use witcherscript_project::{ContentGraph, SourceTree, SourceTreeFile, SourceTreePath};
 use crate::{config::Config, reporting::Reporter};
 
@@ -125,16 +125,23 @@ impl Backend {
 
 
     pub async fn march_symbol_tables<'a>(&self, symtabs: &'a SymbolTables, content_path: &AbsPath) -> SymbolTableMarcher<'a> {
-        let content_dependency_paths: Vec<_> =
-            [content_path.to_owned()].into_iter()
-            .chain(self.content_graph
-                .read().await
-                .walk_dependencies(&content_path)
-                .map(|n| n.content.path().to_owned()))
+        let dependency_paths: Vec<_> =
+            self.content_graph
+            .read().await
+            .walk_dependencies(&content_path)
+            .map(|n| n.content.path().to_owned())
             .collect();
+
+        let symtab_iter =
+            [content_path.to_owned()].into_iter()
+            .chain(dependency_paths.into_iter())
+            .filter_map(|p| symtabs.get(&p));
         
-        content_dependency_paths.into_iter()
-        .filter_map(|p| symtabs.get(&p))
-        .into_marcher()
+        let mut marcher = SymbolTableMarcher::new();
+        for symtab in symtab_iter {
+            marcher.add_step(symtab);
+        }
+
+        marcher
     }
 }
