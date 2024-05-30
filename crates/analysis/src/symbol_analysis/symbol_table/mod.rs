@@ -61,12 +61,12 @@ impl SymbolTable {
     }
 
 
-    pub(crate) fn insert<S>(&mut self, sym: S)
+    pub(crate) fn insert_symbol<S>(&mut self, sym: S)
     where S: Symbol + Into<SymbolVariant> {
         self.symbols.insert(sym.path().to_owned(), sym.into());
     }
 
-    pub(crate) fn insert_primary<S>(&mut self, sym: S)
+    pub(crate) fn insert_primary_symbol<S>(&mut self, sym: S)
     where S: PrimarySymbol + LocatableSymbol + Into<SymbolVariant> {
         self.source_path_assocs.entry(sym.local_source_path().to_owned())
             .or_default()
@@ -75,14 +75,14 @@ impl SymbolTable {
         self.symbols.insert(sym.path().to_owned(), sym.into());
     }
 
-    pub(crate) fn insert_primitive(&mut self, sym: PrimitiveTypeSymbol) {
+    pub(crate) fn insert_primitive_symbol(&mut self, sym: PrimitiveTypeSymbol) {
         if let Some(alias) = &sym.alias {
             self.symbols.insert(alias.to_owned(), sym.clone().into());
         }
         self.symbols.insert(sym.path().to_owned(), sym.into());
     }
 
-    pub(crate) fn insert_array(&mut self, sym: ArrayTypeSymbol, ref_local_source_path: &Path) {
+    pub(crate) fn insert_array_type_symbol(&mut self, sym: ArrayTypeSymbol, ref_local_source_path: &Path) {
         self.array_type_refs
             .entry(sym.path().to_owned())
             .or_default()
@@ -99,11 +99,11 @@ impl SymbolTable {
     /// If the path is occupied returns Err(PathOccupiedError).
     /// Otherwise if the path was not found returns Ok.
     /// If you only want to know if the path exists in the symbol table without extra info, use [`Self::contains`] instead.
-    pub fn test_contains(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
+    pub fn test_contains_symbol(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         if let Some(occupying) = self.symbols.get(path) {
             Err(PathOccupiedError {
                 occupied_path: occupying.path().to_sympath_buf(),
-                occupied_location: self.locate(path)
+                occupied_location: self.locate_symbol(path)
             })
         } else {
             Ok(())
@@ -113,27 +113,27 @@ impl SymbolTable {
     /// Returns whether the given symbol path exists in the symbol table.
     /// If you want to know more about the occupying symbol, use [`Self::test_contains`] instead.
     #[inline]
-    pub fn contains(&self, path: &SymbolPath) -> bool {
+    pub fn contains_symbol(&self, path: &SymbolPath) -> bool {
         self.symbols.contains_key(path)
     }
 
     #[inline]
-    pub fn get<'a>(&'a self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
+    pub fn get_symbol<'a>(&'a self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
         self.symbols.get(path)
     }
 
     #[inline]
-    pub(crate) fn get_mut<'a>(&'a mut self, path: &SymbolPath) -> Option<&'a mut SymbolVariant> {
+    pub(crate) fn get_symbol_mut<'a>(&'a mut self, path: &SymbolPath) -> Option<&'a mut SymbolVariant> {
         self.symbols.get_mut(path)
     }
 
     #[inline]
-    pub fn locate(&self, path: &SymbolPath) -> Option<SymbolLocation> {
-        let (_, loc) = self.get_with_location(path)?;
+    pub fn locate_symbol(&self, path: &SymbolPath) -> Option<SymbolLocation> {
+        let (_, loc) = self.get_symbol_with_location(path)?;
         Some(loc)
     }
 
-    pub fn get_with_location<'a>(&'a self, path: &SymbolPath) -> Option<(&'a SymbolVariant, SymbolLocation)> {
+    pub fn get_symbol_with_location<'a>(&'a self, path: &SymbolPath) -> Option<(&'a SymbolVariant, SymbolLocation)> {
         let local_source_path = path.root()
             .and_then(|root| self.symbols.get(root))
             .and_then(|v| v.local_source_path())?;
@@ -150,9 +150,9 @@ impl SymbolTable {
         }))
     }
  
-    pub fn remove_for_source(&mut self, local_source_path: &Path) {
+    pub fn remove_symbols_for_source(&mut self, local_source_path: &Path) {
         let for_removal: Vec<_> = 
-            self.get_for_source(local_source_path)
+            self.get_symbols_for_source(local_source_path)
             .map(|sym| sym.path().to_owned())
             .collect();
 
@@ -175,7 +175,7 @@ impl SymbolTable {
         for (array_sympath, refs) in self.array_type_refs.iter() {
             if refs.is_empty() {
                 for_removal.push(array_sympath.to_owned());
-                for_removal.extend(self.get_descendants(&array_sympath).map(|v| v.path().to_owned()));
+                for_removal.extend(self.get_symbol_descendants(&array_sympath).map(|v| v.path().to_owned()));
             }
         }
 
@@ -188,52 +188,52 @@ impl SymbolTable {
     /// Iterate over direct children of a symbol in a symbol hierarchy.
     /// Symbols are returned ordered by their symbol path.
     #[inline]
-    pub fn get_children<'a>(&'a self, path: &SymbolPath) -> SymbolChildren<'a> {
+    pub fn get_symbol_children<'a>(&'a self, path: &SymbolPath) -> SymbolChildren<'a> {
         SymbolChildren::new(self, path)
     }
 
     /// Iterate over all descendants of a symbol in a symbol hierarchy.
     /// Symbols are returned ordered by their symbol path.
     #[inline]
-    pub fn get_descendants<'a>(&'a self, path: &SymbolPath) -> SymbolDescendants<'a> {
+    pub fn get_symbol_descendants<'a>(&'a self, path: &SymbolPath) -> SymbolDescendants<'a> {
         SymbolDescendants::new(self, path)
     }
 
     /// Iterate over direct children of a class symbol in a symbol hierarchy.
     /// Symbols are returned ordered by their symbol path.
     #[inline]
-    pub fn get_class_children<'a>(&'a self, class_path: &SymbolPath) -> ClassSymbolChildren<'a> {
+    pub fn get_class_symbol_children<'a>(&'a self, class_path: &SymbolPath) -> ClassSymbolChildren<'a> {
         ClassSymbolChildren::new(self, class_path)
     }
 
     /// Iterate over direct children of a state symbol in a symbol hierarchy.
     /// Symbols are returned ordered by their symbol path.
     #[inline]
-    pub fn get_state_children<'a>(&'a self, state_path: &SymbolPath) -> StateSymbolChildren<'a> {
+    pub fn get_state_symbol_children<'a>(&'a self, state_path: &SymbolPath) -> StateSymbolChildren<'a> {
         StateSymbolChildren::new(self, state_path)
     }
 
     /// Iterate over direct children of a struct symbol in a symbol hierarchy.
     /// Symbols are returned ordered by their symbol path.
     #[inline]
-    pub fn get_struct_children<'a>(&'a self, struct_path: &SymbolPath) -> StructSymbolChildren<'a> {
+    pub fn get_struct_symbol_children<'a>(&'a self, struct_path: &SymbolPath) -> StructSymbolChildren<'a> {
         StructSymbolChildren::new(self, struct_path)
     }
 
     /// Iterate over direct children of any callable symbol in a symbol hierarchy.
     /// Symbols are returned ordered by their symbol path.
     #[inline]
-    pub fn get_callable_children<'a>(&'a self, callable_path: &SymbolPath) -> CallableSymbolChildren<'a> {
+    pub fn get_callable_symbol_children<'a>(&'a self, callable_path: &SymbolPath) -> CallableSymbolChildren<'a> {
         CallableSymbolChildren::new(self, callable_path)
     }
 
     #[inline]
-    pub fn get_array_type_children<'a>(&'a self, array_type_path: &SymbolPath) -> ArrayTypeSymbolChildren<'a> {
+    pub fn get_array_type_symbol_children<'a>(&'a self, array_type_path: &SymbolPath) -> ArrayTypeSymbolChildren<'a> {
         ArrayTypeSymbolChildren::new(self, array_type_path)
     }
 
     #[inline]
-    pub fn get_array_type_function_children<'a>(&'a self, array_type_func_path: &SymbolPath) -> ArrayTypeFunctionSymbolChildren<'a> {
+    pub fn get_array_type_function_symbol_children<'a>(&'a self, array_type_func_path: &SymbolPath) -> ArrayTypeFunctionSymbolChildren<'a> {
         ArrayTypeFunctionSymbolChildren::new(self, array_type_func_path)
     }
 
@@ -241,7 +241,7 @@ impl SymbolTable {
     /// Iterate over symbols attributed to a given local source path.
     /// Symbols are returned ordered by their symbol path.
     #[inline]
-    pub fn get_for_source<'a>(&'a self, local_source_path: &Path) -> FileSymbols<'a> {
+    pub fn get_symbols_for_source<'a>(&'a self, local_source_path: &Path) -> FileSymbols<'a> {
         FileSymbols::new(self, local_source_path)
     }
 
@@ -263,7 +263,7 @@ impl SymbolTable {
                     if !occupying_variant.path().has_missing() {
                         errors.push(MergeConflictError {
                             occupied_path: occupying_variant.path().to_sympath_buf(),
-                            occupied_location: self.locate(&root),
+                            occupied_location: self.locate_symbol(&root),
                             incoming_location: SymbolLocation { 
                                 abs_source_path: self.script_root.join(&file_path).unwrap(),
                                 local_source_path: file_path.to_owned(),
@@ -303,7 +303,7 @@ impl SymbolTable {
                         if !occupying_variant.path().has_missing() {
                             errors.push(MergeConflictError {
                                 occupied_path: occupying_variant.path().to_sympath_buf(),
-                                occupied_location: self.locate(&incoming_sympath),
+                                occupied_location: self.locate_symbol(&incoming_sympath),
                                 incoming_location: SymbolLocation { 
                                     abs_source_path: self.script_root.join(&file_path).unwrap(),
                                     local_source_path: file_path.to_owned(), 

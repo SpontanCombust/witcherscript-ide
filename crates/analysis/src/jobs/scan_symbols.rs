@@ -54,7 +54,7 @@ struct SymbolScannerVisitor<'a> {
 impl SymbolScannerVisitor<'_> {
     // Returns whether the symbol is not a duplicate
     fn check_contains(&mut self, path: &SymbolPath, range: Range) -> bool {
-        if let Err(err) = self.symtab.test_contains(path) {
+        if let Err(err) = self.symtab.test_contains_symbol(path) {
             // missing nodes don't get an error, as it's the job of syntax analysis to detect them and inform the user about them
             // these situations are very rare anyways, so doing anything aside from showing a diagnostic is an overkill
             if !path.has_missing() {
@@ -107,7 +107,7 @@ impl SymbolScannerVisitor<'_> {
                 let type_arg_path = self.check_type_from_type_annot(type_arg_node);
                 if !type_arg_path.is_empty() {
                     let array_path = ArrayTypeSymbolPath::new(type_arg_path);
-                    if !self.symtab.contains(&array_path) {
+                    if !self.symtab.contains_symbol(&array_path) {
                         self.inject_array_type(array_path.clone());
                     }
                     return TypeSymbolPath::Array(array_path);
@@ -134,9 +134,9 @@ impl SymbolScannerVisitor<'_> {
     fn inject_array_type(&mut self, array_sympath: ArrayTypeSymbolPath) {
         let arr = ArrayTypeSymbol::new(array_sympath);
         let (funcs, params) = arr.make_functions();
-        self.symtab.insert_array(arr, self.local_source_path);
-        funcs.into_iter().for_each(|f| { self.symtab.insert(f); } );
-        params.into_iter().for_each(|p| { self.symtab.insert(p); } );
+        self.symtab.insert_array_type_symbol(arr, self.local_source_path);
+        funcs.into_iter().for_each(|f| { self.symtab.insert_symbol(f); } );
+        params.into_iter().for_each(|p| { self.symtab.insert_symbol(p); } );
     }
 }
 
@@ -178,17 +178,17 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             let this_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::This);
             let this_sym = SpecialVarSymbol::new(this_path, path.clone());
-            self.symtab.insert(this_sym);
+            self.symtab.insert_symbol(this_sym);
 
             if let Some(base_path) = &sym.base_path {
                 let super_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Super);
                 let super_sym = SpecialVarSymbol::new(super_path, base_path.clone());
-                self.symtab.insert(super_sym);
+                self.symtab.insert_symbol(super_sym);
             }
 
 
             path.as_ref().clone_into(&mut self.current_path);
-            self.symtab.insert_primary(sym);
+            self.symtab.insert_primary_symbol(sym);
             
             traverse_definition = true;
         }
@@ -232,27 +232,27 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             let this_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::This);
             let this_sym = SpecialVarSymbol::new(this_path, path.clone().into());
-            self.symtab.insert(this_sym);
+            self.symtab.insert_symbol(this_sym);
 
             if let Some(base) = &sym.base_state_name {
                 //TODO super_path can only be evaluated after all states of all base classes are known
             } else {
                 let super_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Super);
                 let super_sym = SpecialVarSymbol::new(super_path, BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME));
-                self.symtab.insert(super_sym);
+                self.symtab.insert_symbol(super_sym);
             }
 
             let parent_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Parent);
             let parent_sym = SpecialVarSymbol::new(parent_path, path.parent_class_path.clone());
-            self.symtab.insert(parent_sym);
+            self.symtab.insert_symbol(parent_sym);
 
             let virtual_parent_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::VirtualParent);
             let virtual_parent_sym = SpecialVarSymbol::new(virtual_parent_path, path.parent_class_path.clone());
-            self.symtab.insert(virtual_parent_sym);
+            self.symtab.insert_symbol(virtual_parent_sym);
 
 
             path.as_ref().clone_into(&mut self.current_path);
-            self.symtab.insert_primary(sym);
+            self.symtab.insert_primary_symbol(sym);
 
             traverse_definition = true;
         }
@@ -291,14 +291,14 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             }
 
             sym.path().clone_into(&mut self.current_path);
-            self.symtab.insert_primary(sym);
+            self.symtab.insert_primary_symbol(sym);
 
             let constr_path = GlobalCallableSymbolPath::new(&struct_name);
             let mut constr_sym = ConstructorSymbol::new(constr_path, self.local_source_path.to_owned(), n.range(), name_node.range());
             constr_sym.parent_type_path = path;
 
             self.current_constr_path = Some(constr_sym.path().to_owned());
-            self.symtab.insert_primary(constr_sym);
+            self.symtab.insert_primary_symbol(constr_sym);
 
             traverse_definition = true;
         }
@@ -326,7 +326,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             let sym = EnumSymbol::new(path, self.local_source_path.to_owned(), n.range(), name_node.range());
 
             sym.path().clone_into(&mut self.current_path);
-            self.symtab.insert_primary(sym);
+            self.symtab.insert_primary_symbol(sym);
 
             traverse_definition = true;
         }
@@ -365,7 +365,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             sym.value = value;
             self.current_enum_variant_value = value + 1;
 
-            self.symtab.insert_primary(sym);
+            self.symtab.insert_primary_symbol(sym);
         }
     }
 
@@ -399,7 +399,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             };
 
             sym.path().clone_into(&mut self.current_path);
-            self.symtab.insert_primary(sym);
+            self.symtab.insert_primary_symbol(sym);
 
             traverse = true;
         }
@@ -461,7 +461,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             };
 
             sym.path().clone_into(&mut self.current_path);
-            self.symtab.insert(sym);
+            self.symtab.insert_symbol(sym);
 
             traverse = true;
         }
@@ -490,7 +490,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             let sym = EventSymbol::new(path, n.range(), name_node.range());
 
             sym.path().clone_into(&mut self.current_path);
-            self.symtab.insert(sym);
+            self.symtab.insert_symbol(sym);
 
             traverse = true;
         }
@@ -534,7 +534,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 sym.type_path = type_path.clone();
                 sym.ordinal = self.current_param_ordinal;
 
-                self.symtab.insert(sym);
+                self.symtab.insert_symbol(sym);
             }
 
             self.current_param_ordinal += 1;
@@ -582,14 +582,14 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 sym.type_path = type_path.clone();
                 sym.ordinal = self.current_var_ordinal;
 
-                self.symtab.insert(sym);
+                self.symtab.insert_symbol(sym);
 
                 if let Some(constr_param_path) = constr_param_path {
                     let mut constr_param_sym = FunctionParameterSymbol::new(constr_param_path, n.range(), name_node.range());
                     constr_param_sym.type_path = type_path.clone();
                     constr_param_sym.ordinal = self.current_var_ordinal;
 
-                    self.symtab.insert(constr_param_sym);
+                    self.symtab.insert_symbol(constr_param_sym);
                 }
             }
 
@@ -632,7 +632,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             sym.type_path = self.check_type_from_type_annot(n.autobind_type());
 
-            self.symtab.insert(sym);
+            self.symtab.insert_symbol(sym);
         }
     }
 
@@ -648,7 +648,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 let mut sym = LocalVarSymbol::new(path, n.range(), name_node.range());
                 sym.type_path = type_path.clone();
 
-                self.symtab.insert(sym);
+                self.symtab.insert_symbol(sym);
             }
         }
 

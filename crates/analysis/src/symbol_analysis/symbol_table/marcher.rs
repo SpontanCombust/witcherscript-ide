@@ -15,29 +15,29 @@ pub struct SymbolTableMarcher<'a> {
 impl<'a> SymbolTableMarcher<'a> {
     pub fn test_contains(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         for symtab in &self.inner {
-            symtab.test_contains(path)?;
+            symtab.test_contains_symbol(path)?;
         }
 
         Ok(())
     }
 
     pub fn contains(&self, path: &SymbolPath) -> bool {
-        self.inner.iter().any(|symtab| symtab.contains(path))
+        self.inner.iter().any(|symtab| symtab.contains_symbol(path))
     }
 
     pub fn find_containing(&self, path: &SymbolPath) -> Option<&'a SymbolTable> {
-        self.march(|symtab| if symtab.contains(path) { Some(symtab) } else { None })   
+        self.march(|symtab| if symtab.contains_symbol(path) { Some(symtab) } else { None })   
     }
 
     #[inline]
     pub fn get(&self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
-        self.march(|symtab| symtab.get(path))
+        self.march(|symtab| symtab.get_symbol(path))
     }
 
     #[inline]
     pub fn get_with_containing(&self, path: &SymbolPath) -> Option<(&'a SymbolTable, &'a SymbolVariant)> {
         self.march(|symtab| {
-            if let Some(symvar) = symtab.get(path) {
+            if let Some(symvar) = symtab.get_symbol(path) {
                 Some((symtab, symvar))
             } else {
                 None
@@ -47,12 +47,12 @@ impl<'a> SymbolTableMarcher<'a> {
 
     #[inline]
     pub fn locate(&self, path: &SymbolPath) -> Option<SymbolLocation> {
-        self.march(|symtab| symtab.locate(path))
+        self.march(|symtab| symtab.locate_symbol(path))
     }
 
     #[inline]
     pub fn get_with_location(&self, path: &SymbolPath) -> Option<(&'a SymbolVariant, SymbolLocation)> {
-        self.march(|symtab| symtab.get_with_location(path))
+        self.march(|symtab| symtab.get_symbol_with_location(path))
     }
 
     #[inline]

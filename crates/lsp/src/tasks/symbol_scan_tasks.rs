@@ -18,7 +18,7 @@ impl Backend {
         let start = Instant::now();
 
         for p in modified_source_paths.iter() {
-            symtab.remove_for_source(p.local());
+            symtab.remove_symbols_for_source(p.local());
             self.reporter.clear_diagnostics(p.absolute(), DiagnosticDomain::SymbolAnalysis).await;
         }
 

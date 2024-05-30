@@ -304,7 +304,7 @@ impl RenderTooltip for ArrayTypeFunctionSymbol {
         buf.push('(');
 
         let mut params = symtab
-            .get_array_type_function_children(self.path())
+            .get_array_type_function_symbol_children(self.path())
             .collect::<Vec<_>>();
 
         params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
@@ -371,7 +371,7 @@ impl RenderTooltip for GlobalFunctionSymbol {
         buf.push('(');
 
         let mut params = symtab
-            .get_callable_children(self.path())
+            .get_callable_symbol_children(self.path())
             .filter_map(|ch| {
                 if let CallableSymbolChild::Param(param) = ch {
                     Some(param)
@@ -405,7 +405,7 @@ impl RenderTooltip for MemberFunctionSymbol {
     fn render(&self, buf: &mut String, symtab: &SymbolTable) {
         let parent_symvar = 
             self.path().parent()
-            .and_then(|p| symtab.get(p));
+            .and_then(|p| symtab.get_symbol(p));
 
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {
@@ -446,7 +446,7 @@ impl RenderTooltip for MemberFunctionSymbol {
         buf.push('(');
 
         let mut params = symtab
-            .get_callable_children(self.path())
+            .get_callable_symbol_children(self.path())
             .filter_map(|ch| {
                 if let CallableSymbolChild::Param(param) = ch {
                     Some(param)
@@ -480,7 +480,7 @@ impl RenderTooltip for EventSymbol {
     fn render(&self, buf: &mut String, symtab: &SymbolTable) {
         let parent_symvar = 
             self.path().parent()
-            .and_then(|p| symtab.get(p));
+            .and_then(|p| symtab.get_symbol(p));
 
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {
@@ -508,7 +508,7 @@ impl RenderTooltip for EventSymbol {
         buf.push('(');
 
         let mut params = symtab
-            .get_callable_children(self.path())
+            .get_callable_symbol_children(self.path())
             .filter_map(|ch| {
                 if let CallableSymbolChild::Param(param) = ch {
                     Some(param)
@@ -535,7 +535,7 @@ impl RenderTooltip for EventSymbol {
 
 impl RenderTooltip for ConstructorSymbol {
     fn render(&self, buf: &mut String, symtab: &SymbolTable) {
-        symtab.get(&self.parent_type_path)
+        symtab.get_symbol(&self.parent_type_path)
             .and_then(|s| s.try_as_struct_ref())
             .map(|s| s.render(buf, symtab));
     }
@@ -551,7 +551,7 @@ impl RenderTooltip for PrimitiveTypeSymbol {
 
 impl RenderTooltip for EnumVariantSymbol {
     fn render(&self, buf: &mut String, symtab: &SymbolTable) {
-        symtab.get(&self.parent_enum_path)
+        symtab.get_symbol(&self.parent_enum_path)
             .and_then(|s| s.try_as_enum_ref())
             .map(|s| {
                 s.render_short(buf);
@@ -596,7 +596,7 @@ impl RenderTooltip for MemberVarSymbol {
     fn render(&self, buf: &mut String, symtab: &SymbolTable) {
         let parent_symvar = 
             self.path().parent()
-            .and_then(|p| symtab.get(p));
+            .and_then(|p| symtab.get_symbol(p));
 
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {
@@ -641,7 +641,7 @@ impl RenderTooltip for AutobindSymbol {
     fn render(&self, buf: &mut String, symtab: &SymbolTable) {
         let parent_symvar = 
             self.path().parent()
-            .and_then(|p| symtab.get(p));
+            .and_then(|p| symtab.get_symbol(p));
 
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {

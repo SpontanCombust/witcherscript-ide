@@ -317,7 +317,7 @@ impl Backend {
             });
         }
 
-        let sym_iter = symtab_ref.get_for_source(&script_ref.source_tree_path.as_ref().unwrap().local());
+        let sym_iter = symtab_ref.get_symbols_for_source(&script_ref.source_tree_path.as_ref().unwrap().local());
         let script_symbols = format!("{:#?}", sym_iter.collect::<Vec<_>>());
 
         Ok(requests::debug::script_symbols::Response {

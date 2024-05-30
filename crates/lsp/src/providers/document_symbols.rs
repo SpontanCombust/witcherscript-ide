@@ -55,7 +55,7 @@ pub async fn document_symbol(backend: &Backend, params: lsp::DocumentSymbolParam
         }
     };
     
-    for sym_variant in symtab_ref.get_for_source(source_file.path.local()) {
+    for sym_variant in symtab_ref.get_symbols_for_source(source_file.path.local()) {
         if let Some(doc_sym) = sym_variant.to_doc_sym() {    
             if let Some(enum_sym) = sym_variant.try_as_enum_ref() {
                 doc_enums.insert(enum_sym.path().to_owned(), doc_sym);

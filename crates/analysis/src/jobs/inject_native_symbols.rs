@@ -19,7 +19,7 @@ pub fn inject_primitives(symtab: &mut SymbolTable) {
 
     ].into_iter()
     .for_each(|sym| {
-        symtab.insert_primitive(sym);
+        symtab.insert_primitive_symbol(sym);
     });
 }
 
@@ -43,6 +43,6 @@ pub fn inject_globals(symtab: &mut SymbolTable) {
     ].into_iter()
     .for_each(|(var_name, class_name)| { 
         let gv = GlobalVarSymbol::new(var_name, BasicTypeSymbolPath::new(class_name));
-        symtab.insert(gv); 
+        symtab.insert_symbol(gv); 
     });
 }
