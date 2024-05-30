@@ -48,37 +48,31 @@ impl Backend {
         let start = Instant::now();
 
         let (diff_added, diff_removed, diff_modified) = (diff.added, diff.removed, diff.modified);
+        let diff_added_or_modified = diff_added.iter()
+            .chain(diff_modified.iter())
+            .map(|f| f.to_owned())
+            .collect::<Vec<_>>();
+
         if !diff_removed.is_empty() {
             self.on_source_tree_files_removed(diff_removed).await;
         }
         if !diff_added.is_empty() {
-            self.on_source_tree_files_added(diff_added.clone()).await;
+            self.on_source_tree_files_added(diff_added).await;
         }
         if !diff_modified.is_empty() {
-            self.on_source_tree_files_modified(diff_modified.clone()).await;
+            self.on_source_tree_files_modified(diff_modified).await;
+        }
+        if !diff_added_or_modified.is_empty() {
+            self.on_source_tree_files_added_or_modified(diff_added_or_modified, content_path).await;
         }
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Handled source tree related changes to {} in {:.3}s", content_path.display(), duration.as_secs_f32())).await;
-
-        let added_or_modified: Vec<_> = 
-            diff_added.into_iter()
-            .chain(diff_modified.into_iter())
-            .collect();
-
-        if !added_or_modified.is_empty() {
-            let mut symtabs = self.symtabs.write().await;
-            if let Some(mut content_symtab) = symtabs.get_mut(content_path) {
-                let paths = added_or_modified.into_iter()
-                        .map(|f| f.path.clone())
-                        .collect();
-
-                self.scan_symbols(&mut content_symtab, content_path, paths).await;
-            }
-        }
     }
 
     async fn on_source_tree_files_added(&self, added_files: Vec<SourceTreeFile>) {
+        let start = Instant::now();
+
         let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
 
         rayon::spawn(move || {
@@ -105,6 +99,9 @@ impl Backend {
                 source_tree_path: Some(source_tree_path)
             });
         }
+
+        let duration = Instant::now() - start;
+        self.reporter.log_info(format!("Parsed discovered scripts in {:.3}s", duration.as_secs_f32())).await;
     }
 
     async fn on_source_tree_files_removed(&self, removed_files: Vec<SourceTreeFile>) {
@@ -126,6 +123,17 @@ impl Backend {
                     script_state.modified_timestamp = modified_file.modified_timestamp;
                 }
             }
+        }
+    }
+
+    async fn on_source_tree_files_added_or_modified(&self, added_or_modified_files: Vec<SourceTreeFile>, content_path: &AbsPath) {
+        let mut symtabs = self.symtabs.write().await;
+        if let Some(mut content_symtab) = symtabs.get_mut(content_path) {
+            let paths = added_or_modified_files.into_iter()
+                    .map(|f| f.path.clone())
+                    .collect();
+
+            self.scan_symbols(&mut content_symtab, content_path, paths).await;
         }
     }
 }
