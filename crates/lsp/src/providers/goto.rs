@@ -88,9 +88,8 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
 
                 let func_name = symvar.name();
 
-                let content_dependency_paths = backend.get_content_dependency_paths(&content_path).await;
                 let symtabs = backend.symtabs.read().await;
-                let symtabs_marcher = symtabs.march(&content_dependency_paths);
+                let symtabs_marcher = backend.march_symbol_tables(&symtabs, &content_path).await;
 
                 let parent_sym_typ = symtabs_marcher
                     .get(&parent_path)
@@ -207,9 +206,8 @@ struct Inspected {
 }
 
 async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, doc_path: &AbsPath, position: lsp::Position) -> Option<Inspected> {
-    let content_dependency_paths = backend.get_content_dependency_paths(content_path).await;
     let symtabs = backend.symtabs.read().await;
-    let symtabs_marcher = symtabs.march(&content_dependency_paths);
+    let symtabs_marcher = backend.march_symbol_tables(&symtabs, &content_path).await;
     
     let script_state = backend.scripts.get(doc_path)?;
 

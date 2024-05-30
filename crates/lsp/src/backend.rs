@@ -103,13 +103,6 @@ impl SymbolTables {
             inner: HashMap::new()
         }
     }
-
-    pub fn march<'a, 'p>(&'a self, content_dependency_paths: &'p [AbsPath]) -> SymbolTableMarcher<'a> 
-    where 'p: 'a {
-        content_dependency_paths.iter()
-            .filter_map(|p| self.get(p))
-            .into_marcher()
-    }
 }
 
 impl Backend {
@@ -131,14 +124,17 @@ impl Backend {
     }
 
 
-    /// Use with [`SymbolTables::make_marcher_from_paths`] to create a sumbol table marcher over the dependency tree
-    /// Paths include the path from the parameter.
-    pub async fn get_content_dependency_paths(&self, content_path: &AbsPath) -> Vec<AbsPath> {
-        [content_path.clone()].into_iter()
-        .chain(self.content_graph
-            .read().await
-            .walk_dependencies(&content_path)
-            .map(|n| n.content.path().to_owned()))
-        .collect()
+    pub async fn march_symbol_tables<'a>(&self, symtabs: &'a SymbolTables, content_path: &AbsPath) -> SymbolTableMarcher<'a> {
+        let content_dependency_paths: Vec<_> =
+            [content_path.to_owned()].into_iter()
+            .chain(self.content_graph
+                .read().await
+                .walk_dependencies(&content_path)
+                .map(|n| n.content.path().to_owned()))
+            .collect();
+        
+        content_dependency_paths.into_iter()
+        .filter_map(|p| symtabs.get(&p))
+        .into_marcher()
     }
 }

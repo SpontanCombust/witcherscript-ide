@@ -27,9 +27,8 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
         return Ok(None);
     }
 
-    let content_dependency_paths = backend.get_content_dependency_paths(&content_path).await;
     let symtabs = backend.symtabs.read().await;
-    let symtabs_marcher = symtabs.march(&content_dependency_paths);
+    let symtabs_marcher = backend.march_symbol_tables(&symtabs, &content_path).await;
     
     let script_state;
     if let Some(ss) = backend.scripts.get(&doc_path) {
