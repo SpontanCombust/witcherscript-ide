@@ -169,12 +169,34 @@ impl SymbolTable {
         }
     }
 
+    pub fn dispose_unreferenced_array_symbols(&mut self) {
+        let mut for_removal = Vec::new();
+
+        for (array_sympath, refs) in self.array_type_refs.iter() {
+            if refs.is_empty() {
+                for_removal.push(array_sympath.to_owned());
+                for_removal.extend(self.get_descendants(&array_sympath).map(|v| v.path().to_owned()));
+            }
+        }
+
+        for sympath in for_removal {
+            self.symbols.remove(&sympath);
+        }
+    }
+
 
     /// Iterate over direct children of a symbol in a symbol hierarchy.
     /// Symbols are returned ordered by their symbol path.
     #[inline]
     pub fn get_children<'a>(&'a self, path: &SymbolPath) -> SymbolChildren<'a> {
         SymbolChildren::new(self, path)
+    }
+
+    /// Iterate over all descendants of a symbol in a symbol hierarchy.
+    /// Symbols are returned ordered by their symbol path.
+    #[inline]
+    pub fn get_descendants<'a>(&'a self, path: &SymbolPath) -> SymbolDescendants<'a> {
+        SymbolDescendants::new(self, path)
     }
 
     /// Iterate over direct children of a class symbol in a symbol hierarchy.

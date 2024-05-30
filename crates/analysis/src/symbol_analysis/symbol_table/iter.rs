@@ -211,3 +211,36 @@ impl<'st> Iterator for FileSymbols<'st> {
         self.iter.next()
     }
 }
+
+
+/// Iterator of all symbols descending from a given parent symbol.
+/// If you want an iterator going over only direct children use [`SymbolChildren`].
+#[derive(Clone)]
+pub struct SymbolDescendants<'st> {
+    iter: btree_map::Range<'st, SymbolPathBuf, SymbolVariant>,
+    parent_sympath: SymbolPathBuf
+}
+
+impl<'st> SymbolDescendants<'st> {
+    pub(super) fn new(symtab: &'st SymbolTable, sympath: &SymbolPath) -> Self {
+        let mut iter = symtab.symbols.range(sympath.to_owned()..);
+        // prime the iterator to go to the first descendant
+        // it is assumed this parent exists
+        iter.next();
+
+        Self {
+            iter,
+            parent_sympath: sympath.to_owned()
+        }
+    }
+}
+
+impl<'st> Iterator for SymbolDescendants<'st> {
+    type Item = &'st SymbolVariant;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter
+            .find(|(sympath, _)| sympath.starts_with(&self.parent_sympath))
+            .map(|(_, variant)| variant)
+    }
+}

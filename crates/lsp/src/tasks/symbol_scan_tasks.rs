@@ -55,6 +55,8 @@ impl Backend {
 
         jobs::merge_symbol_tables(symtab, scanning_symtab, &mut scanning_diagnostis);
 
+        symtab.dispose_unreferenced_array_symbols();
+
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Updated symbol table for content {} in {:.3}s", content_path, duration.as_secs_f32())).await;
 
