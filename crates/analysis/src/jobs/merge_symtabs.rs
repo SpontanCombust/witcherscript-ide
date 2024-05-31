@@ -13,13 +13,13 @@ pub fn merge_symbol_tables(
         .into_iter()
         .map(|err| {
             LocatedDiagnostic {
-                path: err.incoming_location.abs_source_path.clone(),
+                path: err.incoming_location.abs_source_path(),
                 diagnostic: Diagnostic { 
                     range: err.incoming_location.label_range, 
                     kind: DiagnosticKind::SymbolNameTaken { 
                         name: err.occupied_path.components().last().unwrap().name.to_string(),
                         precursor_range: err.occupied_location.as_ref().map(|loc| loc.label_range),
-                        precursor_file_path: err.occupied_location.as_ref().map(|loc| loc.abs_source_path.clone())
+                        precursor_file_path: err.occupied_location.as_ref().map(|loc| loc.abs_source_path())
                     }
                 }
             }

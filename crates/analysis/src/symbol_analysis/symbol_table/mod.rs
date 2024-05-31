@@ -2,7 +2,6 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use thiserror::Error;
-use lsp_types as lsp;
 use abs_path::AbsPath;
 use crate::symbol_analysis::symbols::*;
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
@@ -21,7 +20,7 @@ pub struct SymbolTable {
     script_root: Arc<AbsPath>,
     symbols: BTreeMap<SymbolPathBuf, SymbolVariant>,
     /// SymbolPath roots of symbols associated with given local paths in a source tree
-    source_path_assocs: HashMap<PathBuf, Vec<SymbolPathBuf>>,
+    source_path_assocs: HashMap<Arc<Path>, Vec<SymbolPathBuf>>,
     /// Keeps track of where array type symbols have been referenced
     array_type_refs: HashMap<SymbolPathBuf, HashSet<PathBuf>>
 }
@@ -68,7 +67,7 @@ impl SymbolTable {
 
     pub(crate) fn insert_primary_symbol<S>(&mut self, sym: S)
     where S: PrimarySymbol + LocatableSymbol + Into<SymbolVariant> {
-        self.source_path_assocs.entry(sym.local_source_path().to_owned())
+        self.source_path_assocs.entry(sym.location().local_source_path.clone())
             .or_default()
             .push(sym.path().to_owned());
 
@@ -103,7 +102,7 @@ impl SymbolTable {
         if let Some(occupying) = self.symbols.get(path) {
             Err(PathOccupiedError {
                 occupied_path: occupying.path().to_sympath_buf(),
-                occupied_location: self.locate_symbol(path)
+                occupied_location: occupying.location().cloned()
             })
         } else {
             Ok(())
@@ -128,26 +127,14 @@ impl SymbolTable {
     }
 
     #[inline]
-    pub fn locate_symbol(&self, path: &SymbolPath) -> Option<SymbolLocation> {
-        let (_, loc) = self.get_symbol_with_location(path)?;
-        Some(loc)
+    pub fn locate_symbol<'a>(&'a self, path: &SymbolPath) -> Option<&'a SymbolLocation> {
+        self.get_symbol(path).and_then(|symvar| symvar.location())
     }
 
-    pub fn get_symbol_with_location<'a>(&'a self, path: &SymbolPath) -> Option<(&'a SymbolVariant, SymbolLocation)> {
-        let local_source_path = path.root()
-            .and_then(|root| self.symbols.get(root))
-            .and_then(|v| v.local_source_path())?;
-
-        let symvar = self.symbols.get(path)?;
-        let range = symvar.range()?;
-        let label_range = symvar.label_range()?;
-
-        Some((symvar, SymbolLocation { 
-            abs_source_path: self.script_root.join(local_source_path).unwrap(),
-            local_source_path: local_source_path.to_owned(), 
-            range,
-            label_range
-        }))
+    pub fn get_symbol_with_location<'a>(&'a self, path: &SymbolPath) -> Option<(&'a SymbolVariant, &'a SymbolLocation)> {
+        let symvar = self.get_symbol(path)?;
+        let loc = symvar.location()?;
+        Some((symvar, loc))
     }
  
     pub fn remove_symbols_for_source(&mut self, local_source_path: &Path) {
@@ -263,12 +250,12 @@ impl SymbolTable {
                     if !occupying_variant.path().has_missing() {
                         errors.push(MergeConflictError {
                             occupied_path: occupying_variant.path().to_sympath_buf(),
-                            occupied_location: self.locate_symbol(&root),
+                            occupied_location: occupying_variant.location().cloned(),
                             incoming_location: SymbolLocation { 
-                                abs_source_path: self.script_root.join(&file_path).unwrap(),
-                                local_source_path: file_path.to_owned(),
-                                range: root_variant.range().unwrap_or_default(),
-                                label_range: root_variant.label_range().unwrap_or_default()
+                                scripts_root: other.script_root.clone(),
+                                local_source_path: file_path.clone(),
+                                range: root_variant.location().map(|loc| loc.range).unwrap_or_default(),
+                                label_range: root_variant.location().map(|loc| loc.label_range).unwrap_or_default()
                             }
                         });
                     }
@@ -303,12 +290,12 @@ impl SymbolTable {
                         if !occupying_variant.path().has_missing() {
                             errors.push(MergeConflictError {
                                 occupied_path: occupying_variant.path().to_sympath_buf(),
-                                occupied_location: self.locate_symbol(&incoming_sympath),
+                                occupied_location: incoming_variant.location().cloned(),
                                 incoming_location: SymbolLocation { 
-                                    abs_source_path: self.script_root.join(&file_path).unwrap(),
-                                    local_source_path: file_path.to_owned(), 
-                                    range: incoming_variant.range().unwrap_or_default(),
-                                    label_range: incoming_variant.label_range().unwrap_or_default()
+                                    scripts_root: other.script_root.clone(),
+                                    local_source_path: file_path.clone(),
+                                    range: incoming_variant.location().map(|loc| loc.range).unwrap_or_default(),
+                                    label_range: incoming_variant.location().map(|loc| loc.label_range).unwrap_or_default()
                                 }
                             });
                         }
@@ -348,13 +335,4 @@ impl SymbolTable {
 
         errors
     }
-}
-
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SymbolLocation {
-    pub abs_source_path: AbsPath,
-    pub local_source_path: PathBuf,
-    pub range: lsp::Range,
-    pub label_range: lsp::Range
 }

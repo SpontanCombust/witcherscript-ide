@@ -1,4 +1,3 @@
-use lsp_types as lsp;
 use witcherscript::attribs::FunctionParameterSpecifier;
 use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
@@ -7,8 +6,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct FunctionParameterSymbol {
     path: MemberDataSymbolPath,
-    range: lsp::Range,
-    label_range: lsp::Range,
+    location: SymbolLocation,
     pub specifiers: SymbolSpecifiers<FunctionParameterSpecifier>,
     pub type_path: TypeSymbolPath,
     pub ordinal: usize
@@ -25,21 +23,16 @@ impl Symbol for FunctionParameterSymbol {
 }
 
 impl LocatableSymbol for FunctionParameterSymbol {
-    fn range(&self) -> lsp::Range {
-        self.range
-    }
-
-    fn label_range(&self) -> lsp::Range {
-        self.label_range
+    fn location(&self) -> &SymbolLocation {
+        &self.location
     }
 }
 
 impl FunctionParameterSymbol {
-    pub fn new(path: MemberDataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: MemberDataSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
-            range,
-            label_range,
+            location,
             specifiers: SymbolSpecifiers::new(),
             type_path: TypeSymbolPath::unknown(),
             ordinal: 0

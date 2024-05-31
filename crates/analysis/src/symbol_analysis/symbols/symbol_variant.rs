@@ -1,6 +1,4 @@
-use std::path::Path;
 use strum_macros::{EnumIs, EnumTryAs};
-use lsp_types as lsp;
 use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
@@ -133,74 +131,26 @@ impl SymbolVariant {
         }
     }
 
-    pub fn range(&self) -> Option<lsp::Range> {
+    pub fn location(&self) -> Option<&SymbolLocation> {
         match self {
-            SymbolVariant::Class(s) => Some(s.range()),
-            SymbolVariant::State(s) => Some(s.range()),
-            SymbolVariant::Struct(s) => Some(s.range()),
-            SymbolVariant::Enum(s) => Some(s.range()),
+            SymbolVariant::Class(s) => Some(s.location()),
+            SymbolVariant::State(s) => Some(s.location()),
+            SymbolVariant::Struct(s) => Some(s.location()),
+            SymbolVariant::Enum(s) => Some(s.location()),
             SymbolVariant::Array(_) => None,
             SymbolVariant::ArrayFunc(_) => None,
             SymbolVariant::ArrayFuncParam(_) => None,
-            SymbolVariant::GlobalFunc(s) => Some(s.range()),
-            SymbolVariant::MemberFunc(s) => Some(s.range()),
-            SymbolVariant::Event(s) => Some(s.range()),
-            SymbolVariant::Constructor(s) => Some(s.range()),
+            SymbolVariant::GlobalFunc(s) => Some(s.location()),
+            SymbolVariant::MemberFunc(s) => Some(s.location()),
+            SymbolVariant::Event(s) => Some(s.location()),
+            SymbolVariant::Constructor(s) => Some(s.location()),
             SymbolVariant::Primitive(_) => None,
-            SymbolVariant::EnumVariant(s) => Some(s.range()),
-            SymbolVariant::FuncParam(s) => Some(s.range()),
+            SymbolVariant::EnumVariant(s) => Some(s.location()),
+            SymbolVariant::FuncParam(s) => Some(s.location()),
             SymbolVariant::GlobalVar(_) => None,
-            SymbolVariant::MemberVar(s) => Some(s.range()),
-            SymbolVariant::Autobind(s) => Some(s.range()),
-            SymbolVariant::LocalVar(s) => Some(s.range()),
-            SymbolVariant::SpecialVar(_) => None,
-        }
-    }
-
-    pub fn label_range(&self) -> Option<lsp::Range> {
-        match self {
-            SymbolVariant::Class(s) => Some(s.label_range()),
-            SymbolVariant::State(s) => Some(s.label_range()),
-            SymbolVariant::Struct(s) => Some(s.label_range()),
-            SymbolVariant::Enum(s) => Some(s.label_range()),
-            SymbolVariant::Array(_) => None,
-            SymbolVariant::ArrayFunc(_) => None,
-            SymbolVariant::ArrayFuncParam(_) => None,
-            SymbolVariant::GlobalFunc(s) => Some(s.label_range()),
-            SymbolVariant::MemberFunc(s) => Some(s.label_range()),
-            SymbolVariant::Event(s) => Some(s.label_range()),
-            SymbolVariant::Constructor(s) => Some(s.label_range()),
-            SymbolVariant::Primitive(_) => None,
-            SymbolVariant::EnumVariant(s) => Some(s.label_range()),
-            SymbolVariant::FuncParam(s) => Some(s.label_range()),
-            SymbolVariant::GlobalVar(_) => None,
-            SymbolVariant::MemberVar(s) => Some(s.label_range()),
-            SymbolVariant::Autobind(s) => Some(s.label_range()),
-            SymbolVariant::LocalVar(s) => Some(s.label_range()),
-            SymbolVariant::SpecialVar(_) => None,
-        }
-    }
-
-    pub fn local_source_path(&self) -> Option<&Path> {
-        match self {
-            SymbolVariant::Class(s) => Some(s.local_source_path()),
-            SymbolVariant::State(s) => Some(s.local_source_path()),
-            SymbolVariant::Struct(s) => Some(s.local_source_path()),
-            SymbolVariant::Enum(s) => Some(s.local_source_path()),
-            SymbolVariant::Array(_) => None,
-            SymbolVariant::ArrayFunc(_) => None,
-            SymbolVariant::ArrayFuncParam(_) => None,
-            SymbolVariant::GlobalFunc(s) => Some(s.local_source_path()),
-            SymbolVariant::MemberFunc(_) => None,
-            SymbolVariant::Event(_) => None,
-            SymbolVariant::Constructor(s) => Some(s.local_source_path()),
-            SymbolVariant::Primitive(_) => None,
-            SymbolVariant::EnumVariant(s) => Some(s.local_source_path()),
-            SymbolVariant::FuncParam(_) => None,
-            SymbolVariant::GlobalVar(_) => None,
-            SymbolVariant::MemberVar(_) => None,
-            SymbolVariant::Autobind(_) => None,
-            SymbolVariant::LocalVar(_) => None,
+            SymbolVariant::MemberVar(s) => Some(s.location()),
+            SymbolVariant::Autobind(s) => Some(s.location()),
+            SymbolVariant::LocalVar(s) => Some(s.location()),
             SymbolVariant::SpecialVar(_) => None,
         }
     }

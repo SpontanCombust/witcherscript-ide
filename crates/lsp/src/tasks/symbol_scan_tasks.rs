@@ -90,7 +90,6 @@ impl SymbolScanWorker {
                 &script_state.script, 
                 &script_state.buffer, 
                 &job.source_path.local(),
-                &job.source_path.script_root(),
                 &mut self.symtab,
                 &mut self.diagnostics
             );

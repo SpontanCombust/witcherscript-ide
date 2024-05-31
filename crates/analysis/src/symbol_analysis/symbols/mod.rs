@@ -11,6 +11,7 @@ mod state_symbol;
 mod array_type_symbol;
 mod symbol_specifiers;
 mod symbol_variant;
+mod location;
 
 pub use symbol::*;
 pub use paths::*;
@@ -25,3 +26,4 @@ pub use array_type_symbol::*;
 pub use state_symbol::*;
 pub use symbol_specifiers::*;
 pub use symbol_variant::*;
+pub use location::*;

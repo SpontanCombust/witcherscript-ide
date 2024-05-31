@@ -1,5 +1,3 @@
-use std::path::{Path, PathBuf};
-use lsp_types as lsp;
 use witcherscript::attribs::StructSpecifier;
 use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
@@ -8,9 +6,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct StructSymbol {
     path: BasicTypeSymbolPath,
-    local_source_path: PathBuf,
-    range: lsp::Range,
-    label_range: lsp::Range,
+    location: SymbolLocation,
     pub specifiers: SymbolSpecifiers<StructSpecifier>
 }
 
@@ -24,29 +20,21 @@ impl Symbol for StructSymbol {
     }
 }
 
-impl PrimarySymbol for StructSymbol {
-    fn local_source_path(&self) -> &Path {
-        &self.local_source_path
+impl LocatableSymbol for StructSymbol {
+    fn location(&self) -> &SymbolLocation {
+        &self.location
     }
 }
 
-impl LocatableSymbol for StructSymbol {
-    fn range(&self) -> lsp::Range {
-        self.range
-    }
+impl PrimarySymbol for StructSymbol {
 
-    fn label_range(&self) -> lsp::Range {
-        self.label_range
-    }
 }
 
 impl StructSymbol {
-    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: BasicTypeSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
-            range,
-            label_range,
-            local_source_path,
+            location,
             specifiers: SymbolSpecifiers::new()
         }
     }
@@ -57,9 +45,7 @@ impl StructSymbol {
 #[derive(Debug, Clone)]
 pub struct ConstructorSymbol {
     path: GlobalCallableSymbolPath,
-    local_source_path: PathBuf,
-    range: lsp::Range,
-    label_range: lsp::Range,
+    location: SymbolLocation,
     pub parent_type_path: BasicTypeSymbolPath
 }
 
@@ -73,29 +59,21 @@ impl Symbol for ConstructorSymbol {
     }
 }
 
-impl PrimarySymbol for ConstructorSymbol {
-    fn local_source_path(&self) -> &Path {
-        &self.local_source_path
+impl LocatableSymbol for ConstructorSymbol {
+    fn location(&self) -> &SymbolLocation {
+        &self.location
     }
 }
 
-impl LocatableSymbol for ConstructorSymbol {
-    fn range(&self) -> lsp::Range {
-        self.range
-    }
-
-    fn label_range(&self) -> lsp::Range {
-        self.label_range
-    }
+impl PrimarySymbol for ConstructorSymbol {
+    
 }
 
 impl ConstructorSymbol {
-    pub fn new(path: GlobalCallableSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: GlobalCallableSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
-            range,
-            label_range,
-            local_source_path,
+            location,
             parent_type_path: BasicTypeSymbolPath::unknown()
         }
     }

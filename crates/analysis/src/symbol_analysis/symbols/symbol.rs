@@ -1,6 +1,5 @@
-use std::path::Path;
-use lsp_types as lsp;
 use crate::symbol_analysis::symbol_path::SymbolPath;
+use super::SymbolLocation;
 
 
 pub trait Symbol {
@@ -14,16 +13,15 @@ pub trait Symbol {
     }
 }
 
-/// A symbol with no parent (its path has only a single component) and can be associated with a file it was declared in
-pub trait PrimarySymbol: Symbol {
-    fn local_source_path(&self) -> &Path;
-}
-
 /// Denotes a symbol, which location can be pin-pointed in a file
 /// The range typically spans over the name label of the symbol 
 pub trait LocatableSymbol: Symbol {
-    fn range(&self) -> lsp::Range;
-    fn label_range(&self) -> lsp::Range;
+    fn location(&self) -> &SymbolLocation;
+}
+
+/// A symbol with no parent (its path has only a single component) and can be associated with a file it was declared in
+pub trait PrimarySymbol: LocatableSymbol {
+
 }
 
 

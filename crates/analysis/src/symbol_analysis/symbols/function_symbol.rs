@@ -1,5 +1,3 @@
-use std::path::{Path, PathBuf};
-use lsp_types as lsp;
 use witcherscript::attribs::*;
 use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
@@ -8,9 +6,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct GlobalFunctionSymbol {
     path: GlobalCallableSymbolPath,
-    local_source_path: PathBuf,
-    range: lsp::Range,
-    label_range: lsp::Range,
+    location: SymbolLocation,
     pub specifiers: SymbolSpecifiers<GlobalFunctionSpecifier>,
     pub flavour: Option<GlobalFunctionFlavour>,
     pub return_type_path: TypeSymbolPath
@@ -26,31 +22,23 @@ impl Symbol for GlobalFunctionSymbol {
     }
 }
 
-impl PrimarySymbol for GlobalFunctionSymbol {
-    fn local_source_path(&self) -> &Path {
-        &self.local_source_path
+impl LocatableSymbol for GlobalFunctionSymbol {
+    fn location(&self) -> &SymbolLocation {
+        &self.location
     }
 }
 
-impl LocatableSymbol for GlobalFunctionSymbol {
-    fn range(&self) -> lsp::Range {
-        self.range
-    }
+impl PrimarySymbol for GlobalFunctionSymbol {
 
-    fn label_range(&self) -> lsp::Range {
-        self.label_range
-    }
 }
 
 impl GlobalFunctionSymbol {
     pub const DEFAULT_RETURN_TYPE_NAME: &'static str = "void";
 
-    pub fn new(path: GlobalCallableSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: GlobalCallableSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
-            local_source_path,
-            range,
-            label_range,
+            location,
             specifiers: SymbolSpecifiers::new(),
             flavour: None,
             return_type_path: TypeSymbolPath::unknown()
@@ -67,8 +55,7 @@ impl GlobalFunctionSymbol {
 #[derive(Debug, Clone)]
 pub struct MemberFunctionSymbol {
     path: MemberCallableSymbolPath,
-    range: lsp::Range,
-    label_range: lsp::Range,
+    location: SymbolLocation,
     pub specifiers: SymbolSpecifiers<MemberFunctionSpecifier>,
     pub flavour: Option<MemberFunctionFlavour>,
     pub return_type_path: TypeSymbolPath
@@ -85,23 +72,18 @@ impl Symbol for MemberFunctionSymbol {
 }
 
 impl LocatableSymbol for MemberFunctionSymbol {
-    fn range(&self) -> lsp::Range {
-        self.range
-    }
-
-    fn label_range(&self) -> lsp::Range {
-        self.label_range
+    fn location(&self) -> &SymbolLocation {
+        &self.location
     }
 }
 
 impl MemberFunctionSymbol {
     pub const DEFAULT_RETURN_TYPE_NAME: &'static str = "void";
 
-    pub fn new(path: MemberCallableSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: MemberCallableSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
-            range,
-            label_range,
+            location,
             specifiers: SymbolSpecifiers::new(),
             flavour: None,
             return_type_path: TypeSymbolPath::unknown()
@@ -118,8 +100,7 @@ impl MemberFunctionSymbol {
 #[derive(Debug, Clone)]
 pub struct EventSymbol {
     path: MemberCallableSymbolPath,
-    range: lsp::Range,
-    label_range: lsp::Range,
+    location: SymbolLocation
 }
 
 impl Symbol for EventSymbol {
@@ -133,21 +114,16 @@ impl Symbol for EventSymbol {
 }
 
 impl LocatableSymbol for EventSymbol {
-    fn range(&self) -> lsp::Range {
-        self.range
-    }
-
-    fn label_range(&self) -> lsp::Range {
-        self.label_range
+    fn location(&self) -> &SymbolLocation {
+        &self.location
     }
 }
 
 impl EventSymbol {
-    pub fn new(path: MemberCallableSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: MemberCallableSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
-            range,
-            label_range
+            location
         }
     }
 }

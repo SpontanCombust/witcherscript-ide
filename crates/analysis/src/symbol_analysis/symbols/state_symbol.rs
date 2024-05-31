@@ -1,5 +1,3 @@
-use std::path::{Path, PathBuf};
-use lsp_types as lsp;
 use witcherscript::attribs::StateSpecifier;
 use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
@@ -8,9 +6,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct StateSymbol {
     path: StateSymbolPath,
-    local_source_path: PathBuf,
-    range: lsp::Range,
-    label_range: lsp::Range,
+    location: SymbolLocation,
     pub specifiers: SymbolSpecifiers<StateSpecifier>,
     pub base_state_name: Option<String>,
     /*//TODO base_state_path can be known only after the class tree can be inspected 
@@ -29,20 +25,14 @@ impl Symbol for StateSymbol {
     }
 }
 
-impl PrimarySymbol for StateSymbol {
-    fn local_source_path(&self) -> &Path {
-        &self.local_source_path
+impl LocatableSymbol for StateSymbol {
+    fn location(&self) -> &SymbolLocation {
+        &self.location
     }
 }
 
-impl LocatableSymbol for StateSymbol {
-    fn range(&self) -> lsp::Range {
-        self.range
-    }
-
-    fn label_range(&self) -> lsp::Range {
-        self.label_range
-    }
+impl PrimarySymbol for StateSymbol {
+    
 }
 
 impl StateSymbol {
@@ -50,12 +40,10 @@ impl StateSymbol {
     // I know, confusing as hell, just like this entire language...
     pub const DEFAULT_STATE_BASE_NAME: &'static str = "CScriptableState";
 
-    pub fn new(path: StateSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: StateSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
-            local_source_path,
-            range,
-            label_range,
+            location,
             specifiers: SymbolSpecifiers::new(),
             base_state_name: None,
             base_state_path: None

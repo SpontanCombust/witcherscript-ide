@@ -1,7 +1,6 @@
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
-use witcherscript_analysis::symbol_analysis::symbol_table::SymbolLocation;
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbols::*;
 use crate::{providers::common::PositionTargetKind, Backend, messaging::notifications};
@@ -30,7 +29,7 @@ pub async fn goto_definition(backend: &Backend, params: lsp::GotoDefinitionParam
 
         let target_uri = inspected
             .loc.as_ref()
-            .map(|loc| loc.abs_source_path.to_uri())
+            .map(|loc| loc.abs_source_path().to_uri())
             .unwrap_or(params.text_document_position_params.text_document.uri.clone());
 
         let target_range = inspected
@@ -100,7 +99,7 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
                     for class in symtabs_marcher.class_hierarchy(&parent_path).skip(1) {
                         let base_func_path = class.path().join_component(func_name, SymbolCategory::Callable);
                         if let Some(base_func_loc) = symtabs_marcher.locate(&base_func_path) {
-                            *loc = base_func_loc;
+                            *loc = base_func_loc.to_owned();
                         }
                     }
                 } 
@@ -108,20 +107,20 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
                     for state in symtabs_marcher.state_hierarchy(&parent_path).skip(1) {
                         let base_func_path = state.path().join_component(func_name, SymbolCategory::Callable);
                         if let Some(base_func_loc) = symtabs_marcher.locate(&base_func_path) {
-                            *loc = base_func_loc;
+                            *loc = base_func_loc.to_owned();
                         }
                     }
 
                     let base_func_path = BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME).join_component(func_name, SymbolCategory::Callable);
                     if let Some(base_func_loc) = symtabs_marcher.locate(&base_func_path) {
-                        *loc = base_func_loc;
+                        *loc = base_func_loc.to_owned();
                     }
                 }
             }
         }
 
         let target_uri = loc.as_ref()
-            .map(|loc| loc.abs_source_path.to_uri())
+            .map(|loc| loc.abs_source_path().to_uri())
             .unwrap_or(params.text_document_position_params.text_document.uri.clone());
 
         let target_range = loc.as_ref()
@@ -171,7 +170,7 @@ pub async fn goto_type_definition(backend: &Backend, params: lsp::request::GotoT
 
         let target_uri = inspected
             .loc.as_ref()
-            .map(|loc| loc.abs_source_path.to_uri())
+            .map(|loc| loc.abs_source_path().to_uri())
             .unwrap_or(params.text_document_position_params.text_document.uri.clone());
 
         let target_range = inspected
@@ -304,7 +303,7 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
         })
         .map(|symvar| symvar.to_owned());
 
-    let loc = symvar.as_ref().and_then(|symvar| symtabs_marcher.locate(symvar.path()));
+    let loc = symvar.as_ref().and_then(|symvar| symvar.location().cloned());
 
     Some(Inspected {
         origin_selection_range: position_target.range,

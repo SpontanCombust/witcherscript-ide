@@ -1,5 +1,3 @@
-use std::path::{Path, PathBuf};
-use lsp_types as lsp;
 use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
@@ -7,9 +5,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct EnumSymbol {
     path: BasicTypeSymbolPath,
-    local_source_path: PathBuf,
-    range: lsp::Range,
-    label_range: lsp::Range
+    location: SymbolLocation
 }
 
 impl Symbol for EnumSymbol {
@@ -22,29 +18,21 @@ impl Symbol for EnumSymbol {
     }
 }
 
-impl PrimarySymbol for EnumSymbol {
-    fn local_source_path(&self) -> &Path {
-        &self.local_source_path
+impl LocatableSymbol for EnumSymbol {
+    fn location(&self) -> &SymbolLocation {
+        &self.location
     }
 }
 
-impl LocatableSymbol for EnumSymbol {
-    fn range(&self) -> lsp::Range {
-        self.range
-    }
+impl PrimarySymbol for EnumSymbol {
 
-    fn label_range(&self) -> lsp::Range {
-        self.label_range
-    }
 }
 
 impl EnumSymbol {
-    pub fn new(path: BasicTypeSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: BasicTypeSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
-            local_source_path,
-            range,
-            label_range
+            location
         }
     }
 }
@@ -57,9 +45,7 @@ impl EnumSymbol {
 #[derive(Debug, Clone)]
 pub struct EnumVariantSymbol {
     path: GlobalDataSymbolPath,
-    local_source_path: PathBuf,
-    range: lsp::Range,
-    label_range: lsp::Range,
+    location: SymbolLocation,
     pub parent_enum_path: BasicTypeSymbolPath,
     pub value: i32
 }
@@ -75,28 +61,20 @@ impl Symbol for EnumVariantSymbol {
 }
 
 impl LocatableSymbol for EnumVariantSymbol {
-    fn range(&self) -> lsp::Range {
-        self.range
-    }
-
-    fn label_range(&self) -> lsp::Range {
-        self.label_range
+    fn location(&self) -> &SymbolLocation {
+        &self.location
     }
 }
 
 impl PrimarySymbol for EnumVariantSymbol {
-    fn local_source_path(&self) -> &Path {
-        &self.local_source_path
-    }
+
 }
 
 impl EnumVariantSymbol {
-    pub fn new(path: GlobalDataSymbolPath, local_source_path: PathBuf, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: GlobalDataSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
-            local_source_path,
-            range,
-            label_range,
+            location,
             parent_enum_path: BasicTypeSymbolPath::unknown(),
             value: 0
         }

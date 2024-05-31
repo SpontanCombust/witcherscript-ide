@@ -1,4 +1,3 @@
-use lsp_types as lsp;
 use witcherscript::{attribs::MemberVarSpecifier, tokens::Keyword};
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::*;
@@ -7,8 +6,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct MemberVarSymbol {
     path: MemberDataSymbolPath,
-    range: lsp::Range,
-    label_range: lsp::Range,
+    location: SymbolLocation,
     pub specifiers: SymbolSpecifiers<MemberVarSpecifier>,
     pub type_path: TypeSymbolPath,
     pub ordinal: usize // used in the context of struct constructors
@@ -25,21 +23,16 @@ impl Symbol for MemberVarSymbol {
 }
 
 impl LocatableSymbol for MemberVarSymbol {
-    fn range(&self) -> lsp::Range {
-        self.range
-    }
-
-    fn label_range(&self) -> lsp::Range {
-        self.label_range
+    fn location(&self) -> &SymbolLocation {
+        &self.location
     }
 }
 
 impl MemberVarSymbol {
-    pub fn new(path: MemberDataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: MemberDataSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
-            range,
-            label_range,
+            location,
             specifiers: SymbolSpecifiers::new(),
             type_path: TypeSymbolPath::unknown(),
             ordinal: 0
@@ -56,8 +49,7 @@ impl MemberVarSymbol {
 #[derive(Debug, Clone)]
 pub struct LocalVarSymbol {
     path: MemberDataSymbolPath,
-    range: lsp::Range,
-    label_range: lsp::Range,
+    location: SymbolLocation,
     pub type_path: TypeSymbolPath,
 }
 
@@ -72,21 +64,16 @@ impl Symbol for LocalVarSymbol {
 }
 
 impl LocatableSymbol for LocalVarSymbol {
-    fn range(&self) -> lsp::Range {
-        self.range
-    }
-
-    fn label_range(&self) -> lsp::Range {
-        self.label_range
+    fn location(&self) -> &SymbolLocation {
+        &self.location
     }
 }
 
 impl LocalVarSymbol {
-    pub fn new(path: MemberDataSymbolPath, range: lsp::Range, label_range: lsp::Range) -> Self {
+    pub fn new(path: MemberDataSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
-            range,
-            label_range,
+            location,
             type_path: TypeSymbolPath::unknown()
         }
     }

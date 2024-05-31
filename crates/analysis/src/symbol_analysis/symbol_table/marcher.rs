@@ -57,12 +57,12 @@ impl<'a> SymbolTableMarcher<'a> {
     }
 
     #[inline]
-    pub fn locate(&self, path: &SymbolPath) -> Option<SymbolLocation> {
+    pub fn locate(&self, path: &SymbolPath) -> Option<&'a SymbolLocation> {
         self.march(|symtab| symtab.locate_symbol(path))
     }
 
     #[inline]
-    pub fn get_with_location(&self, path: &SymbolPath) -> Option<(&'a SymbolVariant, SymbolLocation)> {
+    pub fn get_with_location(&self, path: &SymbolPath) -> Option<(&'a SymbolVariant, &'a SymbolLocation)> {
         self.march(|symtab| symtab.get_symbol_with_location(path))
     }
 

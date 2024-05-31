@@ -123,8 +123,8 @@ impl ToDocumentSymbol for ClassSymbol {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
             kind: lsp::SymbolKind::CLASS,
-            range: self.range(),
-            selection_range: self.label_range(),
+            range: self.location().range,
+            selection_range: self.location().label_range,
             detail: None,
             tags: None,
             // we mark symbols that are **able to** have children with a Some value in `children` field 
@@ -141,8 +141,8 @@ impl ToDocumentSymbol for StructSymbol {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
             kind: lsp::SymbolKind::STRUCT,
-            range: self.range(),
-            selection_range: self.label_range(),
+            range: self.location().range,
+            selection_range: self.location().label_range,
             detail: None,
             tags: None,
             children: Some(Vec::new()),
@@ -157,8 +157,8 @@ impl ToDocumentSymbol for StateSymbol {
         Some(lsp::DocumentSymbol {
             name: format!("state {} in {}", self.state_name(), self.parent_class_name()),
             kind: lsp::SymbolKind::CLASS,
-            range: self.range(),
-            selection_range: self.label_range(),
+            range: self.location().range,
+            selection_range: self.location().label_range,
             detail: None,
             tags: None,
             children: Some(Vec::new()),
@@ -173,8 +173,8 @@ impl ToDocumentSymbol for EnumSymbol {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
             kind: lsp::SymbolKind::ENUM,
-            range: self.range(),
-            selection_range: self.label_range(),
+            range: self.location().range,
+            selection_range: self.location().label_range,
             detail: None,
             tags: None,
             children: Some(Vec::new()),
@@ -189,8 +189,8 @@ impl ToDocumentSymbol for EnumVariantSymbol {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
             kind: lsp::SymbolKind::ENUM_MEMBER,
-            range: self.range(),
-            selection_range: self.label_range(),
+            range: self.location().range,
+            selection_range: self.location().label_range,
             detail: None,
             tags: None,
             children: None,
@@ -223,8 +223,8 @@ impl ToDocumentSymbol for GlobalFunctionSymbol {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
             kind: lsp::SymbolKind::FUNCTION,
-            range: self.range(),
-            selection_range: self.label_range(),
+            range: self.location().range,
+            selection_range: self.location().label_range,
             detail: None,
             tags: None,
             children: Some(Vec::new()),
@@ -239,8 +239,8 @@ impl ToDocumentSymbol for MemberFunctionSymbol {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
             kind: lsp::SymbolKind::METHOD,
-            range: self.range(),
-            selection_range: self.label_range(),
+            range: self.location().range,
+            selection_range: self.location().label_range,
             detail: None,
             tags: None,
             children: Some(Vec::new()),
@@ -255,8 +255,8 @@ impl ToDocumentSymbol for EventSymbol {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
             kind: lsp::SymbolKind::EVENT,
-            range: self.range(),
-            selection_range: self.label_range(),
+            range: self.location().range,
+            selection_range: self.location().label_range,
             detail: None,
             tags: None,
             children: Some(Vec::new()),
@@ -279,8 +279,8 @@ impl ToDocumentSymbol for FunctionParameterSymbol {
         // Some(lsp::DocumentSymbol {
         //     name: self.name().to_owned(),
         //     kind: lsp::SymbolKind::VARIABLE,
-        //     range: self.range(),
-        //     selection_range: self.label_range(),
+        //      range: self.location().range,
+        //      selection_range: self.location().label_range,
         //     detail: None,
         //     tags: None,
         //     children: None,
@@ -305,8 +305,8 @@ impl ToDocumentSymbol for MemberVarSymbol {
             } else {
                 lsp::SymbolKind::FIELD
             },
-            range: self.range(),
-            selection_range: self.label_range(),
+            range: self.location().range,
+            selection_range: self.location().label_range,
             detail: None,
             tags: None,
             children: None,
@@ -321,8 +321,8 @@ impl ToDocumentSymbol for AutobindSymbol {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
             kind: lsp::SymbolKind::FIELD,
-            range: self.range(),
-            selection_range: self.label_range(),
+            range: self.location().range,
+            selection_range: self.location().label_range,
             detail: None,
             tags: None,
             children: None,
