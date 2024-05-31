@@ -206,7 +206,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
         // with each class in the inheritance chain we add properties to the UNL that `this` inherits from
         // if any functions are overriden in child classes, the record gets overwritten
         for class in inherit_chain {
-            if let Some(class_symtab) = self.symtab_marcher.find_containing(class.path()) {
+            if let Some(class_symtab) = self.symtab_marcher.find_table_containing_symbol(class.path()) {
                 for ch in class_symtab.get_class_symbol_children(class.path()) {
                     match ch {
                         ClassSymbolChild::Var(s) => {
@@ -247,7 +247,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         // all state types inherit properties from this one class
         let base_type_path = BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME);
-        if let Some(base_type_symtab) = self.symtab_marcher.find_containing(&base_type_path) {
+        if let Some(base_type_symtab) = self.symtab_marcher.find_table_containing_symbol(&base_type_path) {
             for ch in base_type_symtab.get_class_symbol_children(&base_type_path) {
                 match ch {
                     ClassSymbolChild::Var(s) => {
@@ -279,7 +279,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
         inherit_chain.reverse();
 
         for state in inherit_chain {
-            if let Some(state_symtab) = self.symtab_marcher.find_containing(state.path()) {
+            if let Some(state_symtab) = self.symtab_marcher.find_table_containing_symbol(state.path()) {
                 for ch in state_symtab.get_state_symbol_children(state.path()) {
                     match ch {
                         StateSymbolChild::Var(s) => {
@@ -318,7 +318,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         unl.push_scope();
 
-        if let Some(struct_symtab) = self.symtab_marcher.find_containing(&sympath_ctx.current_sympath) {
+        if let Some(struct_symtab) = self.symtab_marcher.find_table_containing_symbol(&sympath_ctx.current_sympath) {
             for s in struct_symtab.get_struct_symbol_children(&sympath_ctx.current_sympath) {
                 unl.insert(s.path().to_owned());
             }
@@ -347,7 +347,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         unl.push_scope();
 
-        if let Some(func_symtab) = self.symtab_marcher.find_containing(&sympath_ctx.current_sympath) {
+        if let Some(func_symtab) = self.symtab_marcher.find_table_containing_symbol(&sympath_ctx.current_sympath) {
             for ch in func_symtab.get_callable_symbol_children(&sympath_ctx.current_sympath) {
                 if let CallableSymbolChild::Param(s) = ch {
                     unl.insert(s.path().to_owned());
@@ -369,7 +369,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         unl.push_scope();
 
-        if let Some(func_symtab) = self.symtab_marcher.find_containing(&sympath_ctx.current_sympath) {
+        if let Some(func_symtab) = self.symtab_marcher.find_table_containing_symbol(&sympath_ctx.current_sympath) {
             for ch in func_symtab.get_callable_symbol_children(&sympath_ctx.current_sympath) {
                 if let CallableSymbolChild::Param(s) = ch {
                     unl.insert(s.path().to_owned());
@@ -390,7 +390,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         unl.push_scope();
 
-        if let Some(func_symtab) = self.symtab_marcher.find_containing(&sympath_ctx.current_sympath) {
+        if let Some(func_symtab) = self.symtab_marcher.find_table_containing_symbol(&sympath_ctx.current_sympath) {
             for ch in func_symtab.get_callable_symbol_children(&sympath_ctx.current_sympath) {
                 if let CallableSymbolChild::Param(s) = ch {
                     unl.insert(s.path().to_owned());

@@ -54,7 +54,7 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
             PositionTargetKind::StateDeclarationBaseIdentifier => {
                 let mut state_base_path = None;
     
-                if let Some(target_state_sym) = symtabs_marcher.get(&position_target.sympath_ctx).and_then(|v| v.try_as_state_ref()) {
+                if let Some(target_state_sym) = symtabs_marcher.get_symbol(&position_target.sympath_ctx).and_then(|v| v.try_as_state_ref()) {
                     let base_state_name = target_state_sym.base_state_name.as_ref().map(|s| s.as_str()).unwrap_or_default();
     
                     'ancestors: for class in symtabs_marcher.class_hierarchy(target_state_sym.parent_class_path()) {
@@ -70,7 +70,7 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
                 state_base_path
             },
             PositionTargetKind::DataDeclarationNameIdentifier(name) => {
-                if let Some(ctx_sym) = symtabs_marcher.get(&position_target.sympath_ctx) {
+                if let Some(ctx_sym) = symtabs_marcher.get_symbol(&position_target.sympath_ctx) {
                     if ctx_sym.is_enum() {
                         Some(GlobalDataSymbolPath::new(&name).into())
                     } else {
@@ -107,7 +107,7 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
                 .unwrap_or(SymbolCategory::Type);
 
             let mut buf = String::new();
-            symtabs_marcher.get_with_containing(&sympath)
+            symtabs_marcher.get_symbol_with_containing_table(&sympath)
                 .map(|(symtab, symvar)| symvar.render(&mut buf, symtab))
                 .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
 

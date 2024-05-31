@@ -24,7 +24,7 @@ impl<'a> SymbolTableMarcher<'a> {
     }
 
 
-    pub fn test_contains(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
+    pub fn test_contains_symbol(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         for symtab in &self.inner {
             symtab.test_contains_symbol(path)?;
         }
@@ -32,21 +32,21 @@ impl<'a> SymbolTableMarcher<'a> {
         Ok(())
     }
 
-    pub fn contains(&self, path: &SymbolPath) -> bool {
+    pub fn contains_symbol(&self, path: &SymbolPath) -> bool {
         self.inner.iter().any(|symtab| symtab.contains_symbol(path))
     }
 
-    pub fn find_containing(&self, path: &SymbolPath) -> Option<&'a SymbolTable> {
+    pub fn find_table_containing_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolTable> {
         self.march(|symtab| if symtab.contains_symbol(path) { Some(symtab) } else { None })   
     }
 
     #[inline]
-    pub fn get(&self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
+    pub fn get_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
         self.march(|symtab| symtab.get_symbol(path))
     }
 
     #[inline]
-    pub fn get_with_containing(&self, path: &SymbolPath) -> Option<(&'a SymbolTable, &'a SymbolVariant)> {
+    pub fn get_symbol_with_containing_table(&self, path: &SymbolPath) -> Option<(&'a SymbolTable, &'a SymbolVariant)> {
         self.march(|symtab| {
             if let Some(symvar) = symtab.get_symbol(path) {
                 Some((symtab, symvar))
@@ -57,12 +57,12 @@ impl<'a> SymbolTableMarcher<'a> {
     }
 
     #[inline]
-    pub fn locate(&self, path: &SymbolPath) -> Option<&'a SymbolLocation> {
+    pub fn locate_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolLocation> {
         self.march(|symtab| symtab.locate_symbol(path))
     }
 
     #[inline]
-    pub fn get_with_location(&self, path: &SymbolPath) -> Option<(&'a SymbolVariant, &'a SymbolLocation)> {
+    pub fn get_symbol_with_location(&self, path: &SymbolPath) -> Option<(&'a SymbolVariant, &'a SymbolLocation)> {
         self.march(|symtab| symtab.get_symbol_with_location(path))
     }
 
@@ -118,7 +118,7 @@ impl<'a> Iterator for ClassHierarchy<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_path.is_empty() {
             None
-        } else if let Some(class) = self.marcher.get(&self.current_path).and_then(|v| v.try_as_class_ref()) {
+        } else if let Some(class) = self.marcher.get_symbol(&self.current_path).and_then(|v| v.try_as_class_ref()) {
             self.current_path = class.base_path.as_ref().map(|p| p.clone().into()).unwrap_or_default();
             Some(class)
         } else {
@@ -181,7 +181,7 @@ impl<'a> Iterator for StateHierarchy<'a> {
             return None;
         } 
         
-        if let Some(current_state_sym) = self.marcher.get(&self.current_state_path).and_then(|v| v.try_as_state_ref()) {
+        if let Some(current_state_sym) = self.marcher.get_symbol(&self.current_state_path).and_then(|v| v.try_as_state_ref()) {
             self.current_state_path.clear();
             //FIXME switch to using `base_state_path` when that is possible
             if let Some(base_state_name) = &current_state_sym.base_state_name {
