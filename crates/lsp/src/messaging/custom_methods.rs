@@ -250,7 +250,8 @@ impl Backend {
 
         let mut dot_graph = String::new();
         dot_graph += "digraph {\n";
-        dot_graph += "\tcomment=\"Edge direction is: dependant ---> dependency\"\n";
+        dot_graph += "\tcomment=\"Edge direction is: dependant ---> dependency. Edge label denotes dependency priority.\"\n";
+        dot_graph += "\trankdir=\"BT\"\n";
         dot_graph += "\n";
 
         for n in graph.nodes() {
@@ -265,7 +266,8 @@ impl Backend {
             let content_name = n.content.content_name();
             for dep in graph.direct_dependencies(n.content.path()) {
                 let dep_name = dep.content.content_name();
-                dot_graph += &format!("\t{content_name} -> {dep_name}\n");
+                let prio = graph.dependency_priority(n.content.path(), dep.content.path()).unwrap_or(-1);
+                dot_graph += &format!("\t{content_name} -> {dep_name} [label={prio}]\n");
             }
         }
 

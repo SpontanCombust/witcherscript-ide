@@ -78,10 +78,12 @@ pub struct GraphNode {
 
 /// Edge direction is:
 /// dependant ---> dependency
+/// Priority is higher the lower is the number (just like Witcher 3 mod priority is done).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct GraphEdge {
     dependant_idx: usize,
-    dependency_idx: usize
+    dependency_idx: usize,
+    priority: i32
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -92,6 +94,11 @@ enum GraphEdgeDirection {
 
 
 impl ContentGraph {
+    const DEFAULT_CONTENT_PRIORITY: i32 = 0;
+    const DEFAULT_VANILLA_CONTENT_PRIORITY: i32 = 998;
+    const DEFAULT_VANILLA_CONTENT_NATIVE_PRIORITY: i32 = 999;
+
+
     pub fn new() -> Self {
         Self {
             repo_scanners: Vec::new(),
@@ -168,13 +175,14 @@ impl ContentGraph {
 
 
     
+    /// Iterator over all nodes in the graph. Order of nodes is arbitrary.
     pub fn nodes<'g>(&'g self) -> Iter<'g> {
         let indices = (0..self.nodes.len()).collect();
         Iter::new(self, indices)
     }
 
 
-    /// Iterate over direct dependencies of specified content
+    /// Iterate over direct dependencies of specified content. Order of nodes depends on dependency priority.
     /// Iterator will be empty when either the specified content doesn't exist or it has no dependencies.
     /// If a circular dependency occurs a reference to the parameter content will not be included.
     pub fn direct_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
@@ -186,7 +194,7 @@ impl ContentGraph {
         }
     }
 
-    /// Iterate over direct dependants of specified content
+    /// Iterate over direct dependants of specified content.
     /// Iterator will be empty when either the specified content doesn't exist or it has no dependants.
     /// If a circular dependency occurs a reference to the parameter content will not be included.
     pub fn direct_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
@@ -200,27 +208,37 @@ impl ContentGraph {
 
 
     /// Iterate over all content nodes that are direct or indirect dependencies to the specified content.
+    /// Order of nodes depends on dependency priority.
     /// Iterator will be empty when either the specified content doesn't exist or it has no dependencies.
     /// If a circular dependency occurs a reference to the parameter content will not be included.
     pub fn walk_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
+        let mut indices = Vec::new();
         if let Some(idx) = self.get_node_index_by_path(content_path) {
-            let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependencies);
-            Iter::new(self, indices)
-        } else {
-            Iter::new(self, vec![])
+            self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependencies, &mut indices, true);
         }
+
+        Iter::new(self, indices)
     }
 
     /// Iterate over all content nodes that are direct or indirect dependants of the specified content.
     /// Iterator will be empty when either the specified content doesn't exist or it has no dependants.
     /// If a circular dependency occurs a reference to the parameter content will not be included.
     pub fn walk_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
+        let mut indices = Vec::new();
         if let Some(idx) = self.get_node_index_by_path(content_path) {
-            let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependants);
-            Iter::new(self, indices)
-        } else {
-            Iter::new(self, vec![])
+            self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependants, &mut indices, true);
         }
+        
+        Iter::new(self, indices)
+    }
+
+    pub fn dependency_priority(&self, dependant_path: &AbsPath, dependency_path: &AbsPath) -> Option<i32> {
+        let dependant_idx = self.get_node_index_by_path(dependant_path)?;
+        let dependency_idx = self.get_node_index_by_path(dependency_path)?;
+
+        self.edges.iter()
+            .find(|e| e.dependant_idx == dependant_idx && e.dependency_idx == dependency_idx)
+            .map(|e| e.priority)
     }
 
 
@@ -339,27 +357,77 @@ impl ContentGraph {
 
         let content = Arc::clone(&self.nodes[node_idx].content);
         if let Some(proj) = content.as_any().downcast_ref::<ProjectDirectory>() {
-            for entry in proj.manifest().dependencies.iter() {
+            let mut deps: Vec<_> = 
+                proj.manifest()
+                .dependencies.iter()
+                .collect();
+
+            // by default we sort dependencies by their name
+            deps.sort_by(|d1, d2| d1.name.cmp(&d2.name));
+
+            let mut current_auto_priority = Self::DEFAULT_CONTENT_PRIORITY;
+            for entry in deps {
+                let priority = if self.nodes[node_idx].is_native {
+                    Self::DEFAULT_VANILLA_CONTENT_NATIVE_PRIORITY
+                }
+                else if entry.name == VANILLA_CONTENT_NAME {
+                    Self::DEFAULT_VANILLA_CONTENT_PRIORITY
+                } 
+                else {
+                    let val = current_auto_priority;
+                    current_auto_priority += 1;
+                    val
+                };
+
                 match &entry.value {
                     manifest::DependencyValue::FromRepo(active) => {
                         if *active {
-                            self.link_dependencies_value_from_repo(node_idx, repo_nodes, proj.manifest_path(), &entry.name, &entry.name_range);
+                            self.link_dependencies_value_from_repo(
+                                node_idx, 
+                                repo_nodes, 
+                                proj.manifest_path(), 
+                                &entry.name, &entry.name_range,
+                                priority
+                            );
                         }
                     },
                     manifest::DependencyValue::FromPath { path } => {
-                        self.link_dependencies_value_from_path(node_idx, repo_nodes, proj.manifest_path(), &entry.name, &entry.name_range, path, &entry.value_range);
+                        self.link_dependencies_value_from_path(
+                            node_idx, 
+                            repo_nodes, 
+                            proj.manifest_path(), 
+                            &entry.name, &entry.name_range, 
+                            path, &entry.value_range,
+                            priority
+                        );
                     },
                 }
             }
         } else if let Some(redkit_proj) = content.as_any().downcast_ref::<RedkitProjectDirectory>() {
-            self.link_dependencies_value_from_repo(node_idx, repo_nodes, redkit_proj.manifest_path(), VANILLA_CONTENT_NAME.into(), &lsp::Range::default());
+            self.link_dependencies_value_from_repo(
+                node_idx, 
+                repo_nodes, 
+                redkit_proj.manifest_path(), 
+                VANILLA_CONTENT_NAME.into(), &lsp::Range::default(),
+                Self::DEFAULT_VANILLA_CONTENT_PRIORITY
+            );
         }
 
         // only content0 gets to be connected to native symbols
         if content.content_name() == VANILLA_CONTENT_NAME {
             if let Some(native_idx) = self.nodes.iter().position(|n| n.is_native) {
-                self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: native_idx });
-                self.insert_edge(GraphEdge { dependant_idx: native_idx, dependency_idx: node_idx });
+                self.insert_edge(GraphEdge { 
+                    dependant_idx: node_idx, 
+                    dependency_idx: native_idx, 
+                    priority: Self::DEFAULT_VANILLA_CONTENT_NATIVE_PRIORITY 
+                });
+                // there are some symbols in native content that depend on information from content0
+                // so a circular connection is needed
+                self.insert_edge(GraphEdge { 
+                    dependant_idx: native_idx, 
+                    dependency_idx: node_idx, 
+                    priority: Self::DEFAULT_VANILLA_CONTENT_PRIORITY 
+                });
             }
         }
     }
@@ -369,11 +437,16 @@ impl ContentGraph {
         repo_nodes: &mut Vec<GraphNode>,
         manifest_path: &AbsPath,
         dependency_name: &str,
-        dependency_name_range: &lsp::Range
+        dependency_name_range: &lsp::Range,
+        priority: i32
     ) {
         match self.get_dependency_node_index_by_name(&dependency_name, repo_nodes) {
             Ok(dep_idx) => {
-                self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: dep_idx });
+                self.insert_edge(GraphEdge { 
+                    dependant_idx: node_idx, 
+                    dependency_idx: dep_idx,
+                    priority
+                });
             },
             Err(matching_paths) => {
                 if matching_paths.is_empty() {
@@ -440,7 +513,8 @@ impl ContentGraph {
         dependency_name: &str,
         dependency_name_range: &lsp::Range,
         dependency_path: &PathBuf,
-        dependency_path_range: &lsp::Range
+        dependency_path_range: &lsp::Range,
+        priority: i32
     ) {
         let dependant_path = self.nodes[node_idx].content.path();
 
@@ -464,7 +538,8 @@ impl ContentGraph {
             if self.nodes[dep_idx].content.content_name() == dependency_name {
                 self.insert_edge(GraphEdge { 
                     dependant_idx: node_idx, 
-                    dependency_idx: dep_idx 
+                    dependency_idx: dep_idx,
+                    priority
                 });
             } else {
                 self.errors.push(ContentGraphError::DependencyNameNotFoundAtPath { 
@@ -486,7 +561,8 @@ impl ContentGraph {
     
                         self.insert_edge(GraphEdge { 
                             dependant_idx: node_idx, 
-                            dependency_idx: dep_idx 
+                            dependency_idx: dep_idx,
+                            priority
                         });
                     } else {
                         self.errors.push(ContentGraphError::DependencyNameNotFoundAtPath { 
@@ -558,53 +634,52 @@ impl ContentGraph {
         None
     }
 
-    /// Get iterator over direct neighbours of a given node
-    fn neighbour_indices_in_direction<'g>(&'g self, node_idx: usize, direction: GraphEdgeDirection) -> impl Iterator<Item = usize> + 'g {
-        self.edges.iter()
+    /// Get direct neighbours of a given node.
+    /// Order of the nodes is based on edge's `priority` attribute.
+    fn neighbour_indices_in_direction(&self, node_idx: usize, direction: GraphEdgeDirection) -> impl Iterator<Item = usize> + '_ {
+        let mut e: Vec<_> = 
+            self.edges.iter()
             .filter(move |edge| {
                 node_idx == match direction {
                     GraphEdgeDirection::Dependants => edge.dependency_idx,
                     GraphEdgeDirection::Dependencies => edge.dependant_idx,
                 }
             })
-            .map(move |edge| {
-                match direction {
-                    GraphEdgeDirection::Dependants => edge.dependant_idx,
-                    GraphEdgeDirection::Dependencies => edge.dependency_idx,
-                }
-            })
-            .filter(move |idx| {
-                // filter out links to self
-                *idx != node_idx
-            })
-    }
+            .collect();
 
-    /// Get a vec of all node indices related to the given node in a given direction
-    fn relatives_indices_in_direction(&self, starting_idx: usize, direction: GraphEdgeDirection) -> Vec<usize> {
-        let mut indices = Vec::with_capacity(self.nodes.capacity());
-
-        for neighbour in self.neighbour_indices_in_direction(starting_idx, direction) {
-            indices.push(neighbour);
+        // when we go over dependencies we are interested in their order
+        // as it dictates how they may overwrite each others parts
+        if direction == GraphEdgeDirection::Dependencies {
+            e.sort_by(|e1, e2| e1.priority.cmp(&e2.priority));
         }
 
-        let mut i = 0;
-        while i < indices.len() {
-            let current_idx = indices[i];
-            let neighbours = self.neighbour_indices_in_direction(current_idx, direction);
-
-            for idx in neighbours {
-                if !indices.contains(&idx) {
-                    indices.push(idx);
-                }
+        e.into_iter()
+        .map(move |edge| {
+            match direction {
+                GraphEdgeDirection::Dependants => edge.dependant_idx,
+                GraphEdgeDirection::Dependencies => edge.dependency_idx,
             }
+        })
+        .filter(move |idx| {
+            // filter out links to self
+            *idx != node_idx
+        })
+    }
 
-            i += 1;
+    /// Get a vec of all node indices related to the given node in a given direction.
+    /// Order of the nodes is based on edge's `priority` attribute.
+    fn relatives_indices_in_direction(&self, idx: usize, direction: GraphEdgeDirection, indices: &mut Vec<usize>, is_starting_idx: bool) {
+        for neighbour in self.neighbour_indices_in_direction(idx, direction) {
+            if !indices.contains(&neighbour) {
+                indices.push(neighbour);
+                self.relatives_indices_in_direction(neighbour, direction, indices, false);
+            }
         }
 
         // filter out links to self
-        indices.retain(|idx| *idx != starting_idx);
-
-        indices
+        if is_starting_idx {
+            indices.retain(|i| *i != idx);
+        }
     }
 }
 
@@ -785,6 +860,7 @@ mod test {
         assert!(graph.get_node_by_path(&test_assets().join("dir1/redkit").unwrap()).is_some());
         assert!(graph.get_node_by_path(&test_assets().join("dir2/raw0").unwrap()).is_some());
         assert!(graph.get_node_by_path(&test_assets().join("dir2/content0").unwrap()).is_some());
+        assert!(graph.get_node_by_path(&test_assets().join("content0_native").unwrap()).is_some());
 
 
         let it = graph.nodes();
@@ -807,28 +883,29 @@ mod test {
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/raw0").unwrap());
 
-        let it = graph.direct_dependencies(&test_assets().join("dir1/nested/proj3").unwrap());
+        let mut it = graph.direct_dependencies(&test_assets().join("dir1/nested/proj3").unwrap());
         assert_eq!(it.clone().count(), 2);
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/raw2").unwrap()));
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
+        // by default dependencies are sorted by their name
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/proj2").unwrap());
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/raw2").unwrap());
 
         let it = graph.direct_dependencies(&test_assets().join("dir1/nested/raw2").unwrap());
         assert_eq!(it.count(), 0);
 
-        let it = graph.direct_dependencies(&test_assets().join("dir1/redkit").unwrap());
+        let mut it = graph.direct_dependencies(&test_assets().join("dir1/redkit").unwrap());
         assert_eq!(it.clone().count(), 1);
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/content0").unwrap());
 
         let it = graph.direct_dependencies(&test_assets().join("dir2/raw0").unwrap());
         assert_eq!(it.count(), 0);
 
-        let it = graph.direct_dependencies(&test_assets().join("dir2/content0").unwrap());
+        let mut it = graph.direct_dependencies(&test_assets().join("dir2/content0").unwrap());
         assert_eq!(it.clone().count(), 1);
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("content0_native").unwrap()));
+        assert!(it.next().unwrap().content.path() == &test_assets().join("content0_native").unwrap());
 
-        let it = graph.direct_dependencies(&test_assets().join("content0_native").unwrap());
+        let mut it = graph.direct_dependencies(&test_assets().join("content0_native").unwrap());
         assert_eq!(it.clone().count(), 1);
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/content0").unwrap());
 
 
 
@@ -873,30 +950,30 @@ mod test {
         assert_eq!(it.clone().count(), 1);
         assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/raw0").unwrap());
 
-        let it = graph.walk_dependencies(&test_assets().join("dir1/nested/proj3").unwrap());
+        let mut it = graph.walk_dependencies(&test_assets().join("dir1/nested/proj3").unwrap());
         assert_eq!(it.clone().count(), 3);
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/raw2").unwrap()));
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/raw0").unwrap()));
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/proj2").unwrap());
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/raw0").unwrap());
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir1/nested/raw2").unwrap());
 
         let it = graph.walk_dependencies(&test_assets().join("dir1/nested/raw2").unwrap());
         assert_eq!(it.count(), 0);
 
-        let it = graph.walk_dependencies(&test_assets().join("dir1/redkit").unwrap());
+        let mut it = graph.walk_dependencies(&test_assets().join("dir1/redkit").unwrap());
         assert_eq!(it.clone().count(), 2);
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("content0_native").unwrap()));
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/content0").unwrap());
+        assert!(it.next().unwrap().content.path() == &test_assets().join("content0_native").unwrap());
 
         let it = graph.walk_dependencies(&test_assets().join("dir2/raw0").unwrap());
         assert_eq!(it.count(), 0);
 
-        let it = graph.walk_dependencies(&test_assets().join("dir2/content0").unwrap());
+        let mut it = graph.walk_dependencies(&test_assets().join("dir2/content0").unwrap());
         assert_eq!(it.clone().count(), 1);
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("content0_native").unwrap()));
+        assert!(it.next().unwrap().content.path() == &test_assets().join("content0_native").unwrap());
 
-        let it = graph.walk_dependencies(&test_assets().join("content0_native").unwrap());
+        let mut it = graph.walk_dependencies(&test_assets().join("content0_native").unwrap());
         assert_eq!(it.clone().count(), 1);
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
+        assert!(it.next().unwrap().content.path() == &test_assets().join("dir2/content0").unwrap());
 
 
         let it = graph.walk_dependants(&test_assets().join("dir1/proj1").unwrap());
