@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 		path.join('server', 'bin', `witcherscript-lsp${ext}`)
 	);
 	const nativeContentUri = vscode.Uri.joinPath(
-		context.extensionUri, 'server', 'assets', 'native_content'
+		context.extensionUri, 'server', 'assets', 'content0_native'
 	).toString();
 
 	// If the extension is launched in debug mode then the debug server options are used

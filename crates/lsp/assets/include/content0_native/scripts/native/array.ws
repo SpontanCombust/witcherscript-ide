@@ -1,3 +1,10 @@
+/* 
+ * Warning: this script is a part of native content directory ditributed with WIDE.
+ * It includes types accessible from scripts that are not however explicitly declared anywhere.
+ * Their reconstructed definition may not be accurate.
+ */
+
+
 // core/array.ws
 
 /*array< T >
