@@ -8,6 +8,12 @@ use crate::source_tree::SourceTree;
 use crate::{redkit, FileError};
 
 
+/// Name of the content directory with vanilla scripts
+pub const VANILLA_CONTENT_NAME: &str = "content0";
+/// Name of the supplementary content distrubuted together with WIDE that contains symbols accessible, but not declared in content0
+pub const VANILLA_CONTENT_NATIVE_NAME: &str = "content0_native";
+
+
 /// Characteristics of a directory that contains a "scripts" folder.
 pub trait Content : core::fmt::Debug + dyn_clone::DynClone + Send + Sync {
     fn try_from_dir(dir: &AbsPath) -> Result<Self, ContentScanError> where Self: Sized;

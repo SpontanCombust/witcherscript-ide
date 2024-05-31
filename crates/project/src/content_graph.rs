@@ -4,7 +4,7 @@ use std::sync::Arc;
 use thiserror::Error;
 use lsp_types as lsp;
 use abs_path::AbsPath;
-use crate::content::{try_make_content, ContentScanError, ProjectDirectory, RedkitProjectDirectory};
+use crate::content::{try_make_content, ContentScanError, ProjectDirectory, RedkitProjectDirectory, VANILLA_CONTENT_NAME};
 use crate::{manifest, redkit, Content, ContentScanner, FileError};
 
 
@@ -348,13 +348,14 @@ impl ContentGraph {
                 }
             }
         } else if let Some(redkit_proj) = content.as_any().downcast_ref::<RedkitProjectDirectory>() {
-            self.link_dependencies_value_from_repo(node_idx, repo_nodes, redkit_proj.manifest_path(), "content0".into(), &lsp::Range::default());
+            self.link_dependencies_value_from_repo(node_idx, repo_nodes, redkit_proj.manifest_path(), VANILLA_CONTENT_NAME.into(), &lsp::Range::default());
         }
 
-        // only content0 gets to be connected to native symbols to avoid redundant edges
-        if content.content_name() == "content0" {
+        // only content0 gets to be connected to native symbols
+        if content.content_name() == VANILLA_CONTENT_NAME {
             if let Some(native_idx) = self.nodes.iter().position(|n| n.is_native) {
                 self.insert_edge(GraphEdge { dependant_idx: node_idx, dependency_idx: native_idx });
+                self.insert_edge(GraphEdge { dependant_idx: native_idx, dependency_idx: node_idx });
             }
         }
     }
@@ -760,7 +761,7 @@ mod test {
 
         graph.add_workspace_scanner(workspace_scanner);
         graph.add_repository_scanner(repo_scanner);
-        graph.set_native_content_path(&test_assets().join("native_content").unwrap());
+        graph.set_native_content_path(&test_assets().join("content0_native").unwrap());
 
         graph.build();
 
@@ -784,7 +785,7 @@ mod test {
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap() && n.in_workspace && !n.in_repository && !n.is_native));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/raw0").unwrap() && !n.in_workspace && n.in_repository && !n.is_native));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap() && !n.in_workspace && n.in_repository && !n.is_native));
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("native_content").unwrap() && !n.in_workspace && !n.in_repository && n.is_native));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("content0_native").unwrap() && !n.in_workspace && !n.in_repository && n.is_native));
 
 
         let mut it = graph.direct_dependencies(&test_assets().join("dir1/proj1").unwrap());
@@ -813,7 +814,7 @@ mod test {
         let it = graph.direct_dependencies(&test_assets().join("dir2/content0").unwrap());
         assert_eq!(it.count(), 1);
 
-        let it = graph.direct_dependencies(&test_assets().join("native_content").unwrap());
+        let it = graph.direct_dependencies(&test_assets().join("content0_native").unwrap());
         assert_eq!(it.count(), 0);
 
 
@@ -844,7 +845,7 @@ mod test {
         assert_eq!(it.clone().count(), 1);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap()));
 
-        let it = graph.direct_dependants(&test_assets().join("native_content").unwrap());
+        let it = graph.direct_dependants(&test_assets().join("content0_native").unwrap());
         assert_eq!(it.clone().count(), 1);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
 
@@ -870,14 +871,14 @@ mod test {
         let it = graph.walk_dependencies(&test_assets().join("dir1/redkit").unwrap());
         assert_eq!(it.clone().count(), 2);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("native_content").unwrap()));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("content0_native").unwrap()));
 
         let it = graph.walk_dependencies(&test_assets().join("dir2/raw0").unwrap());
         assert_eq!(it.count(), 0);
 
         let it = graph.walk_dependencies(&test_assets().join("dir2/content0").unwrap());
         assert_eq!(it.clone().count(), 1);
-        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("native_content").unwrap()));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("content0_native").unwrap()));
 
 
         let it = graph.walk_dependants(&test_assets().join("dir1/proj1").unwrap());
@@ -907,7 +908,7 @@ mod test {
         assert_eq!(it.clone().count(), 1);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap()));
 
-        let it = graph.walk_dependants(&test_assets().join("native_content").unwrap());
+        let it = graph.walk_dependants(&test_assets().join("content0_native").unwrap());
         assert_eq!(it.clone().count(), 2);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap()));

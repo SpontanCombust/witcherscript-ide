@@ -2,6 +2,7 @@ use std::io::Write;
 use tower_lsp::{jsonrpc, lsp_types as lsp};
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
+use witcherscript_project::content::VANILLA_CONTENT_NAME;
 use witcherscript_project::Manifest;
 use crate::Backend;
 use super::requests::{self, ContentInfo};
@@ -195,7 +196,7 @@ impl Backend {
 
         let mut content0_info = None;
         for n in graph.walk_dependencies(&project_path) {
-            if n.content.content_name() == "content0" {
+            if n.content.content_name() == VANILLA_CONTENT_NAME {
                 content0_info = Some(ContentInfo {
                     content_uri: n.content.path().to_uri(),
                     scripts_root_uri: n.content.source_tree_root().to_uri(),
