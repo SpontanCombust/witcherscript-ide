@@ -1,15 +1,18 @@
+use witcherscript_project::SourceMask;
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::{ClassSymbol, PathOccupiedError, StateSymbol, Symbol, SymbolLocation, SymbolTable, SymbolVariant};
 
 
-//TODO needs additional symbol masking mechanism - search only in paths not present in previous symtabs
 /// A type that can perform data fetching operations on many symbol tables
 /// until that data is found.
-/// Can be created from a iterator over symbol tables.
-/// Values are fetched from symbol tables in the order that they are in the iterator.
+/// Values are fetched from symbol tables in the order that they were submitted to the marcher.
+/// 
+/// Uses [`SourceMask`] to properly mask out script files that were already present in previously visited content's symbol table.
+/// So when a marcher is composed of two tables: A and B, when table A contains script file "game/r4Game.ws" 
+/// any data coming from a file at the same local path is ignored when searching through table B.
 #[derive(Clone)]
 pub struct SymbolTableMarcher<'a> {
-    inner : Vec<&'a SymbolTable>
+    inner: Vec<MaskedSymbolTable<'a>>
 }
 
 impl<'a> SymbolTableMarcher<'a> {
@@ -19,37 +22,48 @@ impl<'a> SymbolTableMarcher<'a> {
         }
     }
 
-    pub fn add_step(&mut self, symtab: &'a SymbolTable) {
-        self.inner.push(symtab)
+    pub fn add_step(&mut self, symtab: &'a SymbolTable, mask: SourceMask) {
+        let accum_mask = 
+            self.inner.last()
+            .map(|masked| masked.accum_mask.union(&masked.assoc_mask))
+            .unwrap_or_default();
+
+        let masked = MaskedSymbolTable {
+            symtab,
+            accum_mask,
+            assoc_mask: mask
+        };
+
+        self.inner.push(masked);
     }
 
 
     pub fn test_contains_symbol(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
-        for symtab in &self.inner {
-            symtab.test_contains_symbol(path)?;
+        for masked in &self.inner {
+            masked.test_contains_symbol(path)?;
         }
 
         Ok(())
     }
 
     pub fn contains_symbol(&self, path: &SymbolPath) -> bool {
-        self.inner.iter().any(|symtab| symtab.contains_symbol(path))
+        self.inner.iter().any(|masked| masked.contains_symbol(path))
     }
 
     pub fn find_table_containing_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolTable> {
-        self.march(|symtab| if symtab.contains_symbol(path) { Some(symtab) } else { None })   
+        self.march(|masked| if masked.contains_symbol(path) { Some(masked.symtab) } else { None })   
     }
 
     #[inline]
     pub fn get_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
-        self.march(|symtab| symtab.get_symbol(path))
+        self.march(|masked| masked.get_symbol(path))
     }
 
     #[inline]
     pub fn get_symbol_with_containing_table(&self, path: &SymbolPath) -> Option<(&'a SymbolTable, &'a SymbolVariant)> {
-        self.march(|symtab| {
-            if let Some(symvar) = symtab.get_symbol(path) {
-                Some((symtab, symvar))
+        self.march(|masked| {
+            if let Some(symvar) = masked.get_symbol(path) {
+                Some((masked.symtab, symvar))
             } else {
                 None
             }
@@ -58,12 +72,12 @@ impl<'a> SymbolTableMarcher<'a> {
 
     #[inline]
     pub fn locate_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolLocation> {
-        self.march(|symtab| symtab.locate_symbol(path))
+        self.march(|masked| masked.locate_symbol(path))
     }
 
     #[inline]
     pub fn get_symbol_with_location(&self, path: &SymbolPath) -> Option<(&'a SymbolVariant, &'a SymbolLocation)> {
-        self.march(|symtab| symtab.get_symbol_with_location(path))
+        self.march(|masked| masked.get_symbol_with_location(path))
     }
 
     #[inline]
@@ -85,7 +99,7 @@ impl<'a> SymbolTableMarcher<'a> {
 
 
     fn march<T, F>(&self, mut f: F) -> Option<T> 
-    where F: FnMut(&'a SymbolTable) -> Option<T> {
+    where F: FnMut(&MaskedSymbolTable<'a>) -> Option<T> {
         for symtab in &self.inner {
             if let Some(val) = f(symtab) {
                 return Some(val);
@@ -95,6 +109,64 @@ impl<'a> SymbolTableMarcher<'a> {
         None
     }
 }
+
+
+#[derive(Clone)]
+struct MaskedSymbolTable<'a> {
+    symtab: &'a SymbolTable,
+    accum_mask: SourceMask,
+    assoc_mask: SourceMask
+}
+
+impl<'a> MaskedSymbolTable<'a> {
+    fn into_iter(self) -> impl Iterator<Item = (&'a SymbolPath, &'a SymbolVariant)> {
+        self.symtab.iter().filter(move |(_, v)| mask_symbol(v, &self.accum_mask).is_some())
+    }
+
+    fn get_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
+        self.symtab.get_symbol(path).and_then(|symvar| mask_symbol(symvar, &self.accum_mask))
+    }
+
+
+    fn contains_symbol(&self, path: &SymbolPath) -> bool {
+        self.get_symbol(path).is_some()
+    }
+
+    fn test_contains_symbol(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
+        if let Some(occupying) = self.get_symbol(path) {
+            Err(PathOccupiedError {
+                occupied_path: occupying.path().to_sympath_buf(),
+                occupied_location: occupying.location().cloned()
+            })
+        } else {
+            Ok(())
+        }
+    }
+
+    fn locate_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolLocation> {
+        self.get_symbol(path).and_then(|symvar| symvar.location())
+    }
+
+    fn get_symbol_with_location(&self, path: &SymbolPath) -> Option<(&'a SymbolVariant, &'a SymbolLocation)> {
+        let symvar = self.get_symbol(path)?;
+        let loc = symvar.location()?;
+        Some((symvar, loc))
+    }
+}
+
+#[inline]
+fn mask_symbol<'a>(symvar: &'a SymbolVariant, mask: &SourceMask) -> Option<&'a SymbolVariant> {
+    if let Some(loc) = symvar.location() {
+        if mask.test(&loc.local_source_path) {
+            Some(symvar)
+        } else {
+            None
+        }
+    } else {
+        Some(symvar)
+    }
+}
+
 
 
 #[derive(Clone)]
@@ -137,7 +209,7 @@ impl<'a> ClassStates<'a> {
         let class_path = class_path.to_owned();
         let it = marcher.inner.into_iter().map(move |symtab| {
             let class_path = class_path.to_owned();
-            symtab.symbols.iter()
+            symtab.into_iter()
                 .filter_map(|(_, symvar)| symvar.try_as_state_ref())
                 .filter(move |state_sym| state_sym.parent_class_path() == &class_path)
             })

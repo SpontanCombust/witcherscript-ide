@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use abs_path::AbsPath;
 use filetime::FileTime;
-use crate::FileError;
+use crate::{FileError, SourceMask};
 
 
 #[derive(Debug, Clone)]
@@ -229,7 +229,13 @@ impl SourceTree {
     #[inline]
     pub fn iter(&self) -> impl Iterator<Item = &SourceTreeFile> {
         self.tree.iter()
-    }    
+    }
+
+    pub fn source_mask(&self) -> SourceMask {
+        self.tree.iter()
+            .map(|f| f.path.local().to_owned())
+            .collect()
+    }
 }
 
 

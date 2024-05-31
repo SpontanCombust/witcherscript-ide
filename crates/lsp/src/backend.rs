@@ -132,14 +132,19 @@ impl Backend {
             .map(|n| n.content.path().to_owned())
             .collect();
 
+        let source_mask_iter =
+            [content_path].into_iter()
+            .chain(dependency_paths.iter())
+            .filter_map(|p| self.source_trees.get(p).map(|kv| kv.value().source_mask()));
+
         let symtab_iter =
-            [content_path.to_owned()].into_iter()
-            .chain(dependency_paths.into_iter())
-            .filter_map(|p| symtabs.get(&p));
+            [content_path].into_iter()
+            .chain(dependency_paths.iter())
+            .filter_map(|p| symtabs.get(p));
         
         let mut marcher = SymbolTableMarcher::new();
-        for symtab in symtab_iter {
-            marcher.add_step(symtab);
+        for (symtab, source_mask) in symtab_iter.zip(source_mask_iter) {
+            marcher.add_step(symtab, source_mask);
         }
 
         marcher
