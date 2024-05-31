@@ -176,6 +176,7 @@ impl ContentGraph {
 
     /// Iterate over direct dependencies of specified content
     /// Iterator will be empty when either the specified content doesn't exist or it has no dependencies.
+    /// If a circular dependency occurs a reference to the parameter content will not be included.
     pub fn direct_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependencies).collect();
@@ -187,6 +188,7 @@ impl ContentGraph {
 
     /// Iterate over direct dependants of specified content
     /// Iterator will be empty when either the specified content doesn't exist or it has no dependants.
+    /// If a circular dependency occurs a reference to the parameter content will not be included.
     pub fn direct_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.neighbour_indices_in_direction(idx, GraphEdgeDirection::Dependants).collect();
@@ -199,6 +201,7 @@ impl ContentGraph {
 
     /// Iterate over all content nodes that are direct or indirect dependencies to the specified content.
     /// Iterator will be empty when either the specified content doesn't exist or it has no dependencies.
+    /// If a circular dependency occurs a reference to the parameter content will not be included.
     pub fn walk_dependencies<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependencies);
@@ -210,6 +213,7 @@ impl ContentGraph {
 
     /// Iterate over all content nodes that are direct or indirect dependants of the specified content.
     /// Iterator will be empty when either the specified content doesn't exist or it has no dependants.
+    /// If a circular dependency occurs a reference to the parameter content will not be included.
     pub fn walk_dependants<'g>(&'g self, content_path: &AbsPath) -> Iter<'g> {
         if let Some(idx) = self.get_node_index_by_path(content_path) {
             let indices = self.relatives_indices_in_direction(idx, GraphEdgeDirection::Dependants);
@@ -569,6 +573,10 @@ impl ContentGraph {
                     GraphEdgeDirection::Dependencies => edge.dependency_idx,
                 }
             })
+            .filter(move |idx| {
+                // filter out links to self
+                *idx != node_idx
+            })
     }
 
     /// Get a vec of all node indices related to the given node in a given direction
@@ -592,6 +600,9 @@ impl ContentGraph {
 
             i += 1;
         }
+
+        // filter out links to self
+        indices.retain(|idx| *idx != starting_idx);
 
         indices
     }
@@ -812,10 +823,12 @@ mod test {
         assert_eq!(it.count(), 0);
 
         let it = graph.direct_dependencies(&test_assets().join("dir2/content0").unwrap());
-        assert_eq!(it.count(), 1);
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("content0_native").unwrap()));
 
         let it = graph.direct_dependencies(&test_assets().join("content0_native").unwrap());
-        assert_eq!(it.count(), 0);
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
 
 
 
@@ -842,8 +855,9 @@ mod test {
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/proj2").unwrap()));
 
         let it = graph.direct_dependants(&test_assets().join("dir2/content0").unwrap());
-        assert_eq!(it.clone().count(), 1);
+        assert_eq!(it.clone().count(), 2);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap()));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("content0_native").unwrap()));
 
         let it = graph.direct_dependants(&test_assets().join("content0_native").unwrap());
         assert_eq!(it.clone().count(), 1);
@@ -880,6 +894,10 @@ mod test {
         assert_eq!(it.clone().count(), 1);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("content0_native").unwrap()));
 
+        let it = graph.walk_dependencies(&test_assets().join("content0_native").unwrap());
+        assert_eq!(it.clone().count(), 1);
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir2/content0").unwrap()));
+
 
         let it = graph.walk_dependants(&test_assets().join("dir1/proj1").unwrap());
         assert_eq!(it.count(), 0);
@@ -905,8 +923,9 @@ mod test {
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/nested/proj3").unwrap()));
 
         let it = graph.walk_dependants(&test_assets().join("dir2/content0").unwrap());
-        assert_eq!(it.clone().count(), 1);
+        assert_eq!(it.clone().count(), 2);
         assert!(it.clone().any(|n| n.content.path() == &test_assets().join("dir1/redkit").unwrap()));
+        assert!(it.clone().any(|n| n.content.path() == &test_assets().join("content0_native").unwrap()));
 
         let it = graph.walk_dependants(&test_assets().join("content0_native").unwrap());
         assert_eq!(it.clone().count(), 2);
