@@ -349,7 +349,25 @@ impl ToDocumentSymbol for LocalVarSymbol {
     }
 }
 
-impl ToDocumentSymbol for SpecialVarSymbol {
+impl ToDocumentSymbol for ThisVarSymbol {
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        None
+    }
+}
+
+impl ToDocumentSymbol for SuperVarSymbol {
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        None
+    }
+}
+
+impl ToDocumentSymbol for ParentVarSymbol {
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        None
+    }
+}
+
+impl ToDocumentSymbol for VirtualParentVarSymbol {
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         None
     }
@@ -381,7 +399,10 @@ impl ToDocumentSymbol for SymbolVariant {
             SymbolVariant::MemberVar(s) => s.to_doc_sym(),
             SymbolVariant::Autobind(s) => s.to_doc_sym(),
             SymbolVariant::LocalVar(s) => s.to_doc_sym(),
-            SymbolVariant::SpecialVar(s) => s.to_doc_sym(),
+            SymbolVariant::ThisVar(s) => s.to_doc_sym(),
+            SymbolVariant::SuperVar(s) => s.to_doc_sym(),
+            SymbolVariant::ParentVar(s) => s.to_doc_sym(),
+            SymbolVariant::VirtualParentVar(s) => s.to_doc_sym(),
             SymbolVariant::Constructor(s) => s.to_doc_sym()
         }
     }

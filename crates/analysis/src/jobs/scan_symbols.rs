@@ -178,13 +178,13 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             sym.base_path = n.base().map(|base| self.check_type_from_identifier(base));
 
 
-            let this_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::This);
-            let this_sym = SpecialVarSymbol::new(this_path, path.clone());
+            let this_path = ThisVarSymbolPath::new(&path);
+            let this_sym = ThisVarSymbol::new(this_path, path.clone().into());
             self.symtab.insert_symbol(this_sym);
 
             if let Some(base_path) = &sym.base_path {
-                let super_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Super);
-                let super_sym = SpecialVarSymbol::new(super_path, base_path.clone());
+                let super_path = SuperVarSymbolPath::new(&path);
+                let super_sym = SuperVarSymbol::new(super_path, base_path.clone().into());
                 self.symtab.insert_symbol(super_sym);
             }
 
@@ -237,24 +237,24 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             sym.base_state_name = n.base().map(|base| base.value(&self.doc).to_string());
 
 
-            let this_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::This);
-            let this_sym = SpecialVarSymbol::new(this_path, path.clone().into());
+            let this_path = ThisVarSymbolPath::new(&path);
+            let this_sym = ThisVarSymbol::new(this_path, path.clone().into());
             self.symtab.insert_symbol(this_sym);
 
             if let Some(base) = &sym.base_state_name {
                 //TODO super_path can only be evaluated after all states of all base classes are known
             } else {
-                let super_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Super);
-                let super_sym = SpecialVarSymbol::new(super_path, BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME));
+                let super_path = SuperVarSymbolPath::new(&path);
+                let super_sym = SuperVarSymbol::new(super_path, BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME).into());
                 self.symtab.insert_symbol(super_sym);
             }
 
-            let parent_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::Parent);
-            let parent_sym = SpecialVarSymbol::new(parent_path, path.parent_class_path.clone());
+            let parent_path = ParentVarSymbolPath::new(&path);
+            let parent_sym = ParentVarSymbol::new(parent_path, path.parent_class_path.clone().into());
             self.symtab.insert_symbol(parent_sym);
 
-            let virtual_parent_path = SpecialVarSymbolPath::new(&path, SpecialVarSymbolKind::VirtualParent);
-            let virtual_parent_sym = SpecialVarSymbol::new(virtual_parent_path, path.parent_class_path.clone());
+            let virtual_parent_path = VirtualParentVarSymbolPath::new(&path);
+            let virtual_parent_sym = VirtualParentVarSymbol::new(virtual_parent_path, path.parent_class_path.clone().into());
             self.symtab.insert_symbol(virtual_parent_sym);
 
 

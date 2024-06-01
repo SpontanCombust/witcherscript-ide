@@ -49,7 +49,10 @@ pub enum SymbolType {
     MemberVar,
     Autobind,
     LocalVar,
-    SpecialVar
+    ThisVar,
+    SuperVar,
+    ParentVar,
+    VirtualParentVar,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -64,7 +67,8 @@ impl SymbolType {
         use SymbolType::*;
         match self {
             Type | Enum | Struct | Class | State | Array => SymbolCategory::Type,
-            EnumVariant | Parameter | GlobalVar | MemberVar | Autobind | LocalVar | SpecialVar => SymbolCategory::Data,
+            EnumVariant | Parameter | GlobalVar | MemberVar | Autobind | LocalVar | 
+            ThisVar | SuperVar | ParentVar | VirtualParentVar => SymbolCategory::Data,
             GlobalFunction | MemberFunction | Event | Constructor => SymbolCategory::Callable,
         }
     }

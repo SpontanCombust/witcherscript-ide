@@ -229,7 +229,7 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
 
             if let Some(target_state_sym) = symtabs_marcher.get_symbol(&position_target.sympath_ctx).and_then(|v| v.try_as_state_ref()) {
                 let base_state_name = target_state_sym.base_state_name.as_ref().map(|s| s.as_str()).unwrap_or_default();
-
+                //TODO use state_hierarchy instead
                 'ancestors: for class in symtabs_marcher.class_hierarchy(target_state_sym.parent_class_path()) {
                     for state in symtabs_marcher.class_states(class.path()) {
                         if state.state_name() == base_state_name {
@@ -257,28 +257,29 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
             Some(position_target.sympath_ctx)
         },
         PositionTargetKind::ThisKeyword => {
+            //FIXME these indirections get handled below already!
             symtabs_marcher
-                .get_symbol(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::This))
-                .and_then(|v| v.try_as_special_var_ref())
-                .map(|sym| sym.type_path().clone())
+                .get_symbol(&ThisVarSymbolPath::new(position_target.sympath_ctx.root().unwrap()))
+                .and_then(|v| v.try_as_this_var_ref())
+                .map(|sym| sym.type_path().to_owned())
         },
         PositionTargetKind::SuperKeyword => {
             symtabs_marcher
-                .get_symbol(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::Super))
-                .and_then(|v| v.try_as_special_var_ref())
-                .map(|sym| sym.type_path().clone())
+                .get_symbol(&SuperVarSymbolPath::new(position_target.sympath_ctx.root().unwrap()))
+                .and_then(|v| v.try_as_super_var_ref())
+                .map(|sym| sym.type_path().to_owned())
         },
         PositionTargetKind::ParentKeyword => {
             symtabs_marcher
-                .get_symbol(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::Parent))
-                .and_then(|v| v.try_as_special_var_ref())
-                .map(|sym| sym.type_path().clone())
+                .get_symbol(&ParentVarSymbolPath::new(position_target.sympath_ctx.root().unwrap()))
+                .and_then(|v| v.try_as_parent_var_ref())
+                .map(|sym| sym.type_path().to_owned())
         },
         PositionTargetKind::VirtualParentKeyword => {
             symtabs_marcher
-                .get_symbol(&SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap(), SpecialVarSymbolKind::VirtualParent))
-                .and_then(|v| v.try_as_special_var_ref())
-                .map(|sym| sym.type_path().clone())
+                .get_symbol(&VirtualParentVarSymbolPath::new(position_target.sympath_ctx.root().unwrap()))
+                .and_then(|v| v.try_as_virtual_parent_var_ref())
+                .map(|sym| sym.type_path().to_owned())
         },
         PositionTargetKind::ExpressionIdentifier(expr_type_path) => {
             Some(expr_type_path)
@@ -291,7 +292,10 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
             let rerouted_path = match symvar {
                 SymbolVariant::Constructor(s) => Some(s.parent_type_path.as_sympath()),
                 SymbolVariant::GlobalVar(s) => Some(s.type_path().as_sympath()),
-                SymbolVariant::SpecialVar(s) => Some(s.type_path().as_sympath()),
+                SymbolVariant::ThisVar(s) => Some(s.type_path()),
+                SymbolVariant::SuperVar(s) => Some(s.type_path()),
+                SymbolVariant::ParentVar(s) => Some(s.type_path()),
+                SymbolVariant::VirtualParentVar(s) => Some(s.type_path()),
                 _ => None
             };
 

@@ -104,7 +104,10 @@ impl<'a> ExpressionEvaluator<'a> {
                 SymbolVariant::MemberVar(s) => s.type_path.clone().into(),
                 SymbolVariant::Autobind(s) => s.type_path.clone().into(),
                 SymbolVariant::LocalVar(s) => s.type_path.clone().into(),
-                SymbolVariant::SpecialVar(s) => s.type_path().clone().into(),
+                SymbolVariant::ThisVar(s) => s.type_path().to_owned(),
+                SymbolVariant::SuperVar(s) => s.type_path().to_owned(),
+                SymbolVariant::ParentVar(s) => s.type_path().to_owned(),
+                SymbolVariant::VirtualParentVar(s) => s.type_path().to_owned(),
             }
         } else {
             SymbolPathBuf::unknown(SymbolCategory::Type)
@@ -132,7 +135,7 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
     fn visit_this_expr(&mut self, _: &ThisExpressionNode, ctx: ExpressionTraversalContext) {
         let sympath_payload = self.sympath_payload.borrow();
         let type_path = sympath_payload.current_sympath.root().unwrap_or_default();
-        let this_path = SpecialVarSymbolPath::new(type_path, SpecialVarSymbolKind::This);
+        let this_path = ThisVarSymbolPath::new(type_path);
         drop(sympath_payload);
 
         self.push(this_path.into(), ctx);
@@ -141,7 +144,7 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
     fn visit_super_expr(&mut self, _: &SuperExpressionNode, ctx: ExpressionTraversalContext) {
         let sympath_payload = self.sympath_payload.borrow();
         let type_path = sympath_payload.current_sympath.root().unwrap_or_default();
-        let super_path = SpecialVarSymbolPath::new(type_path, SpecialVarSymbolKind::Super);
+        let super_path = SuperVarSymbolPath::new(type_path);
         drop(sympath_payload);
         
         self.push(super_path.into(), ctx);
@@ -150,7 +153,7 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
     fn visit_parent_expr(&mut self, _: &ParentExpressionNode, ctx: ExpressionTraversalContext) {
         let sympath_payload = self.sympath_payload.borrow();
         let type_path = sympath_payload.current_sympath.root().unwrap_or_default();
-        let parent_path = SpecialVarSymbolPath::new(type_path, SpecialVarSymbolKind::Parent);
+        let parent_path = ParentVarSymbolPath::new(type_path);
         drop(sympath_payload);
         
         self.push(parent_path.into(), ctx);
@@ -159,7 +162,7 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
     fn visit_virtual_parent_expr(&mut self, _: &VirtualParentExpressionNode, ctx: ExpressionTraversalContext) {
         let sympath_payload = self.sympath_payload.borrow();
         let type_path = sympath_payload.current_sympath.root().unwrap_or_default();
-        let virtual_parent_path = SpecialVarSymbolPath::new(type_path, SpecialVarSymbolKind::VirtualParent);
+        let virtual_parent_path = VirtualParentVarSymbolPath::new(type_path);
         drop(sympath_payload);
         
         self.push(virtual_parent_path.into(), ctx);

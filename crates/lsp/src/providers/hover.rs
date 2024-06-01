@@ -84,16 +84,16 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
                 Some(position_target.sympath_ctx)
             },
             PositionTargetKind::ThisKeyword => {
-                Some(SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default(), SpecialVarSymbolKind::This).into())
+                Some(ThisVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default()).into())
             },
             PositionTargetKind::SuperKeyword => {
-                Some(SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default(), SpecialVarSymbolKind::Super).into())
+                Some(SuperVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default()).into())
             },
             PositionTargetKind::ParentKeyword => {
-                Some(SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default(), SpecialVarSymbolKind::Parent).into())
+                Some(ParentVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default()).into())
             },
             PositionTargetKind::VirtualParentKeyword => {
-                Some(SpecialVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default(), SpecialVarSymbolKind::VirtualParent).into())
+                Some(VirtualParentVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default()).into())
             },
             PositionTargetKind::ExpressionIdentifier(expr_ident) => {
                 Some(expr_ident)
@@ -157,7 +157,10 @@ impl RenderTooltip for SymbolVariant {
             SymbolVariant::MemberVar(s) => s.render(buf, symtab),
             SymbolVariant::Autobind(s) => s.render(buf, symtab),
             SymbolVariant::LocalVar(s) => s.render(buf, symtab),
-            SymbolVariant::SpecialVar(s) => s.render(buf, symtab),
+            SymbolVariant::ThisVar(s) => s.render(buf, symtab),
+            SymbolVariant::SuperVar(s) => s.render(buf, symtab),
+            SymbolVariant::ParentVar(s) => s.render(buf, symtab),
+            SymbolVariant::VirtualParentVar(s) => s.render(buf, symtab),
         }
     }
 }
@@ -573,6 +576,8 @@ impl RenderTooltip for FunctionParameterSymbol {
             buf.push(' ');
         }
 
+        //TODO add `var` here and in other places when syntax highlighting brakes because of lack of it
+
         buf.push_str(self.name());
         buf.push(' ');
         buf.push(':');
@@ -685,10 +690,39 @@ impl RenderTooltip for LocalVarSymbol {
     }
 }
 
-impl RenderTooltip for SpecialVarSymbol {
+impl RenderTooltip for ThisVarSymbol {
     fn render(&self, buf: &mut String, _: &SymbolTable) {
-        let kw: Keyword = self.kind().into();
-        buf.push_str(kw.as_ref());
+        buf.push_str(Keyword::This.as_ref());
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.type_name());
+    }
+}
+
+impl RenderTooltip for SuperVarSymbol {
+    fn render(&self, buf: &mut String, _: &SymbolTable) {
+        buf.push_str(Keyword::Super.as_ref());
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.type_name());
+    }
+}
+
+impl RenderTooltip for ParentVarSymbol {
+    fn render(&self, buf: &mut String, _: &SymbolTable) {
+        buf.push_str(Keyword::Parent.as_ref());
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.type_name());
+    }
+}
+
+impl RenderTooltip for VirtualParentVarSymbol {
+    fn render(&self, buf: &mut String, _: &SymbolTable) {
+        buf.push_str(Keyword::VirtualParent.as_ref());
         buf.push(' ');
         buf.push(':');
         buf.push(' ');

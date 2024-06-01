@@ -1,4 +1,4 @@
-use witcherscript::{attribs::MemberVarSpecifier, tokens::Keyword};
+use witcherscript::attribs::MemberVarSpecifier;
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::*;
 
@@ -122,33 +122,14 @@ impl GlobalVarSymbol {
 
 
 #[derive(Debug, Clone)]
-pub struct SpecialVarSymbol {
-    path: SpecialVarSymbolPath,
-    type_path: BasicTypeSymbolPath
+pub struct ThisVarSymbol {
+    path: ThisVarSymbolPath,
+    type_path: SymbolPathBuf
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SpecialVarSymbolKind {
-    This,
-    Super,
-    Parent,
-    VirtualParent
-}
-
-impl From<SpecialVarSymbolKind> for Keyword {
-    fn from(value: SpecialVarSymbolKind) -> Self {
-        match value {
-            SpecialVarSymbolKind::This => Keyword::This,
-            SpecialVarSymbolKind::Super => Keyword::Super,
-            SpecialVarSymbolKind::Parent => Keyword::Parent,
-            SpecialVarSymbolKind::VirtualParent => Keyword::VirtualParent,
-        }
-    }
-}
-
-impl Symbol for SpecialVarSymbol {
+impl Symbol for ThisVarSymbol {
     fn typ(&self) -> SymbolType {
-        SymbolType::GlobalVar
+        SymbolType::ThisVar
     }
 
     fn path(&self) -> &SymbolPath {
@@ -156,23 +137,121 @@ impl Symbol for SpecialVarSymbol {
     }
 }
 
-impl SpecialVarSymbol {
-    pub fn new(path: SpecialVarSymbolPath, type_path: BasicTypeSymbolPath) -> Self {
+impl ThisVarSymbol {
+    pub fn new(path: ThisVarSymbolPath, type_path: SymbolPathBuf) -> Self {
         Self {
             path,
             type_path
         }
     }
 
-    pub fn type_path(&self) -> &SymbolPathBuf {
+    pub fn type_path(&self) -> &SymbolPath {
         &self.type_path
     }
 
     pub fn type_name(&self) -> &str {
         &self.type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
+}
 
-    pub fn kind(&self) -> SpecialVarSymbolKind {
-        self.path.kind
+
+#[derive(Debug, Clone)]
+pub struct SuperVarSymbol {
+    path: SuperVarSymbolPath,
+    type_path: SymbolPathBuf
+}
+
+impl Symbol for SuperVarSymbol {
+    fn typ(&self) -> SymbolType {
+        SymbolType::SuperVar
+    }
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
+
+impl SuperVarSymbol {
+    pub fn new(path: SuperVarSymbolPath, type_path: SymbolPathBuf) -> Self {
+        Self {
+            path,
+            type_path
+        }
+    }
+
+    pub fn type_path(&self) -> &SymbolPath {
+        &self.type_path
+    }
+
+    pub fn type_name(&self) -> &str {
+        &self.type_path.components().next().map(|c| c.name).unwrap_or_default()
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct ParentVarSymbol {
+    path: ParentVarSymbolPath,
+    type_path: SymbolPathBuf
+}
+
+impl Symbol for ParentVarSymbol {
+    fn typ(&self) -> SymbolType {
+        SymbolType::ParentVar
+    }
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
+
+impl ParentVarSymbol {
+    pub fn new(path: ParentVarSymbolPath, type_path: SymbolPathBuf) -> Self {
+        Self {
+            path,
+            type_path
+        }
+    }
+
+    pub fn type_path(&self) -> &SymbolPath {
+        &self.type_path
+    }
+
+    pub fn type_name(&self) -> &str {
+        &self.type_path.components().next().map(|c| c.name).unwrap_or_default()
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct VirtualParentVarSymbol {
+    path: VirtualParentVarSymbolPath,
+    type_path: SymbolPathBuf
+}
+
+impl Symbol for VirtualParentVarSymbol {
+    fn typ(&self) -> SymbolType {
+        SymbolType::VirtualParentVar
+    }
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
+
+impl VirtualParentVarSymbol {
+    pub fn new(path: VirtualParentVarSymbolPath, type_path: SymbolPathBuf) -> Self {
+        Self {
+            path,
+            type_path
+        }
+    }
+
+    pub fn type_path(&self) -> &SymbolPath {
+        &self.type_path
+    }
+
+    pub fn type_name(&self) -> &str {
+        &self.type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
 }

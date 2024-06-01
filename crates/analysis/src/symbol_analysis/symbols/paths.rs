@@ -15,7 +15,7 @@ use std::{ops::Deref, borrow::Borrow};
 use shrinkwraprs::Shrinkwrap;
 use witcherscript::tokens::Keyword;
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
-use super::{SpecialVarSymbolKind, SymbolCategory};
+use super::SymbolCategory;
 
 
 #[derive(Debug, Clone, Shrinkwrap)]
@@ -247,33 +247,84 @@ impl From<TypeSymbolPath> for SymbolPathBuf {
 
 
 #[derive(Debug, Clone, Shrinkwrap)]
-pub struct SpecialVarSymbolPath {
-    #[shrinkwrap(main_field)]
-    path: SymbolPathBuf,
-    pub kind: SpecialVarSymbolKind
+pub struct ThisVarSymbolPath {
+    path: SymbolPathBuf
 }
 
-impl SpecialVarSymbolPath {
-    pub fn new(parent_path: &SymbolPath, kind: SpecialVarSymbolKind) -> Self {
-        let name = match kind {
-            SpecialVarSymbolKind::This => Keyword::This.as_ref(),
-            SpecialVarSymbolKind::Super => Keyword::Super.as_ref(),
-            SpecialVarSymbolKind::Parent => Keyword::Parent.as_ref(),
-            SpecialVarSymbolKind::VirtualParent => Keyword::VirtualParent.as_ref(),
-        };
-
+impl ThisVarSymbolPath {
+    pub fn new(parent_path: &SymbolPath) -> Self {
         let mut path = parent_path.to_owned();
-        path.push(name, SymbolCategory::Data);
+        path.push(Keyword::This.as_ref(), SymbolCategory::Data);
 
-        Self {
-            path,
-            kind
-        }
+        Self { path }
     }
 }
 
-impl From<SpecialVarSymbolPath> for SymbolPathBuf {
-    fn from(value: SpecialVarSymbolPath) -> Self {
+impl From<ThisVarSymbolPath> for SymbolPathBuf {
+    fn from(value: ThisVarSymbolPath) -> Self {
+        value.path
+    }
+}
+
+
+#[derive(Debug, Clone, Shrinkwrap)]
+pub struct SuperVarSymbolPath {
+    path: SymbolPathBuf
+}
+
+impl SuperVarSymbolPath {
+    pub fn new(parent_path: &SymbolPath) -> Self {
+        let mut path = parent_path.to_owned();
+        path.push(Keyword::Super.as_ref(), SymbolCategory::Data);
+
+        Self { path }
+    }
+}
+
+impl From<SuperVarSymbolPath> for SymbolPathBuf {
+    fn from(value: SuperVarSymbolPath) -> Self {
+        value.path
+    }
+}
+
+
+#[derive(Debug, Clone, Shrinkwrap)]
+pub struct ParentVarSymbolPath {
+    path: SymbolPathBuf
+}
+
+impl ParentVarSymbolPath {
+    pub fn new(parent_path: &SymbolPath) -> Self {
+        let mut path = parent_path.to_owned();
+        path.push(Keyword::Parent.as_ref(), SymbolCategory::Data);
+
+        Self { path }
+    }
+}
+
+impl From<ParentVarSymbolPath> for SymbolPathBuf {
+    fn from(value: ParentVarSymbolPath) -> Self {
+        value.path
+    }
+}
+
+
+#[derive(Debug, Clone, Shrinkwrap)]
+pub struct VirtualParentVarSymbolPath {
+    path: SymbolPathBuf
+}
+
+impl VirtualParentVarSymbolPath {
+    pub fn new(parent_path: &SymbolPath) -> Self {
+        let mut path = parent_path.to_owned();
+        path.push(Keyword::VirtualParent.as_ref(), SymbolCategory::Data);
+
+        Self { path }
+    }
+}
+
+impl From<VirtualParentVarSymbolPath> for SymbolPathBuf {
+    fn from(value: VirtualParentVarSymbolPath) -> Self {
         value.path
     }
 }

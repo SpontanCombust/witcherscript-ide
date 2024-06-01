@@ -29,7 +29,10 @@ pub enum SymbolVariant {
     MemberVar(MemberVarSymbol),
     Autobind(AutobindSymbol),
     LocalVar(LocalVarSymbol),
-    SpecialVar(SpecialVarSymbol)
+    ThisVar(ThisVarSymbol),
+    SuperVar(SuperVarSymbol),
+    ParentVar(ParentVarSymbol),
+    VirtualParentVar(VirtualParentVarSymbol),
 }
 
 impl std::fmt::Debug for SymbolVariant {
@@ -53,7 +56,10 @@ impl std::fmt::Debug for SymbolVariant {
             Self::MemberVar(s) => s.fmt(f),
             Self::Autobind(s) => s.fmt(f),
             Self::LocalVar(s) => s.fmt(f),
-            Self::SpecialVar(s) => s.fmt(f),
+            Self::ThisVar(s) => s.fmt(f),
+            Self::SuperVar(s) => s.fmt(f),
+            Self::ParentVar(s) => s.fmt(f),
+            Self::VirtualParentVar(s) => s.fmt(f),
         }
     }
 }
@@ -79,7 +85,10 @@ impl SymbolVariant {
             SymbolVariant::MemberVar(s) => s.typ(),
             SymbolVariant::Autobind(s) => s.typ(),
             SymbolVariant::LocalVar(s) => s.typ(),
-            SymbolVariant::SpecialVar(s) => s.typ(),
+            SymbolVariant::ThisVar(s) => s.typ(),
+            SymbolVariant::SuperVar(s) => s.typ(),
+            SymbolVariant::ParentVar(s) => s.typ(),
+            SymbolVariant::VirtualParentVar(s) => s.typ(),
         }
     }
 
@@ -103,7 +112,10 @@ impl SymbolVariant {
             SymbolVariant::MemberVar(s) => s.path(),
             SymbolVariant::Autobind(s) => s.path(),
             SymbolVariant::LocalVar(s) => s.path(),
-            SymbolVariant::SpecialVar(s) => s.path(),
+            SymbolVariant::ThisVar(s) => s.path(),
+            SymbolVariant::SuperVar(s) => s.path(),
+            SymbolVariant::ParentVar(s) => s.path(),
+            SymbolVariant::VirtualParentVar(s) => s.path(),
         }
     }
 
@@ -127,7 +139,10 @@ impl SymbolVariant {
             SymbolVariant::MemberVar(s) => s.name(),
             SymbolVariant::Autobind(s) => s.name(),
             SymbolVariant::LocalVar(s) => s.name(),
-            SymbolVariant::SpecialVar(s) => s.name(),
+            SymbolVariant::ThisVar(s) => s.name(),
+            SymbolVariant::SuperVar(s) => s.name(),
+            SymbolVariant::ParentVar(s) => s.name(),
+            SymbolVariant::VirtualParentVar(s) => s.name(),
         }
     }
 
@@ -151,7 +166,10 @@ impl SymbolVariant {
             SymbolVariant::MemberVar(s) => Some(s.location()),
             SymbolVariant::Autobind(s) => Some(s.location()),
             SymbolVariant::LocalVar(s) => Some(s.location()),
-            SymbolVariant::SpecialVar(_) => None,
+            SymbolVariant::ThisVar(_) => None,
+            SymbolVariant::SuperVar(_) => None,
+            SymbolVariant::ParentVar(_) => None,
+            SymbolVariant::VirtualParentVar(_) => None,
         }
     }
 }
@@ -265,8 +283,26 @@ impl From<LocalVarSymbol> for SymbolVariant {
     }
 }
 
-impl From<SpecialVarSymbol> for SymbolVariant {
-    fn from(value: SpecialVarSymbol) -> Self {
-        Self::SpecialVar(value)
+impl From<ThisVarSymbol> for SymbolVariant {
+    fn from(value: ThisVarSymbol) -> Self {
+        Self::ThisVar(value)
+    }
+}
+
+impl From<SuperVarSymbol> for SymbolVariant {
+    fn from(value: SuperVarSymbol) -> Self {
+        Self::SuperVar(value)
+    }
+}
+
+impl From<ParentVarSymbol> for SymbolVariant {
+    fn from(value: ParentVarSymbol) -> Self {
+        Self::ParentVar(value)
+    }
+}
+
+impl From<VirtualParentVarSymbol> for SymbolVariant {
+    fn from(value: VirtualParentVarSymbol) -> Self {
+        Self::VirtualParentVar(value)
     }
 }
