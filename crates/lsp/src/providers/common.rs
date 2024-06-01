@@ -2,24 +2,12 @@ use std::{cell::RefCell, rc::Rc};
 use tower_lsp::lsp_types as lsp;
 use witcherscript::{ast::*, script_document::ScriptDocument, tokens::*};
 use witcherscript_analysis::symbol_analysis::symbol_table::marcher::SymbolTableMarcher;
-use witcherscript_analysis::symbol_analysis::symbols::ArrayTypeSymbol;
+use witcherscript_analysis::symbol_analysis::symbols::*;
 use witcherscript_analysis::symbol_analysis::unqualified_name_lookup::*;
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::utils::*;
 use crate::ScriptState;
 
-
-/// A node visitor that can resolve a code identifier/symbol if a specified position points to such.
-/// Expects to work after PositionSeeker in visitor chain.
-pub(super) struct TextDocumentPositionResolver<'a> {
-    pos: lsp::Position,
-    doc: &'a ScriptDocument,
-    pos_filter_payload: Rc<RefCell<PositionFilterPayload>>,
-    symtab_marcher: SymbolTableMarcher<'a>,
-    sympath_builder_payload: Rc<RefCell<SymbolPathBuilderPayload>>,
-    unl_builder_payload: Rc<RefCell<UnqualifiedNameLookup>>,
-    pub found_target: Option<PositionTarget>
-}
 
 #[derive(Debug, Clone)]
 pub(super) struct PositionTarget {
@@ -44,6 +32,81 @@ pub(super) enum PositionTargetKind {
     SuperKeyword,
     ParentKeyword,
     VirtualParentKeyword
+}
+
+impl PositionTarget {
+    pub fn target_symbol_path<'a>(&self, symtab_marcher: &SymbolTableMarcher<'a>) -> Option<SymbolPathBuf> {
+        match &self.kind {
+            PositionTargetKind::ArrayTypeIdentifier => {
+                None
+            },
+            PositionTargetKind::TypeIdentifier(type_name) => {
+                Some(BasicTypeSymbolPath::new(&type_name).into())
+            },
+            PositionTargetKind::StateDeclarationNameIdentifier => {
+                Some(self.sympath_ctx.clone())
+            },
+            PositionTargetKind::StateDeclarationBaseIdentifier => {
+                if let Some(target_state_sym) = symtab_marcher.get_symbol(&self.sympath_ctx).and_then(|v| v.try_as_state_ref()) {
+                    let base_state_name = target_state_sym.base_state_name.as_ref().map(|s| s.as_str()).unwrap_or_default();
+
+                    let mut base_state_path = None;
+                    for state in symtab_marcher.state_hierarchy(target_state_sym.path()) {
+                        if state.state_name() == base_state_name {
+                            base_state_path = Some(state.path().to_owned());
+                            break;
+                        }
+                    }
+                    
+                    base_state_path
+                } else {
+                    None
+                }
+            },
+            PositionTargetKind::DataDeclarationNameIdentifier(name) => {
+                if let Some(ctx_sym) = symtab_marcher.get_symbol(&self.sympath_ctx) {
+                    if ctx_sym.is_enum() {
+                        Some(GlobalDataSymbolPath::new(&name).into())
+                    } else {
+                        Some(MemberDataSymbolPath::new(&self.sympath_ctx, &name).into())
+                    }
+                } else {
+                    None
+                }
+            },
+            PositionTargetKind::CallableDeclarationNameIdentifier => {
+                Some(self.sympath_ctx.clone())
+            },
+            PositionTargetKind::ThisKeyword => {
+                Some(ThisVarSymbolPath::new(self.sympath_ctx.root().unwrap_or_default()).into())
+            },
+            PositionTargetKind::SuperKeyword => {
+                Some(SuperVarSymbolPath::new(self.sympath_ctx.root().unwrap_or_default()).into())
+            },
+            PositionTargetKind::ParentKeyword => {
+                Some(ParentVarSymbolPath::new(self.sympath_ctx.root().unwrap_or_default()).into())
+            },
+            PositionTargetKind::VirtualParentKeyword => {
+                Some(VirtualParentVarSymbolPath::new(self.sympath_ctx.root().unwrap_or_default()).into())
+            },
+            PositionTargetKind::ExpressionIdentifier(expr_type_path) => {
+                Some(expr_type_path.to_owned())
+            }
+        }
+    }
+}
+
+
+/// A node visitor that can resolve a code identifier/symbol if a specified position points to such.
+/// Expects to work after PositionSeeker in visitor chain.
+pub(super) struct TextDocumentPositionResolver<'a> {
+    pos: lsp::Position,
+    doc: &'a ScriptDocument,
+    pos_filter_payload: Rc<RefCell<PositionFilterPayload>>,
+    symtab_marcher: SymbolTableMarcher<'a>,
+    sympath_builder_payload: Rc<RefCell<SymbolPathBuilderPayload>>,
+    unl_builder_payload: Rc<RefCell<UnqualifiedNameLookup>>,
+    pub found_target: Option<PositionTarget>
 }
 
 impl<'a> TextDocumentPositionResolver<'a> {

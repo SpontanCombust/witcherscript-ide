@@ -8,7 +8,6 @@ use witcherscript_analysis::symbol_analysis::symbol_table::SymbolTable;
 use witcherscript_analysis::symbol_analysis::symbols::*;
 use crate::Backend;
 use super::common::resolve_text_document_position;
-use super::common::PositionTargetKind;
 
 
 pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option<lsp::Hover>> {
@@ -40,87 +39,24 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
     let position_target = resolve_text_document_position(params.text_document_position_params.position, &script_state, symtabs_marcher.clone());
     drop(script_state);
     
-    if let Some(position_target) = position_target {
-        let sympath: Option<SymbolPathBuf> = match position_target.kind {
-            PositionTargetKind::ArrayTypeIdentifier => {
-                None
-            },
-            PositionTargetKind::TypeIdentifier(type_name) => {
-                Some(BasicTypeSymbolPath::new(&type_name).into())
-            },
-            PositionTargetKind::StateDeclarationNameIdentifier => {
-                Some(position_target.sympath_ctx)
-            },
-            PositionTargetKind::StateDeclarationBaseIdentifier => {
-                let mut state_base_path = None;
-    
-                if let Some(target_state_sym) = symtabs_marcher.get_symbol(&position_target.sympath_ctx).and_then(|v| v.try_as_state_ref()) {
-                    let base_state_name = target_state_sym.base_state_name.as_ref().map(|s| s.as_str()).unwrap_or_default();
-    
-                    'ancestors: for class in symtabs_marcher.class_hierarchy(target_state_sym.parent_class_path()) {
-                        for state in symtabs_marcher.class_states(class.path()) {
-                            if state.state_name() == base_state_name {
-                                state_base_path = Some(state.path().to_owned());
-                                break 'ancestors;
-                            }
-                        }
-                    }
-                }
-                
-                state_base_path
-            },
-            PositionTargetKind::DataDeclarationNameIdentifier(name) => {
-                if let Some(ctx_sym) = symtabs_marcher.get_symbol(&position_target.sympath_ctx) {
-                    if ctx_sym.is_enum() {
-                        Some(GlobalDataSymbolPath::new(&name).into())
-                    } else {
-                        Some(MemberDataSymbolPath::new(&position_target.sympath_ctx, &name).into())
-                    }
-                } else {
-                    None
-                }
-            },
-            PositionTargetKind::CallableDeclarationNameIdentifier => {
-                Some(position_target.sympath_ctx)
-            },
-            PositionTargetKind::ThisKeyword => {
-                Some(ThisVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default()).into())
-            },
-            PositionTargetKind::SuperKeyword => {
-                Some(SuperVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default()).into())
-            },
-            PositionTargetKind::ParentKeyword => {
-                Some(ParentVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default()).into())
-            },
-            PositionTargetKind::VirtualParentKeyword => {
-                Some(VirtualParentVarSymbolPath::new(position_target.sympath_ctx.root().unwrap_or_default()).into())
-            },
-            PositionTargetKind::ExpressionIdentifier(expr_ident) => {
-                Some(expr_ident)
-            }
-        };
+    if let Some(sympath) = position_target.and_then(|pt| pt.target_symbol_path(&symtabs_marcher)) {
+        let category = sympath
+            .components().last()
+            .map(|c| c.category)
+            .unwrap_or(SymbolCategory::Type);
 
-        if let Some(sympath) = sympath {
-            let category = sympath
-                .components().last()
-                .map(|c| c.category)
-                .unwrap_or(SymbolCategory::Type);
+        let mut buf = String::new();
+        symtabs_marcher.get_symbol_with_containing_table(&sympath)
+            .map(|(symtab, symvar)| symvar.render(&mut buf, symtab))
+            .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
 
-            let mut buf = String::new();
-            symtabs_marcher.get_symbol_with_containing_table(&sympath)
-                .map(|(symtab, symvar)| symvar.render(&mut buf, symtab))
-                .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
-
-            Ok(Some(lsp::Hover {
-                contents: lsp::HoverContents::Scalar(lsp::MarkedString::LanguageString(lsp::LanguageString {
-                    language: Backend::LANGUAGE_ID.to_string(),
-                    value: buf,
-                })),
-                range: None
-            }))
-        } else {
-            Ok(None)
-        }
+        Ok(Some(lsp::Hover {
+            contents: lsp::HoverContents::Scalar(lsp::MarkedString::LanguageString(lsp::LanguageString {
+                language: Backend::LANGUAGE_ID.to_string(),
+                value: buf,
+            })),
+            range: None
+        }))
     } else {
         Ok(None)
     }

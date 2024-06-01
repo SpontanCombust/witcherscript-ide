@@ -1,9 +1,8 @@
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
-use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbols::*;
-use crate::{providers::common::PositionTargetKind, Backend, messaging::notifications};
+use crate::{Backend, messaging::notifications};
 use super::common::resolve_text_document_position;
 
 
@@ -213,80 +212,7 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
     let position_target = resolve_text_document_position(position, &script_state, symtabs_marcher.clone())?;
     drop(script_state);
 
-    
-    let sympath: Option<SymbolPathBuf> = match position_target.kind {
-        PositionTargetKind::ArrayTypeIdentifier => {
-            None
-        },
-        PositionTargetKind::TypeIdentifier(type_name) => {
-            Some(BasicTypeSymbolPath::new(&type_name).into())
-        },
-        PositionTargetKind::StateDeclarationNameIdentifier => {
-            Some(position_target.sympath_ctx)
-        },
-        PositionTargetKind::StateDeclarationBaseIdentifier => {
-            let mut state_base_path = None;
-
-            if let Some(target_state_sym) = symtabs_marcher.get_symbol(&position_target.sympath_ctx).and_then(|v| v.try_as_state_ref()) {
-                let base_state_name = target_state_sym.base_state_name.as_ref().map(|s| s.as_str()).unwrap_or_default();
-                //TODO use state_hierarchy instead
-                'ancestors: for class in symtabs_marcher.class_hierarchy(target_state_sym.parent_class_path()) {
-                    for state in symtabs_marcher.class_states(class.path()) {
-                        if state.state_name() == base_state_name {
-                            state_base_path = Some(state.path().to_owned());
-                            break 'ancestors;
-                        }
-                    }
-                }
-            }
-            
-            state_base_path
-        },
-        PositionTargetKind::DataDeclarationNameIdentifier(name) => {
-            if let Some(ctx_sym) = symtabs_marcher.get_symbol(&position_target.sympath_ctx) {
-                if ctx_sym.is_enum() {
-                    Some(GlobalDataSymbolPath::new(&name).into())
-                } else {
-                    Some(MemberDataSymbolPath::new(&position_target.sympath_ctx, &name).into())
-                }
-            } else {
-                None
-            }
-        },
-        PositionTargetKind::CallableDeclarationNameIdentifier => {
-            Some(position_target.sympath_ctx)
-        },
-        PositionTargetKind::ThisKeyword => {
-            //FIXME these indirections get handled below already!
-            symtabs_marcher
-                .get_symbol(&ThisVarSymbolPath::new(position_target.sympath_ctx.root().unwrap()))
-                .and_then(|v| v.try_as_this_var_ref())
-                .map(|sym| sym.type_path().to_owned())
-        },
-        PositionTargetKind::SuperKeyword => {
-            symtabs_marcher
-                .get_symbol(&SuperVarSymbolPath::new(position_target.sympath_ctx.root().unwrap()))
-                .and_then(|v| v.try_as_super_var_ref())
-                .map(|sym| sym.type_path().to_owned())
-        },
-        PositionTargetKind::ParentKeyword => {
-            symtabs_marcher
-                .get_symbol(&ParentVarSymbolPath::new(position_target.sympath_ctx.root().unwrap()))
-                .and_then(|v| v.try_as_parent_var_ref())
-                .map(|sym| sym.type_path().to_owned())
-        },
-        PositionTargetKind::VirtualParentKeyword => {
-            symtabs_marcher
-                .get_symbol(&VirtualParentVarSymbolPath::new(position_target.sympath_ctx.root().unwrap()))
-                .and_then(|v| v.try_as_virtual_parent_var_ref())
-                .map(|sym| sym.type_path().to_owned())
-        },
-        PositionTargetKind::ExpressionIdentifier(expr_type_path) => {
-            Some(expr_type_path)
-        }
-    };
-
-    let symvar = sympath
+    let symvar = position_target.target_symbol_path(&symtabs_marcher)
         .and_then(|sympath| symtabs_marcher.get_symbol(&sympath))
         .and_then(|symvar| {
             let rerouted_path = match symvar {

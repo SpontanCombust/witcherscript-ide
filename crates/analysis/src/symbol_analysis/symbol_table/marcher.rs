@@ -257,10 +257,11 @@ impl<'a> Iterator for StateHierarchy<'a> {
             self.current_state_path.clear();
             //FIXME switch to using `base_state_path` when that is possible
             if let Some(base_state_name) = &current_state_sym.base_state_name {
-                for class in self.marcher.class_hierarchy(current_state_sym.parent_class_path()) {
+                'classes: for class in self.marcher.class_hierarchy(current_state_sym.parent_class_path()) {
                     for state in self.marcher.class_states(class.path()) {
                         if state.state_name() == base_state_name {
                             state.path().clone_into(&mut self.current_state_path);
+                            break 'classes;
                         }
                     }
                 }
