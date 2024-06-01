@@ -1,7 +1,6 @@
 //! Utilities for sending informational messages to the client.
 
-use std::collections::HashMap;
-use tokio::sync::Mutex;
+use std::{collections::HashMap, sync::Mutex};
 use tower_lsp::Client;
 use abs_path::AbsPath;
 

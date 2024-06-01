@@ -108,7 +108,7 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
     if doc_path.extension().map(|ext| ext == "ws").unwrap_or(false) {
         let mut should_remove_script = false;
         if backend.scripts.get(&doc_path).map(|s| s.source_tree_path.is_none()).unwrap_or(false) {
-            backend.reporter.purge_diagnostics(&doc_path).await;
+            backend.reporter.purge_diagnostics(&doc_path);
             backend.reporter.commit_diagnostics(&doc_path).await;
             should_remove_script = true;
         }

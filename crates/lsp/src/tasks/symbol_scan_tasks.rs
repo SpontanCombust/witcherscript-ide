@@ -57,7 +57,7 @@ impl Backend {
         // while symbols are getting collected, remove old ones for files we're interested in
         for p in modified_source_paths.iter() {
             symtab.remove_symbols_for_source(p.local());
-            self.reporter.clear_diagnostics(p.absolute(), DiagnosticDomain::SymbolAnalysis).await;
+            self.reporter.clear_diagnostics(p.absolute(), DiagnosticDomain::SymbolAnalysis);
         }
 
         let (scanning_symtab, mut scanning_diagnostis) = recv.await.expect("on_scripts_modified symbol scan recv fail");
@@ -70,7 +70,7 @@ impl Backend {
 
 
         for loc_diag in scanning_diagnostis {
-            self.reporter.push_diagnostic(&loc_diag.path, loc_diag.diagnostic).await;
+            self.reporter.push_diagnostic(&loc_diag.path, loc_diag.diagnostic);
         }
     }
 }

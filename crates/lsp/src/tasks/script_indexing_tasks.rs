@@ -108,7 +108,7 @@ impl Backend {
         for removed_file in removed_files {
             // self.log_info(format!("Deprecated script: {}", removed_path)).await;
             self.scripts.remove(removed_file.path.absolute());
-            self.reporter.purge_diagnostics(removed_file.path.absolute()).await;
+            self.reporter.purge_diagnostics(removed_file.path.absolute());
         }
     }
     

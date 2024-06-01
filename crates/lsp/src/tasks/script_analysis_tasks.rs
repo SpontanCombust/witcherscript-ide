@@ -49,8 +49,8 @@ impl Backend {
         }
 
         for (script_path, diags, kinds) in results {
-            self.clear_diagnostics_for_analysis(script_path.as_ref(), kinds).await;
-            self.reporter.push_diagnostics(script_path.as_ref(), diags).await;
+            self.clear_diagnostics_for_analysis(script_path.as_ref(), kinds);
+            self.reporter.push_diagnostics(script_path.as_ref(), diags);
         }
     }
 
@@ -77,14 +77,14 @@ impl Backend {
         }
 
         for (script_path, diags, kinds) in results {
-            self.clear_diagnostics_for_analysis(script_path.as_ref(), kinds).await;
-            self.reporter.push_diagnostics(script_path.as_ref(), diags).await;
+            self.clear_diagnostics_for_analysis(script_path.as_ref(), kinds);
+            self.reporter.push_diagnostics(script_path.as_ref(), diags);
         }
     }
 
-    async fn clear_diagnostics_for_analysis(&self, path: &AbsPath, kind: ScriptAnalysisKind) {
+    fn clear_diagnostics_for_analysis(&self, path: &AbsPath, kind: ScriptAnalysisKind) {
         if kind.contains(ScriptAnalysisKind::SyntaxAnalysis) {
-            self.reporter.clear_diagnostics(path, DiagnosticDomain::SyntaxAnalysis).await;
+            self.reporter.clear_diagnostics(path, DiagnosticDomain::SyntaxAnalysis);
         }
     }
 }

@@ -74,7 +74,7 @@ impl Backend {
     pub async fn build_content_graph(&self, content_graph: &mut ContentGraph) {
         self.reporter.log_info("Building content graph...").await;
 
-        self.reporter.clear_all_diagnostics().await;
+        self.reporter.clear_all_diagnostics();
         
         let diff = content_graph.build();
     
@@ -188,7 +188,7 @@ impl Backend {
                 }
 
                 if let Some(manifest_path) = manifest_path {
-                    self.reporter.purge_diagnostics(manifest_path).await;
+                    self.reporter.purge_diagnostics(manifest_path);
                 }
             }
         }
@@ -250,25 +250,25 @@ impl Backend {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::ProjectDependencyPathNotFound(content_path)
-                }).await;
+                });
             },
             ContentGraphError::DependencyNameNotFound { content_name, manifest_path, manifest_range, .. } => {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::ProjectDependencyNameNotFound(content_name)
-                }).await;
+                });
             },
             ContentGraphError::DependencyNameNotFoundAtPath { content_name, manifest_path, manifest_range } => {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::ProjectDependencyNameNotFoundAtPath(content_name)
-                }).await;
+                });
             },
             ContentGraphError::MultipleMatchingDependencies { content_name, manifest_path, manifest_range, matching_paths } => {
                 self.reporter.push_diagnostic(&manifest_path, Diagnostic {
                     range: manifest_range,
                     kind: DiagnosticKind::MultipleMatchingProjectDependencies { content_name, matching_paths }
-                }).await;
+                });
             },
             ContentGraphError::NativeContentNotFound(scan_err) => {
                 self.reporter.log_error(format!("Native content directory could not be found!")).await;
@@ -289,13 +289,13 @@ impl Backend {
                 self.reporter.push_diagnostic(&path, Diagnostic {
                     range: *range,
                     kind: DiagnosticKind::InvalidProjectManifest(msg.to_owned())
-                }).await;
+                });
             },
             witcherscript_project::manifest::Error::InvalidNameField { range } => {
                 self.reporter.push_diagnostic(&path, Diagnostic {
                     range: *range,
                     kind: DiagnosticKind::InvalidProjectName
-                }).await;
+                });
             },
         }
     }
@@ -310,7 +310,7 @@ impl Backend {
                 self.reporter.push_diagnostic(&path, Diagnostic {
                     range: lsp::Range::new(*position, *position),
                     kind: DiagnosticKind::InvalidRedkitProjectManifest(msg.to_owned())
-                }).await;
+                });
             },
         }   
     }
