@@ -4,6 +4,7 @@ use tower_lsp::jsonrpc::Result;
 use witcherscript::tokens::Keyword;
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbol_table::iter::*;
+use witcherscript_analysis::symbol_analysis::symbol_table::marcher::SymbolTableMarcher;
 use witcherscript_analysis::symbol_analysis::symbol_table::SymbolTable;
 use witcherscript_analysis::symbol_analysis::symbols::*;
 use crate::Backend;
@@ -47,7 +48,7 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
 
         let mut buf = String::new();
         symtabs_marcher.get_symbol_with_containing_table(&sympath)
-            .map(|(symtab, symvar)| symvar.render(&mut buf, symtab))
+            .map(|(symtab, symvar)| symvar.render(&mut buf, symtab, &symtabs_marcher))
             .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
 
         Ok(Some(lsp::Hover {
@@ -64,7 +65,7 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
 
 
 trait RenderTooltip {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable);
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>);
 }
 
 trait RenderShortTooltip {
@@ -73,37 +74,38 @@ trait RenderShortTooltip {
 
 
 impl RenderTooltip for SymbolVariant {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
         match self {
-            SymbolVariant::Class(s) => s.render(buf, symtab),
-            SymbolVariant::State(s) => s.render(buf, symtab),
-            SymbolVariant::Struct(s) => s.render(buf, symtab),
-            SymbolVariant::Enum(s) => s.render(buf, symtab),
-            SymbolVariant::Array(s) => s.render(buf, symtab),
-            SymbolVariant::ArrayFunc(s) => s.render(buf, symtab),
-            SymbolVariant::ArrayFuncParam(s) => s.render(buf, symtab),
-            SymbolVariant::GlobalFunc(s) => s.render(buf, symtab),
-            SymbolVariant::MemberFunc(s) => s.render(buf, symtab),
-            SymbolVariant::Event(s) => s.render(buf, symtab),
-            SymbolVariant::Constructor(s) => s.render(buf, symtab),
-            SymbolVariant::Primitive(s) => s.render(buf, symtab),
-            SymbolVariant::EnumVariant(s) => s.render(buf, symtab),
-            SymbolVariant::FuncParam(s) => s.render(buf, symtab),
-            SymbolVariant::GlobalVar(s) => s.render(buf, symtab),
-            SymbolVariant::MemberVar(s) => s.render(buf, symtab),
-            SymbolVariant::Autobind(s) => s.render(buf, symtab),
-            SymbolVariant::LocalVar(s) => s.render(buf, symtab),
-            SymbolVariant::ThisVar(s) => s.render(buf, symtab),
-            SymbolVariant::SuperVar(s) => s.render(buf, symtab),
-            SymbolVariant::ParentVar(s) => s.render(buf, symtab),
-            SymbolVariant::VirtualParentVar(s) => s.render(buf, symtab),
+            SymbolVariant::Class(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::State(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::Struct(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::Enum(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::Array(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::ArrayFunc(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::ArrayFuncParam(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::GlobalFunc(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::MemberFunc(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::Event(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::Constructor(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::Primitive(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::EnumVariant(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::FuncParam(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::GlobalVar(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::MemberVar(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::Autobind(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::LocalVar(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::ThisVar(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::SuperVar(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::StateSuperVar(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::ParentVar(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::VirtualParentVar(s) => s.render(buf, symtab, marcher),
         }
     }
 }
 
 
 impl RenderTooltip for ClassSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         for spec in self.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
@@ -134,7 +136,7 @@ impl RenderShortTooltip for ClassSymbol {
 }
 
 impl RenderTooltip for StateSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         for spec in self.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
@@ -177,7 +179,7 @@ impl RenderShortTooltip for StateSymbol {
 }
 
 impl RenderTooltip for StructSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         for spec in self.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
@@ -201,7 +203,7 @@ impl RenderShortTooltip for StructSymbol {
 }
 
 impl RenderTooltip for EnumSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(Keyword::Enum.as_ref());
         buf.push(' ');
 
@@ -219,7 +221,7 @@ impl RenderShortTooltip for EnumSymbol {
 }
 
 impl RenderTooltip for ArrayTypeSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(self.name())
     }
 }
@@ -231,7 +233,7 @@ impl RenderShortTooltip for ArrayTypeSymbol {
 }
 
 impl RenderTooltip for ArrayTypeFunctionSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
         buf.push_str(&format!("{}<T>\n", ArrayTypeSymbol::TYPE_NAME));
         
         buf.push_str(Keyword::Function.as_ref());
@@ -249,11 +251,11 @@ impl RenderTooltip for ArrayTypeFunctionSymbol {
 
         let mut params_iter = params.into_iter();
         if let Some(param) = params_iter.next() {
-            param.render(buf, symtab);
+            param.render(buf, symtab, marcher);
         }
         for param in params_iter {
             buf.push_str(", ");
-            param.render(buf, symtab);
+            param.render(buf, symtab, marcher);
         }
         
         buf.push(')');
@@ -271,7 +273,7 @@ impl RenderTooltip for ArrayTypeFunctionSymbol {
 }
 
 impl RenderTooltip for ArrayTypeFunctionParameterSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(self.name());
         buf.push(' ');
         buf.push(':');
@@ -288,7 +290,7 @@ impl RenderTooltip for ArrayTypeFunctionParameterSymbol {
 
 
 impl RenderTooltip for GlobalFunctionSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
         for spec in self.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
@@ -323,11 +325,11 @@ impl RenderTooltip for GlobalFunctionSymbol {
 
         let mut params_iter = params.into_iter();
         if let Some(param) = params_iter.next() {
-            param.render(buf, symtab);
+            param.render(buf, symtab, marcher);
         }
         for param in params_iter {
             buf.push_str(", ");
-            param.render(buf, symtab);
+            param.render(buf, symtab, marcher);
         }
         
         buf.push(')');
@@ -340,7 +342,7 @@ impl RenderTooltip for GlobalFunctionSymbol {
 }
 
 impl RenderTooltip for MemberFunctionSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
         let parent_symvar = 
             self.path().parent()
             .and_then(|p| symtab.get_symbol(p));
@@ -398,11 +400,11 @@ impl RenderTooltip for MemberFunctionSymbol {
 
         let mut params_iter = params.into_iter();
         if let Some(param) = params_iter.next() {
-            param.render(buf, symtab);
+            param.render(buf, symtab, marcher);
         }
         for param in params_iter {
             buf.push_str(", ");
-            param.render(buf, symtab);
+            param.render(buf, symtab, marcher);
         }
         
         buf.push(')');
@@ -415,7 +417,7 @@ impl RenderTooltip for MemberFunctionSymbol {
 }
 
 impl RenderTooltip for EventSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
         let parent_symvar = 
             self.path().parent()
             .and_then(|p| symtab.get_symbol(p));
@@ -460,11 +462,11 @@ impl RenderTooltip for EventSymbol {
 
         let mut params_iter = params.into_iter();
         if let Some(param) = params_iter.next() {
-            param.render(buf, symtab);
+            param.render(buf, symtab, marcher);
         }
         for param in params_iter {
             buf.push_str(", ");
-            param.render(buf, symtab);
+            param.render(buf, symtab, marcher);
         }
         
         buf.push(')');
@@ -472,23 +474,23 @@ impl RenderTooltip for EventSymbol {
 }
 
 impl RenderTooltip for ConstructorSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
         symtab.get_symbol(&self.parent_type_path)
             .and_then(|s| s.try_as_struct_ref())
-            .map(|s| s.render(buf, symtab));
+            .map(|s| s.render(buf, symtab, marcher));
     }
 }
 
 
 
 impl RenderTooltip for PrimitiveTypeSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(self.alias_name().unwrap_or(self.name()))
     }
 }
 
 impl RenderTooltip for EnumVariantSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         symtab.get_symbol(&self.parent_enum_path)
             .and_then(|s| s.try_as_enum_ref())
             .map(|s| {
@@ -505,7 +507,7 @@ impl RenderTooltip for EnumVariantSymbol {
 }
 
 impl RenderTooltip for FunctionParameterSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         for spec in self.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
@@ -523,7 +525,7 @@ impl RenderTooltip for FunctionParameterSymbol {
 }
 
 impl RenderTooltip for GlobalVarSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(self.name());
         buf.push(' ');
         buf.push(':');
@@ -533,7 +535,7 @@ impl RenderTooltip for GlobalVarSymbol {
 }
 
 impl RenderTooltip for MemberVarSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         let parent_symvar = 
             self.path().parent()
             .and_then(|p| symtab.get_symbol(p));
@@ -578,7 +580,7 @@ impl RenderTooltip for MemberVarSymbol {
 }
 
 impl RenderTooltip for AutobindSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         let parent_symvar = 
             self.path().parent()
             .and_then(|p| symtab.get_symbol(p));
@@ -615,7 +617,7 @@ impl RenderTooltip for AutobindSymbol {
 }
 
 impl RenderTooltip for LocalVarSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(Keyword::Var.as_ref());
         buf.push(' ');
         buf.push_str(self.name());
@@ -627,7 +629,7 @@ impl RenderTooltip for LocalVarSymbol {
 }
 
 impl RenderTooltip for ThisVarSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(Keyword::This.as_ref());
         buf.push(' ');
         buf.push(':');
@@ -637,7 +639,7 @@ impl RenderTooltip for ThisVarSymbol {
 }
 
 impl RenderTooltip for SuperVarSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(Keyword::Super.as_ref());
         buf.push(' ');
         buf.push(':');
@@ -646,8 +648,28 @@ impl RenderTooltip for SuperVarSymbol {
     }
 }
 
+impl RenderTooltip for StateSuperVarSymbol {
+    fn render(&self, buf: &mut String, _: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+        buf.push_str(Keyword::Super.as_ref());
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+
+        if self.base_state_name().is_some() {
+            let state_path = self.path().root().unwrap_or_default();
+            if let Some(base_state_sym) = marcher.state_hierarchy(state_path).skip(1).next() {
+                buf.push_str(base_state_sym.name());
+            } else {
+                buf.push_str(&SymbolPathBuf::unknown(SymbolCategory::Type).to_string());
+            }
+        } else {
+            buf.push_str(StateSymbol::DEFAULT_STATE_BASE_NAME);
+        }
+    }
+}
+
 impl RenderTooltip for ParentVarSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(Keyword::Parent.as_ref());
         buf.push(' ');
         buf.push(':');
@@ -657,7 +679,7 @@ impl RenderTooltip for ParentVarSymbol {
 }
 
 impl RenderTooltip for VirtualParentVarSymbol {
-    fn render(&self, buf: &mut String, _: &SymbolTable) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(Keyword::VirtualParent.as_ref());
         buf.push(' ');
         buf.push(':');

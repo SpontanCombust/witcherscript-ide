@@ -189,6 +189,46 @@ impl SuperVarSymbol {
 }
 
 
+/// States are different from classes when it comes to handling the `super` pointer.
+/// When you `extend` a class the base name you give is an unambiguous name of the class you want to extend.
+/// When it comes to states however WitcherScript syntax was not very well thought out for them IMO.
+/// That's because when you write `state B in ClassB extends A` the state `A` is not guaranteed to also be a state of `ClassB`.
+/// What this means is that you need a foresight into the inheritance tree of `ClassB` before you can even know the name of the class
+/// that has state `A`. We need a name of that class, because every state declaration produces a special kind of class, whose real name
+/// is {ClassName}State{StateName}. 
+/// 
+/// The inner machinations of WitcherScript statemachines are an enigma...
+#[derive(Debug, Clone)]
+pub struct StateSuperVarSymbol {
+    path: SuperVarSymbolPath,
+    /// If there is no name, the base is always [`StateSymbol::DEFAULT_STATE_BASE_NAME`]
+    base_state_name: Option<String>
+}
+
+impl Symbol for StateSuperVarSymbol {
+    fn typ(&self) -> SymbolType {
+        SymbolType::SuperVar
+    }
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
+
+impl StateSuperVarSymbol {
+    pub fn new(path: SuperVarSymbolPath, base_state_name: Option<String>) -> Self {
+        Self {
+            path,
+            base_state_name
+        }
+    }
+
+    pub fn base_state_name(&self) -> Option<&str> {
+        self.base_state_name.as_ref().map(|s| s.as_str())
+    }
+}
+
+
 #[derive(Debug, Clone)]
 pub struct ParentVarSymbol {
     path: ParentVarSymbolPath,

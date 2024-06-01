@@ -106,6 +106,18 @@ impl<'a> ExpressionEvaluator<'a> {
                 SymbolVariant::LocalVar(s) => s.type_path.clone().into(),
                 SymbolVariant::ThisVar(s) => s.type_path().to_owned(),
                 SymbolVariant::SuperVar(s) => s.type_path().to_owned(),
+                SymbolVariant::StateSuperVar(s) => {
+                    if s.base_state_name().is_some() {
+                        let state_path = path.root().unwrap_or_default();
+                        self.symtab_marcher
+                            .state_hierarchy(state_path)
+                            .skip(1).next()
+                            .map(|sym| sym.path().to_owned())
+                            .unwrap_or(SymbolPathBuf::unknown(SymbolCategory::Type))
+                    } else {
+                        BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME).into()
+                    }
+                },
                 SymbolVariant::ParentVar(s) => s.type_path().to_owned(),
                 SymbolVariant::VirtualParentVar(s) => s.type_path().to_owned(),
             }

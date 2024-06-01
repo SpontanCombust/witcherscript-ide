@@ -119,6 +119,7 @@ trait ToDocumentSymbol {
 
 impl ToDocumentSymbol for ClassSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
@@ -137,6 +138,7 @@ impl ToDocumentSymbol for ClassSymbol {
 
 impl ToDocumentSymbol for StructSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
@@ -153,6 +155,7 @@ impl ToDocumentSymbol for StructSymbol {
 
 impl ToDocumentSymbol for StateSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
             name: format!("state {} in {}", self.state_name(), self.parent_class_name()),
@@ -169,6 +172,7 @@ impl ToDocumentSymbol for StateSymbol {
 
 impl ToDocumentSymbol for EnumSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
@@ -185,6 +189,7 @@ impl ToDocumentSymbol for EnumSymbol {
 
 impl ToDocumentSymbol for EnumVariantSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
@@ -200,18 +205,21 @@ impl ToDocumentSymbol for EnumVariantSymbol {
 }
 
 impl ToDocumentSymbol for ArrayTypeSymbol {
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         None
     }
 }
 
 impl ToDocumentSymbol for ArrayTypeFunctionSymbol {
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         None
     }
 }
 
 impl ToDocumentSymbol for ArrayTypeFunctionParameterSymbol {
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         None
     }
@@ -219,6 +227,7 @@ impl ToDocumentSymbol for ArrayTypeFunctionParameterSymbol {
 
 impl ToDocumentSymbol for GlobalFunctionSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
@@ -235,6 +244,7 @@ impl ToDocumentSymbol for GlobalFunctionSymbol {
 
 impl ToDocumentSymbol for MemberFunctionSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
@@ -251,6 +261,7 @@ impl ToDocumentSymbol for MemberFunctionSymbol {
 
 impl ToDocumentSymbol for EventSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
@@ -266,6 +277,7 @@ impl ToDocumentSymbol for EventSymbol {
 }
 
 impl ToDocumentSymbol for PrimitiveTypeSymbol {
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         None
     }
@@ -273,6 +285,7 @@ impl ToDocumentSymbol for PrimitiveTypeSymbol {
 
 impl ToDocumentSymbol for FunctionParameterSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         // we're not going to include parameters in listed symbols
         None
@@ -290,6 +303,7 @@ impl ToDocumentSymbol for FunctionParameterSymbol {
 }
 
 impl ToDocumentSymbol for GlobalVarSymbol {
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         None
     }
@@ -297,6 +311,7 @@ impl ToDocumentSymbol for GlobalVarSymbol {
 
 impl ToDocumentSymbol for MemberVarSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
@@ -317,6 +332,7 @@ impl ToDocumentSymbol for MemberVarSymbol {
 
 impl ToDocumentSymbol for AutobindSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         Some(lsp::DocumentSymbol {
             name: self.name().to_owned(),
@@ -333,6 +349,7 @@ impl ToDocumentSymbol for AutobindSymbol {
 
 impl ToDocumentSymbol for LocalVarSymbol {
     #[allow(deprecated)]
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         // we're not going to include local vars in listed symbols
         None
@@ -350,30 +367,42 @@ impl ToDocumentSymbol for LocalVarSymbol {
 }
 
 impl ToDocumentSymbol for ThisVarSymbol {
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         None
     }
 }
 
 impl ToDocumentSymbol for SuperVarSymbol {
+    #[inline]
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        None
+    }
+}
+
+impl ToDocumentSymbol for StateSuperVarSymbol {
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         None
     }
 }
 
 impl ToDocumentSymbol for ParentVarSymbol {
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         None
     }
 }
 
 impl ToDocumentSymbol for VirtualParentVarSymbol {
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         None
     }
 }
 
 impl ToDocumentSymbol for ConstructorSymbol {
+    #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         None
     }
@@ -401,6 +430,7 @@ impl ToDocumentSymbol for SymbolVariant {
             SymbolVariant::LocalVar(s) => s.to_doc_sym(),
             SymbolVariant::ThisVar(s) => s.to_doc_sym(),
             SymbolVariant::SuperVar(s) => s.to_doc_sym(),
+            SymbolVariant::StateSuperVar(s) => s.to_doc_sym(),
             SymbolVariant::ParentVar(s) => s.to_doc_sym(),
             SymbolVariant::VirtualParentVar(s) => s.to_doc_sym(),
             SymbolVariant::Constructor(s) => s.to_doc_sym()

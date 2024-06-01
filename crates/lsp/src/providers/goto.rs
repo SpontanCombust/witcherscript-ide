@@ -1,7 +1,7 @@
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
-use witcherscript_analysis::symbol_analysis::symbols::*;
+use witcherscript_analysis::symbol_analysis::{symbol_path::SymbolPathBuf, symbols::*};
 use crate::{Backend, messaging::notifications};
 use super::common::resolve_text_document_position;
 
@@ -215,11 +215,23 @@ async fn inspect_symbol_at_position(backend: &Backend, content_path: &AbsPath, d
     let symvar = position_target.target_symbol_path(&symtabs_marcher)
         .and_then(|sympath| symtabs_marcher.get_symbol(&sympath))
         .and_then(|symvar| {
+            let default_state_base_path: SymbolPathBuf = BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME).into();
             let rerouted_path = match symvar {
                 SymbolVariant::Constructor(s) => Some(s.parent_type_path.as_sympath()),
                 SymbolVariant::GlobalVar(s) => Some(s.type_path().as_sympath()),
                 SymbolVariant::ThisVar(s) => Some(s.type_path()),
                 SymbolVariant::SuperVar(s) => Some(s.type_path()),
+                SymbolVariant::StateSuperVar(s) => {
+                    if s.base_state_name().is_some() {
+                        let state_path = s.path().root().unwrap_or_default();
+                        symtabs_marcher
+                            .state_hierarchy(state_path)
+                            .skip(1).next()
+                            .map(|sym| sym.path())
+                    } else {
+                        Some(default_state_base_path.as_sympath())
+                    }
+                },
                 SymbolVariant::ParentVar(s) => Some(s.type_path()),
                 SymbolVariant::VirtualParentVar(s) => Some(s.type_path()),
                 _ => None

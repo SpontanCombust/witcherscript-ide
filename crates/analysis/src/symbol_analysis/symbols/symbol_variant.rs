@@ -31,6 +31,7 @@ pub enum SymbolVariant {
     LocalVar(LocalVarSymbol),
     ThisVar(ThisVarSymbol),
     SuperVar(SuperVarSymbol),
+    StateSuperVar(StateSuperVarSymbol),
     ParentVar(ParentVarSymbol),
     VirtualParentVar(VirtualParentVarSymbol),
 }
@@ -58,6 +59,7 @@ impl std::fmt::Debug for SymbolVariant {
             Self::LocalVar(s) => s.fmt(f),
             Self::ThisVar(s) => s.fmt(f),
             Self::SuperVar(s) => s.fmt(f),
+            Self::StateSuperVar(s) => s.fmt(f),
             Self::ParentVar(s) => s.fmt(f),
             Self::VirtualParentVar(s) => s.fmt(f),
         }
@@ -87,6 +89,7 @@ impl SymbolVariant {
             SymbolVariant::LocalVar(s) => s.typ(),
             SymbolVariant::ThisVar(s) => s.typ(),
             SymbolVariant::SuperVar(s) => s.typ(),
+            SymbolVariant::StateSuperVar(s) => s.typ(),
             SymbolVariant::ParentVar(s) => s.typ(),
             SymbolVariant::VirtualParentVar(s) => s.typ(),
         }
@@ -114,6 +117,7 @@ impl SymbolVariant {
             SymbolVariant::LocalVar(s) => s.path(),
             SymbolVariant::ThisVar(s) => s.path(),
             SymbolVariant::SuperVar(s) => s.path(),
+            SymbolVariant::StateSuperVar(s) => s.path(),
             SymbolVariant::ParentVar(s) => s.path(),
             SymbolVariant::VirtualParentVar(s) => s.path(),
         }
@@ -141,6 +145,7 @@ impl SymbolVariant {
             SymbolVariant::LocalVar(s) => s.name(),
             SymbolVariant::ThisVar(s) => s.name(),
             SymbolVariant::SuperVar(s) => s.name(),
+            SymbolVariant::StateSuperVar(s) => s.name(),
             SymbolVariant::ParentVar(s) => s.name(),
             SymbolVariant::VirtualParentVar(s) => s.name(),
         }
@@ -168,6 +173,7 @@ impl SymbolVariant {
             SymbolVariant::LocalVar(s) => Some(s.location()),
             SymbolVariant::ThisVar(_) => None,
             SymbolVariant::SuperVar(_) => None,
+            SymbolVariant::StateSuperVar(_) => None,
             SymbolVariant::ParentVar(_) => None,
             SymbolVariant::VirtualParentVar(_) => None,
         }
@@ -292,6 +298,12 @@ impl From<ThisVarSymbol> for SymbolVariant {
 impl From<SuperVarSymbol> for SymbolVariant {
     fn from(value: SuperVarSymbol) -> Self {
         Self::SuperVar(value)
+    }
+}
+
+impl From<StateSuperVarSymbol> for SymbolVariant {
+    fn from(value: StateSuperVarSymbol) -> Self {
+        Self::StateSuperVar(value)
     }
 }
 
