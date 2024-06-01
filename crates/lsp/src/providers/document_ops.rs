@@ -55,8 +55,7 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
     if should_notify {
         if let (Some(source_path), Some(content_path)) = (source_path, backend.source_trees.containing_content_path(&doc_path)) {
             if let Ok(mut symtabs) = backend.symtabs.try_write() {
-                let mut symtab = symtabs.get_mut(&content_path).unwrap();
-                backend.scan_symbols(&mut symtab, &content_path, vec![source_path]).await;
+                backend.scan_symbols(&mut symtabs, &content_path, vec![source_path]).await;
             }
         }
 

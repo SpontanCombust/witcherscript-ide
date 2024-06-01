@@ -5,30 +5,33 @@ use tokio::{sync::oneshot, time::Instant};
 use witcherscript_diagnostics::*;
 use witcherscript_analysis::{jobs, symbol_analysis::symbol_table::SymbolTable};
 use witcherscript_project::SourceTreePath;
-use crate::{Backend, ScriptStates};
+use crate::{Backend, ScriptStates, SymbolTables};
 
 
 impl Backend {
-    /// modified_script_paths must belong to the same content as the symtab
-    pub async fn scan_symbols(&self, symtab: &mut SymbolTable, content_path: &AbsPath, modified_source_paths: Vec<SourceTreePath>) {
+    pub async fn scan_symbols(&self, symtabs: &mut SymbolTables, content_path: &AbsPath, modified_source_paths: Vec<SourceTreePath>) {
         if modified_source_paths.is_empty() {
             return;
         }
 
-        let start = Instant::now();
-
-        for p in modified_source_paths.iter() {
-            symtab.remove_symbols_for_source(p.local());
-            self.reporter.clear_diagnostics(p.absolute(), DiagnosticDomain::SymbolAnalysis).await;
+        let symtab;
+        if let Some(val) = symtabs.get_mut(content_path) {
+            symtab = val;
+        } else {
+            return;
         }
+ 
 
         let worker_count = std::cmp::min(rayon::current_num_threads(), modified_source_paths.len());
         let scripts = Arc::clone(&self.scripts);
         let scripts_root = modified_source_paths.first().unwrap().script_root_arc();
-
+        
         let job_provider = SymbolScanJobProvider {
-            script_paths: Arc::new(Mutex::new(modified_source_paths))
+            script_paths: Arc::new(Mutex::new(modified_source_paths.clone()))
         };
+
+
+        let start = Instant::now();
 
         let (send, recv) = oneshot::channel();
         rayon::spawn(move || {
@@ -51,14 +54,20 @@ impl Backend {
             send.send((merged_symtab, merged_diagnostics)).expect("on_scripts_modified symbol scan send fail");
         });
 
-        let (scanning_symtab, mut scanning_diagnostis) = recv.await.expect("on_scripts_modified symbol scan recv fail");
+        // while symbols are getting collected, remove old ones for files we're interested in
+        for p in modified_source_paths.iter() {
+            symtab.remove_symbols_for_source(p.local());
+            self.reporter.clear_diagnostics(p.absolute(), DiagnosticDomain::SymbolAnalysis).await;
+        }
 
+        let (scanning_symtab, mut scanning_diagnostis) = recv.await.expect("on_scripts_modified symbol scan recv fail");
         jobs::merge_symbol_tables(symtab, scanning_symtab, &mut scanning_diagnostis);
 
         symtab.dispose_unreferenced_array_symbols();
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Updated symbol table for content {} in {:.3}s", content_path, duration.as_secs_f32())).await;
+
 
         for loc_diag in scanning_diagnostis {
             self.reporter.push_diagnostic(&loc_diag.path, loc_diag.diagnostic).await;
