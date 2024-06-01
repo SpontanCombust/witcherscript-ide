@@ -97,7 +97,7 @@ impl SymbolTable {
 
     /// If the path is occupied returns Err(PathOccupiedError).
     /// Otherwise if the path was not found returns Ok.
-    /// If you only want to know if the path exists in the symbol table without extra info, use [`Self::contains`] instead.
+    /// If you only want to know if the path exists in the symbol table without extra info, use [`Self::contains_symbol`] instead.
     pub fn test_contains_symbol(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         if let Some(occupying) = self.symbols.get(path) {
             Err(PathOccupiedError {
@@ -110,7 +110,7 @@ impl SymbolTable {
     }
 
     /// Returns whether the given symbol path exists in the symbol table.
-    /// If you want to know more about the occupying symbol, use [`Self::test_contains`] instead.
+    /// If you want to know more about the occupying symbol, use [`Self::test_contains_symbol`] instead.
     #[inline]
     pub fn contains_symbol(&self, path: &SymbolPath) -> bool {
         self.symbols.contains_key(path)
@@ -119,11 +119,6 @@ impl SymbolTable {
     #[inline]
     pub fn get_symbol<'a>(&'a self, path: &SymbolPath) -> Option<&'a SymbolVariant> {
         self.symbols.get(path)
-    }
-
-    #[inline]
-    pub(crate) fn get_symbol_mut<'a>(&'a mut self, path: &SymbolPath) -> Option<&'a mut SymbolVariant> {
-        self.symbols.get_mut(path)
     }
 
     #[inline]

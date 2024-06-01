@@ -255,7 +255,6 @@ impl<'a> Iterator for StateHierarchy<'a> {
         
         if let Some(current_state_sym) = self.marcher.get_symbol(&self.current_state_path).and_then(|v| v.try_as_state_ref()) {
             self.current_state_path.clear();
-            //FIXME switch to using `base_state_path` when that is possible
             if let Some(base_state_name) = &current_state_sym.base_state_name {
                 'classes: for class in self.marcher.class_hierarchy(current_state_sym.parent_class_path()) {
                     for state in self.marcher.class_states(class.path()) {

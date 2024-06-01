@@ -9,10 +9,6 @@ pub struct StateSymbol {
     location: SymbolLocation,
     pub specifiers: SymbolSpecifiers<StateSpecifier>,
     pub base_state_name: Option<String>,
-    /*//TODO base_state_path can be known only after the class tree can be inspected 
-    the base state can belong to a super class of the statemachine class
-    and its name cannot be deduced from the context of state declaration itself*/
-    pub base_state_path: Option<StateSymbolPath> 
 }
 
 impl Symbol for StateSymbol {
@@ -45,8 +41,7 @@ impl StateSymbol {
             path,
             location,
             specifiers: SymbolSpecifiers::new(),
-            base_state_name: None,
-            base_state_path: None
+            base_state_name: None
         }
     }
 
