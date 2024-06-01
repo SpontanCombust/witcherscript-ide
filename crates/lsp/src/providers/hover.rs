@@ -68,8 +68,11 @@ trait RenderTooltip {
     fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>);
 }
 
-trait RenderShortTooltip {
-    fn render_short(&self, buf: &mut String);
+/// For when the text is supposed to be rendered as a part of some bigger tooltip
+/// e.g. a member var tooltip contains a partial tooltip for containing class at the top 
+/// to know where that var comes from
+trait RenderPartialTooltip {
+    fn render_partial(&self, buf: &mut String);
 }
 
 
@@ -126,8 +129,8 @@ impl RenderTooltip for ClassSymbol {
     }
 }
 
-impl RenderShortTooltip for ClassSymbol {
-    fn render_short(&self, buf: &mut String) {
+impl RenderPartialTooltip for ClassSymbol {
+    fn render_partial(&self, buf: &mut String) {
         buf.push_str(Keyword::Class.as_ref());
         buf.push(' ');
 
@@ -163,8 +166,8 @@ impl RenderTooltip for StateSymbol {
     }
 }
 
-impl RenderShortTooltip for StateSymbol {
-    fn render_short(&self, buf: &mut String) {
+impl RenderPartialTooltip for StateSymbol {
+    fn render_partial(&self, buf: &mut String) {
         buf.push_str(Keyword::State.as_ref());
         buf.push(' ');
 
@@ -193,8 +196,8 @@ impl RenderTooltip for StructSymbol {
     }
 }
 
-impl RenderShortTooltip for StructSymbol {
-    fn render_short(&self, buf: &mut String) {
+impl RenderPartialTooltip for StructSymbol {
+    fn render_partial(&self, buf: &mut String) {
         buf.push_str(Keyword::Struct.as_ref());
         buf.push(' ');
 
@@ -211,8 +214,8 @@ impl RenderTooltip for EnumSymbol {
     }
 }
 
-impl RenderShortTooltip for EnumSymbol {
-    fn render_short(&self, buf: &mut String) {
+impl RenderPartialTooltip for EnumSymbol {
+    fn render_partial(&self, buf: &mut String) {
         buf.push_str(Keyword::Enum.as_ref());
         buf.push(' ');
 
@@ -226,8 +229,8 @@ impl RenderTooltip for ArrayTypeSymbol {
     }
 }
 
-impl RenderShortTooltip for ArrayTypeSymbol {
-    fn render_short(&self, buf: &mut String) {
+impl RenderPartialTooltip for ArrayTypeSymbol {
+    fn render_partial(&self, buf: &mut String) {
         buf.push_str(self.name())
     }
 }
@@ -350,15 +353,15 @@ impl RenderTooltip for MemberFunctionSymbol {
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {
                 SymbolVariant::Class(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 SymbolVariant::State(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 SymbolVariant::Array(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 _ => {}
@@ -425,15 +428,15 @@ impl RenderTooltip for EventSymbol {
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {
                 SymbolVariant::Class(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 SymbolVariant::State(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 SymbolVariant::Array(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 _ => {}
@@ -494,7 +497,7 @@ impl RenderTooltip for EnumVariantSymbol {
         symtab.get_symbol(&self.parent_enum_path)
             .and_then(|s| s.try_as_enum_ref())
             .map(|s| {
-                s.render_short(buf);
+                s.render_partial(buf);
                 buf.push('\n');
             });
 
@@ -543,19 +546,19 @@ impl RenderTooltip for MemberVarSymbol {
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {
                 SymbolVariant::Class(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 SymbolVariant::State(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 SymbolVariant::Array(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 SymbolVariant::Struct(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 _ => {}
@@ -588,11 +591,11 @@ impl RenderTooltip for AutobindSymbol {
         if let Some(parent_symvar) = parent_symvar {
             match parent_symvar {
                 SymbolVariant::Class(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 SymbolVariant::State(s) => {
-                    s.render_short(buf);
+                    s.render_partial(buf);
                     buf.push('\n');
                 },
                 _ => {}
