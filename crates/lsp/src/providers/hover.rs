@@ -236,7 +236,7 @@ impl RenderPartialTooltip for ArrayTypeSymbol {
 }
 
 impl RenderTooltip for ArrayTypeFunctionSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(&format!("{}<T>\n", ArrayTypeSymbol::TYPE_NAME));
         
         buf.push_str(Keyword::Function.as_ref());
@@ -254,11 +254,11 @@ impl RenderTooltip for ArrayTypeFunctionSymbol {
 
         let mut params_iter = params.into_iter();
         if let Some(param) = params_iter.next() {
-            param.render(buf, symtab, marcher);
+            param.render_partial(buf);
         }
         for param in params_iter {
             buf.push_str(", ");
-            param.render(buf, symtab, marcher);
+            param.render_partial(buf);
         }
         
         buf.push(')');
@@ -277,6 +277,12 @@ impl RenderTooltip for ArrayTypeFunctionSymbol {
 
 impl RenderTooltip for ArrayTypeFunctionParameterSymbol {
     fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
+        self.render_partial(buf)
+    }
+}
+
+impl RenderPartialTooltip for ArrayTypeFunctionParameterSymbol {
+    fn render_partial(&self, buf: &mut String) {
         buf.push_str(self.name());
         buf.push(' ');
         buf.push(':');
@@ -293,7 +299,7 @@ impl RenderTooltip for ArrayTypeFunctionParameterSymbol {
 
 
 impl RenderTooltip for GlobalFunctionSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         for spec in self.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
@@ -328,11 +334,11 @@ impl RenderTooltip for GlobalFunctionSymbol {
 
         let mut params_iter = params.into_iter();
         if let Some(param) = params_iter.next() {
-            param.render(buf, symtab, marcher);
+            param.render_partial(buf);
         }
         for param in params_iter {
             buf.push_str(", ");
-            param.render(buf, symtab, marcher);
+            param.render_partial(buf);
         }
         
         buf.push(')');
@@ -345,7 +351,7 @@ impl RenderTooltip for GlobalFunctionSymbol {
 }
 
 impl RenderTooltip for MemberFunctionSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         let parent_symvar = 
             self.path().parent()
             .and_then(|p| symtab.get_symbol(p));
@@ -403,11 +409,11 @@ impl RenderTooltip for MemberFunctionSymbol {
 
         let mut params_iter = params.into_iter();
         if let Some(param) = params_iter.next() {
-            param.render(buf, symtab, marcher);
+            param.render_partial(buf);
         }
         for param in params_iter {
             buf.push_str(", ");
-            param.render(buf, symtab, marcher);
+            param.render_partial(buf);
         }
         
         buf.push(')');
@@ -420,7 +426,7 @@ impl RenderTooltip for MemberFunctionSymbol {
 }
 
 impl RenderTooltip for EventSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         let parent_symvar = 
             self.path().parent()
             .and_then(|p| symtab.get_symbol(p));
@@ -465,11 +471,11 @@ impl RenderTooltip for EventSymbol {
 
         let mut params_iter = params.into_iter();
         if let Some(param) = params_iter.next() {
-            param.render(buf, symtab, marcher);
+            param.render_partial(buf);
         }
         for param in params_iter {
             buf.push_str(", ");
-            param.render(buf, symtab, marcher);
+            param.render_partial(buf);
         }
         
         buf.push(')');
@@ -517,7 +523,23 @@ impl RenderTooltip for FunctionParameterSymbol {
             buf.push(' ');
         }
 
-        //TODO add `var` here and in other places when syntax highlighting brakes because of lack of it
+        buf.push_str(Keyword::Var.as_ref());
+        buf.push(' ');
+        buf.push_str(self.name());
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.type_name());
+    }
+}
+
+impl RenderPartialTooltip for FunctionParameterSymbol {
+    fn render_partial(&self, buf: &mut String) {
+        for spec in self.specifiers.iter() {
+            let kw: Keyword = spec.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
 
         buf.push_str(self.name());
         buf.push(' ');
