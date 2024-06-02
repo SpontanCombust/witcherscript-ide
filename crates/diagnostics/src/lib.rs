@@ -15,11 +15,10 @@ impl Into<lsp::Diagnostic> for Diagnostic {
         lsp::Diagnostic {
             range: self.range,
             severity: Some(self.kind.severity()),
-            code: Some(lsp::NumberOrString::String(
-                // using strum's IntoStaticStr
-                Into::<&'static str>::into(&self.kind).to_string()
-            )),
-            code_description: None,
+            code: Some(lsp::NumberOrString::String(self.kind.code().to_string())),
+            code_description: Some(lsp::CodeDescription {
+                href: self.kind.code_link()
+            }),
             source: Some("witcherscript-ide".into()),
             message: self.kind.message(),
             related_information: self.kind.related_info().map(|ri| {
@@ -48,6 +47,7 @@ pub enum DiagnosticDomain {
 
 /// All diagnostics that will appear in the editor should be collected in this enum.
 /// Each domain of diagnostics should be handled by a seperate unit of code to keep the separation of concerns and avoid error duplication.
+/// All diagnostics should documented on the diagnostic index page, so if any changes are made here, make sure to reflect them there.
 #[derive(Debug, Clone, IntoStaticStr)]
 #[strum(serialize_all = "kebab-case")]
 pub enum DiagnosticKind {
@@ -78,6 +78,13 @@ pub enum DiagnosticKind {
     RepeatedSpecifier,
     MultipleAccessModifiers
 }
+
+#[cfg(debug_assertions)]
+const DIAGNOSTICS_INDEX_PAGE: &str = "http://127.0.0.1:8000/witcherscript-ide/user-manual/diagnostic-index/";
+
+#[cfg(not(debug_assertions))]
+const DIAGNOSTICS_INDEX_PAGE: &str = "https://spontancombust.github.io/witcherscript-ide/user-manual/diagnostic-index/";
+
 
 impl DiagnosticKind {
     pub fn domain(&self) -> DiagnosticDomain {
@@ -159,6 +166,17 @@ impl DiagnosticKind {
             }),
             _ => None
         }
+    }
+
+    fn code(&self) -> &str {
+        // using strum's IntoStaticStr
+        let code: &str = self.into();
+        code
+    }
+
+    fn code_link(&self) -> lsp::Url {
+        let s = format!("{}#{}", DIAGNOSTICS_INDEX_PAGE, self.code());
+        lsp::Url::parse(&s).unwrap()
     }
 }
 
