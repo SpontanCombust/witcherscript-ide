@@ -6,6 +6,7 @@ Welcome to the User Manual. Here you fill find all sorts of useful information a
 - [Getting Started](getting-started.md) - how to get the tool up and running
 - [Editor](editor.md) - showcase of extension capabilities,
 - [Project System](project-system.md) - explanation on the project management system established by WitcherScript IDE,
+- [Diagnostic index](diagnostic-index.md) - list of all diagnostics that WIDE can publish to the editor,
 - [Changelog](changelog.md)
 
 ## Contributions

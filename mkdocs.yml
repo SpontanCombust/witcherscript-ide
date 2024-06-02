@@ -11,6 +11,7 @@ nav:
     - 'Getting Started': 'user-manual/getting-started.md'
     - 'Editor': 'user-manual/editor.md'
     - 'Project System': 'user-manual/project-system.md' 
+    - 'Diagnostic Index': 'user-manual/diagnostic-index.md'
     - 'Changelog': 'user-manual/changelog.md'
   - 'Developer Manual': 'dev-manual.md'
   - 'About':
@@ -37,6 +38,7 @@ theme:
     - navigation.indexes
     - navigation.expand
     - content.code.copy
+    - content.code.annotate
     - toc.follow
   locale: en
 
@@ -48,6 +50,7 @@ markdown_extensions:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
+  - pymdownx.inlinehilite:
   - pymdownx.superfences:
   - toc:
       permalink: true
