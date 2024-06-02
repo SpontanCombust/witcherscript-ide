@@ -8,7 +8,7 @@ use witcherscript_analysis::symbol_analysis::symbol_table::marcher::SymbolTableM
 use witcherscript_analysis::symbol_analysis::symbol_table::SymbolTable;
 use witcherscript_analysis::symbol_analysis::symbols::*;
 use crate::Backend;
-use super::common::resolve_text_document_position;
+use super::common::{resolve_text_document_position, PositionTargetKind};
 
 
 pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option<lsp::Hover>> {
@@ -40,21 +40,29 @@ pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option
     let position_target = resolve_text_document_position(params.text_document_position_params.position, &script_state, symtabs_marcher.clone());
     drop(script_state);
     
-    if let Some(sympath) = position_target.and_then(|pt| pt.target_symbol_path(&symtabs_marcher)) {
-        let category = sympath
+    if let Some(position_target) = position_target {
+        let mut value = None;
+
+        if let Some(sympath) = position_target.target_symbol_path(&symtabs_marcher) {
+            let category = sympath
             .components().last()
             .map(|c| c.category)
             .unwrap_or(SymbolCategory::Type);
 
-        let mut buf = String::new();
-        symtabs_marcher.get_symbol_with_containing_table(&sympath)
-            .map(|(symtab, symvar)| symvar.render(&mut buf, symtab, &symtabs_marcher))
-            .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
+            let mut buf = String::new();
+            symtabs_marcher.get_symbol_with_containing_table(&sympath)
+                .map(|(symtab, symvar)| symvar.render(&mut buf, symtab, &symtabs_marcher))
+                .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
 
-        Ok(Some(lsp::Hover {
+            value = Some(buf);
+        } else if let PositionTargetKind::ArrayTypeIdentifier = position_target.kind {
+            value = Some("array<T>".to_string());
+        }
+
+        Ok(value.map(|value| lsp::Hover {
             contents: lsp::HoverContents::Scalar(lsp::MarkedString::LanguageString(lsp::LanguageString {
                 language: Backend::LANGUAGE_ID.to_string(),
-                value: buf,
+                value,
             })),
             range: None
         }))
