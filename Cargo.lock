@@ -1267,6 +1267,7 @@ version = "0.3.0-dev.3"
 dependencies = [
  "abs-path",
  "lsp-types",
+ "rayon",
  "shrinkwraprs",
  "smallvec",
  "strum",

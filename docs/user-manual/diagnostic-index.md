@@ -152,7 +152,7 @@ Diagnostic used for all other syntax error cases. Syntactical analysis is very b
 
 </br>
 
-## **Symbol Scanning**
+## **Symbol Analysis**
 
 ---
 
@@ -263,5 +263,38 @@ protected public function MakeDinner() { // (1)
 1. Can't use both `protected` and `public` access modifiers. Use only one of these two.
 
 You can read more about access modifiers in programming languages [here](https://en.wikipedia.org/wiki/Access_modifiers).
+
+---
+
+
+
+## **Workspace Symbol Analysis**
+
+---
+
+### `symbol-name-taken-in-dependency`
+
+A code symbol (type, function, etc.) has already been defined in a content that is a dependency to this content.
+
+```ts linenums="1" title="content0/scripts/game/player/playerCheats.ws"
+exec function RestoreStamina( optional val : int )
+{	
+	// ...
+}
+```
+
+```ts linenums="1" title="modFoodStamina/scripts/local/staminaManager.ws" hl_lines="3"
+// ...
+
+function RestoreStamina() // (1)
+{	
+	// ...
+}
+```
+
+1. Global function "RestoreStamina" has already been defined in content "content0"
+
+See also [`symbol-name-taken`](#symbol-name-taken).
+
 
 ---

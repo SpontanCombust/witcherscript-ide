@@ -180,6 +180,41 @@ impl<'st> Iterator for ArrayTypeFunctionSymbolChildren<'st> {
 
 
 
+/// Iterate over primary symbols associated with a script file at a given path
+pub struct FilePrimarySymbols<'st> {
+    symtab: &'st SymbolTable,
+    primary_paths: Vec<SymbolPathBuf>,
+    primary_path_idx: usize
+}
+
+impl<'st> FilePrimarySymbols<'st> {
+    pub(super) fn new(symtab: &'st SymbolTable, local_source_path: &Path) -> Self {
+        let primary_paths = 
+            symtab.source_path_assocs
+            .get(local_source_path)
+            .cloned()
+            .unwrap_or_default();
+
+        Self {
+            symtab,
+            primary_paths,
+            primary_path_idx: 0
+        }
+    }
+}
+
+impl<'st> Iterator for FilePrimarySymbols<'st> {
+    type Item = &'st SymbolVariant;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let sympath = self.primary_paths.get(self.primary_path_idx)?;
+        let item = self.symtab.get_symbol(sympath);
+        self.primary_path_idx += 1;
+        item
+    }
+}
+
+
 /// Iterate over symbols associated with a script file at a given path
 pub struct FileSymbols<'st> {
     iter: Box<dyn Iterator<Item = &'st SymbolVariant> + 'st>

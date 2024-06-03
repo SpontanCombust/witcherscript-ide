@@ -12,13 +12,15 @@ use super::{ClassSymbol, PathOccupiedError, StateSymbol, Symbol, SymbolLocation,
 /// any data coming from a file at the same local path is ignored when searching through table B.
 #[derive(Clone)]
 pub struct SymbolTableMarcher<'a> {
-    inner: Vec<MaskedSymbolTable<'a>>
+    inner: Vec<MaskedSymbolTable<'a>>,
+    start_idx: usize
 }
 
 impl<'a> SymbolTableMarcher<'a> {
     pub fn new() -> Self {
         Self {
-            inner: Vec::new()
+            inner: Vec::new(),
+            start_idx: 0
         }
     }
 
@@ -37,19 +39,34 @@ impl<'a> SymbolTableMarcher<'a> {
         self.inner.push(masked);
     }
 
+    /// Can be used to march only over dependencies while keeping proper source masking
+    pub fn skip_first_step(mut self, skip: bool) -> Self {
+        if skip {
+            self.start_idx = 1;
+        } else {
+            self.start_idx = 0;
+        }
 
+        self
+    }
+
+
+    #[inline]
     pub fn test_contains_symbol(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
-        for masked in &self.inner {
+        for i in self.start_idx..self.inner.len() {
+            let masked = &self.inner[i];
             masked.test_contains_symbol(path)?;
         }
 
         Ok(())
     }
 
+    #[inline]
     pub fn contains_symbol(&self, path: &SymbolPath) -> bool {
-        self.inner.iter().any(|masked| masked.contains_symbol(path))
+        self.march(|masked| if masked.contains_symbol(path) { Some(()) } else { None }).is_some()
     }
 
+    #[inline]
     pub fn find_table_containing_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolTable> {
         self.march(|masked| if masked.contains_symbol(path) { Some(masked.symtab) } else { None })   
     }
@@ -100,13 +117,18 @@ impl<'a> SymbolTableMarcher<'a> {
 
     fn march<T, F>(&self, mut f: F) -> Option<T> 
     where F: FnMut(&MaskedSymbolTable<'a>) -> Option<T> {
-        for symtab in &self.inner {
-            if let Some(val) = f(symtab) {
+        for i in self.start_idx..self.inner.len() {
+            let masked = &self.inner[i];
+            if let Some(val) = f(masked) {
                 return Some(val);
             }
         }
 
         None
+    }
+
+    fn into_iter(self) -> impl Iterator<Item = MaskedSymbolTable<'a>> {
+        self.inner.into_iter().skip(self.start_idx)
     }
 }
 
@@ -207,7 +229,7 @@ pub struct ClassStates<'a> {
 impl<'a> ClassStates<'a> {
     fn new(marcher: SymbolTableMarcher<'a>, class_path: &SymbolPath) -> Self {
         let class_path = class_path.to_owned();
-        let it = marcher.inner.into_iter().map(move |symtab| {
+        let it = marcher.into_iter().map(move |symtab| {
             let class_path = class_path.to_owned();
             symtab.into_iter()
                 .filter_map(|(_, symvar)| symvar.try_as_state_ref())

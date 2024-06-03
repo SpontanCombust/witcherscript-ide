@@ -42,6 +42,7 @@ pub enum DiagnosticDomain {
     ProjectSystem,
     SyntaxAnalysis,
     SymbolAnalysis,
+    WorkspaceSymbolAnalysis,
 }
 
 
@@ -67,7 +68,7 @@ pub enum DiagnosticKind {
     MissingSyntax(String),
     InvalidSyntax, // for all other syntax cases when it's impossible to determine
 
-    // symbol scanning
+    // symbol anaysis
     SymbolNameTaken {
         name: String,
         precursor_file_path: Option<AbsPath>,
@@ -76,7 +77,14 @@ pub enum DiagnosticKind {
     MissingTypeArg,
     UnnecessaryTypeArg,
     RepeatedSpecifier,
-    MultipleAccessModifiers
+    MultipleAccessModifiers,
+
+    // workspace symbol analysis
+    SymbolNameTakenInDependency {
+        name: String,
+        precursor_file_path: Option<AbsPath>,
+        precursor_range: Option<lsp::Range>
+    },
 }
 
 #[cfg(debug_assertions)]
@@ -105,6 +113,7 @@ impl DiagnosticKind {
             | UnnecessaryTypeArg
             | RepeatedSpecifier
             | MultipleAccessModifiers => DiagnosticDomain::SymbolAnalysis,
+            SymbolNameTakenInDependency { .. } => DiagnosticDomain::WorkspaceSymbolAnalysis
         }
     }
 
@@ -129,6 +138,8 @@ impl DiagnosticKind {
             UnnecessaryTypeArg => lsp::DiagnosticSeverity::ERROR,
             RepeatedSpecifier => lsp::DiagnosticSeverity::ERROR,
             MultipleAccessModifiers => lsp::DiagnosticSeverity::ERROR,
+
+            SymbolNameTakenInDependency { .. } => lsp::DiagnosticSeverity::ERROR
         }
     }
 
@@ -147,11 +158,13 @@ impl DiagnosticKind {
             MissingSyntax(s) => format!("Syntax error: expected {}", s),
             InvalidSyntax => "Syntax error: unexpected syntax".into(),
 
-            SymbolNameTaken { name, .. } => format!("The name {} is defined multiple times", name),
+            SymbolNameTaken { name, .. } => format!("The name \"{}\" is defined multiple times", name),
             MissingTypeArg => "Missing type argument".into(),
             UnnecessaryTypeArg => "This type does not take any type arguments".into(),
             RepeatedSpecifier => "Specifiers can not be repeating".into(),
             MultipleAccessModifiers => "Only one access modifier is allowed".into(),
+
+            SymbolNameTakenInDependency { name, .. } => format!("The name \"{}\" is already defined in another content", name),
         }
     }
 
@@ -160,6 +173,11 @@ impl DiagnosticKind {
 
         match self {
             SymbolNameTaken { precursor_file_path, precursor_range, .. } if precursor_file_path.is_some() => Some(DiagnosticRelatedInfo {
+                path: precursor_file_path.clone().unwrap(),
+                range: precursor_range.unwrap_or_default(),
+                message: "Name originally defined here".into()
+            }),
+            SymbolNameTakenInDependency { precursor_file_path, precursor_range, .. } if precursor_file_path.is_some() => Some(DiagnosticRelatedInfo {
                 path: precursor_file_path.clone().unwrap(),
                 range: precursor_range.unwrap_or_default(),
                 message: "Name originally defined here".into()

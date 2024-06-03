@@ -186,6 +186,7 @@ impl SymbolTable {
         SymbolDescendants::new(self, path)
     }
 
+    //TODO refactor to take symbol parameter so it can be done with trait
     /// Iterate over direct children of a class symbol in a symbol hierarchy.
     /// Symbols are returned ordered by their symbol path.
     #[inline]
@@ -224,6 +225,11 @@ impl SymbolTable {
         ArrayTypeFunctionSymbolChildren::new(self, array_type_func_path)
     }
 
+
+    #[inline]
+    pub fn get_primary_symbols_for_source<'a>(&'a self, local_source_path: &Path) -> FilePrimarySymbols<'a> {
+        FilePrimarySymbols::new(self, local_source_path)
+    }
 
     /// Iterate over symbols attributed to a given local source path.
     /// Symbols are returned ordered by their symbol path.
