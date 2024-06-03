@@ -1,4 +1,4 @@
-use tokio::{sync::mpsc, time::Instant};
+use tokio::{sync::oneshot, time::Instant};
 use rayon::prelude::*;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
@@ -73,24 +73,23 @@ impl Backend {
     async fn on_source_tree_files_added(&self, added_files: Vec<SourceTreeFile>, content_path: &AbsPath) {
         let start = Instant::now();
 
-        //TODO do this with oneshot
-        let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
+        let (send, recv) = oneshot::channel();
 
         rayon::spawn(move || {
-            added_files.into_par_iter()
+            let results: Vec<_> = 
+                added_files.into_par_iter()
                 .map(|f| {
                     let path = f.path;
                     let doc = ScriptDocument::from_file(path.absolute()).unwrap();
                     let script = Script::new(&doc).unwrap();
                     (path, doc, script, f.modified_timestamp)
                 })
-                .for_each(|result| send.blocking_send(result).expect("on_source_tree_paths_added mpsc::send fail"));
+                .collect();
+
+            send.send(results).expect("on_source_tree_paths_added oneshot::send fail")
         });
 
-        let mut results = Vec::new();
-        while let Some(res) = recv.recv().await {
-            results.push(res);
-        }
+        let results = recv.await.expect("on_source_tree_paths_added oneshot::recv fail");
 
         for (source_tree_path, buffer, script, modified_timestamp) in results {
             self.scripts.insert(source_tree_path.absolute().to_owned(), ScriptState { 
