@@ -90,7 +90,11 @@ impl Backend {
             self.reporter.log_info("Found no content graph changes.").await;
         }
 
-        self.run_script_analysis_for_all().await;
+        let script_paths = self.scripts.iter()
+            .map(|kv| kv.key().to_owned())
+            .collect();
+
+        self.run_script_analysis(script_paths, true).await;
     }
 
     async fn on_content_graph_changed(&self, diff: ContentGraphDifference) {

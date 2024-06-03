@@ -31,7 +31,7 @@ impl Backend {
                     .collect();
 
                 self.on_source_tree_changed(content_path, diff).await;
-                self.run_script_analysis(paths_for_analysis).await;
+                self.run_script_analysis(paths_for_analysis, true).await;
             } else {
                 self.reporter.log_info("Found no source tree changes.").await;
             }

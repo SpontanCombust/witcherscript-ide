@@ -26,7 +26,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
                 content_info: None
             });
 
-            backend.run_script_analysis([doc_path.clone()]).await;
+            backend.run_script_analysis(vec![doc_path.clone()], true).await;
             backend.reporter.commit_diagnostics(&doc_path).await;
         }
     }
@@ -61,7 +61,7 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
             }
         }
 
-        backend.run_script_analysis([doc_path.clone()]).await;
+        backend.run_script_analysis(vec![doc_path.clone()], false).await;
         backend.reporter.commit_diagnostics(&doc_path).await;
     }
 }
