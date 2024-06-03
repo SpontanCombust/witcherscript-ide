@@ -16,10 +16,9 @@ pub async fn document_symbol(backend: &Backend, params: lsp::DocumentSymbolParam
         return Ok(None);
     }
     
-    let (content_path, source_file);
-    if let Some((path, file)) = backend.source_trees.find_source_file(&doc_path) {
-        content_path = path;
-        source_file = file;
+    let content_info;
+    if let Some(ci) = backend.scripts.get(&doc_path).and_then(|ss| ss.content_info.clone()) {
+        content_info = ci;
     } 
     else {
         return Ok(None);
@@ -27,11 +26,11 @@ pub async fn document_symbol(backend: &Backend, params: lsp::DocumentSymbolParam
 
     let symtabs = backend.symtabs.read().await;
     let symtab_ref;
-    if let Some(symtab) = symtabs.get(&content_path) {
+    if let Some(symtab) = symtabs.get(&content_info.content_path) {
         symtab_ref = symtab;
     } 
     else {
-        backend.reporter.log_error(format!("[document_symbol] Unexpeted: symbol table not found for content {}", content_path)).await;
+        backend.reporter.log_error(format!("[document_symbol] Unexpeted: symbol table not found for content {}", content_info.content_path)).await;
         return Ok(None);
     }
 
@@ -55,7 +54,7 @@ pub async fn document_symbol(backend: &Backend, params: lsp::DocumentSymbolParam
         }
     };
     
-    for sym_variant in symtab_ref.get_symbols_for_source(source_file.path.local()) {
+    for sym_variant in symtab_ref.get_symbols_for_source(content_info.source_tree_path.local()) {
         if let Some(doc_sym) = sym_variant.to_doc_sym() {    
             if let Some(enum_sym) = sym_variant.try_as_enum_ref() {
                 doc_enums.insert(enum_sym.path().to_owned(), doc_sym);

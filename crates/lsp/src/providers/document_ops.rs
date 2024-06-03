@@ -23,7 +23,7 @@ pub async fn did_open(backend: &Backend, params: lsp::DidOpenTextDocumentParams)
                 buffer: doc_buff,
                 script,
                 modified_timestamp: FileTime::now(),
-                source_tree_path: None
+                content_info: None
             });
 
             backend.run_script_analysis([doc_path.clone()]).await;
@@ -36,7 +36,7 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
 
     let mut should_notify = false;
-    let mut source_path = None;
+    let mut content_info = None;
     if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
         let script_state = entry.value_mut();
 
@@ -48,12 +48,14 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
 
         script_state.modified_timestamp = FileTime::now();
 
-        source_path = script_state.source_tree_path.clone();
+        content_info = script_state.content_info.clone();
         should_notify = true;
     } 
 
     if should_notify {
-        if let (Some(source_path), Some(content_path)) = (source_path, backend.source_trees.containing_content_path(&doc_path)) {
+        if let Some(content_info) = content_info {
+            let content_path = content_info.content_path;
+            let source_path = content_info.source_tree_path;
             if let Ok(mut symtabs) = backend.symtabs.try_write() {
                 backend.scan_symbols(&mut symtabs, &content_path, vec![source_path]).await;
             }
@@ -78,6 +80,7 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
 
     
     if doc_path.extension().map(|ext| ext == "ws").unwrap_or(false) {
+        let mut containing_content_path = None;
         if let Some(text) = params.text {
             if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
                 let script_state = entry.value_mut();
@@ -87,10 +90,12 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
                 script_state.buffer.replace(&text);
                 script_state.script.refresh(&mut script_state.buffer).expect("Script refresh error!");
                 script_state.modified_timestamp = FileTime::now();
+
+                containing_content_path = script_state.content_info.as_ref().map(|ci| ci.content_path.clone());
             }
         } 
 
-        if let Some(containing_content_path) = backend.source_trees.containing_content_path(&doc_path) {
+        if let Some(containing_content_path) = containing_content_path {
             backend.scan_source_tree(&containing_content_path).await;
         }
     } else if (doc_path.file_name().unwrap() == Manifest::FILE_NAME || doc_path.extension().unwrap() == redkit::RedkitManifest::EXTENSION) && belongs_to_workspace {
@@ -107,7 +112,7 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
     let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
     if doc_path.extension().map(|ext| ext == "ws").unwrap_or(false) {
         let mut should_remove_script = false;
-        if backend.scripts.get(&doc_path).map(|s| s.source_tree_path.is_none()).unwrap_or(false) {
+        if backend.scripts.get(&doc_path).map(|s| s.content_info.is_none()).unwrap_or(false) {
             backend.reporter.purge_diagnostics(&doc_path);
             backend.reporter.commit_diagnostics(&doc_path).await;
             should_remove_script = true;

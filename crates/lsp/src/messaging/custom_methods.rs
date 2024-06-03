@@ -4,7 +4,7 @@ use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript_project::content::VANILLA_CONTENT_NAME;
 use witcherscript_project::Manifest;
-use crate::Backend;
+use crate::{Backend, ScriptStateContentInfo};
 use super::requests::{self, ContentInfo};
 
 
@@ -286,9 +286,9 @@ impl Backend {
             return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
         }
 
-        let content_path: AbsPath;
-        if let Some(path) = self.source_trees.containing_content_path(&script_path) {
-            content_path = path;
+        let content_info: ScriptStateContentInfo;
+        if let Some(ci) = self.scripts.get(&script_path).and_then(|ss| ss.content_info.clone()) {
+            content_info = ci;
         } else {
             return Err(jsonrpc::Error {
                 code: jsonrpc::ErrorCode::ServerError(-1060),
@@ -299,7 +299,7 @@ impl Backend {
 
         let symtabs = self.symtabs.read().await;
         let symtab_ref;
-        if let Some(symtab) = symtabs.get(&content_path) {
+        if let Some(symtab) = symtabs.get(&content_info.content_path) {
             symtab_ref = symtab;
         } else {
             return Err(jsonrpc::Error {
@@ -309,18 +309,7 @@ impl Backend {
             });
         }
 
-        let script_ref;
-        if let Some(script) = self.scripts.get(&script_path) {
-            script_ref = script;
-        } else {
-            return Err(jsonrpc::Error {
-                code: jsonrpc::ErrorCode::ServerError(-1062),
-                message: "No script at the path was found".into(),
-                data: None
-            });
-        }
-
-        let sym_iter = symtab_ref.get_symbols_for_source(&script_ref.source_tree_path.as_ref().unwrap().local());
+        let sym_iter = symtab_ref.get_symbols_for_source(&content_info.source_tree_path.local());
         let script_symbols = format!("{:#?}", sym_iter.collect::<Vec<_>>());
 
         Ok(requests::debug::script_symbols::Response {

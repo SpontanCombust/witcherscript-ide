@@ -15,7 +15,7 @@ pub async fn goto_definition(backend: &Backend, params: lsp::GotoDefinitionParam
     }
 
     let content_path;
-    if let Some(path) = backend.source_trees.containing_content_path(&doc_path) {
+    if let Some(path) = backend.scripts.get(&doc_path).and_then(|ss| ss.content_info.as_ref().map(|ci| ci.content_path.to_owned())) {
         content_path = path;
     } 
     else {
@@ -63,7 +63,7 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
     }
 
     let content_path;
-    if let Some(path) = backend.source_trees.containing_content_path(&doc_path) {
+    if let Some(path) = backend.scripts.get(&doc_path).and_then(|ss| ss.content_info.as_ref().map(|ci| ci.content_path.to_owned())) {
         content_path = path;
     } 
     else {
@@ -152,7 +152,7 @@ pub async fn goto_type_definition(backend: &Backend, params: lsp::request::GotoT
     }
 
     let content_path;
-    if let Some(path) = backend.source_trees.containing_content_path(&doc_path) {
+    if let Some(path) = backend.scripts.get(&doc_path).and_then(|ss| ss.content_info.as_ref().map(|ci| ci.content_path.to_owned())) {
         content_path = path;
     } 
     else {

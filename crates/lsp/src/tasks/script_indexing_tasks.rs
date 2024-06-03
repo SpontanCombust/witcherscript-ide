@@ -3,7 +3,7 @@ use rayon::prelude::*;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_project::source_tree::{SourceTreeDifference, SourceTreeFile};
-use crate::{Backend, ScriptState};
+use crate::{Backend, ScriptState, ScriptStateContentInfo};
 
 
 impl Backend {
@@ -57,7 +57,7 @@ impl Backend {
             self.on_source_tree_files_removed(diff_removed).await;
         }
         if !diff_added.is_empty() {
-            self.on_source_tree_files_added(diff_added).await;
+            self.on_source_tree_files_added(diff_added, content_path).await;
         }
         if !diff_modified.is_empty() {
             self.on_source_tree_files_modified(diff_modified).await;
@@ -70,9 +70,10 @@ impl Backend {
         self.reporter.log_info(format!("Handled source tree related changes to {} in {:.3}s", content_path.display(), duration.as_secs_f32())).await;
     }
 
-    async fn on_source_tree_files_added(&self, added_files: Vec<SourceTreeFile>) {
+    async fn on_source_tree_files_added(&self, added_files: Vec<SourceTreeFile>, content_path: &AbsPath) {
         let start = Instant::now();
 
+        //TODO do this with oneshot
         let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
 
         rayon::spawn(move || {
@@ -96,7 +97,10 @@ impl Backend {
                 script, 
                 buffer,
                 modified_timestamp,
-                source_tree_path: Some(source_tree_path)
+                content_info: Some(ScriptStateContentInfo {
+                    content_path: content_path.to_owned(), 
+                    source_tree_path
+                })
             });
         }
 
