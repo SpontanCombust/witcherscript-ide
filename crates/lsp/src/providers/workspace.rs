@@ -18,11 +18,8 @@ pub async fn did_change_workspace_folders(backend: &Backend, params: lsp::DidCha
         workspace_roots.extend(added);
     }
 
-    let mut content_graph = backend.content_graph.write().await;
-
-    backend.setup_workspace_content_scanners(&mut content_graph).await;
-    backend.build_content_graph(&mut content_graph).await;
-    drop(content_graph);
+    backend.setup_workspace_content_scanners().await;
+    backend.build_content_graph(true).await;
 
     backend.reporter.commit_all_diagnostics().await;
 }

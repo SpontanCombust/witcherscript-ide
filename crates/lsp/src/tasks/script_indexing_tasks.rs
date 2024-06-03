@@ -131,12 +131,11 @@ impl Backend {
     }
 
     async fn on_source_tree_files_added_or_modified(&self, added_or_modified_files: Vec<SourceTreeFile>, content_path: &AbsPath) {
-        let mut symtabs = self.symtabs.write().await;
         let paths = added_or_modified_files.into_iter()
                 .map(|f| f.path.clone())
                 .collect();
 
-        self.scan_symbols(&mut symtabs, content_path, paths).await;
+        self.scan_symbols(content_path, paths, true).await;
     }
 }
 

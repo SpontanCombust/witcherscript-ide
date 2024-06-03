@@ -56,9 +56,7 @@ pub async fn did_change(backend: &Backend, params: lsp::DidChangeTextDocumentPar
         if let Some(content_info) = content_info {
             let content_path = content_info.content_path;
             let source_path = content_info.source_tree_path;
-            if let Ok(mut symtabs) = backend.symtabs.try_write() {
-                backend.scan_symbols(&mut symtabs, &content_path, vec![source_path]).await;
-            }
+            backend.scan_symbols(&content_path, vec![source_path], false).await;
         }
 
         backend.run_script_analysis(vec![doc_path.clone()], false).await;
@@ -99,10 +97,7 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
             backend.scan_source_tree(&containing_content_path).await;
         }
     } else if (doc_path.file_name().unwrap() == Manifest::FILE_NAME || doc_path.extension().unwrap() == redkit::RedkitManifest::EXTENSION) && belongs_to_workspace {
-        // try rebuilding the graph but only if it's not already being rebuilt
-        if let Ok(mut content_graph) = backend.content_graph.try_write() {
-            backend.build_content_graph(&mut content_graph).await;
-        }
+        backend.build_content_graph(false).await;
     }
 
     backend.reporter.commit_all_diagnostics().await;

@@ -5,12 +5,22 @@ use tokio::{sync::oneshot, time::Instant};
 use witcherscript_diagnostics::*;
 use witcherscript_analysis::{jobs, symbol_analysis::symbol_table::SymbolTable};
 use witcherscript_project::SourceTreePath;
-use crate::{Backend, ScriptStates, SymbolTables};
+use crate::{Backend, ScriptStates};
 
 
 impl Backend {
-    pub async fn scan_symbols(&self, symtabs: &mut SymbolTables, content_path: &AbsPath, modified_source_paths: Vec<SourceTreePath>) {
+    /// If `force` is false it will not update the symbol table if it is currently locked somewhere else
+    pub async fn scan_symbols(&self, content_path: &AbsPath, modified_source_paths: Vec<SourceTreePath>, force: bool) {
         if modified_source_paths.is_empty() {
+            return;
+        }
+
+        let mut symtabs;
+        if let Ok(res) = self.symtabs.try_write() {
+            symtabs = res;
+        } else if force {
+            symtabs = self.symtabs.write().await;
+        } else {
             return;
         }
 
@@ -64,6 +74,8 @@ impl Backend {
         jobs::merge_symbol_tables(symtab, scanning_symtab, &mut scanning_diagnostis);
 
         symtab.dispose_unreferenced_array_symbols();
+
+        drop(symtabs);
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Updated symbol table for content {} in {:.3}s", content_path, duration.as_secs_f32())).await;

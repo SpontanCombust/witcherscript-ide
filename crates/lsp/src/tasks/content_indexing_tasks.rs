@@ -7,14 +7,15 @@ use witcherscript_analysis::symbol_analysis::symbol_table::SymbolTable;
 use witcherscript_diagnostics::*;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory, RedkitProjectDirectory};
 use witcherscript_project::source_tree::SourceTreeDifference;
-use witcherscript_project::{ContentGraph, ContentScanner, FileError};
+use witcherscript_project::{ContentScanner, FileError};
 use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphEdgeWithContent, GraphNode};
 use crate::Backend;
 
 
 impl Backend {
-    pub async fn setup_workspace_content_scanners(&self, content_graph: &mut ContentGraph) {
+    pub async fn setup_workspace_content_scanners(&self) {
         let workspace_roots = self.workspace_roots.read().await;
+        let mut content_graph = self.content_graph.write().await;
 
         content_graph.clear_workspace_scanners();
 
@@ -26,10 +27,13 @@ impl Backend {
 
             content_graph.add_workspace_scanner(scanner);
         }
+
+        drop(content_graph);
     }
 
-    pub async fn setup_repository_content_scanners(&self, content_graph: &mut ContentGraph) {
+    pub async fn setup_repository_content_scanners(&self) {
         let config = self.config.read().await;
+        let mut content_graph = self.content_graph.write().await;
 
         let mut repo_paths = Vec::new();
         
@@ -69,13 +73,25 @@ impl Backend {
                 }
             }
         }
+
+        drop(content_graph);
     }
     
-    pub async fn build_content_graph(&self, content_graph: &mut ContentGraph) {
+    /// If `force` is false it will not update the graph if it is currently locked somewhere else
+    pub async fn build_content_graph(&self, force: bool) {
         self.reporter.log_info("Building content graph...").await;
 
         self.reporter.clear_all_diagnostics();
         
+        let mut content_graph;
+        if let Ok(res) = self.content_graph.try_write() {
+            content_graph = res;
+        } else if force {
+            content_graph = self.content_graph.write().await;
+        } else {
+            return;
+        }
+
         let diff = content_graph.build();
     
         if !content_graph.errors.is_empty() {
@@ -83,6 +99,8 @@ impl Backend {
                 self.report_content_graph_error(err.clone()).await;
             }
         }
+
+        drop(content_graph);
 
         if !diff.is_empty() {
             self.on_content_graph_changed(diff).await;

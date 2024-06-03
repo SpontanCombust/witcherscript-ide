@@ -83,9 +83,6 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
 }
 
 pub async fn initialized(backend: &Backend, _: lsp::InitializedParams) {
-    // make sure that content graph's lock is always acquired first here
-    let mut content_graph = backend.content_graph.try_write().unwrap();
-
     backend.reporter.log_info("Server initialized!").await;
 
     backend.client.register_capability(vec![
@@ -96,10 +93,9 @@ pub async fn initialized(backend: &Backend, _: lsp::InitializedParams) {
         }
     ]).await.unwrap();
 
-    backend.setup_workspace_content_scanners(&mut content_graph).await;
-    backend.setup_repository_content_scanners(&mut content_graph).await;
-    backend.build_content_graph(&mut content_graph).await;
-    drop(content_graph);
+    backend.setup_workspace_content_scanners().await;
+    backend.setup_repository_content_scanners().await;
+    backend.build_content_graph(true).await;
 
     backend.reporter.commit_all_diagnostics().await;
 }
