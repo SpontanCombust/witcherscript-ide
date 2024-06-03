@@ -20,7 +20,7 @@ impl Backend {
         }
 
         let duration = Instant::now() - start;
-        self.reporter.log_info(format!("Analysis finished in {}s", duration.as_secs_f32())).await;
+        self.reporter.log_info(format!("Analysis finished in {:.3}s", duration.as_secs_f32())).await;
     }
 
     

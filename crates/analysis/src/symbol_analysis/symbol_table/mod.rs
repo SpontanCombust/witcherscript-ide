@@ -179,50 +179,19 @@ impl SymbolTable {
         SymbolChildren::new(self, path)
     }
 
+    /// Iterate over direct children of a symbol in a symbol hierarchy with automatic type conversion.
+    /// Symbols are returned ordered by their symbol path.
+    #[inline]
+    pub fn get_symbol_children_filtered<'a, F>(&'a self, sym: &F) -> FilteredSymbolChildren<'a, F>
+    where F: ChildrenSymbolsFilter<'a> {
+        FilteredSymbolChildren::new(self, sym)
+    }
+
     /// Iterate over all descendants of a symbol in a symbol hierarchy.
     /// Symbols are returned ordered by their symbol path.
     #[inline]
     pub fn get_symbol_descendants<'a>(&'a self, path: &SymbolPath) -> SymbolDescendants<'a> {
         SymbolDescendants::new(self, path)
-    }
-
-    //TODO refactor to take symbol parameter so it can be done with trait
-    /// Iterate over direct children of a class symbol in a symbol hierarchy.
-    /// Symbols are returned ordered by their symbol path.
-    #[inline]
-    pub fn get_class_symbol_children<'a>(&'a self, class_path: &SymbolPath) -> ClassSymbolChildren<'a> {
-        ClassSymbolChildren::new(self, class_path)
-    }
-
-    /// Iterate over direct children of a state symbol in a symbol hierarchy.
-    /// Symbols are returned ordered by their symbol path.
-    #[inline]
-    pub fn get_state_symbol_children<'a>(&'a self, state_path: &SymbolPath) -> StateSymbolChildren<'a> {
-        StateSymbolChildren::new(self, state_path)
-    }
-
-    /// Iterate over direct children of a struct symbol in a symbol hierarchy.
-    /// Symbols are returned ordered by their symbol path.
-    #[inline]
-    pub fn get_struct_symbol_children<'a>(&'a self, struct_path: &SymbolPath) -> StructSymbolChildren<'a> {
-        StructSymbolChildren::new(self, struct_path)
-    }
-
-    /// Iterate over direct children of any callable symbol in a symbol hierarchy.
-    /// Symbols are returned ordered by their symbol path.
-    #[inline]
-    pub fn get_callable_symbol_children<'a>(&'a self, callable_path: &SymbolPath) -> CallableSymbolChildren<'a> {
-        CallableSymbolChildren::new(self, callable_path)
-    }
-
-    #[inline]
-    pub fn get_array_type_symbol_children<'a>(&'a self, array_type_path: &SymbolPath) -> ArrayTypeSymbolChildren<'a> {
-        ArrayTypeSymbolChildren::new(self, array_type_path)
-    }
-
-    #[inline]
-    pub fn get_array_type_function_symbol_children<'a>(&'a self, array_type_func_path: &SymbolPath) -> ArrayTypeFunctionSymbolChildren<'a> {
-        ArrayTypeFunctionSymbolChildren::new(self, array_type_func_path)
     }
 
 

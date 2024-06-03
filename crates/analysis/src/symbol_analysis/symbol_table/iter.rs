@@ -1,4 +1,4 @@
-use std::{collections::btree_map, path::Path};
+use std::{collections::btree_map, marker::PhantomData, path::Path};
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::*;
 
@@ -32,6 +32,38 @@ impl<'st> Iterator for SymbolChildren<'st> {
 }
 
 
+/// Iterate over direct children of a symbol in a symbol hierarchy with type filtration
+#[derive(Clone)]
+pub struct FilteredSymbolChildren<'st, F> {
+    iter: SymbolChildren<'st>,
+    filter_phantom: PhantomData<F>
+}
+
+impl<'st, F> FilteredSymbolChildren<'st, F> 
+where F: ChildrenSymbolsFilter<'st> {
+    pub(super) fn new(symtab: &'st SymbolTable, symbol: &F) -> Self {
+        Self {
+            iter: SymbolChildren::new(symtab, symbol.path()),
+            filter_phantom: PhantomData
+        }
+    }
+}
+
+impl<'st, F> Iterator for FilteredSymbolChildren<'st, F> 
+where F: ChildrenSymbolsFilter<'st> {
+    type Item = F::ChildRef;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.find_map(|symvar| symvar.try_into().ok())
+    }
+}
+
+
+pub trait ChildrenSymbolsFilter<'a>: Symbol {
+    type ChildRef: TryFrom<&'a SymbolVariant> + 'a;
+}
+
+
 pub enum ClassSymbolChild<'st> {
     Var(&'st MemberVarSymbol),
     Autobind(&'st AutobindSymbol),
@@ -39,59 +71,42 @@ pub enum ClassSymbolChild<'st> {
     Event(&'st EventSymbol)
 }
 
-#[derive(Clone)]
-pub struct ClassSymbolChildren<'st> {
-    iter: SymbolChildren<'st>
-}
+impl<'a> TryFrom<&'a SymbolVariant> for ClassSymbolChild<'a> {
+    type Error = ();
 
-impl<'st> ClassSymbolChildren<'st> {
-    pub(super) fn new(symtab: &'st SymbolTable, class_sympath: &SymbolPath) -> Self {
-        Self {
-            iter: SymbolChildren::new(symtab, class_sympath)
+    fn try_from(value: &'a SymbolVariant) -> Result<Self, Self::Error> {
+        match value {
+            SymbolVariant::MemberVar(s) => Ok(ClassSymbolChild::Var(s)),
+            SymbolVariant::Autobind(s) => Ok(ClassSymbolChild::Autobind(s)),
+            SymbolVariant::MemberFunc(s) => Ok(ClassSymbolChild::Method(s)),
+            SymbolVariant::Event(s) => Ok(ClassSymbolChild::Event(s)),
+            _ => Err(())
         }
     }
 }
 
-impl<'st> Iterator for ClassSymbolChildren<'st> {
-    type Item = ClassSymbolChild<'st>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter
-            .find_map(|v| match v {
-                SymbolVariant::MemberVar(s) => Some(ClassSymbolChild::Var(s)),
-                SymbolVariant::Autobind(s) => Some(ClassSymbolChild::Autobind(s)),
-                SymbolVariant::MemberFunc(s) => Some(ClassSymbolChild::Method(s)),
-                SymbolVariant::Event(s) => Some(ClassSymbolChild::Event(s)),
-                _ => None
-            })
-    }
+impl<'a> ChildrenSymbolsFilter<'a> for ClassSymbol {
+    type ChildRef = ClassSymbolChild<'a>;
 }
 
 
 pub type StateSymbolChild<'st> = ClassSymbolChild<'st>;
-pub type StateSymbolChildren<'st> = ClassSymbolChildren<'st>;
 
-
-#[derive(Clone)]
-pub struct StructSymbolChildren<'st> {
-    iter: SymbolChildren<'st>
+impl<'a> ChildrenSymbolsFilter<'a> for StateSymbol {
+    type ChildRef = StateSymbolChild<'a>;
 }
 
-impl<'st> StructSymbolChildren<'st> {
-    pub(super) fn new(symtab: &'st SymbolTable, struct_sympath: &SymbolPath) -> Self {
-        Self {
-            iter: SymbolChildren::new(symtab, struct_sympath)
-        }
+
+impl<'a> TryFrom<&'a SymbolVariant> for &'a MemberVarSymbol {
+    type Error = ();
+
+    fn try_from(value: &'a SymbolVariant) -> Result<Self, Self::Error> {
+        value.try_as_member_var_ref().ok_or(())
     }
 }
 
-impl<'st> Iterator for StructSymbolChildren<'st> {
-    type Item = &'st MemberVarSymbol;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter
-            .find_map(|v| v.try_as_member_var_ref())
-    }
+impl<'a> ChildrenSymbolsFilter<'a> for StructSymbol {
+    type ChildRef = &'a MemberVarSymbol;
 }
 
 
@@ -100,83 +115,55 @@ pub enum CallableSymbolChild<'st> {
     LocalVar(&'st LocalVarSymbol)
 }
 
-#[derive(Clone)]
-pub struct CallableSymbolChildren<'st> {
-    iter: SymbolChildren<'st>
-}
+impl<'a> TryFrom<&'a SymbolVariant> for CallableSymbolChild<'a> {
+    type Error = ();
 
-impl<'st> CallableSymbolChildren<'st> {
-    pub(super) fn new(symtab: &'st SymbolTable, func_sympath: &SymbolPath) -> Self {
-        Self {
-            iter: SymbolChildren::new(symtab, func_sympath)
+    fn try_from(value: &'a SymbolVariant) -> Result<Self, Self::Error> {
+        match value {
+            SymbolVariant::FuncParam(s) => Ok(CallableSymbolChild::Param(s)),
+            SymbolVariant::LocalVar(s) => Ok(CallableSymbolChild::LocalVar(s)),
+            _ => Err(())
         }
     }
 }
 
-impl<'st> Iterator for CallableSymbolChildren<'st> {
-    type Item = CallableSymbolChild<'st>;
+impl<'a> ChildrenSymbolsFilter<'a> for GlobalFunctionSymbol {
+    type ChildRef = CallableSymbolChild<'a>;
+}
 
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter
-            .find_map(|v| match v {
-                SymbolVariant::FuncParam(s) => Some(CallableSymbolChild::Param(s)),
-                SymbolVariant::LocalVar(s) => Some(CallableSymbolChild::LocalVar(s)),
-                _ => None
-            })
+impl<'a> ChildrenSymbolsFilter<'a> for MemberFunctionSymbol {
+    type ChildRef = CallableSymbolChild<'a>;
+}
+
+impl<'a> ChildrenSymbolsFilter<'a> for EventSymbol {
+    type ChildRef = CallableSymbolChild<'a>;
+}
+
+
+impl<'a> TryFrom<&'a SymbolVariant> for &'a ArrayTypeFunctionSymbol {
+    type Error = ();
+
+    fn try_from(value: &'a SymbolVariant) -> Result<Self, Self::Error> {
+        value.try_as_array_func_ref().ok_or(())
     }
 }
 
-
-#[derive(Clone)]
-pub struct ArrayTypeSymbolChildren<'st> {
-    iter: SymbolChildren<'st>
+impl<'a> ChildrenSymbolsFilter<'a> for ArrayTypeSymbol {
+    type ChildRef = &'a ArrayTypeFunctionSymbol;
 }
 
-impl<'st> ArrayTypeSymbolChildren<'st> {
-    pub(super) fn new(symtab: &'st SymbolTable, array_sympath: &SymbolPath) -> Self {
-        Self {
-            iter: SymbolChildren::new(symtab, array_sympath)
-        }
+impl<'a> TryFrom<&'a SymbolVariant> for &'a ArrayTypeFunctionParameterSymbol {
+    type Error = ();
+
+    fn try_from(value: &'a SymbolVariant) -> Result<Self, Self::Error> {
+        value.try_as_array_func_param_ref().ok_or(())
     }
 }
 
-impl<'st> Iterator for ArrayTypeSymbolChildren<'st> {
-    type Item = &'st ArrayTypeFunctionSymbol;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter
-            .find_map(|v| match v {
-                SymbolVariant::ArrayFunc(s) => Some(s),
-                _ => None
-            })
-    }
+impl<'a> ChildrenSymbolsFilter<'a> for ArrayTypeFunctionSymbol {
+    type ChildRef = &'a ArrayTypeFunctionParameterSymbol;
 }
 
-
-#[derive(Clone)]
-pub struct ArrayTypeFunctionSymbolChildren<'st> {
-    iter: SymbolChildren<'st>
-}
-
-impl<'st> ArrayTypeFunctionSymbolChildren<'st> {
-    pub(super) fn new(symtab: &'st SymbolTable, array_func_sympath: &SymbolPath) -> Self {
-        Self {
-            iter: SymbolChildren::new(symtab, array_func_sympath)
-        }
-    }
-}
-
-impl<'st> Iterator for ArrayTypeFunctionSymbolChildren<'st> {
-    type Item = &'st ArrayTypeFunctionParameterSymbol;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter
-            .find_map(|v| match v {
-                SymbolVariant::ArrayFuncParam(s) => Some(s),
-                _ => None
-            })
-    }
-}
 
 
 

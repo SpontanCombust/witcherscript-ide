@@ -255,7 +255,7 @@ impl RenderTooltip for ArrayTypeFunctionSymbol {
         buf.push('(');
 
         let mut params = symtab
-            .get_array_type_function_symbol_children(self.path())
+            .get_symbol_children_filtered(self)
             .collect::<Vec<_>>();
 
         params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
@@ -328,7 +328,7 @@ impl RenderTooltip for GlobalFunctionSymbol {
         buf.push('(');
 
         let mut params = symtab
-            .get_callable_symbol_children(self.path())
+            .get_symbol_children_filtered(self)
             .filter_map(|ch| {
                 if let CallableSymbolChild::Param(param) = ch {
                     Some(param)
@@ -403,7 +403,7 @@ impl RenderTooltip for MemberFunctionSymbol {
         buf.push('(');
 
         let mut params = symtab
-            .get_callable_symbol_children(self.path())
+            .get_symbol_children_filtered(self)
             .filter_map(|ch| {
                 if let CallableSymbolChild::Param(param) = ch {
                     Some(param)
@@ -465,7 +465,7 @@ impl RenderTooltip for EventSymbol {
         buf.push('(');
 
         let mut params = symtab
-            .get_callable_symbol_children(self.path())
+            .get_symbol_children_filtered(self)
             .filter_map(|ch| {
                 if let CallableSymbolChild::Param(param) = ch {
                     Some(param)
