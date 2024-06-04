@@ -119,7 +119,9 @@ impl Backend {
         for modified_file in &modified_files {
             if let Some(mut script_state) = self.scripts.get_mut(modified_file.path.absolute()) {
                 // for cases when files have been updated outside of of LSP client's knowledge
-                if modified_file.modified_timestamp > script_state.modified_timestamp {
+                // checking for not just if greater timestamp, because you can roll back the timestamp 
+                // if you discard changes to the file in source control window in VSCode for example
+                if modified_file.modified_timestamp != script_state.modified_timestamp {
                     let doc = ScriptDocument::from_file(modified_file.path.absolute()).unwrap();
                     script_state.script.refresh(&doc).unwrap();
                     script_state.buffer = doc;
