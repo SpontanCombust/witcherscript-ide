@@ -4,7 +4,7 @@
 
 <!--TODO add demo pictures or gifs for each point-->
 - syntax highlighting
-- basic syntactical analysis
+- basic syntax analysis
 - creating and initializing [script projects](./project-system.md)
 - importing and comparing scripts with their vanilla counterparts
 - go to definition/declaration

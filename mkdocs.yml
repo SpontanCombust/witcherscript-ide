@@ -1,8 +1,9 @@
-site_name: WitcherScript IDE  
-site_description: WitcherScript-IDE - Witcher 3 scripting tooling
+site_name: W I D E - WitcherScript IDE
+site_description: WIDE - Witcher 3 scripting tooling
 site_author: Przemysław Cedro (SpontanCombust)
 site_url: https://spontancombust.github.io/witcherscript-ide/
 repo_url: https://github.com/SpontanCombust/witcherscript-ide
+edit_uri: 'docs'
 
 nav:
   - 'Home': 'index.md'
@@ -17,12 +18,19 @@ nav:
   - 'About':
     - 'about/index.md'
 
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
 theme:
   name: material
   favicon: assets/favicon.ico
   logo: assets/logo.svg
   icon:
     repo: fontawesome/brands/github
+    annotation: material/chevron-right-circle
   palette:
     - scheme: default
       primary: wolven-red

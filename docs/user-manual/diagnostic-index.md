@@ -13,16 +13,17 @@
 
 Project manifest (`witcherscript.toml`) could not be parsed due to syntax error or missing properties.
 
-```toml title="witcherscript.toml" hl_lines="1"
-[content] # (1)
+```toml title="witcherscript.toml" hl_lines="5"
+[content] 
 version = "1.0.0"
 authors = []
 game_version = "4.04"
+# (1)
 
 [dependencies]
 ```
 
-1. Missing field "name".
+1. Missing field "name" in table \[content].
 
 
 ---
@@ -74,7 +75,7 @@ modSharedUtils = { path = "../modSharedUtils" } # (1)
 
 ### `project-dependency-name-not-found`
 
-Dependency in the `witcherscript.toml` manifest file could not be found in any of the [repositories](project-system.md#content-repositories).
+Dependency in the `witcherscript.toml` manifest file could not be found in any of the [repositories](project-system.md#content-repositories). Make sure that the name of the dependency is correct. It should correspond to the name of the project or name of the directory if it's raw content.
 
 ```toml title="witcherscript.toml" hl_lines="2"
 [dependencies]
@@ -95,7 +96,7 @@ Dependency in the `witcherscript.toml` manifest file was found at a given path, 
 mod_shared_utils = { path = "../modSharedUtils" } # (1)
 ```
 
-1. Expected `#!toml modSharedUtils = { path = "../modSharedUtils" }`
+1. Expected for example `#!toml modSharedUtils = { path = "../modSharedUtils" }`
 
 
 ---
@@ -103,7 +104,7 @@ mod_shared_utils = { path = "../modSharedUtils" } # (1)
 ### `multiple-matching-project-dependencies`
 
 A repository dependency was found, but in multiple places. WIDE has no idea which one to choose. This can happen if you have added multiple repository paths in the configuration that share script content with the same name.  
-One good example would be having two `content0` repository paths configured: one from game installation and other is from the 1.21 version of the game with commented code.
+A good example would be having two `content0` repository paths configured: one from game installation and other is from the 1.21 version of the game with commented code.
 
 ```toml title="witcherscript.toml" hl_lines="2"
 [dependencies]
@@ -236,7 +237,7 @@ var player: CR4Player<Ciri>; // (1)
 
 ### `repeated-specifier`
 
-Specifiers are keywords that tell the WitcherScript compiler to give a code symbol some specific properties. For example adding the keyword `exec` before global function declaration will make that function be able to be invoked from the level of the debug console in game.
+Specifiers are keywords that tell the WitcherScript compiler to give a code symbol some specific properties. For example adding the keyword `exec` before global function declaration will make that function accessible from the debug console in game.
 
 Repeating the same specifier for one code symbol is not allowed.
 

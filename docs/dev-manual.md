@@ -6,7 +6,7 @@ Here you will find the information you need if you want to contribute to this pr
 ## Project structure
 - `.cargo` - Cargo configuration to enable xtasks
 - `.vscode` - VSCode specific files with debugging configurations 
-- `crates` - server Rust code. The main crate is `lsp`, which contains language server implementation
+- `crates` - Rust packages forming WIDE. The main crate is `lsp`, which contains language server implementation
 - `docs` - project documentation from which this website is built
 - `editors` - contains implementations of WitcherScript language client, currently just `vscode` client written in TypeScript
 - `schemas` - contains `witcherscript.toml` schema
