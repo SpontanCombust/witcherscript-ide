@@ -502,7 +502,7 @@ impl RenderTooltip for ConstructorSymbol {
 
 impl RenderTooltip for PrimitiveTypeSymbol {
     fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
-        buf.push_str(self.alias_name().unwrap_or(self.name()))
+        buf.push_str(self.name())
     }
 }
 

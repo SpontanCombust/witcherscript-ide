@@ -6,20 +6,26 @@ use crate::symbol_analysis::symbol_table::SymbolTable;
 /// If only lower case can be found in vanilla code, then the type name is a guess.
 pub fn inject_primitives(symtab: &mut SymbolTable) {
     [
-        PrimitiveTypeSymbol::new("Void", Some("void")),
-        PrimitiveTypeSymbol::new("Byte", Some("byte")),
+        PrimitiveTypeSymbol::new("void", None),
+        PrimitiveTypeSymbol::new("Byte", None),
+        PrimitiveTypeSymbol::new("byte", Some("Byte")),
         PrimitiveTypeSymbol::new("Int8", None),
-        PrimitiveTypeSymbol::new("Int32", Some("int")),
-        PrimitiveTypeSymbol::new("UInt64", None),
-        PrimitiveTypeSymbol::new("Float", Some("float")),
-        PrimitiveTypeSymbol::new("Bool", Some("bool")),
-        PrimitiveTypeSymbol::new("String", Some("string")),
-        PrimitiveTypeSymbol::new("CName", Some("name")),
+        PrimitiveTypeSymbol::new("Int32", None),
+        PrimitiveTypeSymbol::new("int", Some("Int32")),
+        PrimitiveTypeSymbol::new("Uint64", None),
+        PrimitiveTypeSymbol::new("Float", None),
+        PrimitiveTypeSymbol::new("float", Some("Float")),
+        PrimitiveTypeSymbol::new("Bool", None),
+        PrimitiveTypeSymbol::new("bool", Some("Bool")),
+        PrimitiveTypeSymbol::new("String", None),
+        PrimitiveTypeSymbol::new("string", Some("String")),
+        PrimitiveTypeSymbol::new("CName", None),
+        PrimitiveTypeSymbol::new("name", Some("CName")),
         PrimitiveTypeSymbol::new("NULL", None),
 
     ].into_iter()
     .for_each(|sym| {
-        symtab.insert_primitive_symbol(sym);
+        symtab.insert_symbol(sym);
     });
 }
 
