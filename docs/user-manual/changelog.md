@@ -3,56 +3,45 @@
 # Changelog
 
 
-## v0.3.0-dev.3
+## v0.3.0
+Code symbols update
 
-Almost feature complete "go to definition" & hover tooltips
-
-### Features
-- Expanded "Go to definition" to almost all code symbols including expressions (only missing handling of state base types) [#13](https://github.com/SpontanCombust/witcherscript-ide/issues/13)
-- Added "Go to declaration" pointing to the first declaration of the function in the inheritance tree [#13](https://github.com/SpontanCombust/witcherscript-ide/issues/13)
-- Added hover feature displaying code symbol information [#7](https://github.com/SpontanCombust/witcherscript-ide/issues/7)
-- Made `{unknown}` the default text to display for unknown code symbols
-- Added native content directory, which contains all symbols available in WitcherScript, but not explicitly declared. This directory is shipped together with the Language Server.
-- Diagnostics are now published together with an identifier, e.g. `symbol-name-taken`
-
-### Fixes
-- Fixed code text not synchronizing properly when saving a file
-- Lessened the chance of deadlocking by freeing resources earlier
-
-
-
-## v0.3.0-dev.2
+With this release we also establish an acronym for the project, that being ***WIDE*** (**W**itcherScript **I**ntegrated **D**evelopment **E**nvironment). 
+It is also finally getting some visual branding!
 
 ### Features
-- Added go to definition feature, for now working for type identifiers and special vars (`this`, `super` in most cases, `parent`, `virtual_parent`). [#13](https://github.com/SpontanCombust/witcherscript-ide/issues/13)
-
-### Commands
-- Added `witcherscript-ide.debug.clearGlobalState` debug command, which clears global persistant data saved by the VSCode extension. Useful for testing by developers.
-
-### Configuration
-- Added "Enable debug features" setting, which prevents debug features such as commands from being available if not enabled. The default value is false. [#25](https://github.com/SpontanCombust/witcherscript-ide/issues/25)
-
-### Other
-- Trying to access more than very basic features such as go to definition outside of a script project should now result in showing a warning message explaining as to why that can't be done. [#33](https://github.com/SpontanCombust/witcherscript-ide/issues/33)
-
-
-## v0.3.0-dev.1
-This is the first pre-release of the version that will finally bring "Go to" code features to the extension.
-If you find any criticial bugs make sure to submit an issue. Thank you!
-
-### Features
-- Added code symbol scanning. This enables the IDE to know about all the types, functions and data declared in workspace scripts. The use of it is limited for now [#9](https://github.com/SpontanCombust/witcherscript-ide/issues/9)
+- Added Go to definition/declaration feature [#13](https://github.com/SpontanCombust/witcherscript-ide/issues/13)
+- Added Hover tooltips feature [#7](https://github.com/SpontanCombust/witcherscript-ide/issues/7)
 - Added Document Symbols feature [#26](https://github.com/SpontanCombust/witcherscript-ide/issues/26)
 - Added Selection Range feature [#27](https://github.com/SpontanCombust/witcherscript-ide/issues/27)
 - Added `witcherscript.toml` schema, which can be used by [`Even Better TOML`](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml) extension if you have it installed [#16](https://github.com/SpontanCombust/witcherscript-ide/issues/16)
-- Some diagnostics now have linked information to them, e.g. diagnostic for multiple definitions will point to the original declaration
+- Added multiple definition detection
+- Added unique identifiers to diagnostics, which point to the documentation
+
+### Fixes
+- Fixed code text not synchronizing properly when saving a file
+- Fixed unusual line endings in some vanilla script files causing parsing errors [#31](https://github.com/SpontanCombust/witcherscript-ide/issues/31)
+- Fixed diagnostic for invalid project dependency path not being displayed
+- Lessened the chance of the server getting deadlocked
 
 ### Commands
 - Added debug command "Show script symbols" to get a view of all symbols coming from current script file
+- Added "Clear global cache" debug command, which clears global persistant data saved by the VSCode extension. Useful for testing by developers
 
-### Other
+### Configuration
+- Added "Enable debug features" setting, which prevents debug features such as commands from being available if not enabled. By default this is disabled. [#25](https://github.com/SpontanCombust/witcherscript-ide/issues/25)
+  
+### Other changes
+- Trying to access more than very basic features such as go to definition outside of a script project should now result in showing a warning message explaining as to why that can't be done. [#33](https://github.com/SpontanCombust/witcherscript-ide/issues/33)
+- Added more possible automatic `scripts_root` subdirectory candidates for new projects [#35](https://github.com/SpontanCombust/witcherscript-ide/issues/35)
+- Improved script diff view by explicitly displaying which window is vanilla and which is for the mod
+- Added native content directory, which contains all symbols available in WitcherScript, but not explicitly declared. This directory is shipped together with the Language Server
 - Improved AST traversal and text retrieval performance through better memory management
-- Lessened the chance of code deadlock for diagnostics by using HashMap behind a Mutex instead of DashMap
+- Added issue templates to the repository
+
+### Documentation
+- Added "Diagnostic Index" page detailing all diagnostics that can be appear in the editor [#36](https://github.com/SpontanCombust/witcherscript-ide/issues/36)
+- Added more demo media showing WIDE's capabilities
 
 
 ## v0.2.1
