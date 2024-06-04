@@ -140,6 +140,19 @@ impl<'a> ChildrenSymbolsFilter<'a> for EventSymbol {
 }
 
 
+impl<'a> TryFrom<&'a SymbolVariant> for &'a FunctionParameterSymbol {
+    type Error = ();
+
+    fn try_from(value: &'a SymbolVariant) -> Result<Self, Self::Error> {
+        value.try_as_func_param_ref().ok_or(())
+    }
+}
+
+impl<'a> ChildrenSymbolsFilter<'a> for ConstructorSymbol {
+    type ChildRef = &'a FunctionParameterSymbol;
+}
+
+
 impl<'a> TryFrom<&'a SymbolVariant> for &'a ArrayTypeFunctionSymbol {
     type Error = ();
 
