@@ -68,7 +68,7 @@ impl SyntaxErrorVisitor<'_> {
     /// Returns whether the definition contains no errors
     #[inline]
     fn check_function_def(&mut self, n: &FunctionDefinitionNode) -> bool {
-        if self.check_missing(n, "{ or ;") {
+        if self.check_missing(n, "block or ;") {
             if let FunctionDefinition::Some(block) = n.clone().value() {
                 !block.has_errors()
             } else {
@@ -298,8 +298,10 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
             let def = n.definition();
             if !self.check_function_def(&def) {
-                self.check_errors(&def);
-                traverse_definition = true;
+                if let FunctionDefinition::Some(block) = def.clone().value() {
+                    self.check_errors(&block);
+                    traverse_definition = true;
+                }
             }
         }
 
