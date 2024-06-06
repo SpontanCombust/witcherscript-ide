@@ -1,8 +1,9 @@
+use std::collections::HashSet;
 use filetime::FileTime;
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
-use witcherscript_project::{redkit, Manifest};
+use witcherscript_project::{redkit::RedkitManifest, Manifest};
 use crate::{Backend, ScriptState};
 
 
@@ -91,21 +92,10 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
         }
 
         // a fail-safe for situations when the script isn't known to source trees yet
-        let mut containing_content_path = None;
-        for kv in backend.source_trees.iter() {
-            let content_path = kv.key();
-            let source_tree = kv.value();
-    
-            if doc_path.starts_with(source_tree.script_root()) {
-                containing_content_path = Some(content_path.to_owned());
-                break;
-            }
-        }
-
-        if let Some(containing_content_path) = containing_content_path {
+        if let Some(containing_content_path) = backend.content_graph.read().await.strip_content_path_prefix(&doc_path) {
             backend.scan_source_tree(&containing_content_path).await;
         }
-    } else if (doc_path.file_name().unwrap() == Manifest::FILE_NAME || doc_path.extension().unwrap() == redkit::RedkitManifest::EXTENSION) && belongs_to_workspace {
+    } else if (doc_path.file_name().unwrap() == Manifest::FILE_NAME || doc_path.extension().unwrap() == RedkitManifest::EXTENSION) && belongs_to_workspace {
         backend.build_content_graph(false).await;
     }
 
@@ -126,4 +116,90 @@ pub async fn did_close(backend: &Backend, params: lsp::DidCloseTextDocumentParam
             backend.scripts.remove(&doc_path);
         }
     }
+}
+
+pub async fn did_create_files(backend: &Backend, params: lsp::CreateFilesParams) {
+    let paths: Vec<AbsPath> = 
+        params.files.into_iter()
+        .map(|f| f.uri)
+        .filter_map(|uri_str| lsp::Url::parse(&uri_str).ok())
+        .filter_map(|uri| AbsPath::try_from(uri).ok())
+        .collect();
+
+    let mut contents_to_update = HashSet::new();
+    for p in &paths {
+        if p.extension().unwrap_or_default() == "ws" || p.is_dir() {
+            if let Some(content_path) = backend.content_graph.read().await.strip_content_path_prefix(&p) {
+                contents_to_update.insert(content_path);
+            }
+        }
+    }
+
+    for content_path in contents_to_update {
+        backend.scan_source_tree(&content_path).await;
+    }
+
+    backend.reporter.commit_all_diagnostics().await;
+}
+
+pub async fn did_delete_files(backend: &Backend, params: lsp::DeleteFilesParams) {
+    let paths: Vec<AbsPath> = 
+        params.files.into_iter()
+        .map(|f| f.uri)
+        .filter_map(|uri_str| lsp::Url::parse(&uri_str).ok())
+        .filter_map(|uri| AbsPath::try_from(uri).ok())
+        .collect();
+
+    let mut contents_to_update = HashSet::new();
+    let mut contents_to_be_deleted = HashSet::new();
+    for p in &paths {
+        if p.extension().unwrap_or_default() == "ws" || p.is_dir() {
+            if let Some(content_path) = backend.content_graph.read().await.strip_content_path_prefix(&p) {
+                contents_to_update.insert(content_path);
+            }
+        }
+        else if p.file_name().unwrap_or_default() == Manifest::FILE_NAME || p.extension().unwrap_or_default() == RedkitManifest::EXTENSION {
+            if let Some(content_path) = backend.content_graph.read().await.strip_content_path_prefix(&p) {
+                contents_to_be_deleted.insert(content_path);
+            }
+        }
+    }
+
+    for p in &contents_to_be_deleted {
+        contents_to_update.remove(p);
+    }
+
+    for content_path in contents_to_update {
+        backend.scan_source_tree(&content_path).await;
+    }
+
+    if !contents_to_be_deleted.is_empty() {
+        backend.build_content_graph(false).await;
+    }
+
+    backend.reporter.commit_all_diagnostics().await;
+}
+
+pub async fn did_rename_files(backend: &Backend, params: lsp::RenameFilesParams) {
+    let paths: Vec<AbsPath> = 
+        params.files.into_iter()
+        .map(|f| f.old_uri)
+        .filter_map(|uri_str| lsp::Url::parse(&uri_str).ok())
+        .filter_map(|uri| AbsPath::try_from(uri).ok())
+        .collect();
+
+    let mut contents_to_update = HashSet::new();
+    for p in &paths {
+        if p.extension().unwrap_or_default() == "ws" || p.is_dir() {
+            if let Some(content_path) = backend.content_graph.read().await.strip_content_path_prefix(&p) {
+                contents_to_update.insert(content_path);
+            }
+        }
+    }
+
+    for content_path in contents_to_update {
+        backend.scan_source_tree(&content_path).await;
+    }
+
+    backend.reporter.commit_all_diagnostics().await;
 }

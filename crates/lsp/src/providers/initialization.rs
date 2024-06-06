@@ -4,6 +4,8 @@ use serde::Deserialize;
 use tower_lsp::lsp_types::notification::Notification;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
+use witcherscript_project::redkit::RedkitManifest;
+use witcherscript_project::Manifest;
 use crate::Backend;
 
 
@@ -48,6 +50,42 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
         backend.reporter.log_error("Initialization options missing!").await;
     }
 
+
+    let file_ops_filter_ws = lsp::FileOperationFilter {
+        scheme: Some("file".into()),
+        pattern: lsp::FileOperationPattern {
+            glob: "**/*.ws".into(),
+            matches: Some(lsp::FileOperationPatternKind::File),
+            ..Default::default()
+        }
+    };
+
+    let file_ops_filter_manifest = lsp::FileOperationFilter {
+        scheme: Some("file".into()),
+        pattern: lsp::FileOperationPattern {
+            glob: format!("**/{}", Manifest::FILE_NAME),
+            matches: Some(lsp::FileOperationPatternKind::File),
+            ..Default::default()
+        }
+    };
+
+    let file_ops_filter_redkit_manifest = lsp::FileOperationFilter {
+        scheme: Some("file".into()),
+        pattern: lsp::FileOperationPattern {
+            glob: format!("**/*.{}", RedkitManifest::EXTENSION),
+            matches: Some(lsp::FileOperationPatternKind::File),
+            ..Default::default()
+        }
+    };
+
+    let file_ops_reg_opts = Some(lsp::FileOperationRegistrationOptions {
+        filters: vec![
+            file_ops_filter_ws,
+            file_ops_filter_manifest,
+            file_ops_filter_redkit_manifest
+        ]
+    });
+
     Ok(lsp::InitializeResult {
         server_info: Some(lsp::ServerInfo {
             name: Backend::SERVER_NAME.into(),
@@ -68,7 +106,12 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
                     supported: Some(true),
                     change_notifications: Some(lsp::OneOf::Left(true)),
                 }),
-                file_operations: None
+                file_operations: Some(lsp::WorkspaceFileOperationsServerCapabilities {
+                    did_create: file_ops_reg_opts.clone(),
+                    did_delete: file_ops_reg_opts.clone(),
+                    did_rename: file_ops_reg_opts,
+                    ..Default::default()
+                })
             }),
             selection_range_provider: Some(lsp::SelectionRangeProviderCapability::Simple(true)),
             document_symbol_provider: Some(lsp::OneOf::Left(true)),

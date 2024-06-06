@@ -45,6 +45,18 @@ impl LanguageServer for Backend {
         providers::document_ops::did_close(self, params).await
     }
 
+    async fn did_create_files(&self, params: lsp::CreateFilesParams) {
+        providers::document_ops::did_create_files(self, params).await
+    }
+
+    async fn did_delete_files(&self, params: lsp::DeleteFilesParams) {
+        providers::document_ops::did_delete_files(self, params).await
+    }
+
+    async fn did_rename_files(&self, params: lsp::RenameFilesParams) {
+        providers::document_ops::did_rename_files(self, params).await
+    }
+
 
     async fn did_change_configuration(&self, params: lsp::DidChangeConfigurationParams) {
         providers::configuration::did_change_configuration(self, params).await

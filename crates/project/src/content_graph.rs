@@ -173,6 +173,18 @@ impl ContentGraph {
         self.get_node_index_by_path(content_path).map(|i| &self.nodes[i])
     }
 
+    /// Checks given path against contents in the graph.
+    /// If the path is a subpath to any content in the graph, a path to that content will be returned.
+    pub fn strip_content_path_prefix(&self, path: &AbsPath) -> Option<AbsPath> {
+        for n in self.nodes.iter() {
+            if path.starts_with(n.content.path()) {
+                return Some(n.content.path().to_owned());
+            }
+        }
+
+        None
+    }
+
 
     
     /// Iterator over all nodes in the graph. Order of nodes is arbitrary.
