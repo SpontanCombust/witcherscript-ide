@@ -5,6 +5,7 @@ use abs_path::AbsPath;
 use witcherscript_project::content::VANILLA_CONTENT_NAME;
 use witcherscript_project::Manifest;
 use crate::{Backend, ScriptStateContentInfo};
+use super::notifications;
 use super::requests::{self, ContentInfo};
 
 
@@ -139,7 +140,7 @@ impl Backend {
         } else {
             return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
         }
-
+        //TODO change to getting from script state
         let mut parent_content_path = None;
         for it in self.source_trees.iter() {
             let source_tree = it.value();
@@ -315,6 +316,24 @@ impl Backend {
         Ok(requests::debug::script_symbols::Response {
             symbols: script_symbols
         })
+    }
+
+    pub async fn handle_projects_did_import_scripts_notification(&self, params: notifications::projects::did_import_scripts::Parameters) {
+        let paths: Vec<AbsPath> = 
+            params.imported_scripts_uris.into_iter()
+            .filter_map(|uri| AbsPath::try_from(uri).ok())
+            .collect();
+
+        if paths.is_empty() {
+            return;
+        }
+
+        if let Some(content_path) = self.content_graph.read().await.strip_content_path_prefix(&paths[0]) {
+            self.scan_source_tree(&content_path).await;
+            self.reporter.commit_all_diagnostics().await;
+        } else {
+            self.reporter.log_error("Imported files do no belong to a known content!").await;
+        }
     }
 }
 

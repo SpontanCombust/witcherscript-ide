@@ -5,6 +5,7 @@ import * as fs from 'fs/promises';
 import { client } from "./extension"
 import { getConfiguration } from './config';
 import * as requests from './requests';
+import * as notifications from './notifications';
 import * as state from './state';
 import * as utils from './utils';
 import * as tdcp from './providers/text_document_content_providers'
@@ -315,6 +316,7 @@ function commandImportVanillaScripts(): Cmd {
 
             // Finally import scripts while doing a little validation
 
+            let scriptsImported = [];
             for (const content0ScriptUri of scriptsToImport) {
                 const content0ScriptPath = content0ScriptUri.fsPath;
                 const relativePath = path.relative(content0ScriptsRootPath, content0ScriptPath);
@@ -339,11 +341,16 @@ function commandImportVanillaScripts(): Cmd {
                         await fs.copyFile(content0ScriptPath, projectScriptPath);
                         await vscode.window.showTextDocument(projectScriptUri, { preview: false });
                         client.info(`Successfully imported ${relativePath} into the project`);
+                        scriptsImported.push(projectScriptUri);
                     } catch (err) {
                         client.error(`Failed to import script ${relativePath}: ${err}`);
                     }
                 }
             }
+
+            client.sendNotification(notifications.projects.didImportScripts.type, {
+                importedScriptsUris: scriptsImported.map(uri => client.code2ProtocolConverter.asUri(uri))
+            })
 
             if (encounteredProblems) {
                 vscode.window.showWarningMessage("Scripts imported with some problems (check extension output)");

@@ -1,4 +1,4 @@
-use messaging::requests;
+use messaging::{notifications, requests};
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::{LanguageServer, LspService, Server};
@@ -109,6 +109,7 @@ async fn main() {
         .custom_method(requests::debug::script_ast::METHOD, Backend::handle_debug_script_ast_request)
         .custom_method(requests::debug::content_graph_dot::METHOD, Backend::handle_debug_content_graph_dot_request)
         .custom_method(requests::debug::script_symbols::METHOD, Backend::handle_debug_script_symbols_request)
+        .custom_method(notifications::projects::did_import_scripts::METHOD, Backend::handle_projects_did_import_scripts_notification)
         .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
