@@ -2,4 +2,4 @@
 
 > Creating/renaming scripts in the editor doesn't get detected.
 
-When in doubt explicitly save the file using `Ctrl + S`. This should refresh source trees.
+When in doubt explicitly save the file using `Ctrl + S`. This should refresh source trees. This is especially true in case of changes to folders.
