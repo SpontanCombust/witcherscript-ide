@@ -140,25 +140,29 @@ impl Backend {
         } else {
             return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
         }
-        //TODO change to getting from script state
-        let mut parent_content_path = None;
-        for it in self.source_trees.iter() {
-            let source_tree = it.value();
-            if source_tree.contains(&script_path) {
-                parent_content_path = Some(it.key().to_owned());
-                break;
-            }
-        }
 
-        if parent_content_path.is_none() {
+        let script_state;
+        if let Some(ss) = self.scripts.get(&script_path) {
+            script_state = ss;
+        } else {
             return Err(jsonrpc::Error {
                 code: jsonrpc::ErrorCode::ServerError(-1020),
+                message: "This script file is uknown to the langauge server".into(),
+                data: None
+            })
+        }
+
+        let parent_content_path;
+        if let Some(content_info) = &script_state.content_info {
+            parent_content_path = content_info.content_path.clone();
+        } else {
+            return Err(jsonrpc::Error {
+                code: jsonrpc::ErrorCode::ServerError(-1021),
                 message: "Script does not belong to any content in the content graph".into(),
                 data: None
             })
         }
-        let parent_content_path = parent_content_path.unwrap();
-        
+
         if let Some(n) = self.content_graph.read().await.get_node_by_path(&parent_content_path) {
             Ok(requests::scripts::parent_content::Response {
                 parent_content_info: ContentInfo { 
@@ -171,7 +175,7 @@ impl Backend {
             })
         } else {
             Err(jsonrpc::Error {
-                code: jsonrpc::ErrorCode::ServerError(-1021),
+                code: jsonrpc::ErrorCode::ServerError(-1022),
                 message: "Could not find content in content graph".into(),
                 data: None
             })

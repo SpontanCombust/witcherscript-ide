@@ -383,7 +383,7 @@ function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): Cmd {
         } catch(error: any) {
             vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
 
-            if (error.code == -1020) {
+            if (error.code == -1021) {
                 utils.showForeignScriptWarning(context);
             }
 
