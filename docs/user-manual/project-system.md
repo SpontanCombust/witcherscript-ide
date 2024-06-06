@@ -19,7 +19,10 @@ The scripts directory is a subfolder literally called *"scripts"*, which contain
 Creating a manifest for your script mod is mandatory if you want to use more advanced code features like go to definition. Without a manifest you are limited to syntax highlighting and basic syntax analysis.
 
 :material-information-outline: To quickly create a new project or initialize one in an existing project directory use *`"Initialize/Create WitcherScript project..."`* commands in the editor.
-<!-- TODO add a gif of project creation -->
+
+<video controls muted>
+  <source src="../../assets/user-manual/editor/project-creation.mp4" type="video/mp4">
+</video>
 
 Example of a simple WIDE project setup:
 
