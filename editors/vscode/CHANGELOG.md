@@ -22,6 +22,8 @@ It is also finally getting some visual branding!
 - Fixed code text not synchronizing properly when saving a file
 - Fixed unusual line endings in some vanilla script files causing parsing errors [#31](https://github.com/SpontanCombust/witcherscript-ide/issues/31)
 - Fixed diagnostic for invalid project dependency path not being displayed
+- Fixed scripts not getting updated if their version was rolled back (modified date was made older than the previous date)
+- Fixed change to the script root path in the manifest file not getting detected and handled
 - Lessened the chance of the server getting deadlocked
 
 ### Commands
@@ -30,17 +32,20 @@ It is also finally getting some visual branding!
 
 ### Configuration
 - Added "Enable debug features" setting, which prevents debug features such as commands from being available if not enabled. By default this is disabled. [#25](https://github.com/SpontanCombust/witcherscript-ide/issues/25)
+- Added "Enable language server" setting, which allows you to disable everything except syntax highlighting if you want to [#38](https://github.com/SpontanCombust/witcherscript-ide/issues/38)
   
 ### Other changes
 - Trying to access more than very basic features such as go to definition outside of a script project should now result in showing a warning message explaining as to why that can't be done. [#33](https://github.com/SpontanCombust/witcherscript-ide/issues/33)
 - Added more possible automatic `scripts_root` subdirectory candidates for new projects [#35](https://github.com/SpontanCombust/witcherscript-ide/issues/35)
-- Improved script diff view by explicitly displaying which window is vanilla and which is for the mod
+- Improved UX by explicitly displaying which window is vanilla and which is for the mod in script diff view
+- Improved UX by automatically reacting to newly created, removed or renamed script files, some cases still require explicit file save to refresh though [#39](https://github.com/SpontanCombust/witcherscript-ide/issues/39)
 - Added native content directory, which contains all symbols available in WitcherScript, but not explicitly declared. This directory is shipped together with the Language Server
 - Improved AST traversal and text retrieval performance through better memory management
 - Added issue templates to the repository
 
 ### Documentation
 - Added "Diagnostic Index" page detailing all diagnostics that can be appear in the editor [#36](https://github.com/SpontanCombust/witcherscript-ide/issues/36)
+- Added FAQ page
 - Added more demo media showing WIDE's capabilities
 
 
