@@ -2,13 +2,38 @@
 
 ## Features
 
-<!--TODO add demo pictures or gifs for each point-->
-- syntax highlighting
-- basic syntax analysis
 - creating and initializing [script projects](./project-system.md)
+
+<video controls muted>
+  <source src="../../assets/user-manual/editor/project-creation.mp4" type="video/mp4">
+</video>
+
+- syntax highlighting
+
+![Syntax Highlighting](../assets/user-manual/editor/syntax-highlighting.jpg)
+
+- basic syntax analysis
+
+![Syntax Analysis](../assets/user-manual/editor/syntax-analysis.jpg)
+
 - importing and comparing scripts with their vanilla counterparts
-- go to definition/declaration
+
+<video controls muted>
+  <source src="../../assets/user-manual/editor/vanilla-import-diff.mp4" type="video/mp4">
+</video>
+
 - hover tooltips
+
+<video controls muted>
+  <source src="../../assets/user-manual/editor/hover.mp4" type="video/mp4">
+</video>
+
+- go to definition/declaration
+
+<video controls muted>
+  <source src="../../assets/user-manual/editor/goto-definition.mp4" type="video/mp4">
+</video>
+
 - support for REDKit projects
 
 **More coming soon!**
