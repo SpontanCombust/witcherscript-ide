@@ -85,6 +85,27 @@ impl Backend {
             self.reporter.push_diagnostic(&loc_diag.path, loc_diag.diagnostic);
         }
     }
+
+    pub async fn remove_symbols(&self, content_path: &AbsPath, removed_source_paths: Vec<SourceTreePath>) {
+        let mut symtabs;
+        if let Ok(res) = self.symtabs.try_write() {
+            symtabs = res;
+        } else {
+            return;
+        }
+
+        let symtab;
+        if let Some(val) = symtabs.get_mut(content_path) {
+            symtab = val;
+        } else {
+            return;
+        }
+
+        for p in removed_source_paths.iter() {
+            symtab.remove_symbols_for_source(p.local());
+            self.reporter.clear_diagnostics(p.absolute(), DiagnosticDomain::SymbolAnalysis);
+        }
+    }
 }
 
 struct SymbolScanWorker {

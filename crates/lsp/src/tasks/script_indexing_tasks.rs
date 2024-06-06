@@ -54,7 +54,7 @@ impl Backend {
             .collect::<Vec<_>>();
 
         if !diff_removed.is_empty() {
-            self.on_source_tree_files_removed(diff_removed).await;
+            self.on_source_tree_files_removed(diff_removed, content_path).await;
         }
         if !diff_added.is_empty() {
             self.on_source_tree_files_added(diff_added, content_path).await;
@@ -107,12 +107,17 @@ impl Backend {
         self.reporter.log_info(format!("Parsed discovered scripts in {:.3}s", duration.as_secs_f32())).await;
     }
 
-    async fn on_source_tree_files_removed(&self, removed_files: Vec<SourceTreeFile>) {
-        for removed_file in removed_files {
-            // self.log_info(format!("Deprecated script: {}", removed_path)).await;
+    async fn on_source_tree_files_removed(&self, removed_files: Vec<SourceTreeFile>, content_path: &AbsPath) {
+        for removed_file in removed_files.iter() {
             self.scripts.remove(removed_file.path.absolute());
             self.reporter.purge_diagnostics(removed_file.path.absolute());
         }
+
+        let paths = removed_files.into_iter()
+                .map(|f| f.path.clone())
+                .collect();
+
+        self.remove_symbols(content_path, paths).await;
     }
     
     async fn on_source_tree_files_modified(&self, modified_files: Vec<SourceTreeFile>) {
