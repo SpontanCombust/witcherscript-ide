@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { client } from "./../extension"
+import { getLanguageClient } from "./../lang_client"
 import * as requests from './../requests';
 
 
@@ -24,6 +24,12 @@ export class ScriptAstProvider implements vscode.TextDocumentContentProvider {
 
 
     provideTextDocumentContent(uri: vscode.Uri): vscode.ProviderResult<string> {
+        const client = getLanguageClient();
+        if (client == undefined) {
+            vscode.window.showErrorMessage("Language Server is not active!");
+            return;
+        }
+
         // VSCode at the time of writing this does not provide any quick and easy way to display a custom tab label.
         // Its default way of getting the tab name is the file name component of URI passed to openTextDocument.
         // So if I want to display "{file} - AST" I need to do a bit of URI hacking and pass the whole thing to it.
@@ -68,6 +74,12 @@ export class ContentGraphDotProvider implements vscode.TextDocumentContentProvid
     public eventEmitter = new vscode.EventEmitter<vscode.Uri>();
 
     provideTextDocumentContent(_: vscode.Uri): vscode.ProviderResult<string> {
+        const client = getLanguageClient();
+        if (client == undefined) {
+            vscode.window.showErrorMessage("Language Server is not active!");
+            return;
+        }
+
         const params: requests.debug.contentGraphDot.Parameters = {};
         return client.sendRequest(requests.debug.contentGraphDot.type, params).then(
             (response) => {
@@ -105,6 +117,12 @@ export class ScriptSymbolsProvider implements vscode.TextDocumentContentProvider
     public eventEmitter = new vscode.EventEmitter<vscode.Uri>();
 
     provideTextDocumentContent(uri: vscode.Uri): vscode.ProviderResult<string> {
+        const client = getLanguageClient();
+        if (client == undefined) {
+            vscode.window.showErrorMessage("Language Server is not active!");
+            return;
+        }
+        
         uri = vscode.Uri.file(uri.fsPath.substring(0, uri.fsPath.length - ScriptSymbolsProvider.pathSuffix.length));
 
         const params: requests.debug.scriptSymbols.Parameters = {

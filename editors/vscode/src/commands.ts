@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 
-import { client } from "./extension"
+import { getLanguageClient } from "./lang_client"
 import { getConfiguration } from './config';
 import * as requests from './requests';
 import * as notifications from './notifications';
@@ -126,6 +126,12 @@ function validateProjectName(input: string): string | undefined {
 }
 
 async function initializeProjectInDirectory(projectDirUri: vscode.Uri, projectName: string, context: vscode.ExtensionContext) {
+    const client = getLanguageClient();
+    if (client == undefined) {
+        vscode.window.showErrorMessage("Language Server is not active!");
+        return;
+    }
+
     let manifestUri: vscode.Uri;
     try {
         const params: requests.projects.create.Parameters = {
@@ -236,6 +242,12 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
 
 function commandImportVanillaScripts(): Cmd {
     return async () => {
+        const client = getLanguageClient();
+        if (client == undefined) {
+            vscode.window.showErrorMessage("Language Server is not active!");
+            return;
+        }
+        
         let projectContentInfo: requests.ContentInfo;
         let content0Info: requests.ContentInfo;
 
@@ -363,6 +375,12 @@ function commandImportVanillaScripts(): Cmd {
 
 function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): Cmd {
     return async () => {
+        const client = getLanguageClient();
+        if (client == undefined) {
+            vscode.window.showErrorMessage("Language Server is not active!");
+            return;
+        }
+        
         if (!vscode.window.activeTextEditor) {
             vscode.window.showErrorMessage("No active editor available!");
             return;

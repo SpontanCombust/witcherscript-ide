@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 export interface Config {
     gameDirectory: string,
     contentRepositories: string[],
+    enableLanguageServer: boolean,
     enableDebugFeatures: boolean
 }
 
@@ -12,6 +13,7 @@ export function getConfiguration(): Config {
     return {
         gameDirectory: config.get<string>('gameDirectory') ?? '',
         contentRepositories: config.get<string[]>('contentRepositories') ?? [],
+        enableLanguageServer: config.get<boolean>('enableLanguageServer') ?? true,
         enableDebugFeatures: config.get<boolean>('debug.enableDebugFeatures') ?? false
     }
 }

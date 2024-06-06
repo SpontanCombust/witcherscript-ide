@@ -70,10 +70,15 @@
           "default": [],
           "markdownDescription": "Paths to custom directories containing WitcherScript contents"
         },
+        "witcherscript-ide.enableLanguageServer": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable the language server. You can disable this if you only want syntax highlighting (change requires extension reload)"
+        },
         "witcherscript-ide.debug.enableDebugFeatures": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Enable debug features (requires extension reload)"
+          "markdownDescription": "Enable debug features (change requires extension reload)"
         }
       }
     },
@@ -81,41 +86,44 @@
       {
         "command": "witcherscript-ide.projects.init",
         "title": "Initialize a WitcherScript project in existing directory...",
-        "category": "WitcherScript-IDE"
+        "category": "WitcherScript-IDE",
+        "enablement": "witcherscript-ide.languageServerActive"
       },
       {
         "command": "witcherscript-ide.projects.create",
         "title": "Create a new WitcherScript project...",
-        "category": "WitcherScript-IDE"
+        "category": "WitcherScript-IDE",
+        "enablement": "witcherscript-ide.languageServerActive"
       },
       {
         "command": "witcherscript-ide.scripts.importVanilla",
         "title": "Import scripts from vanilla...",
-        "category": "WitcherScript-IDE"
+        "category": "WitcherScript-IDE",
+        "enablement": "witcherscript-ide.languageServerActive"
       },
       {
         "command": "witcherscript-ide.scripts.diffVanilla",
         "title": "Compare this script with vanilla counterpart",
         "category": "WitcherScript-IDE",
-        "enablement": "editorLangId == 'witcherscript'"
+        "enablement": "witcherscript-ide.languageServerActive && editorLangId == 'witcherscript'"
       },
       {
         "command": "witcherscript-ide.debug.showScriptAst",
         "title": "Show script AST",
         "category": "WitcherScript-IDE (debug)",
-        "enablement": "witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
+        "enablement": "witcherscript-ide.languageServerActive && witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
       },
       {
         "command": "witcherscript-ide.debug.contentGraphDot",
         "title": "Show content graph",
         "category": "WitcherScript-IDE (debug)",
-        "enablement": "witcherscript-ide.debugFeaturesEnabled"
+        "enablement": "witcherscript-ide.languageServerActive && witcherscript-ide.debugFeaturesEnabled"
       },
       {
         "command": "witcherscript-ide.debug.showScriptSymbols",
         "title": "Show script symbols",
         "category": "WitcherScript-IDE (debug)",
-        "enablement": "witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
+        "enablement": "witcherscript-ide.languageServerActive && witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
       },
       {
         "command": "witcherscript-ide.debug.clearGlobalState",
