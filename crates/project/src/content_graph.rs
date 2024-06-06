@@ -746,6 +746,7 @@ impl<'g> Iterator for Iter<'g> {
 pub struct ContentGraphDifference {
     pub added_nodes: Vec<GraphNode>,
     pub removed_nodes: Vec<GraphNode>,
+    pub modified_nodes: Vec<ModifiedGraphNode>,
     pub added_edges: Vec<GraphEdgeWithContent>,
     pub removed_edges: Vec<GraphEdgeWithContent>
 }
@@ -780,9 +781,28 @@ impl ContentGraphDifference {
         let old_edges_diffable: HashSet<_> = old_edges.iter().map(|e| GraphEdgeWithContent::new(e, old_nodes)).collect();
         let new_edges_diffable: HashSet<_> = new_edges.iter().map(|e| GraphEdgeWithContent::new(e, new_nodes)).collect();
 
+        let mut modified_nodes = Vec::new();
+        for old in &old_nodes_diffable {
+            if let Some(new) = new_nodes_diffable.get(old) {
+                let mut source_tree_root_changed = false;
+
+                if old.0.content.source_tree_root() != new.0.content.source_tree_root() {
+                    source_tree_root_changed = true;
+                }
+
+                if source_tree_root_changed {
+                    modified_nodes.push(ModifiedGraphNode {
+                        node: new.0.clone(),
+                        source_tree_root_changed
+                    });
+                }
+            }
+        }
+
         Self {
             added_nodes: new_nodes_diffable.difference(&old_nodes_diffable).map(|wrapper| wrapper.0.clone()).collect(),
             removed_nodes: old_nodes_diffable.difference(&new_nodes_diffable).map(|wrapper| wrapper.0.clone()).collect(),
+            modified_nodes,
             added_edges: new_edges_diffable.difference(&old_edges_diffable).cloned().collect(),
             removed_edges: old_edges_diffable.difference(&new_edges_diffable).cloned().collect(),
         }
@@ -791,9 +811,16 @@ impl ContentGraphDifference {
     pub fn is_empty(&self) -> bool {
         self.added_nodes.is_empty()     && 
         self.removed_nodes.is_empty()   && 
+        self.modified_nodes.is_empty()  &&
         self.added_edges.is_empty()     && 
         self.removed_edges.is_empty()
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct ModifiedGraphNode {
+    pub node: GraphNode,
+    pub source_tree_root_changed: bool
 }
 
 #[derive(Debug, Clone)]

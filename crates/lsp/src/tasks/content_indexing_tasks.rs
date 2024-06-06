@@ -8,7 +8,7 @@ use witcherscript_diagnostics::*;
 use witcherscript_project::content::{ContentScanError, ProjectDirectory, RedkitProjectDirectory};
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{ContentScanner, FileError};
-use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphEdgeWithContent, GraphNode};
+use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphEdgeWithContent, GraphNode, ModifiedGraphNode};
 use crate::Backend;
 
 
@@ -121,12 +121,17 @@ impl Backend {
 
         let start = Instant::now();
 
-        let (diff_nodes_added, diff_nodes_removed, diff_edges_added, diff_edges_removed) = (diff.added_nodes, diff.removed_nodes, diff.added_edges, diff.removed_edges);
+        let (diff_nodes_added, diff_nodes_removed, diff_nodes_modified, diff_edges_added, diff_edges_removed) = 
+            (diff.added_nodes, diff.removed_nodes, diff.modified_nodes, diff.added_edges, diff.removed_edges);
+
         if !diff_nodes_removed.is_empty() {
             self.on_graph_nodes_removed(diff_nodes_removed).await;
         }
         if !diff_nodes_added.is_empty() {
             self.on_graph_nodes_added(diff_nodes_added).await;
+        }
+        if !diff_nodes_modified.is_empty() {
+            self.on_graph_nodes_modified(diff_nodes_modified).await;
         }
         if !diff_edges_added.is_empty() {
             self.on_graph_edges_added(diff_edges_added).await;
@@ -212,6 +217,52 @@ impl Backend {
                 if let Some(manifest_path) = manifest_path {
                     self.reporter.purge_diagnostics(manifest_path);
                 }
+            }
+        }
+
+        for (content_path, diff) in source_tree_diffs {
+            self.on_source_tree_changed(&content_path, diff).await;
+        }
+    }
+
+    async fn on_graph_nodes_modified(&self, modified_nodes: Vec<ModifiedGraphNode>) {
+        let mut source_tree_diffs = HashMap::new();
+        for n in modified_nodes {
+            let modified_content = n.node.content;
+            let modified_content_path = modified_content.path();
+
+            if n.source_tree_root_changed {
+                self.reporter.log_info(format!("Source tree root changed for content \"{}\" in {}", modified_content.content_name(), modified_content_path)).await;
+    
+    
+                let old_source_tree_files = 
+                    self.source_trees.remove(modified_content_path)
+                    .map(|(_, source_tree)| source_tree.into_iter().collect())
+                    .unwrap_or(vec![]);
+    
+                let new_source_tree = modified_content.source_tree();
+                if !new_source_tree.errors.is_empty() {
+                    for err in &new_source_tree.errors {
+                        self.report_source_tree_scan_error(err.clone()).await;
+                    }
+                }
+    
+                let new_scripts_root = new_source_tree.script_root_arc();
+                let new_source_tree_files: Vec<_> = new_source_tree.iter().cloned().collect();
+    
+                source_tree_diffs.insert(modified_content_path.to_owned(), SourceTreeDifference {
+                    added: new_source_tree_files,
+                    removed: old_source_tree_files,
+                    modified: vec![]
+                });
+    
+                self.source_trees.insert(modified_content_path.clone(), new_source_tree);
+    
+    
+                let mut symtabs = self.symtabs.write().await;
+                let symtab = SymbolTable::new(new_scripts_root);
+    
+                symtabs.insert(modified_content_path.clone(), symtab);
             }
         }
 
