@@ -78,7 +78,6 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
 
     
     if doc_path.extension().map(|ext| ext == "ws").unwrap_or(false) {
-        let mut containing_content_path = None;
         if let Some(text) = params.text {
             if let Some(mut entry) = backend.scripts.get_mut(&doc_path) {
                 let script_state = entry.value_mut();
@@ -88,10 +87,20 @@ pub async fn did_save(backend: &Backend, params: lsp::DidSaveTextDocumentParams)
                 script_state.buffer.replace(&text);
                 script_state.script.refresh(&mut script_state.buffer).expect("Script refresh error!");
                 script_state.modified_timestamp = FileTime::now();
-
-                containing_content_path = script_state.content_info.as_ref().map(|ci| ci.content_path.clone());
             }
-        } 
+        }
+
+        // a fail-safe for situations when the script isn't known to source trees yet
+        let mut containing_content_path = None;
+        for kv in backend.source_trees.iter() {
+            let content_path = kv.key();
+            let source_tree = kv.value();
+    
+            if doc_path.starts_with(source_tree.script_root()) {
+                containing_content_path = Some(content_path.to_owned());
+                break;
+            }
+        }
 
         if let Some(containing_content_path) = containing_content_path {
             backend.scan_source_tree(&containing_content_path).await;
