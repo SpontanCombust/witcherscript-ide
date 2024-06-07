@@ -343,6 +343,12 @@ impl Backend {
                     kind: DiagnosticKind::MultipleMatchingProjectDependencies { content_name, matching_paths }
                 });
             },
+            ContentGraphError::SelfDependency { manifest_path, manifest_range } => {
+                self.reporter.push_diagnostic(&manifest_path, Diagnostic {
+                    range: manifest_range,
+                    kind: DiagnosticKind::ProjectSelfDependency
+                });
+            },
             ContentGraphError::NativeContentNotFound(scan_err) => {
                 self.reporter.log_error(format!("Native content directory could not be found!")).await;
                 if let Some(scan_err) = scan_err {

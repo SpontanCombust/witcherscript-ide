@@ -63,6 +63,7 @@ pub enum DiagnosticKind {
         content_name: String,
         matching_paths: Vec<AbsPath>
     },
+    ProjectSelfDependency,
 
     // syntax analysis
     MissingSyntax(String),
@@ -105,7 +106,8 @@ impl DiagnosticKind {
             | ProjectDependencyPathNotFound(_)
             | ProjectDependencyNameNotFound(_)
             | ProjectDependencyNameNotFoundAtPath(_)
-            | MultipleMatchingProjectDependencies { .. } => DiagnosticDomain::ProjectSystem,
+            | MultipleMatchingProjectDependencies { .. } 
+            | ProjectSelfDependency => DiagnosticDomain::ProjectSystem,
             MissingSyntax(_)
             | InvalidSyntax => DiagnosticDomain::SyntaxAnalysis,
             SymbolNameTaken { .. }
@@ -129,6 +131,7 @@ impl DiagnosticKind {
             ProjectDependencyNameNotFound(_) => lsp::DiagnosticSeverity::ERROR,
             ProjectDependencyNameNotFoundAtPath(_) => lsp::DiagnosticSeverity::ERROR,
             MultipleMatchingProjectDependencies { .. } => lsp::DiagnosticSeverity::ERROR,
+            ProjectSelfDependency => lsp::DiagnosticSeverity::ERROR,
 
             MissingSyntax(_) => lsp::DiagnosticSeverity::ERROR,
             InvalidSyntax => lsp::DiagnosticSeverity::ERROR,
@@ -154,6 +157,7 @@ impl DiagnosticKind {
             ProjectDependencyNameNotFound(n) => format!("Dependency could not be found with name \"{n}\""),
             ProjectDependencyNameNotFoundAtPath(n) => format!("Dependency with name \"{n}\" could not be found at specified path"),
             MultipleMatchingProjectDependencies { content_name: project_name, matching_paths } => format!("Multiple matching contents for dependency with name \"{project_name}\": {:?}", matching_paths.into_iter().map(|p| p.to_string()).collect::<Vec<_>>()),
+            ProjectSelfDependency => "Content may not specify itself as its own dependency".into(),
 
             MissingSyntax(s) => format!("Syntax error: expected {}", s),
             InvalidSyntax => "Syntax error: unexpected syntax".into(),

@@ -101,6 +101,24 @@ mod_shared_utils = { path = "../modSharedUtils" } # (1)
 
 ---
 
+### `project-self-dependency`
+
+You've made content point to itself as its own dependency. Make sure to specify a correct path if it's a path dependency or remove the entry entirely if it's a repository dependency.
+
+```toml title="witcherscript.toml" hl_lines="5 6"
+[content]
+name = "helloWorld"
+
+[dependencies]
+helloWorld = { path = "." } # (1)
+helloWorld = true # (2)
+```
+
+1. A path self-dependency
+2. This is an error if content itself is inside a repository
+
+---
+
 ### `multiple-matching-project-dependencies`
 
 A repository dependency was found, but in multiple places. WIDE has no idea which one to choose. This can happen if you have added multiple repository paths in the configuration that share script content with the same name.  

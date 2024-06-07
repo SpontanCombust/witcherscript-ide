@@ -50,6 +50,11 @@ pub enum ContentGraphError {
 
         matching_paths: Vec<AbsPath>
     },
+    #[error("content specified itself as its own dependency")]
+    SelfDependency {
+        manifest_path: AbsPath,
+        manifest_range: lsp::Range,
+    },
     #[error("native content could not be found")]
     NativeContentNotFound(Option<ContentScanError>),
 }
@@ -454,6 +459,14 @@ impl ContentGraph {
     ) {
         match self.get_dependency_node_index_by_name(&dependency_name, repo_nodes) {
             Ok(dep_idx) => {
+                if node_idx == dep_idx {
+                    self.errors.push(ContentGraphError::SelfDependency { 
+                        manifest_path: manifest_path.to_owned(), 
+                        manifest_range: dependency_name_range.to_owned()
+                    });
+                    return;
+                }
+
                 self.insert_edge(GraphEdge { 
                     dependant_idx: node_idx, 
                     dependency_idx: dep_idx,
@@ -547,19 +560,25 @@ impl ContentGraph {
         }
 
         if let Some(dep_idx) = self.get_dependency_node_index_by_path(&dep_path, repo_nodes) {
-            if self.nodes[dep_idx].content.content_name() == dependency_name {
-                self.insert_edge(GraphEdge { 
-                    dependant_idx: node_idx, 
-                    dependency_idx: dep_idx,
-                    priority
-                });
-            } else {
+            if self.nodes[dep_idx].content.content_name() != dependency_name {
                 self.errors.push(ContentGraphError::DependencyNameNotFoundAtPath { 
                     content_name: dependency_name.to_owned(), 
                     manifest_path: manifest_path.to_owned(), 
                     manifest_range: dependency_name_range.to_owned()
                 });
             }
+            if node_idx == dep_idx {
+                self.errors.push(ContentGraphError::SelfDependency { 
+                    manifest_path: manifest_path.to_owned(), 
+                    manifest_range: dependency_name_range.to_owned()
+                });
+            }
+
+            self.insert_edge(GraphEdge { 
+                dependant_idx: node_idx, 
+                dependency_idx: dep_idx,
+                priority
+            });
         } else {
             match try_make_content(&dep_path) {
                 Ok(content) => {
