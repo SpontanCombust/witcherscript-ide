@@ -1,4 +1,6 @@
-# WIDE - WitcherScript IDE
+<p align="center">
+    <img src="media/wide-banner.png" alt="Banner" style="box-shadow: 4px 4px 3px gray;">
+</p>
 
 ![GitHub Release](https://img.shields.io/github/v/release/SpontanCombust/witcherscript-ide)
 ![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/SpontanCombust.witcherscript-ide)
