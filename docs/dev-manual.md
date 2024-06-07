@@ -9,6 +9,7 @@ Here you will find the information you need if you want to contribute to this pr
 - `crates` - Rust packages forming WIDE. The main crate is `lsp`, which contains language server implementation
 - `docs` - project documentation from which this website is built
 - `editors` - contains implementations of WitcherScript language client, currently just `vscode` client written in TypeScript
+- `media` - all sorts of visual assets used throughout the repository
 - `schemas` - contains `witcherscript.toml` schema
 - `xtask` - code for build commands to speed up development
 

@@ -8,6 +8,8 @@
   <source src="../../assets/user-manual/editor/project-creation.mp4" type="video/mp4">
 </video>
 
+:material-information-outline: Loading REDkit projects is also natively supported with some prior requirements outlined [here](./project-system.md#redkit-project).
+
 - syntax highlighting
 
 ![Syntax Highlighting](../assets/user-manual/editor/syntax-highlighting.jpg)
@@ -33,8 +35,6 @@
 <video controls muted>
   <source src="../../assets/user-manual/editor/goto-definition.mp4" type="video/mp4">
 </video>
-
-- support for REDKit projects
 
 **More coming soon!**
 
@@ -88,5 +88,8 @@ Path to Witcher 3's root game directory (containing bin, content, Mods folders e
 ### `witcherscript-ide.contentRepositories`
 Paths to custom directories containing WitcherScript contents. Useful when not having Witcher 3 installed on your local machine or when simply storing scripts outside of game directory.
 
+### `witcherscript-ide.enableLanguageServer`
+Enable the language server. True by default.  You can disable this if you only want syntax highlighting. Change requires extension reload.
+
 ### `witcherscript-ide.debug.enableDebugFeatures`
-Enables debug features used for development. False by default. Requires extension reload when changed.
+Enables debug features used for development. False by default. Change requires extension reload.
