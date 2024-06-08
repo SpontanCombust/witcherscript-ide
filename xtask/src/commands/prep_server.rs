@@ -55,24 +55,25 @@ pub fn prep_server(release: bool, target: Option<String>) -> anyhow::Result<()> 
         println!("Copied LSP .pdb into {}", lsp_bin_dst.display());
     }
 
+    let lsp_assets_src = root.join(LSP_ASSETS.replace('/', MAIN_SEPARATOR_STR));
     let lsp_assets_dst = root.join(LSP_ASSETS_DST.replace('/', MAIN_SEPARATOR_STR));
     sh.remove_path(&lsp_assets_dst)?;
     sh.create_dir(&lsp_assets_dst)?;
-    copy_server_assets(&sh, Path::new(LSP_ASSETS), &lsp_assets_dst)?;
+    copy_server_assets(&sh, &lsp_assets_src, &lsp_assets_src, &lsp_assets_dst)?;
     println!("Copied LSP assets into {}", lsp_assets_dst.display());
 
     Ok(())
 }
 
-fn copy_server_assets(sh: &Shell, src_dir: &Path, dst_root: &Path) -> anyhow::Result<()> {
+fn copy_server_assets(sh: &Shell, src_dir_root: &Path, src_dir: &Path, dst_root: &Path) -> anyhow::Result<()> {
     for src_entry in std::fs::read_dir(src_dir)? {
         let src_entry = src_entry?;
         let ty = src_entry.file_type()?;
         let src_path = src_entry.path();
-        let dst_path = dst_root.join(src_path.strip_prefix(LSP_ASSETS)?);
+        let dst_path = dst_root.join(src_path.strip_prefix(src_dir_root)?);
         if ty.is_dir() {
             sh.create_dir(&dst_path)?;
-            copy_server_assets(sh, &src_path, dst_root)?;
+            copy_server_assets(sh, src_dir_root, &src_path, dst_root)?;
         // READMEs and stuff are not needed
         } else if dst_path.extension().unwrap() != "md" {
             sh.copy_file(src_path, dst_path)?;
