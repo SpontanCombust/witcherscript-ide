@@ -68,17 +68,22 @@
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "Paths to custom directories containing WitcherScript contents"
+          "markdownDescription": "Paths to custom directories containing WitcherScript contents."
         },
         "witcherscript-ide.languageServer.enable": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Enable the language server. You can disable this if you only want syntax highlighting (change requires extension reload)"
+          "markdownDescription": "Enable the language server. You can disable this if you only want syntax highlighting (change requires extension reload)."
+        },
+        "witcherscript-ide.languageServer.syntaxAnalysis": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enables syntax analysis in the language server."
         },
         "witcherscript-ide.debug.enableDebugFeatures": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Enable debug features (change requires extension reload)"
+          "markdownDescription": "Enable debug features (change requires extension reload)."
         }
       }
     },

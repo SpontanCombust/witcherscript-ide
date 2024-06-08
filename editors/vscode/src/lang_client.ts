@@ -34,7 +34,8 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 	const initializationOptions: InitializationOptions = {
 		nativeContentUri: nativeContentUri,
 		gameDirectory: cfg.gameDirectory,
-		contentRepositories: cfg.contentRepositories
+		contentRepositories: cfg.contentRepositories,
+		enableSyntaxAnalysis: cfg.enableSyntaxAnalysis
 	};
 
 	const clientOptions: lsp.LanguageClientOptions = {
@@ -85,10 +86,12 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 	});
 }
 
+// Configuration needed by the server. The format in both client and server must match!
 interface InitializationOptions {
 	nativeContentUri: string,
 	gameDirectory: string,
     contentRepositories: string[]
+	enableSyntaxAnalysis: boolean
 }
 
 

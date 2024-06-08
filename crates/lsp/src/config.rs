@@ -6,11 +6,14 @@ use tower_lsp::lsp_types as lsp;
 use crate::Backend;
 
 
+/// Configuration needed by the server. The format in both client and server must match!
+/// Make sure that you initialize values in it though InitializationOptions in [`crate::providers::initialization::initialize`].
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
     pub game_directory: PathBuf,
-    pub content_repositories: Vec<PathBuf>
+    pub content_repositories: Vec<PathBuf>,
+    pub enable_syntax_analysis: bool
 }
 
 #[derive(Debug, Error)]
@@ -22,9 +25,10 @@ pub enum ConfigError {
 }
 
 impl Config {
-    const CONFIG_ITEM_SECTIONS: [&'static str; 2] = [
+    const CONFIG_ITEM_SECTIONS: [&'static str; 3] = [
         "witcherscript-ide.gameDirectory",
-        "witcherscript-ide.contentRepositories"
+        "witcherscript-ide.contentRepositories",
+        "witcherscript-ide.languageServer.syntaxAnalysis"
     ];
 
     pub async fn fetch(client: &Client) -> Result<Self, ConfigError> {
@@ -37,7 +41,8 @@ impl Config {
 
         Ok(Self {
             game_directory: serde_json::from_value(values[0].clone())?,
-            content_repositories: serde_json::from_value(values[1].clone())?
+            content_repositories: serde_json::from_value(values[1].clone())?,
+            enable_syntax_analysis: serde_json::from_value(values[2].clone())?
         })
     }
 }
@@ -71,23 +76,27 @@ impl Backend {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConfigDifference {
     pub game_directory_changed: bool,
-    pub content_repositories_changed: bool
+    pub content_repositories_changed: bool,
+    pub enable_syntax_analysis_changed: bool
 }
 
 impl ConfigDifference {
     fn from_comparison(old_config: &Config, new_config: &Config) -> Self {
         let game_directory_changed = old_config.game_directory != new_config.game_directory;
         let content_repositories_changed = old_config.content_repositories != new_config.content_repositories;
+        let enable_syntax_analysis_changed = old_config.enable_syntax_analysis != new_config.enable_syntax_analysis;
 
         ConfigDifference {
             game_directory_changed,
-            content_repositories_changed
+            content_repositories_changed,
+            enable_syntax_analysis_changed
         }
     }
 
     pub fn any_changed(&self) -> bool {
         self.game_directory_changed || 
-        self.content_repositories_changed
+        self.content_repositories_changed ||
+        self.enable_syntax_analysis_changed
     }
 }
 
@@ -95,7 +104,8 @@ impl Default for ConfigDifference {
     fn default() -> Self {
         Self { 
             game_directory_changed: false, 
-            content_repositories_changed: false 
+            content_repositories_changed: false,
+            enable_syntax_analysis_changed: false
         }
     }
 }

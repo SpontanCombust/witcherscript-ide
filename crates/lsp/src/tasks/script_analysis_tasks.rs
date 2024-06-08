@@ -9,10 +9,16 @@ use crate::Backend;
 
 impl Backend {
     pub async fn run_script_analysis(&self, script_paths: Vec<AbsPath>, full: bool) {
+        let config = self.config.read().await;
+        let do_syntax_analysis = config.enable_syntax_analysis;
+        drop(config);
+
         let start = Instant::now();
 
         // first go analytics that can run on each keystroke
-        self.syntax_analysis(script_paths.clone()).await;
+        if do_syntax_analysis {
+            self.syntax_analysis(script_paths.clone()).await;
+        }
         
         if full {
             // here should go more expensive analytics that should be done only when the file is explicitly saved

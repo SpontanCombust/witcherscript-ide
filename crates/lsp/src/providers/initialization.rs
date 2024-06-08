@@ -14,7 +14,8 @@ use crate::Backend;
 struct InitializationOptions {
     native_content_uri: lsp::Url,
     game_directory: PathBuf,
-    content_repositories: Vec<PathBuf>
+    content_repositories: Vec<PathBuf>,
+    enable_syntax_analysis: bool
 }
 
 pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Result<lsp::InitializeResult> {
@@ -28,6 +29,8 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
     if let Some(init_opts) = params.initialization_options {
         match serde_json::from_value::<InitializationOptions>(init_opts) {
             Ok(val) => {
+                backend.reporter.log_info(format!("Initializing server with: {:#?}", val)).await;
+
                 match AbsPath::try_from(val.native_content_uri) {
                     Ok(native_content_path) => {
                         let mut graph = backend.content_graph.write().await;
@@ -41,6 +44,7 @@ pub async fn initialize(backend: &Backend, params: lsp::InitializeParams) -> Res
                 let mut config = backend.config.write().await;
                 config.game_directory = val.game_directory;
                 config.content_repositories = val.content_repositories;
+                config.enable_syntax_analysis = val.enable_syntax_analysis;
             },
             Err(err) => {
                 backend.reporter.log_error(format!("InitializationOptions deserialization fail: {}", err)).await;
