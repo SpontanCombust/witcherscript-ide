@@ -9,7 +9,7 @@
   },
   "homepage": "https://spontancombust.github.io/witcherscript-ide",
   "license": "MIT OR Apache-2.0",
-  "version": "0.3.0-dev.3",
+  "version": "0.3.0",
   "engines": {
     "vscode": "^1.85.0"
   },
