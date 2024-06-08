@@ -331,8 +331,10 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
             let def = n.definition();
             if !self.check_function_def(&def) {
-                self.check_errors(&def);
-                traverse_definition = true;
+                if let FunctionDefinition::Some(block) = def.clone().value() {
+                    self.check_errors(&block);
+                    traverse_definition = true;
+                }
             }
         }
         
@@ -362,8 +364,10 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
             let def = n.definition();
             if !self.check_function_def(&def) {
-                self.check_errors(&def);
-                traverse_definition = true;
+                if let FunctionDefinition::Some(block) = def.clone().value() {
+                    self.check_errors(&block);
+                    traverse_definition = true;
+                }
             }
         }
         
