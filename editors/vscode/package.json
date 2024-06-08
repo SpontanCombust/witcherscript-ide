@@ -70,7 +70,7 @@
           "default": [],
           "markdownDescription": "Paths to custom directories containing WitcherScript contents"
         },
-        "witcherscript-ide.enableLanguageServer": {
+        "witcherscript-ide.languageServer.enable": {
           "type": "boolean",
           "default": true,
           "markdownDescription": "Enable the language server. You can disable this if you only want syntax highlighting (change requires extension reload)"

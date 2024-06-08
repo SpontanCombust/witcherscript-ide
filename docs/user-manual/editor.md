@@ -88,7 +88,7 @@ Path to Witcher 3's root game directory (containing bin, content, Mods folders e
 ### `witcherscript-ide.contentRepositories`
 Paths to custom directories containing WitcherScript contents. Useful when not having Witcher 3 installed on your local machine or when simply storing scripts outside of game directory.
 
-### `witcherscript-ide.enableLanguageServer`
+### `witcherscript-ide.languageServer.enable`
 Enable the language server. True by default.  You can disable this if you only want syntax highlighting. Change requires extension reload.
 
 ### `witcherscript-ide.debug.enableDebugFeatures`

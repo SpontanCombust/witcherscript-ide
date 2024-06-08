@@ -13,7 +13,7 @@ export function getConfiguration(): Config {
     return {
         gameDirectory: config.get<string>('gameDirectory') ?? '',
         contentRepositories: config.get<string[]>('contentRepositories') ?? [],
-        enableLanguageServer: config.get<boolean>('enableLanguageServer') ?? true,
+        enableLanguageServer: config.get<boolean>('languageServer.enable') ?? true,
         enableDebugFeatures: config.get<boolean>('debug.enableDebugFeatures') ?? false
     }
 }
