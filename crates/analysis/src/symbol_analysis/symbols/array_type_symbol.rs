@@ -73,8 +73,8 @@ impl ArrayTypeSymbol {
         {
             let f = ArrayTypeFunctionSymbol {
                 path: MemberCallableSymbolPath::new(&self.path, "PushBack"),
-                return_type_path: self.data_type_path().clone(),
-                was_return_type_generic: true 
+                return_type_path: void_path.clone(),
+                was_return_type_generic: false 
             };
             let p = ArrayTypeFunctionParameterSymbol {
                 path: MemberDataSymbolPath::new(&f.path(), "element"),
@@ -83,6 +83,14 @@ impl ArrayTypeSymbol {
                 ordinal: 0 
             };
             params.push(p);
+            funcs.push(f);
+        }
+        {
+            let f = ArrayTypeFunctionSymbol {
+                path: MemberCallableSymbolPath::new(&self.path, "PopBack"),
+                return_type_path: self.data_type_path().clone(),
+                was_return_type_generic: true 
+            };
             funcs.push(f);
         }
         {
