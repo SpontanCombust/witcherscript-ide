@@ -6,7 +6,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  IS_PRE_RELEASE: contains(${{ github.ref_name }}, 'dev')
+  IS_PRE_RELEASE: ${{ contains(github.ref_name, 'dev') }}
 
 jobs:
   build:
