@@ -74,15 +74,17 @@ impl<'script> TryFrom<AnyNode<'script>> for RootStatementNode<'script> {
     }
 }
 
-impl StatementTraversal for RootStatementNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxNodeTraversal for RootStatementNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         match self.clone().value() {
-            RootStatement::Function(s) => s.accept(visitor),
-            RootStatement::Class(s) => s.accept(visitor),
-            RootStatement::State(s) => s.accept(visitor),
-            RootStatement::Struct(s) => s.accept(visitor),
-            RootStatement::Enum(s) => s.accept(visitor),
-            RootStatement::Nop(s) => s.accept(visitor),
+            RootStatement::Function(s) => s.accept(visitor, ()),
+            RootStatement::Class(s) => s.accept(visitor, ()),
+            RootStatement::State(s) => s.accept(visitor, ()),
+            RootStatement::Struct(s) => s.accept(visitor, ()),
+            RootStatement::Enum(s) => s.accept(visitor, ()),
+            RootStatement::Nop(_) => {},
         }
     }
 }
@@ -95,7 +97,7 @@ impl NamedSyntaxNode for RootNode<'_> {
     const NODE_KIND: &'static str = "script";
 }
 
-impl RootNode<'_> {
+impl<'script> RootNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = RootStatementNode> {
         self.named_children().map(|n| n.into())
     }
@@ -122,10 +124,13 @@ impl<'script> TryFrom<AnyNode<'script>> for RootNode<'script> {
     }
 }
 
-impl StatementTraversal for RootNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_root(self) {
-            self.iter().for_each(|s| s.accept(visitor));
+impl SyntaxNodeTraversal for RootNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+        let tp = visitor.visit_root(self);
+        if tp.traverse {
+            self.iter().for_each(|s| s.accept(visitor, ()));
         }
     }
 }

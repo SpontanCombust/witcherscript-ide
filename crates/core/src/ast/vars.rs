@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{attribs::MemberVarSpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{StatementTraversal, StatementVisitor, ExpressionNode};
+use super::*;
 
 
 mod tags {
@@ -16,12 +16,12 @@ impl NamedSyntaxNode for TypeAnnotationNode<'_> {
     const NODE_KIND: &'static str = "type_annot";
 }
 
-impl TypeAnnotationNode<'_> {
-    pub fn type_name(&self) -> IdentifierNode {
+impl<'script> TypeAnnotationNode<'script> {
+    pub fn type_name(&self) -> IdentifierNode<'script> {
         self.field_child("type_name").unwrap().into()
     }
 
-    pub fn type_arg(&self) -> Option<TypeAnnotationNode> {
+    pub fn type_arg(&self) -> Option<TypeAnnotationNode<'script>> {
         self.field_child("type_arg").map(|n| n.into())
     }
 }
@@ -55,16 +55,16 @@ impl NamedSyntaxNode for VarDeclarationNode<'_> {
     const NODE_KIND: &'static str = "var_decl_stmt";
 }
 
-impl VarDeclarationNode<'_> {
-    pub fn names(&self) -> impl Iterator<Item = IdentifierNode> {
+impl<'script> VarDeclarationNode<'script> {
+    pub fn names(&self) -> impl Iterator<Item = IdentifierNode<'script>> {
         self.field_children("names").map(|n| n.into())
     }
 
-    pub fn var_type(&self) -> TypeAnnotationNode {
+    pub fn var_type(&self) -> TypeAnnotationNode<'script> {
         self.field_child("var_type").unwrap().into()
     }
 
-    pub fn init_value(&self) -> Option<ExpressionNode> {
+    pub fn init_value(&self) -> Option<ExpressionNode<'script>> {
         self.field_child("init_value").map(|c| c.into())
     }
 }
@@ -91,9 +91,15 @@ impl<'script> TryFrom<AnyNode<'script>> for VarDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for VarDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_local_var_decl_stmt(self);
+impl SyntaxNodeTraversal for VarDeclarationNode<'_> {
+    type TraversalCtx = StatementTraversalContext;
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let tp = visitor.visit_local_var_decl_stmt(self, ctx);
+        if tp.traverse_init_value {
+            self.init_value().map(|init_value| init_value.accept(visitor, ExpressionTraversalContext::VarDeclarationInitValue));
+        }
+        visitor.exit_local_var_decl_stmt(self, ctx);
     }
 }
 
@@ -105,16 +111,16 @@ impl NamedSyntaxNode for MemberVarDeclarationNode<'_> {
     const NODE_KIND: &'static str = "member_var_decl_stmt";
 }
 
-impl MemberVarDeclarationNode<'_> {
-    pub fn specifiers(&self) -> impl Iterator<Item = MemberVarSpecifierNode> {
+impl<'script> MemberVarDeclarationNode<'script> {
+    pub fn specifiers(&self) -> impl Iterator<Item = MemberVarSpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn names(&self) -> impl Iterator<Item = IdentifierNode> {
+    pub fn names(&self) -> impl Iterator<Item = IdentifierNode<'script>> {
         self.field_children("names").map(|n| n.into())
     }
 
-    pub fn var_type(&self) -> TypeAnnotationNode {
+    pub fn var_type(&self) -> TypeAnnotationNode<'script> {
         self.field_child("var_type").unwrap().into()
     }
 }
@@ -141,8 +147,10 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberVarDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for MemberVarDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_member_var_decl(self);
+impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
+    type TraversalCtx = PropertyTraversalContext;
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        visitor.visit_member_var_decl(self, ctx);
     }
 }

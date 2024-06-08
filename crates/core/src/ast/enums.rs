@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{tokens::{IdentifierNode, LiteralHexNode, LiteralIntNode}, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{StatementTraversal, StatementVisitor};
+use super::*;
 
 
 mod tags {
@@ -16,12 +16,12 @@ impl NamedSyntaxNode for EnumDeclarationNode<'_> {
     const NODE_KIND: &'static str = "enum_decl_stmt";
 }
 
-impl EnumDeclarationNode<'_> {
-    pub fn name(&self) -> IdentifierNode {
+impl<'script> EnumDeclarationNode<'script> {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn definition(&self) -> EnumBlockNode {
+    pub fn definition(&self) -> EnumBlockNode<'script> {
         self.field_child("definition").unwrap().into()
     }
 }
@@ -47,10 +47,13 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for EnumDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_enum_decl(self) {
-            self.definition().accept(visitor);
+impl SyntaxNodeTraversal for EnumDeclarationNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+        let tp = visitor.visit_enum_decl(self);
+        if tp.traverse_definition {
+            self.definition().accept(visitor, ());
         }
         visitor.exit_enum_decl(self);
     }
@@ -64,8 +67,8 @@ impl NamedSyntaxNode for EnumBlockNode<'_> {
     const NODE_KIND: &'static str = "enum_block";
 }
 
-impl EnumBlockNode<'_> {
-    pub fn iter(&self) -> impl Iterator<Item = EnumVariantDeclarationNode> {
+impl<'script> EnumBlockNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = EnumVariantDeclarationNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -91,9 +94,11 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumBlockNode<'script> {
     }
 }
 
-impl StatementTraversal for EnumBlockNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.iter().for_each(|s| s.accept(visitor));
+impl SyntaxNodeTraversal for EnumBlockNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+        self.iter().for_each(|s| s.accept(visitor, ()));
     }
 }
 
@@ -104,12 +109,12 @@ impl NamedSyntaxNode for EnumVariantDeclarationNode<'_> {
     const NODE_KIND: &'static str = "enum_decl_variant";
 }
 
-impl EnumVariantDeclarationNode<'_> {
-    pub fn name(&self) -> IdentifierNode {
+impl<'script> EnumVariantDeclarationNode<'script> {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn value(&self) -> Option<EnumVariantValue> {
+    pub fn value(&self) -> Option<EnumVariantValue<'script>> {
         self.field_child("value").map(|n| {
             let kind = n.tree_node.kind();
             match kind {
@@ -142,8 +147,10 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumVariantDeclarationNode<'script> 
     }
 }
 
-impl StatementTraversal for EnumVariantDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxNodeTraversal for EnumVariantDeclarationNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         visitor.visit_enum_variant_decl(self);
     }
 }

@@ -8,8 +8,8 @@ mod structs;
 mod enums;
 mod states;
 mod nop;
-mod visitor;
 mod root;
+mod traversal;
 
 pub use expressions::*;
 pub use functions::*;
@@ -21,5 +21,5 @@ pub use structs::*;
 pub use enums::*;
 pub use states::*;
 pub use nop::*;
-pub use visitor::*;
 pub use root::*;
+pub use traversal::*;

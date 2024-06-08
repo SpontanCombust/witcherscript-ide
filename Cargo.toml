@@ -3,7 +3,7 @@ members = ["crates/*", "xtask"]
 resolver = "2"
 
 [workspace.package]
-version = "0.2.1"
+version = "0.3.0-dev.3"
 edition = "2021"
 authors = ["SpontanCombust"]
 
@@ -27,3 +27,4 @@ dyn-clone = "1.0"
 rayon = "1.9"
 bitmask-enum = "2.2.3"
 filetime = "0.2.23"
+smallvec = "1.13"

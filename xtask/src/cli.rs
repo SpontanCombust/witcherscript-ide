@@ -24,7 +24,10 @@ pub enum Commands {
     PrepClient {
         /// Whether client should be continuously watched for changes made to it and rebuilt 
         #[arg(long)]
-        watch: bool
+        watch: bool,
+        /// Whether client should be built instantly by skipping `npm ci` step
+        #[arg(long)]
+        fast: bool
     },
     /// Build and package VSCode extension into a .vsix file
     Package {
@@ -35,7 +38,10 @@ pub enum Commands {
         /// 
         /// https://code.visualstudio.com/api/working-with-extensions/publishing-extension#platformspecific-extensions
         #[arg(long)]
-        target: Option<String>
+        target: Option<String>,
+        /// Mark the packed extension as pre-release
+        #[arg(long)]
+        pre_release: bool
     },
     /// Build, package and install the VSCode extension
     Install

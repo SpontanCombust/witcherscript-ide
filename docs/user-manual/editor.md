@@ -2,11 +2,39 @@
 
 ## Features
 
+- creating and initializing [script projects](./project-system.md)
+
+<video controls muted>
+  <source src="../../assets/user-manual/editor/project-creation.mp4" type="video/mp4">
+</video>
+
+:material-information-outline: Loading REDkit projects is also natively supported with some prior requirements outlined [here](./project-system.md#redkit-project).
+
 - syntax highlighting
-- basic syntactical analysis
-- initializing or creating new script projects
+
+![Syntax Highlighting](../assets/user-manual/editor/syntax-highlighting.jpg)
+
+- basic syntax analysis
+
+![Syntax Analysis](../assets/user-manual/editor/syntax-analysis.jpg)
+
 - importing and comparing scripts with their vanilla counterparts
-- support for REDKit projects
+
+<video controls muted>
+  <source src="../../assets/user-manual/editor/vanilla-import-diff.mp4" type="video/mp4">
+</video>
+
+- hover tooltips
+
+<video controls muted>
+  <source src="../../assets/user-manual/editor/hover.mp4" type="video/mp4">
+</video>
+
+- go to definition/declaration
+
+<video controls muted>
+  <source src="../../assets/user-manual/editor/goto-definition.mp4" type="video/mp4">
+</video>
 
 **More coming soon!**
 
@@ -32,12 +60,24 @@ Shows a difference view between the original vanilla script and the imported, mo
 
 ### `witcherscript-ide.debug.showScriptAst`
 *"Show script AST"*  
-A debugging command. Shows the Abstract Syntax Tree  of the currently focused on script as it is uderstood by the language server.
+Shows the Abstract Syntax Tree  of the currently focused on script as it is uderstood by the language server.
 Warning: if document's identation is done with tabs instead of spaces it may not show accurate symbol span data.  
+Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
 
 ### `witcherscript-ide.debug.contentGraphDot`
 *"Show content graph"*  
-A debugging command. Shows the graph in Graphviz .dot format representing the overall content dependency graph of the workspace.
+Shows the graph in Graphviz .dot format representing the overall content dependency graph of the workspace.  
+Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
+
+### `witcherscript-ide.debug.showScriptSymbols`
+*"Show script symbols"*  
+Shows code symbols that have been extracted from the currently focused on script file.  
+Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
+
+### `witcherscript-ide.debug.clearGlobalState`
+*"Clear global cache of the extension"*  
+Clears VSCode extension database entries created by the client. Useful mostly for testing.
+Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
 
 
 ## Configuration
@@ -47,3 +87,12 @@ Path to Witcher 3's root game directory (containing bin, content, Mods folders e
 
 ### `witcherscript-ide.contentRepositories`
 Paths to custom directories containing WitcherScript contents. Useful when not having Witcher 3 installed on your local machine or when simply storing scripts outside of game directory.
+
+### `witcherscript-ide.languageServer.enable`
+Enable the language server. True by default.  You can disable this if you only want syntax highlighting. Change requires extension reload.
+
+### `witcherscript-ide.languageServer.syntaxAnalysis`
+Enable syntax analysis in the language server. True by default. This may require window reload if there are unresolved syntax analysis related diagnostics present.
+
+### `witcherscript-ide.debug.enableDebugFeatures`
+Enables debug features used for development. False by default. Change requires extension reload.

@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "witcherscript.toml",
+  "description": "WitcherScript IDE project manifest",
+
+  "type": "object",
+  "definitions": {
+    "Dependency": {
+      "description": "Dependency of the project",
+      "anyOf": [
+        { "$ref": "#/definitions/RepoDependency" },
+        { "$ref": "#/definitions/DetailedDependency" }
+      ]
+    },
+    "RepoDependency": {
+      "type": "boolean",
+      "default": "true"
+    },
+    "DetailedDependency": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "description": "Relative path to the dependency content",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "properties": {
+    "content": {
+      "description": "Project metadata establishing basic information on how its content is named and structured",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Name of the project",
+          "type": "string",
+          "pattern": "^[_a-zA-Z][_a-zA-Z0-9]*$"
+        },
+        "description": {
+          "description": "Short description of the project",
+          "type": "string",
+          "default": ""
+        },
+        "version": {
+          "description": "Version of the project. It must follow semantic versioning format.",
+          "type": "string",
+          "format": "semver",
+          "default": "1.0.0"
+        },
+        "authors": {
+          "description": "An array of authors of this project",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "game_version": {
+          "description": "Version of Witcher 3 with which this project is compatible",
+          "type": "string",
+          "default": "4.04"
+        },
+        "scripts_root": {
+          "description": "Relative path to the scripts root directory, defaults to \"./scripts\"",
+          "type": "string",
+          "default": "scripts"
+        }
+      },
+      "required": ["name", "version", "game_version"]
+    },
+    "dependencies": {
+      "description": "Dependencies of this project",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Dependency"
+      }
+    }
+  },
+  "required": ["content", "dependencies"]
+}

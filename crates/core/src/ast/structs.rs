@@ -1,6 +1,6 @@
 use std::fmt::Debug;
-use crate::{attribs::StructSpecifierNode, tokens::{IdentifierNode, LiteralStringNode}, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{StatementTraversal, StatementVisitor, ExpressionNode, MemberVarDeclarationNode, NopNode};
+use crate::{attribs::*, tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
+use super::*;
 
 
 mod tags {
@@ -19,16 +19,16 @@ impl NamedSyntaxNode for StructDeclarationNode<'_> {
     const NODE_KIND: &'static str = "struct_decl_stmt";
 }
 
-impl StructDeclarationNode<'_> {
-    pub fn specifiers(&self) -> impl Iterator<Item = StructSpecifierNode> {
+impl<'script> StructDeclarationNode<'script> {
+    pub fn specifiers(&self) -> impl Iterator<Item = StructSpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn name(&self) -> IdentifierNode {
+    pub fn name(&self) -> IdentifierNode<'script> {
         self.field_child("name").unwrap().into()
     }
 
-    pub fn definition(&self) -> StructBlockNode {
+    pub fn definition(&self) -> StructBlockNode<'script> {
         self.field_child("definition").unwrap().into()
     }
 }
@@ -55,10 +55,13 @@ impl<'script> TryFrom<AnyNode<'script>> for StructDeclarationNode<'script> {
     }
 }
 
-impl StatementTraversal for StructDeclarationNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_struct_decl(self) {
-            self.definition().accept(visitor);
+impl SyntaxNodeTraversal for StructDeclarationNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+        let tp = visitor.visit_struct_decl(self);
+        if tp.traverse_definition {
+            self.definition().accept(visitor, ());
         }
         visitor.exit_struct_decl(self);
     }
@@ -72,7 +75,7 @@ impl NamedSyntaxNode for StructBlockNode<'_> {
     const NODE_KIND: &'static str = "struct_block";
 }
 
-impl StructBlockNode<'_> {
+impl<'script> StructBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = StructStatementNode> {
         self.named_children().map(|n| n.into())
     }
@@ -99,9 +102,11 @@ impl<'script> TryFrom<AnyNode<'script>> for StructBlockNode<'script> {
     }
 }
 
-impl StatementTraversal for StructBlockNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.iter().for_each(|s| s.accept(visitor));
+impl SyntaxNodeTraversal for StructBlockNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+        self.iter().for_each(|s| s.accept(visitor, ()));
     }
 }
 
@@ -168,14 +173,17 @@ impl<'script> TryFrom<AnyNode<'script>> for StructStatementNode<'script> {
     }
 }
 
-impl StatementTraversal for StructStatementNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxNodeTraversal for StructStatementNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+        let ctx = PropertyTraversalContext::StructDefinition;
         match self.clone().value() {
-            StructStatement::Var(s) => s.accept(visitor),
-            StructStatement::Default(s) => s.accept(visitor),
-            StructStatement::DefaultsBlock(s) => s.accept(visitor),
-            StructStatement::Hint(s) => s.accept(visitor),
-            StructStatement::Nop(s) => s.accept(visitor),
+            StructStatement::Var(s) => s.accept(visitor, ctx),
+            StructStatement::Default(s) => s.accept(visitor, ctx),
+            StructStatement::DefaultsBlock(s) => s.accept(visitor, ctx),
+            StructStatement::Hint(s) => s.accept(visitor, ctx),
+            StructStatement::Nop(_) => {},
         }
     }
 }
@@ -188,8 +196,8 @@ impl NamedSyntaxNode for MemberDefaultsBlockNode<'_> {
     const NODE_KIND: &'static str = "member_defaults_block_stmt";
 }
 
-impl MemberDefaultsBlockNode<'_> {
-    pub fn iter(&self) -> impl Iterator<Item = MemberDefaultsBlockAssignmentNode> {
+impl<'script> MemberDefaultsBlockNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = MemberDefaultsBlockAssignmentNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -215,12 +223,15 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockNode<'script> {
     }
 }
 
-impl StatementTraversal for MemberDefaultsBlockNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_member_defaults_block(self) {
-            self.iter().for_each(|n| n.accept(visitor))
+impl SyntaxNodeTraversal for MemberDefaultsBlockNode<'_> {
+    type TraversalCtx = PropertyTraversalContext;
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let tp = visitor.visit_member_defaults_block(self, ctx);
+        if tp.traverse {
+            self.iter().for_each(|n| n.accept(visitor, ()));
         }
-        visitor.exit_member_defaults_block(self);
+        visitor.exit_member_defaults_block(self, ctx);
     }
 }
 
@@ -232,12 +243,12 @@ impl NamedSyntaxNode for MemberDefaultsBlockAssignmentNode<'_> {
     const NODE_KIND: &'static str = "member_defaults_block_assign";
 }
 
-impl MemberDefaultsBlockAssignmentNode<'_> {
-    pub fn member(&self) -> IdentifierNode {
+impl<'script> MemberDefaultsBlockAssignmentNode<'script> {
+    pub fn member(&self) -> IdentifierNode<'script> {
         self.field_child("member").unwrap().into()
     }
 
-    pub fn value(&self) -> ExpressionNode {
+    pub fn value(&self) -> ExpressionNode<'script> {
         self.field_child("value").unwrap().into()
     }
 }
@@ -263,9 +274,15 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockAssignmentNode<'s
     }
 }
 
-impl StatementTraversal for MemberDefaultsBlockAssignmentNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_member_defaults_block_assignment(self);
+impl SyntaxNodeTraversal for MemberDefaultsBlockAssignmentNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+        let tp = visitor.visit_member_defaults_block_assignment(self);
+        if tp.traverse_value {
+            self.value().accept(visitor, ExpressionTraversalContext::MemberDefaultValue);
+        }
+        visitor.exit_member_defaults_block_assignment(self);
     }
 }
 
@@ -277,12 +294,12 @@ impl NamedSyntaxNode for MemberDefaultValueNode<'_> {
     const NODE_KIND: &'static str = "member_default_val_stmt";
 }
 
-impl MemberDefaultValueNode<'_> {
-    pub fn member(&self) -> IdentifierNode {
+impl<'script> MemberDefaultValueNode<'script> {
+    pub fn member(&self) -> IdentifierNode<'script> {
         self.field_child("member").unwrap().into()
     }
 
-    pub fn value(&self) -> ExpressionNode {
+    pub fn value(&self) -> ExpressionNode<'script> {
         self.field_child("value").unwrap().into()
     }
 }
@@ -308,9 +325,15 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultValueNode<'script> {
     }
 }
 
-impl StatementTraversal for MemberDefaultValueNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_member_default_val(self);
+impl SyntaxNodeTraversal for MemberDefaultValueNode<'_> {
+    type TraversalCtx = PropertyTraversalContext;
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let tp = visitor.visit_member_default_val(self, ctx);
+        if tp.traverse_value {
+            self.value().accept(visitor, ExpressionTraversalContext::MemberDefaultValue);
+        }
+        visitor.exit_member_default_val(self, ctx);
     }
 }
 
@@ -322,12 +345,12 @@ impl NamedSyntaxNode for MemberHintNode<'_> {
     const NODE_KIND: &'static str = "member_hint_stmt";
 }
 
-impl MemberHintNode<'_> {
-    pub fn member(&self) -> IdentifierNode {
+impl<'script> MemberHintNode<'script> {
+    pub fn member(&self) -> IdentifierNode<'script> {
         self.field_child("member").unwrap().into()
     }
 
-    pub fn value(&self) -> LiteralStringNode {
+    pub fn value(&self) -> LiteralStringNode<'script> {
         self.field_child("value").unwrap().into()
     }
 }
@@ -353,8 +376,10 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberHintNode<'script> {
     }
 }
 
-impl StatementTraversal for MemberHintNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_member_hint(self);
+impl SyntaxNodeTraversal for MemberHintNode<'_> {
+    type TraversalCtx = PropertyTraversalContext;
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        visitor.visit_member_hint(self, ctx);
     }
 }

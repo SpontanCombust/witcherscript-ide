@@ -8,7 +8,7 @@ const VSIX_NAME: &'static str = "witcherscript-ide.vsix";
 const NPM: &'static str = if cfg!(windows) { "npm.cmd" } else { "npm" };
 const NPX: &'static str = if cfg!(windows) { "npx.cmd" } else { "npx" };
 
-pub fn package(output: Option<String>, code_target: Option<String>) -> anyhow::Result<()> {
+pub fn package(output: Option<String>, code_target: Option<String>, pre_release: bool) -> anyhow::Result<()> {
     let sh = Shell::new()?;
     let root = project_root::get_project_root()?;
     let cwd = std::env::current_dir()?;
@@ -25,6 +25,9 @@ pub fn package(output: Option<String>, code_target: Option<String>) -> anyhow::R
     let mut package_opt_args = Vec::new();
     if let Some(code_target) = &code_target {
         package_opt_args.extend(["--target", code_target])
+    }
+    if pre_release {
+        package_opt_args.extend(["--pre-release"]);
     }
 
     cmd!(sh, "{NPM} --version").run().with_context(|| "npm is required")?;

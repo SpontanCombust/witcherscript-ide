@@ -1,8 +1,9 @@
-site_name: WitcherScript IDE  
-site_description: WitcherScript-IDE - Witcher 3 scripting tooling
+site_name: W I D E - WitcherScript IDE
+site_description: WIDE - Witcher 3 scripting tooling
 site_author: Przemysław Cedro (SpontanCombust)
 site_url: https://spontancombust.github.io/witcherscript-ide/
 repo_url: https://github.com/SpontanCombust/witcherscript-ide
+edit_uri: 'docs'
 
 nav:
   - 'Home': 'index.md'
@@ -11,10 +12,18 @@ nav:
     - 'Getting Started': 'user-manual/getting-started.md'
     - 'Editor': 'user-manual/editor.md'
     - 'Project System': 'user-manual/project-system.md' 
+    - 'Diagnostic Index': 'user-manual/diagnostic-index.md'
+    - 'FAQ': 'user-manual/faq.md'
     - 'Changelog': 'user-manual/changelog.md'
   - 'Developer Manual': 'dev-manual.md'
   - 'About':
     - 'about/index.md'
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
 
 theme:
   name: material
@@ -22,6 +31,7 @@ theme:
   logo: assets/logo.svg
   icon:
     repo: fontawesome/brands/github
+    annotation: material/chevron-right-circle
   palette:
     - scheme: default
       primary: wolven-red
@@ -37,6 +47,7 @@ theme:
     - navigation.indexes
     - navigation.expand
     - content.code.copy
+    - content.code.annotate
     - toc.follow
   locale: en
 
@@ -48,6 +59,7 @@ markdown_extensions:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
+  - pymdownx.inlinehilite:
   - pymdownx.superfences:
   - toc:
       permalink: true

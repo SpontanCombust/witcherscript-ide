@@ -21,7 +21,8 @@ pub struct Content {
     /// Name of this project, for example SharedUtils
     pub name: String,
     pub name_range: lsp::Range,
-    //TODO optional description field 
+    /// Short description of the project
+    pub description: Option<String>,
     /// Version of this project, has to abide to semantic versioning
     pub version: Version,
     /// Version(s) of the game this project is compatible with 
@@ -142,6 +143,7 @@ impl FromRaw for Content {
         Self {
            name: raw.name.get_ref().to_owned(),
            name_range: lsp::Range::from_raw(raw.name.span(), rope),
+           description: raw.description,
            version: raw.version,
            authors: raw.authors,
            game_version: raw.game_version,
@@ -243,6 +245,7 @@ mod raw {
     #[derive(Serialize, Deserialize)]
     pub struct Content {
         pub name: toml::Spanned<String>,
+        pub description: Option<String>,
         pub version: Version,
         pub authors: Option<Vec<String>>,
         pub game_version: String,
@@ -280,6 +283,7 @@ mod test {
 r#"
 [content]
 name = "ExampleMod"
+description = "Short mod description"
 version = "0.9.0"
 authors = ["Rip Van Winkle"]
 game_version = "4.04"
@@ -293,6 +297,7 @@ shared_utils = true
         let manifest = Manifest::from_str(s).unwrap();
     
         assert_eq!(manifest.content.name, "ExampleMod");
+        assert_eq!(manifest.content.description, Some("Short mod description".into()));
         assert_eq!(manifest.content.version, Version::from_str("0.9.0").unwrap());
         assert_eq!(manifest.content.authors, Some(vec!["Rip Van Winkle".into()]));
         assert_eq!(manifest.content.game_version, String::from("4.04"));
@@ -303,15 +308,15 @@ shared_utils = true
 
         let content0 = manifest.dependencies[0].clone();
         assert_eq!(content0.name, "content0".to_string());
-        assert_eq!(content0.name_range, lsp::Range::new(lsp::Position::new(9, 0), lsp::Position::new(9, 8)));
+        assert_eq!(content0.name_range, lsp::Range::new(lsp::Position::new(10, 0), lsp::Position::new(10, 8)));
         assert_eq!(content0.value, DependencyValue::FromPath { path: PathBuf::from("../Witcher 3/content/content0") });
-        assert_eq!(content0.value_range, lsp::Range::new(lsp::Position::new(9, 11), lsp::Position::new(9, 53)));
+        assert_eq!(content0.value_range, lsp::Range::new(lsp::Position::new(10, 11), lsp::Position::new(10, 53)));
 
         let shared_utils = manifest.dependencies[1].clone();
         assert_eq!(shared_utils.name, "shared_utils".to_string());
-        assert_eq!(shared_utils.name_range, lsp::Range::new(lsp::Position::new(10, 0), lsp::Position::new(10, 12)));
+        assert_eq!(shared_utils.name_range, lsp::Range::new(lsp::Position::new(11, 0), lsp::Position::new(11, 12)));
         assert_eq!(shared_utils.value, DependencyValue::FromRepo(true));
-        assert_eq!(shared_utils.value_range, lsp::Range::new(lsp::Position::new(10, 15), lsp::Position::new(10, 19)));
+        assert_eq!(shared_utils.value_range, lsp::Range::new(lsp::Position::new(11, 15), lsp::Position::new(11, 19)));
     }
 
     #[test]
@@ -328,6 +333,7 @@ game_version = "4.04"
 
         let manifest = Manifest::from_str(s).unwrap();
 
+        assert_eq!(manifest.content.description, None);
         assert_eq!(manifest.content.authors, None);
         assert_eq!(manifest.content.scripts_root, None);
         assert_eq!(*manifest.dependencies, vec![]);

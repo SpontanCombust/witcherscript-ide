@@ -8,6 +8,12 @@ use crate::source_tree::SourceTree;
 use crate::{redkit, FileError};
 
 
+/// Name of the content directory with vanilla scripts
+pub const VANILLA_CONTENT_NAME: &str = "content0";
+/// Name of the supplementary content distrubuted together with WIDE that contains symbols accessible, but not declared in content0
+pub const VANILLA_CONTENT_NATIVE_NAME: &str = "content0_native";
+
+
 /// Characteristics of a directory that contains a "scripts" folder.
 pub trait Content : core::fmt::Debug + dyn_clone::DynClone + Send + Sync {
     fn try_from_dir(dir: &AbsPath) -> Result<Self, ContentScanError> where Self: Sized;
@@ -223,7 +229,7 @@ pub enum ContentScanError {
     #[error(transparent)]
     Io(#[from] FileError<std::io::Error>),
     #[error(transparent)]
-    ManifestParse(#[from] FileError<manifest::Error>), //todo rename to ManifestRead
+    ManifestRead(#[from] FileError<manifest::Error>),
     #[error(transparent)]
     RedkitManifestRead(#[from] FileError<redkit::manifest::Error>),
     #[error("this is not content directory")]
@@ -288,7 +294,7 @@ mod test {
         static TEST_ASSETS: OnceLock<AbsPath> = OnceLock::new();
         TEST_ASSETS.get_or_init(|| {
             let manifest_dir = AbsPath::resolve(env!("CARGO_MANIFEST_DIR"), None).unwrap();
-            manifest_dir.join("../../test_assets/project").unwrap()
+            manifest_dir.join("assets/tests").unwrap()
         })
     }
 

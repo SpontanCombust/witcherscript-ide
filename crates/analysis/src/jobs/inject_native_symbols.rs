@@ -1,38 +1,32 @@
-use crate::model::symbols::*;
-use crate::model::collections::symbol_table::SymbolTable;
+use crate::symbol_analysis::symbols::*;
+use crate::symbol_analysis::symbol_table::SymbolTable;
 
 
-/// Should be called at the start, before parsing WS files.
-/// 
 /// Making assumptions that actual types start with capital letter and aliases are always lower case.
 /// If only lower case can be found in vanilla code, then the type name is a guess.
 pub fn inject_primitives(symtab: &mut SymbolTable) {
     [
-        PrimitiveTypeSymbol::new("Void", Some("void")),
-        PrimitiveTypeSymbol::new("Byte", Some("byte")),
+        PrimitiveTypeSymbol::new("void", None),
+        PrimitiveTypeSymbol::new("Byte", None),
+        PrimitiveTypeSymbol::new("byte", Some("Byte")),
         PrimitiveTypeSymbol::new("Int8", None),
-        PrimitiveTypeSymbol::new("Int32", Some("int")),
-        PrimitiveTypeSymbol::new("UInt64", None),
-        PrimitiveTypeSymbol::new("Float", Some("float")),
-        PrimitiveTypeSymbol::new("Bool", Some("bool")),
-        PrimitiveTypeSymbol::new("String", Some("string")),
-        PrimitiveTypeSymbol::new("CName", Some("name")),
+        PrimitiveTypeSymbol::new("Int32", None),
+        PrimitiveTypeSymbol::new("int", Some("Int32")),
+        PrimitiveTypeSymbol::new("Uint64", None),
+        PrimitiveTypeSymbol::new("Float", None),
+        PrimitiveTypeSymbol::new("float", Some("Float")),
+        PrimitiveTypeSymbol::new("Bool", None),
+        PrimitiveTypeSymbol::new("bool", Some("Bool")),
+        PrimitiveTypeSymbol::new("String", None),
+        PrimitiveTypeSymbol::new("string", Some("String")),
+        PrimitiveTypeSymbol::new("CName", None),
+        PrimitiveTypeSymbol::new("name", Some("CName")),
+        PrimitiveTypeSymbol::new("NULL", None),
 
     ].into_iter()
     .for_each(|sym| {
-        symtab.insert(sym).unwrap();
+        symtab.insert_symbol(sym);
     });
-}
-
-
-/// Should be called after injecting primitives.
-pub fn inject_misc_native_types(symtab: &mut SymbolTable) {
-    //TODO put the rest that could actually be declared in a script file; include!() that file and parse it to get symbols 
-    todo!()
-    // "CGUID",
-    // "EngineQsTransform",
-    // "ISerializable",
-    // "EInputKey"
 }
 
 
@@ -55,22 +49,6 @@ pub fn inject_globals(symtab: &mut SymbolTable) {
     ].into_iter()
     .for_each(|(var_name, class_name)| { 
         let gv = GlobalVarSymbol::new(var_name, BasicTypeSymbolPath::new(class_name));
-        symtab.insert(gv).unwrap(); 
+        symtab.insert_symbol(gv); 
     });
-}
-
-
-/// Should be called when coming accross an array type that hasn't been inserted into symtab yet.
-/// Assumes the data type is not some error type and corresponding array type does not yet exist in the symbol table.
-/// Use ArrayTypeSymbol::path_for to get the path to array's symbol.
-pub fn inject_array_type(symtab: &mut SymbolTable, data_type_path: ArrayTypeSymbolPath) {
-    let void_path = TypeSymbolPath::Basic(BasicTypeSymbolPath::new("void"));
-    let int_path = TypeSymbolPath::Basic(BasicTypeSymbolPath::new("int"));
-    let bool_path = TypeSymbolPath::Basic(BasicTypeSymbolPath::new("bool"));
-
-    let arr = ArrayTypeSymbol::new(data_type_path);
-    let (funcs, params) = arr.make_functions(&void_path, &int_path, &bool_path);
-    symtab.insert(arr).unwrap();
-    funcs.into_iter().for_each(|f| { symtab.insert(f).unwrap(); } );
-    params.into_iter().for_each(|p| { symtab.insert(p).unwrap(); } );
 }

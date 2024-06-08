@@ -1,7 +1,10 @@
+use std::path::{Path, MAIN_SEPARATOR_STR};
 use xshell::{Shell, cmd};
 
 
-const LSP_DST: &str = "./editors/vscode/server/bin";
+const LSP_ASSETS: &str = "crates/lsp/assets/include";
+const LSP_BIN_DST: &str = "editors/vscode/server/bin";
+const LSP_ASSETS_DST: &str = "editors/vscode/server/assets";
 
 pub fn prep_server(release: bool, target: Option<String>) -> anyhow::Result<()> {
     let sh = Shell::new()?;
@@ -19,29 +22,62 @@ pub fn prep_server(release: bool, target: Option<String>) -> anyhow::Result<()> 
     cmd!(sh, "cargo build --package witcherscript-lsp {build_opt_args...}").run()?;
 
 
-    let mut lsp_src = root.join("target");
+    let mut lsp_dir = root.join("target");
     if let Some(target) = &target {
-        lsp_src.push(target);
+        lsp_dir.push(target);
     }
     
     if release {
-        lsp_src.push("release");
+        lsp_dir.push("release");
     } else {
-        lsp_src.push("debug");
+        lsp_dir.push("debug");
     }
     
-    lsp_src.push("witcherscript-lsp");
-    
+
+    let mut lsp_bin = lsp_dir.join("witcherscript-lsp");
+
     if cfg!(windows) {
-        lsp_src.set_extension("exe");
+        lsp_bin.set_extension("exe");
     }
 
     // make sure destination folder exists
-    let lsp_dst = root.join(LSP_DST);
-    sh.create_dir(&lsp_dst)?;
+    let lsp_bin_dst = root.join(LSP_BIN_DST.replace('/', MAIN_SEPARATOR_STR));
+    sh.create_dir(&lsp_bin_dst)?;
 
-    sh.copy_file(lsp_src, &lsp_dst)?;
-    println!("Copied LSP into {}", lsp_dst.display());
+    sh.copy_file(lsp_bin, &lsp_bin_dst)?;
+    println!("Copied LSP binary into {}", lsp_bin_dst.display());
+
+
+    if cfg!(windows) && !release {
+        let lsp_pdb = lsp_dir.join("witcherscript_lsp.pdb");
+
+        sh.copy_file(lsp_pdb, &lsp_bin_dst)?;
+        println!("Copied LSP .pdb into {}", lsp_bin_dst.display());
+    }
+
+    let lsp_assets_dst = root.join(LSP_ASSETS_DST.replace('/', MAIN_SEPARATOR_STR));
+    sh.remove_path(&lsp_assets_dst)?;
+    sh.create_dir(&lsp_assets_dst)?;
+    copy_server_assets(&sh, Path::new(LSP_ASSETS), &lsp_assets_dst)?;
+    println!("Copied LSP assets into {}", lsp_assets_dst.display());
+
+    Ok(())
+}
+
+fn copy_server_assets(sh: &Shell, src_dir: &Path, dst_root: &Path) -> anyhow::Result<()> {
+    for src_entry in std::fs::read_dir(src_dir)? {
+        let src_entry = src_entry?;
+        let ty = src_entry.file_type()?;
+        let src_path = src_entry.path();
+        let dst_path = dst_root.join(src_path.strip_prefix(LSP_ASSETS)?);
+        if ty.is_dir() {
+            sh.create_dir(&dst_path)?;
+            copy_server_assets(sh, &src_path, dst_root)?;
+        // READMEs and stuff are not needed
+        } else if dst_path.extension().unwrap() != "md" {
+            sh.copy_file(src_path, dst_path)?;
+        }
+    }
 
     Ok(())
 }

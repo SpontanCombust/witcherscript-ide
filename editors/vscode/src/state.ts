@@ -52,15 +52,18 @@ export namespace RememberedChoices {
     export const KEY = "RememberedChoices";
 
     export class Memento {
-        public neverShowAgainDebugAstNotif: boolean
+        public neverShowAgainDebugAstNotif: boolean;
+        public neverShowAgainForeignScriptWarning: boolean;
 
-        constructor(neverShowAgainDebugAstNotif: boolean) {
-            this.neverShowAgainDebugAstNotif = neverShowAgainDebugAstNotif;
+        constructor(dto: MementoDto) {
+            this.neverShowAgainDebugAstNotif = dto.neverShowAgainDebugAstNotif;
+            this.neverShowAgainForeignScriptWarning = dto.neverShowAgainForeignScriptWarning;
         }
 
         public async store(context: vscode.ExtensionContext) {
             const dto: MementoDto = {
-                neverShowAgainDebugAstNotif: this.neverShowAgainDebugAstNotif
+                neverShowAgainDebugAstNotif: this.neverShowAgainDebugAstNotif,
+                neverShowAgainForeignScriptWarning: this.neverShowAgainForeignScriptWarning
             };
 
             context.globalState.update(KEY, dto);
@@ -70,18 +73,18 @@ export namespace RememberedChoices {
             const dto = context.globalState.get<MementoDto>(KEY);
 
             if (dto) {
-                return new Memento(
-                    dto.neverShowAgainDebugAstNotif
-                );
+                return new Memento(dto);
             } else {
-                return new Memento(
-                    false
-                )
+                return new Memento({
+                    neverShowAgainDebugAstNotif: false,
+                    neverShowAgainForeignScriptWarning: false
+                })
             }
         }
     }
 
     interface MementoDto {
-        neverShowAgainDebugAstNotif: boolean
+        neverShowAgainDebugAstNotif: boolean;
+        neverShowAgainForeignScriptWarning: boolean;
     }
 }

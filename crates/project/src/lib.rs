@@ -2,7 +2,10 @@ pub mod manifest;
 pub use manifest::Manifest;
 
 pub mod source_tree;
-pub use source_tree::SourceTree;
+pub use source_tree::{SourceTree, SourceTreeFile, SourceTreePath};
+
+pub mod source_mask;
+pub use source_mask::SourceMask;
 
 pub mod content;
 pub use content::{Content, try_make_content};

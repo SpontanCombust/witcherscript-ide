@@ -10,6 +10,15 @@ pub enum FunctionParameterSpecifier {
     Out
 }
 
+impl From<FunctionParameterSpecifier> for Keyword {
+    fn from(value: FunctionParameterSpecifier) -> Self {
+        match value {
+            FunctionParameterSpecifier::Optional => Keyword::Optional,
+            FunctionParameterSpecifier::Out => Keyword::Out,
+        }
+    }
+}
+
 pub type FunctionParameterSpecifierNode<'script> = SyntaxNode<'script, FunctionParameterSpecifier>;
 
 impl NamedSyntaxNode for FunctionParameterSpecifierNode<'_> {
@@ -58,6 +67,15 @@ pub enum GlobalFunctionSpecifier {
     Latent,
 }
 
+impl From<GlobalFunctionSpecifier> for Keyword {
+    fn from(value: GlobalFunctionSpecifier) -> Self {
+        match value {
+            GlobalFunctionSpecifier::Import => Keyword::Import,
+            GlobalFunctionSpecifier::Latent => Keyword::Latent,
+        }
+    }
+}
+
 pub type GlobalFunctionSpecifierNode<'script> = SyntaxNode<'script, GlobalFunctionSpecifier>;
 
 impl NamedSyntaxNode for GlobalFunctionSpecifierNode<'_> {
@@ -104,6 +122,17 @@ pub enum GlobalFunctionFlavour {
     Quest,
     Storyscene,
     Reward,
+}
+
+impl From<GlobalFunctionFlavour> for Keyword {
+    fn from(value: GlobalFunctionFlavour) -> Self {
+        match value {
+            GlobalFunctionFlavour::Exec => Keyword::Exec,
+            GlobalFunctionFlavour::Quest => Keyword::Quest,
+            GlobalFunctionFlavour::Storyscene => Keyword::Storyscene,
+            GlobalFunctionFlavour::Reward => Keyword::Reward,
+        }
+    }
 }
 
 pub type GlobalFunctionFlavourNode<'script> = SyntaxNode<'script, GlobalFunctionFlavour>;
@@ -158,6 +187,23 @@ pub enum MemberFunctionSpecifier {
     Latent,
 }
 
+impl From<MemberFunctionSpecifier> for Keyword {
+    fn from(value: MemberFunctionSpecifier) -> Self {
+        match value {
+            MemberFunctionSpecifier::AccessModifier(am) => am.into(),
+            MemberFunctionSpecifier::Import => Keyword::Import,
+            MemberFunctionSpecifier::Final => Keyword::Final,
+            MemberFunctionSpecifier::Latent => Keyword::Latent,
+        }
+    }
+}
+
+impl From<AccessModifier> for MemberFunctionSpecifier {
+    fn from(value: AccessModifier) -> Self {
+        Self::AccessModifier(value)
+    }
+}
+
 pub type MemberFunctionSpecifierNode<'script> = SyntaxNode<'script, MemberFunctionSpecifier>;
 
 impl NamedSyntaxNode for MemberFunctionSpecifierNode<'_> {
@@ -207,6 +253,16 @@ pub enum MemberFunctionFlavour {
     Entry,
     Cleanup,
     Timer
+}
+
+impl From<MemberFunctionFlavour> for Keyword {
+    fn from(value: MemberFunctionFlavour) -> Self {
+        match value {
+            MemberFunctionFlavour::Entry => Keyword::Entry,
+            MemberFunctionFlavour::Cleanup => Keyword::Cleanup,
+            MemberFunctionFlavour::Timer => Keyword::Timer,
+        }
+    }
 }
 
 pub type MemberFunctionFlavourNode<'script> = SyntaxNode<'script, MemberFunctionFlavour>;

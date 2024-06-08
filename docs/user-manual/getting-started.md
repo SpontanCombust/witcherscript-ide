@@ -5,7 +5,7 @@
 3. Open the command prompt using Ctrl + Shift + P and start typeing "witcherscript". Choose a command to create or initialize a WitcherScript project.
 
 <video controls muted>
-  <source src="../../assets/videos/getting-started.mp4" type="video/mp4">
+  <source src="../../assets/user-manual/getting-started/getting-started.mp4" type="video/mp4">
 </video>
 
-You can skip step 3. if you're already working on a mod using the REDKit modding tool. Just open the editor in your project's directory. If you want to use other mods as a dependency for your mod for example you should still check out [`witcherscript.toml` projects](./project-system.md#project) though.
+You can skip step 3. if you're already working on a mod using the REDKit modding tool. Just open the editor in your project's directory. If you want to use other mods as a dependency for your mod for example you should still check out [WIDE projects](./project-system.md#wide-project) though.

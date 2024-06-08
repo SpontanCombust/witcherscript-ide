@@ -9,6 +9,7 @@ authors.workspace = true
 witcherscript = { path = "../core" }
 witcherscript-analysis = { path = "../analysis" }
 witcherscript-project = { path = "../project" }
+witcherscript-diagnostics = { path = "../diagnostics" }
 abs-path = { path = "../abs-path" }
 dashmap.workspace = true
 serde.workspace = true

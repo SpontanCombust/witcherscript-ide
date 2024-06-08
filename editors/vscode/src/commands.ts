@@ -2,9 +2,13 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 
-import { client } from "./extension"
+import { getLanguageClient } from "./lang_client"
+import { getConfiguration } from './config';
 import * as requests from './requests';
+import * as notifications from './notifications';
 import * as state from './state';
+import * as utils from './utils';
+import * as tdcp from './providers/text_document_content_providers'
 
 
 export function registerCommands(context: vscode.ExtensionContext) {
@@ -12,10 +16,18 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.projects.init", commandInitProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.projects.create", commandCreateProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.scripts.importVanilla", commandImportVanillaScripts()),
-        vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", commandDiffScriptWithVanilla()),
-        vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context)),
-        vscode.commands.registerCommand("witcherscript-ide.debug.contentGraphDot", commandContentGraphDot(context))
+        vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", commandDiffScriptWithVanilla(context)),
     );
+
+    const cfg = getConfiguration();
+    if (cfg.enableDebugFeatures) {
+        context.subscriptions.push(
+            vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context)),
+            vscode.commands.registerCommand("witcherscript-ide.debug.contentGraphDot", commandContentGraphDot()),
+            vscode.commands.registerCommand("witcherscript-ide.debug.showScriptSymbols", commandShowScriptSymbols()),
+            vscode.commands.registerCommand("witcherscript-ide.debug.clearGlobalState", commandClearGlobalState(context))
+        );
+    }
 }
 
 type Cmd = (...args: any[]) => unknown;
@@ -114,6 +126,12 @@ function validateProjectName(input: string): string | undefined {
 }
 
 async function initializeProjectInDirectory(projectDirUri: vscode.Uri, projectName: string, context: vscode.ExtensionContext) {
+    const client = getLanguageClient();
+    if (client == undefined) {
+        vscode.window.showErrorMessage("Language Server is not active!");
+        return;
+    }
+
     let manifestUri: vscode.Uri;
     try {
         const params: requests.projects.create.Parameters = {
@@ -165,41 +183,6 @@ async function initializeProjectInDirectory(projectDirUri: vscode.Uri, projectNa
 
 
 function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
-    const astSuffix = " - AST";
-
-    const tdcp = new (class implements vscode.TextDocumentContentProvider {
-        readonly scheme = "witcherscript-ide-ast";
-
-        eventEmitter = new vscode.EventEmitter<vscode.Uri>();
-
-        provideTextDocumentContent(uri: vscode.Uri): vscode.ProviderResult<string> {
-            // VSCode at the time of writing this does not provide any quick and easy way to display a custom tab label.
-            // Its default way of getting the tab name is the file name component of URI passed to openTextDocument.
-            // So if I want to display "{file} - AST" I need to do a bit of URI hacking and pass the whole thing to it.
-            // Anyways, LS needs name of the actual file, so the decoratory suffix needs to be gone from that URI.
-            uri = vscode.Uri.file(uri.fsPath.substring(0, uri.fsPath.length - astSuffix.length));
-
-            const params: requests.debug.scriptAst.Parameters = {
-                scriptUri: client.code2ProtocolConverter.asUri(uri)
-            }
-            return client.sendRequest(requests.debug.scriptAst.type, params).then(
-                (response) => {
-                    return response.ast;
-                },
-                (error) => {
-                    vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
-                    return ""
-                }
-            )
-        }
-
-        get onDidChange(): vscode.Event<vscode.Uri> {
-            return this.eventEmitter.event;
-        }
-    })();
-
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(tdcp.scheme, tdcp));
-
     return async () => {
         const activeEditor = vscode.window.activeTextEditor;
         if (!activeEditor) {
@@ -208,16 +191,18 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
 
         const scriptPath = activeEditor.document.uri.fsPath;
         const scriptLine = activeEditor.selection.active.line + 1;
-        const uri = vscode.Uri.file(scriptPath + astSuffix).with({ scheme: tdcp.scheme });
+        const uri = vscode.Uri
+            .file(scriptPath + tdcp.ScriptAstProvider.pathSuffix)
+            .with({ scheme: tdcp.ScriptAstProvider.scheme });
         
         const doc = await vscode.workspace.openTextDocument(uri);
         const options: vscode.TextDocumentShowOptions = {
-            viewColumn: vscode.ViewColumn.Two,
+            viewColumn: vscode.ViewColumn.Beside,
             preview: false,
             preserveFocus: true
         };
 
-        tdcp.eventEmitter.fire(uri);
+        tdcp.ScriptAstProvider.getInstance().eventEmitter.fire(uri);
         
         vscode.window.showTextDocument(doc, options).then(async editor => {
             const astText = editor.document.getText();
@@ -257,6 +242,12 @@ function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
 
 function commandImportVanillaScripts(): Cmd {
     return async () => {
+        const client = getLanguageClient();
+        if (client == undefined) {
+            vscode.window.showErrorMessage("Language Server is not active!");
+            return;
+        }
+        
         let projectContentInfo: requests.ContentInfo;
         let content0Info: requests.ContentInfo;
 
@@ -268,7 +259,24 @@ function commandImportVanillaScripts(): Cmd {
             })).projectInfos;
 
             if (projectInfos.length == 0) {
-                return vscode.window.showErrorMessage("No project available to import scripts into!");
+                enum Answer {
+                    Close = "I understand",
+                    SeeManual = "See manual"
+                }
+
+                const manualUri = vscode.Uri.parse("https://spontancombust.github.io/witcherscript-ide/user-manual/project-system/");
+
+                const answer = await vscode.window.showErrorMessage(
+                    "No project available to import scripts into.\n" +
+                    "To learn about creating projects see the manual:\n" + manualUri.toString(),
+                    Answer.Close, Answer.SeeManual
+                );
+
+                if (answer == Answer.SeeManual) {
+                    await vscode.env.openExternal(manualUri);
+                }
+
+                return;
             } else {
                 const chosen = await chooseProject(projectInfos);
                 if (chosen) {
@@ -320,6 +328,7 @@ function commandImportVanillaScripts(): Cmd {
 
             // Finally import scripts while doing a little validation
 
+            let scriptsImported = [];
             for (const content0ScriptUri of scriptsToImport) {
                 const content0ScriptPath = content0ScriptUri.fsPath;
                 const relativePath = path.relative(content0ScriptsRootPath, content0ScriptPath);
@@ -344,11 +353,16 @@ function commandImportVanillaScripts(): Cmd {
                         await fs.copyFile(content0ScriptPath, projectScriptPath);
                         await vscode.window.showTextDocument(projectScriptUri, { preview: false });
                         client.info(`Successfully imported ${relativePath} into the project`);
+                        scriptsImported.push(projectScriptUri);
                     } catch (err) {
                         client.error(`Failed to import script ${relativePath}: ${err}`);
                     }
                 }
             }
+
+            client.sendNotification(notifications.projects.didImportScripts.type, {
+                importedScriptsUris: scriptsImported.map(uri => client.code2ProtocolConverter.asUri(uri))
+            })
 
             if (encounteredProblems) {
                 vscode.window.showWarningMessage("Scripts imported with some problems (check extension output)");
@@ -359,8 +373,14 @@ function commandImportVanillaScripts(): Cmd {
     }
 }
 
-function commandDiffScriptWithVanilla(): Cmd {
+function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): Cmd {
     return async () => {
+        const client = getLanguageClient();
+        if (client == undefined) {
+            vscode.window.showErrorMessage("Language Server is not active!");
+            return;
+        }
+        
         if (!vscode.window.activeTextEditor) {
             vscode.window.showErrorMessage("No active editor available!");
             return;
@@ -379,7 +399,13 @@ function commandDiffScriptWithVanilla(): Cmd {
                 projectUri: currentContent.contentUri
             })).content0Info;
         } catch(error: any) {
-            return vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+            vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+
+            if (error.code == -1021) {
+                utils.showForeignScriptWarning(context);
+            }
+
+            return;
         }
 
         const currentScriptPath = currentScriptUri.fsPath;
@@ -401,50 +427,73 @@ function commandDiffScriptWithVanilla(): Cmd {
         }
 
         const vanillaScriptUri = vscode.Uri.file(vanillaScriptPath);
-        return await vscode.commands.executeCommand("vscode.diff", vanillaScriptUri, currentScriptUri);
+        const scriptName = path.basename(vanillaScriptPath);
+        const title = `${scriptName} (vanilla) ↔ ${scriptName} (modded)`;
+        return await vscode.commands.executeCommand("vscode.diff", vanillaScriptUri, currentScriptUri, title);
     }
 }
 
-function commandContentGraphDot(context: vscode.ExtensionContext): Cmd {
-    const tdcp = new (class implements vscode.TextDocumentContentProvider {
-        readonly scheme = "witcherscript-ide-graph-dot";
-
-        eventEmitter = new vscode.EventEmitter<vscode.Uri>();
-
-        provideTextDocumentContent(_: vscode.Uri): vscode.ProviderResult<string> {
-            const params: requests.debug.contentGraphDot.Parameters = {};
-            return client.sendRequest(requests.debug.contentGraphDot.type, params).then(
-                (response) => {
-                    return response.dotGraph;
-                },
-                (error) => {
-                    vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
-                    return ""
-                }
-            )
-        }
-
-        get onDidChange(): vscode.Event<vscode.Uri> {
-            return this.eventEmitter.event;
-        }
-    })();
-
-    context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(tdcp.scheme, tdcp));
-
+function commandContentGraphDot(): Cmd {
     return async () => {
         const virtFileName = "WitcherScript Content Graph";
-        const uri = vscode.Uri.file(virtFileName).with({ scheme: tdcp.scheme });
+        const uri = vscode.Uri
+            .file(virtFileName)
+            .with({ scheme: tdcp.ContentGraphDotProvider.scheme });
 
         const doc = await vscode.workspace.openTextDocument(uri);
         const options: vscode.TextDocumentShowOptions = {
-            viewColumn: vscode.ViewColumn.Two,
+            viewColumn: vscode.ViewColumn.Beside,
             preview: false,
             preserveFocus: true
         };
 
-        tdcp.eventEmitter.fire(uri);
+        tdcp.ContentGraphDotProvider.getInstance().eventEmitter.fire(uri);
 
         await vscode.window.showTextDocument(doc, options);
+    }
+}
+
+function commandShowScriptSymbols(): Cmd {
+    return async () => {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor) {
+            return;
+        }
+
+        const scriptPath = activeEditor.document.uri.fsPath;
+        const uri = vscode.Uri
+            .file(scriptPath + tdcp.ScriptSymbolsProvider.pathSuffix)
+            .with({ scheme: tdcp.ScriptSymbolsProvider.scheme });
+        
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const options: vscode.TextDocumentShowOptions = {
+            viewColumn: vscode.ViewColumn.Beside,
+            preview: false,
+            preserveFocus: true
+        };
+
+        tdcp.ScriptSymbolsProvider.getInstance().eventEmitter.fire(uri);
+        
+        vscode.window.showTextDocument(doc, options);
+    };
+}
+
+
+
+function commandClearGlobalState(context: vscode.ExtensionContext): Cmd {
+    return async () => {
+        const keys = context.globalState.keys();
+
+        const selected = await vscode.window.showQuickPick([...keys, 'ALL']);
+        if (selected) {
+            if (selected == 'ALL') {
+                for (const key of keys) {
+                    await context.globalState.update(key, undefined);
+                }
+            } else {
+                await context.globalState.update(selected, undefined);
+            }
+        }
     }
 }
 

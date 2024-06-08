@@ -6,6 +6,7 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
+abs-path = { path = "../abs-path" }
 strum.workspace = true
 strum_macros.workspace = true
 thiserror.workspace = true

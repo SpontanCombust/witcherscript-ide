@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 use crate::{AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::{StatementTraversal, StatementVisitor, ExpressionNode, FunctionStatementNode};
+use super::*;
 
 
 mod tags {
@@ -18,16 +18,16 @@ impl NamedSyntaxNode for IfConditionalNode<'_> {
     const NODE_KIND: &'static str = "if_stmt";
 }
 
-impl IfConditionalNode<'_> {
-    pub fn cond(&self) -> ExpressionNode {
+impl<'script> IfConditionalNode<'script> {
+    pub fn cond(&self) -> ExpressionNode<'script> {
         self.field_child("cond").unwrap().into()
     }
 
-    pub fn body(&self) -> FunctionStatementNode {
+    pub fn body(&self) -> FunctionStatementNode<'script> {
         self.field_child("body").unwrap().into()
     }
 
-    pub fn else_body(&self) -> Option<FunctionStatementNode> {
+    pub fn else_body(&self) -> Option<FunctionStatementNode<'script>> {
         self.field_child("else").map(|n| n.into())
     }
 }
@@ -54,12 +54,21 @@ impl<'script> TryFrom<AnyNode<'script>> for IfConditionalNode<'script> {
     }
 }
 
-impl StatementTraversal for IfConditionalNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_if_stmt(self) {
-            self.body().accept(visitor);
-            self.else_body().map(|s| { s.accept(visitor) });
+impl SyntaxNodeTraversal for IfConditionalNode<'_> {
+    type TraversalCtx = StatementTraversalContext;
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let tp = visitor.visit_if_stmt(self, ctx);
+        if tp.traverse_cond {
+            self.cond().accept(visitor, ExpressionTraversalContext::IfConditionalCond);
         }
+        if tp.traverse_body {
+            self.body().accept(visitor, StatementTraversalContext::IfConditionalBody);
+        }
+        if tp.traverse_else_body {
+            self.else_body().map(|s| s.accept(visitor, StatementTraversalContext::IfConditionalElseBody));
+        }
+        visitor.exit_if_stmt(self, ctx);
     }
 }
 
@@ -71,12 +80,12 @@ impl NamedSyntaxNode for SwitchConditionalNode<'_> {
     const NODE_KIND: &'static str = "switch_stmt";
 }
 
-impl SwitchConditionalNode<'_> {
-    pub fn cond(&self) -> ExpressionNode {
+impl<'script> SwitchConditionalNode<'script> {
+    pub fn cond(&self) -> ExpressionNode<'script> {
         self.field_child("cond").unwrap().into()
     }
 
-    pub fn body(&self) -> SwitchConditionalBlockNode {
+    pub fn body(&self) -> SwitchConditionalBlockNode<'script> {
         self.field_child("body").unwrap().into()
     }
 }
@@ -102,11 +111,18 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalNode<'script> {
     }
 }
 
-impl StatementTraversal for SwitchConditionalNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        if visitor.visit_switch_stmt(self) {
-            self.body().accept(visitor);
+impl SyntaxNodeTraversal for SwitchConditionalNode<'_> {
+    type TraversalCtx = StatementTraversalContext;
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+        let tp = visitor.visit_switch_stmt(self, ctx);
+        if tp.traverse_cond {
+            self.cond().accept(visitor, ExpressionTraversalContext::SwitchConditionalCond);
         }
+        if tp.traverse_body {
+            self.body().accept(visitor, ());
+        }
+        visitor.exit_switch_stmt(self, ctx);
     }
 }
 
@@ -118,8 +134,8 @@ impl NamedSyntaxNode for SwitchConditionalBlockNode<'_> {
     const NODE_KIND: &'static str = "switch_block";
 }
 
-impl SwitchConditionalBlockNode<'_> {
-    pub fn sections(&self) -> impl Iterator<Item = SwitchConditionalSectionNode> {
+impl<'script> SwitchConditionalBlockNode<'script> {
+    pub fn sections(&self) -> impl Iterator<Item = SwitchConditionalSectionNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -145,9 +161,11 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalBlockNode<'script> 
     }
 }
 
-impl StatementTraversal for SwitchConditionalBlockNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        self.sections().for_each(|s| s.accept(visitor));
+impl SyntaxNodeTraversal for SwitchConditionalBlockNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+        self.sections().for_each(|s| s.accept(visitor, ()));
     }
 }
 
@@ -214,12 +232,14 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalSectionNode<'script
     }
 }
 
-impl StatementTraversal for SwitchConditionalSectionNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxNodeTraversal for SwitchConditionalSectionNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         match self.clone().value() {
-            SwitchConditionalSection::Statement(n) => n.accept(visitor),
-            SwitchConditionalSection::Case(n) => n.accept(visitor),
-            SwitchConditionalSection::Default(n) => n.accept(visitor),
+            SwitchConditionalSection::Statement(n) => n.accept(visitor, StatementTraversalContext::SwitchConditionalBody),
+            SwitchConditionalSection::Case(n) => n.accept(visitor, ()),
+            SwitchConditionalSection::Default(n) => n.accept(visitor, ()),
         }
     }
 }
@@ -232,8 +252,8 @@ impl NamedSyntaxNode for SwitchConditionalCaseLabelNode<'_> {
     const NODE_KIND: &'static str = "switch_case_label";
 }
 
-impl SwitchConditionalCaseLabelNode<'_> {
-    pub fn value(&self) -> ExpressionNode {
+impl<'script> SwitchConditionalCaseLabelNode<'script> {
+    pub fn value(&self) -> ExpressionNode<'script> {
         self.field_child("value").unwrap().into()
     }
 }
@@ -258,11 +278,18 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalCaseLabelNode<'scri
     }
 }
 
-impl StatementTraversal for SwitchConditionalCaseLabelNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
-        visitor.visit_switch_stmt_case(self);
+impl SyntaxNodeTraversal for SwitchConditionalCaseLabelNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+        let tp = visitor.visit_switch_stmt_case(self);
+        if tp.traverse_value {
+            self.value().accept(visitor, ExpressionTraversalContext::SwitchConditionalCaseLabel);
+        }
+        visitor.exit_switch_stmt_case(self);
     }
 }
+
 
 
 pub type SwitchConditionalDefaultLabelNode<'script> = SyntaxNode<'script, tags::SwitchConditionalDefaultLabel>;
@@ -289,8 +316,10 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalDefaultLabelNode<'s
     }
 }
 
-impl StatementTraversal for SwitchConditionalDefaultLabelNode<'_> {
-    fn accept<V: StatementVisitor>(&self, visitor: &mut V) {
+impl SyntaxNodeTraversal for SwitchConditionalDefaultLabelNode<'_> {
+    type TraversalCtx = ();
+
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         visitor.visit_switch_stmt_default(self);
     }
 }

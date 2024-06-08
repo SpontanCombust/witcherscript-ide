@@ -1,88 +1,111 @@
-use std::sync::Arc;
-use bitmask_enum::bitmask;
-use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
-use tokio::sync::mpsc;
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use tokio::{sync::oneshot, time::Instant};
 use abs_path::AbsPath;
-use witcherscript::Script;
-use witcherscript_analysis::diagnostics::Diagnostic;
-use crate::{reporting::IntoLspDiagnostic, Backend, ScriptState};
+use witcherscript_analysis::jobs;
+use witcherscript_diagnostics::*;
+use crate::Backend;
 
-
-#[bitmask(u8)]
-pub enum ScriptAnalysisKind {
-    SyntaxAnalysis
-}
-
-impl ScriptAnalysisKind {
-    pub fn suggested_for_script(script_state: &ScriptState) -> Self {
-        if script_state.is_foreign {
-            ScriptAnalysisKind::SyntaxAnalysis
-        } else {
-            ScriptAnalysisKind::all()
-        }
-    }
-}
 
 impl Backend {
-    pub async fn run_script_analysis<It>(&self, script_paths: It) 
-    where It: IntoParallelIterator<Item = AbsPath> + Send + 'static {
-        let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
+    pub async fn run_script_analysis(&self, script_paths: Vec<AbsPath>, full: bool) {
+        let config = self.config.read().await;
+        let do_syntax_analysis = config.enable_syntax_analysis;
+        drop(config);
+
+        let start = Instant::now();
+
+        // first go analytics that can run on each keystroke
+        if do_syntax_analysis {
+            self.syntax_analysis(script_paths.clone()).await;
+        }
+        
+        if full {
+            // here should go more expensive analytics that should be done only when the file is explicitly saved
+            self.workspace_symbol_analysis(script_paths.clone()).await;
+        }
+
+        let duration = Instant::now() - start;
+        self.reporter.log_info(format!("Analysis finished in {:.3}s", duration.as_secs_f32())).await;
+    }
+
+    
+    async fn syntax_analysis(&self, script_paths: Vec<AbsPath>) {
+        for path in &script_paths {
+            self.reporter.clear_diagnostics(path, DiagnosticDomain::SyntaxAnalysis);
+        }
 
         let scripts = Arc::clone(&self.scripts);
+        let (send, recv) = oneshot::channel();
+
         rayon::spawn(move || {
-            script_paths.into_par_iter()
-                .for_each(move |script_path| {
+            let loc_diagnostics: Vec<_> = 
+                script_paths.into_par_iter()
+                .filter_map(move |script_path| {
                     if let Some(kv) = scripts.get(&script_path) {
                         let script_state = kv.value();
                         let script = &script_state.script;
-                        let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
-                        let diagnostics = diagnose_script(script, analysis_kinds)
-                            .into_iter()
-                            .map(|d| d.into_lsp_diagnostic());
+                        let mut diags = Vec::new();
+                        jobs::syntax_analysis(script, &mut diags);
+                        drop(kv);
 
-                        send.blocking_send((script_path, diagnostics)).expect("run_script_analysis mpsc::send fail");
-                    }    
-                });
+                        Some((script_path, diags))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            send.send(loc_diagnostics).expect("syntax_analysis oneshot::send fail")
         });
+        
+        let results = recv.await.expect("syntax_analysis oneshot::recv fail");
 
-        while let Some((script_path, diags)) = recv.recv().await {
-            self.reporter.clear_diagnostics(script_path.as_ref());
-            self.reporter.push_diagnostics(script_path.as_ref(), diags);
+        for (script_path, diags) in results {
+            self.reporter.push_diagnostics(&script_path, diags);
         }
-    }
+    }  
 
-    pub async fn run_script_analysis_for_all(&self) {
-        let (send, mut recv) = mpsc::channel(rayon::current_num_threads());
+    async fn workspace_symbol_analysis(&self, script_paths: Vec<AbsPath>) {
+        let mut grouped_by_content: HashMap<AbsPath, Vec<PathBuf>> = HashMap::new();
 
-        let scripts = Arc::clone(&self.scripts);
-        rayon::spawn(move || {
-            scripts.iter().par_bridge()
-                .for_each(move |kv| {
-                    let script_path = kv.key().to_owned();
-                    let script_state = kv.value();
-                    let script = &script_state.script;
-                    let analysis_kinds = ScriptAnalysisKind::suggested_for_script(script_state);
-                    let diagnostics = diagnose_script(script, analysis_kinds)
-                        .into_iter()
-                        .map(|d| d.into_lsp_diagnostic());
+        for path in script_paths {
+            self.reporter.clear_diagnostics(&path, DiagnosticDomain::WorkspaceSymbolAnalysis);
 
-                    send.blocking_send((script_path, diagnostics)).expect("run_script_analysis mpsc::send fail");
-                });
-        });
-
-        while let Some((script_path, diags)) = recv.recv().await {
-            self.reporter.clear_diagnostics(script_path.as_ref());
-            self.reporter.push_diagnostics(script_path.as_ref(), diags);
+            if let Some(script_state) = self.scripts.get(&path) {
+                if let Some(content_info) = &script_state.content_info {
+                    grouped_by_content.entry(content_info.content_path.clone())
+                        .or_default()
+                        .push(content_info.source_tree_path.local().to_owned());
+                }
+            }
         }
-    }
-}
 
-fn diagnose_script(script: &Script, analysis_kinds: ScriptAnalysisKind) -> Vec<Diagnostic> {
-    let mut diagnostics: Vec<Diagnostic> = Vec::new();
-    
-    if analysis_kinds.contains(ScriptAnalysisKind::SyntaxAnalysis) {
-        witcherscript_analysis::jobs::syntax_analysis(script.root_node(), &mut diagnostics);
-    }
+        let symtabs = self.symtabs.read().await;
 
-    diagnostics
+        let mut diagnostics = Vec::new();
+        for (content_path, local_source_paths) in grouped_by_content {
+            if let Some(content_symtab) = symtabs.get(&content_path) {
+                let marcher = self.march_symbol_tables(&symtabs, &content_path).await;
+
+                jobs::workspace_symbol_analysis(content_symtab, marcher, local_source_paths, &mut diagnostics);
+            }
+        }
+
+        drop(symtabs);
+
+        if !diagnostics.is_empty() {
+            diagnostics.sort_by(|ld1, ld2| ld1.path.cmp(&ld2.path));
+
+            let mut current_path = diagnostics[0].path.clone();
+            for ld in diagnostics {
+                if ld.path != current_path {
+                    current_path = ld.path;
+                    self.reporter.clear_diagnostics(&current_path, DiagnosticDomain::WorkspaceSymbolAnalysis);
+                }
+
+                self.reporter.push_diagnostic(&current_path, ld.diagnostic);
+            }
+        }
+    } 
 }

@@ -2,10 +2,16 @@ use std::io::Write;
 use tower_lsp::{jsonrpc, lsp_types as lsp};
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
+use witcherscript_project::content::VANILLA_CONTENT_NAME;
 use witcherscript_project::Manifest;
-use crate::Backend;
+use crate::{Backend, ScriptStateContentInfo};
+use super::notifications;
 use super::requests::{self, ContentInfo};
 
+
+// CAUTION!!!
+// Do not change already existing ServerError codes.
+// If you have to, make sure to update them on the client side in they're explicitly checked for.
 
 impl Backend {
     pub async fn handle_projects_create_request(&self, params: requests::projects::create::Parameters) -> Result<requests::projects::create::Response> {
@@ -36,10 +42,29 @@ impl Backend {
         }
 
 
-        let scripts_path = project_dir.join("scripts").unwrap();
-        //TODO try content/scripts and workspace/scripts
-        if !scripts_path.exists() {
-            if let Err(err) = std::fs::create_dir(scripts_path) {
+        let scripts_root_candidates_rel = [
+            "scripts",
+            "content/scripts",
+            "workspace/scripts",
+        ];
+        
+        let scripts_root_candidates_abs = 
+            scripts_root_candidates_rel.iter()
+            .map(|rel| project_dir.join(rel).unwrap())
+            .collect::<Vec<_>>();
+
+        let candidate_idx =
+            scripts_root_candidates_abs.iter()
+            .enumerate()
+            .find(|(_, abs)| abs.exists())
+            .map(|(i, _)| i)
+            .unwrap_or(0);
+
+        let scripts_root_rel = scripts_root_candidates_rel[candidate_idx];
+        let scripts_root_abs = &scripts_root_candidates_abs[candidate_idx];
+
+        if !scripts_root_abs.exists() {
+            if let Err(err) = std::fs::create_dir(scripts_root_abs) {
                 return Err(jsonrpc::Error { 
                     code: jsonrpc::ErrorCode::ServerError(-1002), 
                     message: format!("File system error: {err}").into(), 
@@ -47,6 +72,7 @@ impl Backend {
                 })
             }
         }
+
 
         let mut manifest_file;
         match std::fs::File::create(&manifest_path) {
@@ -70,7 +96,7 @@ impl Backend {
             })
         }
 
-        let template = manifest_template(&params.project_name);
+        let template = manifest_template(&params.project_name, scripts_root_rel);
 
         if let Err(err) = manifest_file.write_all(template.as_bytes()) {
             return Err(jsonrpc::Error { 
@@ -100,6 +126,7 @@ impl Backend {
         })?;
 
         let ast = format!("{:#?}", script_entry.value().script.root_node());
+        drop(script_entry);
 
         Ok(requests::debug::script_ast::Response { 
             ast
@@ -114,24 +141,28 @@ impl Backend {
             return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
         }
 
-        let mut parent_content_path = None;
-        for it in self.source_trees.iter() {
-            let source_tree = it.value();
-            if source_tree.contains(&script_path) {
-                parent_content_path = Some(it.key().to_owned());
-                break;
-            }
-        }
-
-        if parent_content_path.is_none() {
+        let script_state;
+        if let Some(ss) = self.scripts.get(&script_path) {
+            script_state = ss;
+        } else {
             return Err(jsonrpc::Error {
                 code: jsonrpc::ErrorCode::ServerError(-1020),
+                message: "This script file is uknown to the langauge server".into(),
+                data: None
+            })
+        }
+
+        let parent_content_path;
+        if let Some(content_info) = &script_state.content_info {
+            parent_content_path = content_info.content_path.clone();
+        } else {
+            return Err(jsonrpc::Error {
+                code: jsonrpc::ErrorCode::ServerError(-1021),
                 message: "Script does not belong to any content in the content graph".into(),
                 data: None
             })
         }
-        let parent_content_path = parent_content_path.unwrap();
-        
+
         if let Some(n) = self.content_graph.read().await.get_node_by_path(&parent_content_path) {
             Ok(requests::scripts::parent_content::Response {
                 parent_content_info: ContentInfo { 
@@ -144,7 +175,7 @@ impl Backend {
             })
         } else {
             Err(jsonrpc::Error {
-                code: jsonrpc::ErrorCode::ServerError(-1021),
+                code: jsonrpc::ErrorCode::ServerError(-1022),
                 message: "Could not find content in content graph".into(),
                 data: None
             })
@@ -170,7 +201,7 @@ impl Backend {
 
         let mut content0_info = None;
         for n in graph.walk_dependencies(&project_path) {
-            if n.content.content_name() == "content0" {
+            if n.content.content_name() == VANILLA_CONTENT_NAME {
                 content0_info = Some(ContentInfo {
                     content_uri: n.content.path().to_uri(),
                     scripts_root_uri: n.content.source_tree_root().to_uri(),
@@ -224,7 +255,8 @@ impl Backend {
 
         let mut dot_graph = String::new();
         dot_graph += "digraph {\n";
-        dot_graph += "\tcomment=\"Edge direction is: dependant ---> dependency\"\n";
+        dot_graph += "\tcomment=\"Edge direction is: dependant ---> dependency. Edge label denotes dependency priority.\"\n";
+        dot_graph += "\trankdir=\"BT\"\n";
         dot_graph += "\n";
 
         for n in graph.nodes() {
@@ -239,7 +271,8 @@ impl Backend {
             let content_name = n.content.content_name();
             for dep in graph.direct_dependencies(n.content.path()) {
                 let dep_name = dep.content.content_name();
-                dot_graph += &format!("\t{content_name} -> {dep_name}\n");
+                let prio = graph.dependency_priority(n.content.path(), dep.content.path()).unwrap_or(-1);
+                dot_graph += &format!("\t{content_name} -> {dep_name} [label={prio}]\n");
             }
         }
 
@@ -249,10 +282,67 @@ impl Backend {
             dot_graph
         })
     }
+
+    pub async fn handle_debug_script_symbols_request(&self, params: requests::debug::script_symbols::Parameters) -> Result<requests::debug::script_symbols::Response> {
+        let script_path: AbsPath;
+        if let Ok(path) = AbsPath::try_from(params.script_uri) {
+            script_path = path;
+        } else {
+            return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
+        }
+
+        let content_info: ScriptStateContentInfo;
+        if let Some(ci) = self.scripts.get(&script_path).and_then(|ss| ss.content_info.clone()) {
+            content_info = ci;
+        } else {
+            return Err(jsonrpc::Error {
+                code: jsonrpc::ErrorCode::ServerError(-1060),
+                message: "Script file does not belong to any known content".into(),
+                data: None
+            });
+        }
+
+        let symtabs = self.symtabs.read().await;
+        let symtab_ref;
+        if let Some(symtab) = symtabs.get(&content_info.content_path) {
+            symtab_ref = symtab;
+        } else {
+            return Err(jsonrpc::Error {
+                code: jsonrpc::ErrorCode::ServerError(-1061),
+                message: "Symbol table for the content could not be found".into(),
+                data: None
+            });
+        }
+
+        let sym_iter = symtab_ref.get_symbols_for_source(&content_info.source_tree_path.local());
+        let script_symbols = format!("{:#?}", sym_iter.collect::<Vec<_>>());
+
+        Ok(requests::debug::script_symbols::Response {
+            symbols: script_symbols
+        })
+    }
+
+    pub async fn handle_projects_did_import_scripts_notification(&self, params: notifications::projects::did_import_scripts::Parameters) {
+        let paths: Vec<AbsPath> = 
+            params.imported_scripts_uris.into_iter()
+            .filter_map(|uri| AbsPath::try_from(uri).ok())
+            .collect();
+
+        if paths.is_empty() {
+            return;
+        }
+
+        if let Some(content_path) = self.content_graph.read().await.strip_content_path_prefix(&paths[0]) {
+            self.scan_source_tree(&content_path).await;
+            self.reporter.commit_all_diagnostics().await;
+        } else {
+            self.reporter.log_error("Imported files do no belong to a known content!").await;
+        }
+    }
 }
 
 
-fn manifest_template(project_name: &str) -> String {
+fn manifest_template(project_name: &str, scripts_root: &str) -> String {
     // Serialization would've been better if not for the fact that the default behaviour for inline tables
     // is to instead create a new table with a dotted key. 
     // So it would require extra effort to make something small look better when you can just write the template by hand.
@@ -260,9 +350,11 @@ fn manifest_template(project_name: &str) -> String {
 r#"# Basic information about this project
 [content]
 name = "{project_name}"
+description = ""
 version = "1.0.0"
 authors = []
 game_version = "4.04"
+scripts_root = "{scripts_root}"
 
 # Any dependencies that this project might need
 [dependencies]
@@ -286,7 +378,7 @@ mod test {
 
     #[test]
     fn test_manifest_template() {
-        let template = manifest_template("modFoo_Bar");
+        let template = manifest_template("modFoo_Bar", "scripts");
         let manifest = Manifest::from_str(&template);
         assert!(manifest.is_ok());
     }

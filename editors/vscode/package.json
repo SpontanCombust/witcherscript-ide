@@ -9,7 +9,7 @@
   },
   "homepage": "https://spontancombust.github.io/witcherscript-ide",
   "license": "MIT OR Apache-2.0",
-  "version": "0.2.1",
+  "version": "0.3.0-dev.3",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -68,7 +68,22 @@
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "Paths to custom directories containing WitcherScript contents"
+          "markdownDescription": "Paths to custom directories containing WitcherScript contents."
+        },
+        "witcherscript-ide.languageServer.enable": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable the language server. You can disable this if you only want syntax highlighting (change requires extension reload)."
+        },
+        "witcherscript-ide.languageServer.syntaxAnalysis": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enables syntax analysis in the language server."
+        },
+        "witcherscript-ide.debug.enableDebugFeatures": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable debug features (change requires extension reload)."
         }
       }
     },
@@ -76,34 +91,50 @@
       {
         "command": "witcherscript-ide.projects.init",
         "title": "Initialize a WitcherScript project in existing directory...",
-        "category": "WitcherScript-IDE"
+        "category": "WitcherScript-IDE",
+        "enablement": "witcherscript-ide.languageServerActive"
       },
       {
         "command": "witcherscript-ide.projects.create",
         "title": "Create a new WitcherScript project...",
-        "category": "WitcherScript-IDE"
+        "category": "WitcherScript-IDE",
+        "enablement": "witcherscript-ide.languageServerActive"
       },
       {
         "command": "witcherscript-ide.scripts.importVanilla",
         "title": "Import scripts from vanilla...",
-        "category": "WitcherScript-IDE"
+        "category": "WitcherScript-IDE",
+        "enablement": "witcherscript-ide.languageServerActive"
       },
       {
         "command": "witcherscript-ide.scripts.diffVanilla",
         "title": "Compare this script with vanilla counterpart",
         "category": "WitcherScript-IDE",
-        "enablement": "editorLangId == 'witcherscript'"
+        "enablement": "witcherscript-ide.languageServerActive && editorLangId == 'witcherscript'"
       },
       {
         "command": "witcherscript-ide.debug.showScriptAst",
         "title": "Show script AST",
         "category": "WitcherScript-IDE (debug)",
-        "enablement": "editorLangId == 'witcherscript'"
+        "enablement": "witcherscript-ide.languageServerActive && witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
       },
       {
         "command": "witcherscript-ide.debug.contentGraphDot",
         "title": "Show content graph",
-        "category": "WitcherScript-IDE (debug)"
+        "category": "WitcherScript-IDE (debug)",
+        "enablement": "witcherscript-ide.languageServerActive && witcherscript-ide.debugFeaturesEnabled"
+      },
+      {
+        "command": "witcherscript-ide.debug.showScriptSymbols",
+        "title": "Show script symbols",
+        "category": "WitcherScript-IDE (debug)",
+        "enablement": "witcherscript-ide.languageServerActive && witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
+      },
+      {
+        "command": "witcherscript-ide.debug.clearGlobalState",
+        "title": "Clear global cache of the extension",
+        "category": "WitcherScript-IDE (debug)",
+        "enablement": "witcherscript-ide.debugFeaturesEnabled"
       }
     ],
     "grammars": [
@@ -112,7 +143,11 @@
         "scopeName": "source.ws",
         "path": "./syntaxes/ws.tmLanguage.json"
       }
-    ]
+    ],
+    "tomlValidation": [{
+        "fileMatch": "witcherscript.toml",
+        "url": "https://raw.githubusercontent.com/SpontanCombust/witcherscript-ide/dev/schemas/witcherscript.toml.schema.json"
+    }]
   },
 
   "scripts": {

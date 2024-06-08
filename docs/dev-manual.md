@@ -6,10 +6,11 @@ Here you will find the information you need if you want to contribute to this pr
 ## Project structure
 - `.cargo` - Cargo configuration to enable xtasks
 - `.vscode` - VSCode specific files with debugging configurations 
-- `crates` - server Rust code. The main crate is `lsp`, which contains language server implementation
+- `crates` - Rust packages forming WIDE. The main crate is `lsp`, which contains language server implementation
 - `docs` - project documentation from which this website is built
 - `editors` - contains implementations of WitcherScript language client, currently just `vscode` client written in TypeScript
-- `test_assets` - file assets used by tests
+- `media` - all sorts of visual assets used throughout the repository
+- `schemas` - contains `witcherscript.toml` schema
 - `xtask` - code for build commands to speed up development
 
 
@@ -25,10 +26,12 @@ Currently available xtask commands:
     - `--target` - compilation target triple, e.g. x86_64-pc-windows-msvc
 - `prep-client` - build VSCode client
     - `--watch` - whether client should be continuously watched for changes made to it and rebuilt 
+    - `--fast` - whether client should be built instantly by skipping `npm ci` step
 - `package` - build and package VSCode extension into a .vsix file
     - `--out` - output path for the .vsix file; default is "./witcherscript-ide.vsix"
     - `--target` - VSCode extension target, e.g. win32-x64
-- `install` - build, package and install the VSCode extension
+    - `--pre-release` - mark the package as pre-release
+- `install` - build, package and install the VSCode extension locally
 
 
 ## Debugging
@@ -53,11 +56,9 @@ mkdocs serve
 
 To learn more about MKDocs check out their website at <https://www.mkdocs.org/>.
 
-## The project board
-You can access the [project board](https://github.com/users/SpontanCombust/projects/2/views/1) conveniently detailing what has been done and future plans.
-
 
 ## Contributing
 Contributions to the project are welcome. First create an issue or a PR to discuss the change you want to make and ensure that it doesn't conflict with any future plans or core features. The active development branch is `dev`.
 
-You can also catch me in the [Wolven Workshop](https://discord.gg/S3HjaY65uh) Discord server.
+You can access the [project board](https://github.com/users/SpontanCombust/projects/2/views/1) conveniently detailing what has been done and future plans.
+The board does not contain everything though and some issues might just be annotated with TODO or FIXME comments. For this I highly recommend the [Todo Tree](https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.todo-tree) extension.

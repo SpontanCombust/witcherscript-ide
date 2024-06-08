@@ -10,12 +10,32 @@ pub enum AccessModifier {
     Public
 }
 
+impl From<AccessModifier> for Keyword {
+    fn from(value: AccessModifier) -> Self {
+        match value {
+            AccessModifier::Private => Keyword::Private,
+            AccessModifier::Protected => Keyword::Protected,
+            AccessModifier::Public => Keyword::Public,
+        }
+    }
+}
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ClassSpecifier {
     Import,
     Abstract,
     Statemachine
+}
+
+impl From<ClassSpecifier> for Keyword {
+    fn from(value: ClassSpecifier) -> Self {
+        match value {
+            ClassSpecifier::Import => Keyword::Import,
+            ClassSpecifier::Abstract => Keyword::Abstract,
+            ClassSpecifier::Statemachine => Keyword::Statemachine,
+        }
+    }
 }
 
 pub type ClassSpecifierNode<'script> = SyntaxNode<'script, ClassSpecifier>;
@@ -63,6 +83,21 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassSpecifierNode<'script> {
 pub enum AutobindSpecifier {
     AccessModifier(AccessModifier),
     Optional
+}
+
+impl From<AutobindSpecifier> for Keyword {
+    fn from(value: AutobindSpecifier) -> Self {
+        match value {
+            AutobindSpecifier::AccessModifier(am) => am.into(),
+            AutobindSpecifier::Optional => Keyword::Optional,
+        }
+    }
+}
+
+impl From<AccessModifier> for AutobindSpecifier {
+    fn from(value: AccessModifier) -> Self {
+        Self::AccessModifier(value)
+    }
 }
 
 pub type AutobindSpecifierNode<'script> = SyntaxNode<'script, AutobindSpecifier>;

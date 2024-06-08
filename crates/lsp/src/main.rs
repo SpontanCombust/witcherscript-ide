@@ -1,18 +1,11 @@
-use std::sync::Arc;
-use dashmap::DashMap;
-use filetime::FileTime;
-use shrinkwraprs::Shrinkwrap;
-use tokio::sync::RwLock;
+use messaging::{notifications, requests};
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types as lsp;
-use tower_lsp::{Client, LanguageServer, LspService, Server};
-use abs_path::AbsPath;
-use witcherscript::Script;
-use witcherscript::script_document::ScriptDocument;
-use witcherscript_project::{ContentGraph, SourceTree};
-use crate::config::Config;
-use crate::reporting::Reporter;
-use crate::messaging::requests;
+use tower_lsp::{LanguageServer, LspService, Server};
+
+
+mod backend;
+pub use backend::*;
 
 mod providers;
 mod config;
@@ -20,75 +13,6 @@ mod reporting;
 mod tasks;
 mod messaging;
 
-
-#[derive(Debug)]
-pub struct Backend {
-    client: Client,
-    config: RwLock<Config>,
-    workspace_roots: RwLock<Vec<AbsPath>>,
-    reporter: Reporter,
-
-    content_graph: RwLock<ContentGraph>,
-    source_trees: SourceTreeMap,
-    // key is path to the file
-    scripts: Arc<DashMap<AbsPath, ScriptState>>
-}
-
-#[derive(Debug, Shrinkwrap)]
-pub struct SourceTreeMap {
-    // key is path to content directory
-    inner: DashMap<AbsPath, SourceTree>
-}
-
-impl SourceTreeMap {
-    fn new() -> Self {
-        Self {
-            inner: DashMap::new()
-        }
-    }
-
-    pub fn containing_content_path(&self, source_path: &AbsPath) -> Option<AbsPath> {
-        for it in self.inner.iter() {
-            let content_path = it.key();
-            let source_tree = it.value();
-            if source_path.starts_with(source_tree.script_root()) {
-                return Some(content_path.to_owned());
-            }
-        }
-
-        None
-    }
-}
-
-#[derive(Debug)]
-pub struct ScriptState {
-    script: Script,
-    buffer: ScriptDocument,
-    /// Timestamp for the modification of the script and not necessairly the file,
-    /// i.e. the timestamp will update with `did_change` notification even if the file itself has not been saved yet.
-    modified_timestamp: FileTime,
-    /// Marks a script that is not known to any content in the content graph
-    is_foreign: bool
-}
-
-
-impl Backend {
-    pub const LANGUAGE_ID: &'static str = "witcherscript";
-    pub const SERVER_NAME: &'static str = "witcherscript-ide";
-
-    fn new(client: Client) -> Self {
-        Self {
-            config: RwLock::new(Config::default()),
-            workspace_roots: RwLock::new(Vec::new()),
-            reporter: Reporter::new(client.clone()),
-            client,
-
-            content_graph: RwLock::new(ContentGraph::new()),
-            source_trees: SourceTreeMap::new(),
-            scripts: Arc::new(DashMap::new())
-        }
-    }
-}
 
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
@@ -103,6 +27,7 @@ impl LanguageServer for Backend {
     async fn shutdown(&self) -> Result<()> {
         Ok(())
     }
+
 
     async fn did_open(&self, params: lsp::DidOpenTextDocumentParams) {
         providers::document_ops::did_open(self, params).await
@@ -120,12 +45,52 @@ impl LanguageServer for Backend {
         providers::document_ops::did_close(self, params).await
     }
 
+    async fn did_create_files(&self, params: lsp::CreateFilesParams) {
+        providers::document_ops::did_create_files(self, params).await
+    }
+
+    async fn did_delete_files(&self, params: lsp::DeleteFilesParams) {
+        providers::document_ops::did_delete_files(self, params).await
+    }
+
+    async fn did_rename_files(&self, params: lsp::RenameFilesParams) {
+        providers::document_ops::did_rename_files(self, params).await
+    }
+
+
     async fn did_change_configuration(&self, params: lsp::DidChangeConfigurationParams) {
         providers::configuration::did_change_configuration(self, params).await
     }
 
     async fn did_change_workspace_folders(&self, params: lsp::DidChangeWorkspaceFoldersParams) {
         providers::workspace::did_change_workspace_folders(self, params).await
+    }
+
+
+    async fn selection_range(&self, params: lsp::SelectionRangeParams) -> Result<Option<Vec<lsp::SelectionRange>>> {
+        providers::selection_range::selection_range(self, params).await
+    }
+
+    async fn document_symbol(&self, params: lsp::DocumentSymbolParams) -> Result<Option<lsp::DocumentSymbolResponse>> {
+        providers::document_symbols::document_symbol(self, params).await
+    }
+
+
+    async fn goto_definition(&self, params: lsp::GotoDefinitionParams) -> Result<Option<lsp::GotoDefinitionResponse>> {
+        providers::goto::goto_definition(self, params).await
+    }
+
+    async fn goto_declaration(&self, params: lsp::request::GotoDeclarationParams) -> Result<Option<lsp::request::GotoDeclarationResponse>> {
+        providers::goto::goto_declaration(self, params).await
+    }
+
+    async fn goto_type_definition(&self, params: lsp::request::GotoTypeDefinitionParams) -> Result<Option<lsp::request::GotoTypeDefinitionResponse>> {
+        providers::goto::goto_type_definition(self, params).await
+    }
+
+
+    async fn hover(&self, params: lsp::HoverParams) -> Result<Option<lsp::Hover>> {
+        providers::hover::hover(self, params).await
     }
 }
 
@@ -143,6 +108,8 @@ async fn main() {
         .custom_method(requests::scripts::parent_content::METHOD, Backend::handle_scripts_parent_content_request)
         .custom_method(requests::debug::script_ast::METHOD, Backend::handle_debug_script_ast_request)
         .custom_method(requests::debug::content_graph_dot::METHOD, Backend::handle_debug_content_graph_dot_request)
+        .custom_method(requests::debug::script_symbols::METHOD, Backend::handle_debug_script_symbols_request)
+        .custom_method(notifications::projects::did_import_scripts::METHOD, Backend::handle_projects_did_import_scripts_notification)
         .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;

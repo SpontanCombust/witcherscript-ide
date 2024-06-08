@@ -90,4 +90,16 @@ export namespace debug {
 
         export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/debug/contentGraphDot");
     }
+
+    export namespace scriptSymbols {
+        export interface Parameters {
+            scriptUri: string
+        }
+    
+        export interface Response {
+            symbols: string
+        }
+    
+        export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/debug/scriptSymbols");
+    }
 }

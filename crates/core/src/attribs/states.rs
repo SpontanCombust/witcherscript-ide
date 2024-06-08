@@ -9,6 +9,15 @@ pub enum StateSpecifier {
     Abstract
 }
 
+impl From<StateSpecifier> for Keyword {
+    fn from(value: StateSpecifier) -> Self {
+        match value {
+            StateSpecifier::Import => Keyword::Import,
+            StateSpecifier::Abstract => Keyword::Abstract,
+        }
+    }
+}
+
 pub type StateSpecifierNode<'script> = SyntaxNode<'script, StateSpecifier>;
 
 impl NamedSyntaxNode for StateSpecifierNode<'_> {
@@ -17,7 +26,7 @@ impl NamedSyntaxNode for StateSpecifierNode<'_> {
 
 impl StateSpecifierNode<'_> {
     pub fn value(&self) -> StateSpecifier {
-        let s = self.tree_node.kind();
+        let s = self.first_child(false).unwrap().tree_node.kind();
         if let Ok(k) = Keyword::from_str(s) {
             match k {
                 Keyword::Import => return StateSpecifier::Import,

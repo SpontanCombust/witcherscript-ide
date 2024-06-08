@@ -1,192 +1,121 @@
+use std::collections::HashMap;
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
-use witcherscript_analysis::diagnostics::{Diagnostic, DiagnosticBody};
-use witcherscript_project::{manifest, redkit, FileError};
-use crate::Backend;
+use witcherscript_diagnostics::{Diagnostic, DiagnosticDomain};
 use super::Reporter;
-
-
-pub trait IntoLspDiagnostic {
-    fn into_lsp_diagnostic(self) -> lsp::Diagnostic;
-}
-
-impl IntoLspDiagnostic for Diagnostic {
-    fn into_lsp_diagnostic(self) -> lsp::Diagnostic {
-        lsp::Diagnostic {
-            range: self.range,
-            severity: Some(match self.body {
-                DiagnosticBody::Error(_) => lsp::DiagnosticSeverity::ERROR,
-                DiagnosticBody::Warning(_) => lsp::DiagnosticSeverity::WARNING,
-                DiagnosticBody::Info(_) => lsp::DiagnosticSeverity::INFORMATION,
-            }),
-            source: Some(Backend::SERVER_NAME.to_string()),
-            message: self.body.to_string(),
-            ..Default::default()
-        }
-    }
-}
-
-impl IntoLspDiagnostic for FileError<std::io::Error> {
-    fn into_lsp_diagnostic(self) -> lsp::Diagnostic {
-        lsp::Diagnostic {
-            range: lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1)),
-            severity: Some(lsp::DiagnosticSeverity::ERROR),
-            source: Some(Backend::SERVER_NAME.to_string()),
-            message: self.error.to_string(),
-            ..Default::default()
-        }
-    }
-}
-
-impl IntoLspDiagnostic for FileError<manifest::Error> {
-    fn into_lsp_diagnostic(self) -> lsp::Diagnostic {
-        let error = self.error.as_ref();
-        
-        let range = match error {
-            manifest::Error::Io(_) => lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1)),
-            manifest::Error::Toml { range, msg: _ } => range.clone(),
-            manifest::Error::InvalidNameField { range } => range.clone(),
-        };
-
-        let message = error.to_string();
-
-        lsp::Diagnostic {
-            range,
-            severity: Some(lsp::DiagnosticSeverity::ERROR),
-            source: Some(Backend::SERVER_NAME.to_string()),
-            message,
-            ..Default::default()
-        }
-    }
-}
-
-impl IntoLspDiagnostic for FileError<redkit::manifest::Error> {
-    fn into_lsp_diagnostic(self) -> lsp::Diagnostic {
-        let error = self.error.as_ref();
-
-        let range = match error {
-            redkit::manifest::Error::Io(_) => lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 1)),
-            redkit::manifest::Error::Json { position, msg: _ } => lsp::Range::new(position.to_owned(), lsp::Position::new(position.line, position.character + 1)),
-        };
-
-        let message = error.to_string();
-
-        lsp::Diagnostic {
-            range,
-            severity: Some(lsp::DiagnosticSeverity::ERROR),
-            source: Some(Backend::SERVER_NAME.to_string()),
-            message,
-            ..Default::default()
-        }
-    }
-}
-
-impl IntoLspDiagnostic for (String, lsp::Range) {
-    fn into_lsp_diagnostic(self) -> lsp::Diagnostic {
-        lsp::Diagnostic {
-            range: self.1,
-            severity: Some(lsp::DiagnosticSeverity::ERROR),
-            source: Some(Backend::SERVER_NAME.to_string()),
-            message: self.0,
-            ..Default::default()
-        }
-    }
-}
 
 
 #[derive(Debug)]
 pub struct BufferedDiagnostics {
-    pub diags: Vec<lsp::Diagnostic>,
-    pub changed: bool,
-    pub should_purge: bool
+    diags: Vec<BufferedDiagnostic>,
+    changed: bool,
+    should_purge: bool
+}
+
+#[derive(Debug)]
+struct BufferedDiagnostic {
+    lsp_diag: lsp::Diagnostic,
+    domain: DiagnosticDomain
 }
 
 impl Reporter {
-    pub fn push_diagnostic(&self, path: &AbsPath, diag: lsp::Diagnostic) {
-        if let Some(mut kv) = self.buffered_diagnostics.get_mut(path) {
-            let v = kv.value_mut();
-            v.diags.push(diag);
+    pub fn push_diagnostic(&self, path: &AbsPath, diag: Diagnostic) {
+        let bd = BufferedDiagnostic { domain: diag.kind.domain(), lsp_diag: diag.into() };
+        let mut diags = self.buffered_diagnostics.lock().unwrap();
+        if let Some(v) = diags.get_mut(path) {
+            v.diags.push(bd);
             v.changed = true;
         } else {
-            self.buffered_diagnostics.insert(path.clone(), BufferedDiagnostics {
-                diags: vec![diag],
+            diags.insert(path.clone(), BufferedDiagnostics {
+                diags: vec![bd],
                 changed: true,
                 should_purge: false
             });
         }
     }
 
-    pub fn push_diagnostics(&self, path: &AbsPath, diags: impl IntoIterator<Item = lsp::Diagnostic>) {
-        if let Some(mut kv) = self.buffered_diagnostics.get_mut(path) {
-            let v = kv.value_mut();
-            v.diags.extend(diags.into_iter());
+    pub fn push_diagnostics(&self, path: &AbsPath, diags: impl IntoIterator<Item = Diagnostic>) {
+        let bds = diags.into_iter().map(|diag| BufferedDiagnostic { domain: diag.kind.domain(), lsp_diag: diag.into() });
+        let mut diags = self.buffered_diagnostics.lock().unwrap();
+        if let Some(v) = diags.get_mut(path) {
+            v.diags.extend(bds);
             v.changed = true;
         } else {
-            self.buffered_diagnostics.insert(path.clone(), BufferedDiagnostics {
-                diags: diags.into_iter().collect(),
+            diags.insert(path.clone(), BufferedDiagnostics {
+                diags: bds.collect(),
                 changed: true,
                 should_purge: false
             });
         }
     }
 
-    pub fn clear_diagnostics(&self, path: &AbsPath) {
-        self.buffered_diagnostics
-            .alter(path, |_, mut v|  {
-                v.diags.clear();
-                v.changed = true;
-                v
-            });
+    pub fn clear_diagnostics(&self, path: &AbsPath, domain: DiagnosticDomain) {
+        let mut diags = self.buffered_diagnostics.lock().unwrap();
+        if let Some(v) = diags.get_mut(path) {
+            v.diags.retain(|d| d.domain != domain);
+            v.changed = true;
+        }
     }
 
-    /// In addition to clearing diagnostics for a given file, said file will be forgotten about
+    /// Clears all diagnostics for a given file and additionally that file gets forgotten about by the diagnostic system
     pub fn purge_diagnostics(&self, path: &AbsPath) {
-        self.buffered_diagnostics
-            .alter(path, |_, mut v|  {
-                v.diags.clear();
-                v.changed = true;
-                v.should_purge = true;
-                v
-            });
+        let mut diags = self.buffered_diagnostics.lock().unwrap();
+        if let Some(v) = diags.get_mut(path) {
+            v.diags.clear();
+            v.changed = true;
+            v.should_purge = true;
+        }
     }
 
     pub fn clear_all_diagnostics(&self) {
-        self.buffered_diagnostics
-            .alter_all(|_, mut v| {
-                v.diags.clear();
-                v.changed = true;
-                v
-            });
+        let mut diags = self.buffered_diagnostics.lock().unwrap();
+        for (_, v) in diags.iter_mut() {
+            v.diags.clear();
+            v.changed = true;
+        }
     }
 
 
     pub async fn commit_diagnostics(&self, path: &AbsPath) {
-        if let Some(mut kv) = self.buffered_diagnostics.get_mut(path) {
-            if kv.value().changed {
-                let uri = kv.key().to_uri();
+        let mut to_publish = Vec::new();
+        {
+            let mut diags = self.buffered_diagnostics.lock().unwrap();
+            let mut should_purge = false;
+            if let Some(v) = diags.get_mut(path) {
+                if v.changed {
+                    to_publish = v.diags.iter().map(|d| d.lsp_diag.clone()).collect();
+                    v.changed = false;
+                }
     
-                let v = kv.value_mut();
-                let diags = v.diags.drain(..).collect();
-                v.changed = false;
+                should_purge = v.should_purge;            
+            }
     
-                self.client.publish_diagnostics(uri, diags, None).await;
+            if should_purge {
+                diags.remove(path);
             }
         }
 
-        self.buffered_diagnostics.remove_if(path, |_, v| v.should_purge);
+        let uri = path.to_uri();
+        self.client.publish_diagnostics(uri, to_publish, None).await;
     }
 
     pub async fn commit_all_diagnostics(&self) {
-        for mut kv in self.buffered_diagnostics.iter_mut().filter(|kv| kv.value().changed) {
-            let uri = kv.key().to_uri();
+        let mut to_publish = HashMap::new();
+        {
+            let mut diags = self.buffered_diagnostics.lock().unwrap();
+            for (k, v) in diags.iter_mut().filter(|(_, v)| v.changed) {
+                let current_uri = k.to_uri();
+                let current_to_publish: Vec<_> = v.diags.iter().map(|d| d.lsp_diag.clone()).collect();
 
-            let v = kv.value_mut();
-            let diags = v.diags.drain(..).collect();
-            v.changed = false;
+                to_publish.insert(current_uri, current_to_publish);
+                v.changed = false;
+            }
 
-            self.client.publish_diagnostics(uri, diags, None).await;
+            diags.retain(|_, v| !v.should_purge);
         }
 
-        self.buffered_diagnostics.retain(|_, v| !v.should_purge);
+        for (uri, diags) in to_publish {
+            self.client.publish_diagnostics(uri, diags, None).await;
+        }
     }
 }
