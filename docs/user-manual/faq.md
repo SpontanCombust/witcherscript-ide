@@ -6,4 +6,4 @@ When in doubt explicitly save the file using `Ctrl + S`. This should refresh sou
 
 > Does WIDE support symbolic links (symlinks)?
 
-WIDE at the moment does not have a support for directories and files stored as symbol links.
+WIDE at the moment does not offer support for directories and files stored as symbolic links.
