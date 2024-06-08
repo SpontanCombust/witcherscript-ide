@@ -98,8 +98,9 @@ impl SymbolScannerVisitor<'_> {
 
     /// Returns type path and type name, if it's invalid returns empty path
     fn check_type_from_type_annot(&mut self, n: TypeAnnotationNode) -> TypeSymbolPath {
+        let type_name_node = n.type_name();
         if let Some(type_arg_node) = n.type_arg() {
-            let type_name = n.type_name().value(&self.doc);
+            let type_name = type_name_node.value(&self.doc);
             if type_name == ArrayTypeSymbol::TYPE_NAME {
                 let type_arg_path = self.check_type_from_type_annot(type_arg_node);
                 if !type_arg_path.is_empty() {
@@ -114,17 +115,17 @@ impl SymbolScannerVisitor<'_> {
                 self.diagnostics.push(LocatedDiagnostic { 
                     path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
                     diagnostic: Diagnostic { 
-                        range: n.type_arg().unwrap().range(), 
+                        range: type_name_node.range(), 
                         kind: DiagnosticKind::UnnecessaryTypeArg
                     }
                 });
 
-                return self.check_type_from_identifier(n.type_name()).into();
+                return self.check_type_from_identifier(type_name_node).into();
             }
 
             TypeSymbolPath::unknown()
         } else {
-            self.check_type_from_identifier(n.type_name()).into()
+            self.check_type_from_identifier(type_name_node).into()
         }   
     }
 
