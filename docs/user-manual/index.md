@@ -10,8 +10,8 @@ Welcome to the User Manual. Here you fill find all sorts of useful information a
 - [FAQ](faq.md) - guide to common problems you may encounter,
 - [Changelog](changelog.md)
 
-## Language specification
-Check out REDkit's official WitcherScript specification here:  
+## Language guide
+Check out REDkit's official WitcherScript guide here:  
 <https://cdprojektred.atlassian.net/wiki/spaces/W3REDkit/pages/36306960/WitcherScript>
 
 ## Contributions

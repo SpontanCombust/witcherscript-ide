@@ -24,6 +24,7 @@ It is also finally getting some visual branding!
 - Fixed diagnostic for invalid project dependency path not being displayed
 - Fixed scripts not getting updated if their version was rolled back (modified date was made older than the previous date)
 - Fixed change to the script root path in the manifest file not getting detected and handled
+- Disallowed contents to specify themselves as their own dependency
 - Lessened the chance of the server getting deadlocked
 
 ### Commands

@@ -62,7 +62,7 @@ Every WIDE project manifest is composed of following sections:
     - [game_version](#the-game_version-field) *
     - [authors](#the-authors-field)
     - [scripts_root](#the-scripts_root-field)
-- [dependencies](#the-dependencies-table)
+- [dependencies](#the-dependencies-table) *
 
 \* table/field is required
 
@@ -94,7 +94,9 @@ Relative path to the scripts root directory. This field is optional and defaults
 
 
 ### The `[dependencies]` table
-This table contains key-value pairs of dependency specifications like so: 
+This table contains key-value pairs of dependency specifications. It may be left empty, but it's still required.
+
+Format of allowed values is as follows: 
 
 ```toml
 dependency_name = value
