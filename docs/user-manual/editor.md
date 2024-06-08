@@ -91,5 +91,8 @@ Paths to custom directories containing WitcherScript contents. Useful when not h
 ### `witcherscript-ide.languageServer.enable`
 Enable the language server. True by default.  You can disable this if you only want syntax highlighting. Change requires extension reload.
 
+### `witcherscript-ide.languageServer.syntaxAnalysis`
+Enable syntax analysis in the language server. True by default. This may require window reload if there are unresolved syntax analysis related diagnostics present.
+
 ### `witcherscript-ide.debug.enableDebugFeatures`
 Enables debug features used for development. False by default. Change requires extension reload.

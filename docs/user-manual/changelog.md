@@ -33,7 +33,8 @@ It is also finally getting some visual branding!
 
 ### Configuration
 - Added "Enable debug features" setting, which prevents debug features such as commands from being available if not enabled. By default this is disabled. [#25](https://github.com/SpontanCombust/witcherscript-ide/issues/25)
-- Added "Enable language server" setting, which allows you to disable everything except syntax highlighting if you want to [#38](https://github.com/SpontanCombust/witcherscript-ide/issues/38)
+- Added a setting to enable or disable the language server, which allows you to disable everything except syntax highlighting if you want to [#38](https://github.com/SpontanCombust/witcherscript-ide/issues/38)
+- Added a setting to enable or disable syntax analysis in the language server
   
 ### Other changes
 - Trying to access more than very basic features such as go to definition outside of a script project should now result in showing a warning message explaining as to why that can't be done. [#33](https://github.com/SpontanCombust/witcherscript-ide/issues/33)
