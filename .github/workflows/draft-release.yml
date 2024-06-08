@@ -41,10 +41,10 @@ jobs:
       run: cargo xtask prep-server --target ${{ matrix.target }} --release
     
     - name: Package the extension (pre-release)
-      if: ${{ env.IS_PRE_RELEASE }}
+      if: ${{ env.IS_PRE_RELEASE == 'true' }}
       run: cargo xtask package --pre-release -o "witcherscript-ide-${{ github.ref_name }}-${{ matrix.target }}.vsix" --target ${{ matrix.code_target }}
     - name: Package the extension (main release)
-      if: ${{ !env.IS_PRE_RELEASE }}
+      if: ${{ env.IS_PRE_RELEASE == 'false' }}
       run: cargo xtask package -o "witcherscript-ide-${{ github.ref_name }}-${{ matrix.target }}.vsix" --target ${{ matrix.code_target }}
     
     - name: Upload artifacts
@@ -78,23 +78,23 @@ jobs:
     # The VS Marketplace doesn't yet support pre-release semver versions, sigh....
     # https://code.visualstudio.com/api/working-with-extensions/publishing-extension#prerelease-extensions
     # - name: Upload extension to VSCode Marketplace (pre-release)
-    #   if: ${{ env.IS_PRE_RELEASE }}
+    #   if: ${{ env.IS_PRE_RELEASE == 'true' }}
     #   run: npx vsce publish --pre-release --packagePath $(find . -iname *.vsix)
     #   env:
     #     VSCE_PAT: ${{ secrets.VSCE_PAT }}
     - name: Upload extension to VSCode Marketplace (main release)
-      if: ${{ !env.IS_PRE_RELEASE }}
+      if: ${{ env.IS_PRE_RELEASE == 'false' }}
       run: npx vsce publish --packagePath $(find . -iname *.vsix)
       env:
         VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
     # - name: Upload extension to Open VSX Registry (pre-release)
-    #   if: ${{ env.IS_PRE_RELEASE }}
+    #   if: ${{ env.IS_PRE_RELEASE == 'true' }}
     #   run: npx ovsx publish --pre-release --packagePath $(find . -iname *.vsix)
     #   env:
     #     OVSX_PAT: ${{ secrets.OVSX_PAT }}
     - name: Upload extension to Open VSX Registry (main release)
-      if: ${{ !env.IS_PRE_RELEASE }}
+      if: ${{ env.IS_PRE_RELEASE == 'false' }}
       run: npx ovsx publish --packagePath $(find . -iname *.vsix)
       env:
         OVSX_PAT: ${{ secrets.OVSX_PAT }}
