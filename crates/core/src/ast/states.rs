@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{attribs::StateSpecifierNode, tokens::IdentifierNode, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{attribs::SpecifierNode, tokens::IdentifierNode, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -16,7 +16,7 @@ impl NamedSyntaxNode for StateDeclarationNode<'_> {
 }
 
 impl<'script> StateDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = StateSpecifierNode<'script>> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 

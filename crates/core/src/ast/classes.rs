@@ -18,7 +18,7 @@ impl NamedSyntaxNode for ClassDeclarationNode<'_> {
 }
 
 impl<'script> ClassDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = ClassSpecifierNode<'script>> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
@@ -209,7 +209,7 @@ impl NamedSyntaxNode for AutobindDeclarationNode<'_> {
 }
 
 impl<'script> AutobindDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = AutobindSpecifierNode> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 

@@ -79,6 +79,15 @@ pub enum DiagnosticKind {
     UnnecessaryTypeArg,
     RepeatedSpecifier,
     MultipleAccessModifiers,
+    IncompatibleSpecifier {
+        spec_name: String,
+        sym_name: String
+    },
+    IncompatibleFunctionFlavour {
+        flavour_name: String,
+        sym_name: String
+    },
+
 
     // workspace symbol analysis
     SymbolNameTakenInDependency {
@@ -114,7 +123,9 @@ impl DiagnosticKind {
             | MissingTypeArg
             | UnnecessaryTypeArg
             | RepeatedSpecifier
-            | MultipleAccessModifiers => DiagnosticDomain::SymbolAnalysis,
+            | MultipleAccessModifiers 
+            | IncompatibleSpecifier { .. } 
+            | IncompatibleFunctionFlavour { .. } => DiagnosticDomain::SymbolAnalysis,
             SymbolNameTakenInDependency { .. } => DiagnosticDomain::WorkspaceSymbolAnalysis
         }
     }
@@ -141,6 +152,8 @@ impl DiagnosticKind {
             UnnecessaryTypeArg => lsp::DiagnosticSeverity::ERROR,
             RepeatedSpecifier => lsp::DiagnosticSeverity::ERROR,
             MultipleAccessModifiers => lsp::DiagnosticSeverity::ERROR,
+            IncompatibleSpecifier { .. } => lsp::DiagnosticSeverity::ERROR,
+            IncompatibleFunctionFlavour { .. } => lsp::DiagnosticSeverity::ERROR,
 
             SymbolNameTakenInDependency { .. } => lsp::DiagnosticSeverity::ERROR
         }
@@ -167,6 +180,8 @@ impl DiagnosticKind {
             UnnecessaryTypeArg => "This type does not take any type arguments".into(),
             RepeatedSpecifier => "Specifiers can not be repeating".into(),
             MultipleAccessModifiers => "Only one access modifier is allowed".into(),
+            IncompatibleSpecifier { spec_name, sym_name } => format!("\"{}\" cannot be used for {}", spec_name, sym_name),
+            IncompatibleFunctionFlavour { flavour_name, sym_name } => format!("\"{}\" cannot be used for {}", flavour_name, sym_name),
 
             SymbolNameTakenInDependency { name, .. } => format!("The name \"{}\" is already defined in another content", name),
         }

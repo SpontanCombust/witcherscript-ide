@@ -89,11 +89,11 @@ impl NamedSyntaxNode for GlobalFunctionDeclarationNode<'_> {
 }
 
 impl<'script> GlobalFunctionDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = GlobalFunctionSpecifierNode<'script>> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn flavour(&self) -> Option<GlobalFunctionFlavourNode<'script>> {
+    pub fn flavour(&self) -> Option<FunctionFlavourNode<'script>> {
         self.field_child("flavour").map(|n| n.into())
     }
 
@@ -163,11 +163,11 @@ impl NamedSyntaxNode for MemberFunctionDeclarationNode<'_> {
 }
 
 impl<'script> MemberFunctionDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = MemberFunctionSpecifierNode<'script>> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn flavour(&self) -> Option<MemberFunctionFlavourNode<'script>> {
+    pub fn flavour(&self) -> Option<FunctionFlavourNode<'script>> {
         self.field_child("flavour").map(|n| n.into())
     }
 
@@ -390,7 +390,7 @@ impl NamedSyntaxNode for FunctionParameterGroupNode<'_> {
 }
 
 impl<'script> FunctionParameterGroupNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = FunctionParameterSpecifierNode<'script>> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 

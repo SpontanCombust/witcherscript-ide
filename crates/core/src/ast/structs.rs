@@ -20,7 +20,7 @@ impl NamedSyntaxNode for StructDeclarationNode<'_> {
 }
 
 impl<'script> StructDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = StructSpecifierNode<'script>> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 

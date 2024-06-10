@@ -1,13 +1,96 @@
 use std::fmt::Debug;
 use std::str::FromStr;
 use crate::{tokens::Keyword, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::AccessModifier;
+use super::{AccessModifier, Specifier};
+
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum FunctionFlavour {
+    Cleanup,
+    Entry,
+    Exec,
+    Quest,
+    Reward,
+    Storyscene,
+    Timer
+}
+
+impl From<FunctionFlavour> for Keyword {
+    fn from(value: FunctionFlavour) -> Self {
+        match value {
+            FunctionFlavour::Cleanup => Keyword::Cleanup,
+            FunctionFlavour::Entry => Keyword::Entry,
+            FunctionFlavour::Exec => Keyword::Exec,
+            FunctionFlavour::Quest => Keyword::Quest,
+            FunctionFlavour::Reward => Keyword::Reward,
+            FunctionFlavour::Storyscene => Keyword::Storyscene,
+            FunctionFlavour::Timer => Keyword::Timer,
+        }
+    }
+}
+
+pub type FunctionFlavourNode<'script> = SyntaxNode<'script, FunctionFlavour>;
+
+impl<'script> NamedSyntaxNode for FunctionFlavourNode<'script> {
+    const NODE_KIND: &'static str = "func_flavour";
+}
+
+impl FunctionFlavourNode<'_> {
+    pub fn value(&self) -> FunctionFlavour {
+        let s = self.first_child(false).unwrap().tree_node.kind();
+        if let Ok(k) = Keyword::from_str(s) {
+            match k {
+                Keyword::Cleanup => return FunctionFlavour::Cleanup,
+                Keyword::Abstract => return FunctionFlavour::Entry,
+                Keyword::Exec => return FunctionFlavour::Exec,
+                Keyword::Quest => return FunctionFlavour::Quest,
+                Keyword::Reward => return FunctionFlavour::Reward,
+                Keyword::Storyscene => return FunctionFlavour::Storyscene,
+                Keyword::Timer => return FunctionFlavour::Timer,
+                _ => {}
+            }
+        }
+
+        panic!("Unknown function flavour: {} {}", s, self.range().debug())
+    }
+}
+
+impl std::fmt::Debug for FunctionFlavourNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} {}", self.value(), self.range().debug())
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for FunctionFlavourNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FunctionParameterSpecifier {
     Optional,
     Out
+}
+
+impl TryFrom<Specifier> for FunctionParameterSpecifier {
+    type Error = ();
+
+    fn try_from(value: Specifier) -> Result<Self, Self::Error> {
+        match value {
+            Specifier::Optional => Ok(Self::Optional),
+            Specifier::Out => Ok(Self::Out),
+            _ => Err(())
+        }
+    }
 }
 
 impl From<FunctionParameterSpecifier> for Keyword {
@@ -19,52 +102,24 @@ impl From<FunctionParameterSpecifier> for Keyword {
     }
 }
 
-pub type FunctionParameterSpecifierNode<'script> = SyntaxNode<'script, FunctionParameterSpecifier>;
-
-impl NamedSyntaxNode for FunctionParameterSpecifierNode<'_> {
-    const NODE_KIND: &'static str = "func_param_specifier";
-}
-
-impl FunctionParameterSpecifierNode<'_> {
-    pub fn value(&self) -> FunctionParameterSpecifier {
-        let s = self.first_child(false).unwrap().tree_node.kind();
-        if let Ok(k) = Keyword::from_str(s) {
-            match k {
-                Keyword::Optional => return FunctionParameterSpecifier::Optional,
-                Keyword::Out => return FunctionParameterSpecifier::Out,
-                _ => {}
-            }
-        }
-
-        panic!("Unknown function parameter specifier: {} {}", s, self.range().debug())
-    }
-}
-
-impl Debug for FunctionParameterSpecifierNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {}", self.value(), self.range().debug())
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for FunctionParameterSpecifierNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
-    }
-}
-
-
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GlobalFunctionSpecifier {
     Import,
     Latent,
+}
+
+impl TryFrom<Specifier> for GlobalFunctionSpecifier {
+    type Error = ();
+
+    fn try_from(value: Specifier) -> Result<Self, Self::Error> {
+        match value {
+            Specifier::Import => Ok(Self::Import),
+            Specifier::Latent => Ok(Self::Latent),
+            _ => Err(())
+        }
+    }
 }
 
 impl From<GlobalFunctionSpecifier> for Keyword {
@@ -76,44 +131,6 @@ impl From<GlobalFunctionSpecifier> for Keyword {
     }
 }
 
-pub type GlobalFunctionSpecifierNode<'script> = SyntaxNode<'script, GlobalFunctionSpecifier>;
-
-impl NamedSyntaxNode for GlobalFunctionSpecifierNode<'_> {
-    const NODE_KIND: &'static str = "global_func_specifier";
-}
-
-impl GlobalFunctionSpecifierNode<'_> {
-    pub fn value(&self) -> GlobalFunctionSpecifier {
-        let s = self.first_child(false).unwrap().tree_node.kind();
-        if let Ok(k) = Keyword::from_str(s) {
-            match k {
-                Keyword::Import => return GlobalFunctionSpecifier::Import,
-                Keyword::Latent => return GlobalFunctionSpecifier::Latent,
-                _ => {}
-            }
-        }
-
-        panic!("Unknown global function specifier: {} {}", s, self.range().debug())
-    }
-}
-
-impl Debug for GlobalFunctionSpecifierNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {}", self.value(), self.range().debug())
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionSpecifierNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
-    }
-}
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -122,6 +139,20 @@ pub enum GlobalFunctionFlavour {
     Quest,
     Storyscene,
     Reward,
+}
+
+impl TryFrom<FunctionFlavour> for GlobalFunctionFlavour {
+    type Error = ();
+
+    fn try_from(value: FunctionFlavour) -> Result<Self, Self::Error> {
+        match value {
+            FunctionFlavour::Exec => Ok(Self::Exec),
+            FunctionFlavour::Quest => Ok(Self::Quest),
+            FunctionFlavour::Reward => Ok(Self::Reward),
+            FunctionFlavour::Storyscene => Ok(Self::Storyscene),
+            _ => Err(())
+        }
+    }
 }
 
 impl From<GlobalFunctionFlavour> for Keyword {
@@ -135,48 +166,6 @@ impl From<GlobalFunctionFlavour> for Keyword {
     }
 }
 
-pub type GlobalFunctionFlavourNode<'script> = SyntaxNode<'script, GlobalFunctionFlavour>;
-
-impl NamedSyntaxNode for GlobalFunctionFlavourNode<'_> {
-    const NODE_KIND: &'static str = "global_func_flavour";
-}
-
-impl GlobalFunctionFlavourNode<'_> {
-    pub fn value(&self) -> GlobalFunctionFlavour {
-        let s = self.first_child(false).unwrap().tree_node.kind();
-        if let Ok(k) = Keyword::from_str(s) {
-            match k {
-                Keyword::Exec => return GlobalFunctionFlavour::Exec,
-                Keyword::Quest => return GlobalFunctionFlavour::Quest,
-                Keyword::Storyscene => return GlobalFunctionFlavour::Storyscene,
-                Keyword::Reward => return GlobalFunctionFlavour::Reward,
-                _ => {}
-            }
-        }
-
-        panic!("Unknown global function flavour: {} {}", s, self.range().debug())
-    }
-}
-
-impl Debug for GlobalFunctionFlavourNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {}", self.value(), self.range().debug())
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionFlavourNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
-    }
-}
-
-
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -185,6 +174,22 @@ pub enum MemberFunctionSpecifier {
     Import,
     Final,
     Latent,
+}
+
+impl TryFrom<Specifier> for MemberFunctionSpecifier {
+    type Error = ();
+
+    fn try_from(value: Specifier) -> Result<Self, Self::Error> {
+        match value {
+            Specifier::Final => Ok(Self::Final),
+            Specifier::Import => Ok(Self::Import),
+            Specifier::Latent => Ok(Self::Latent),
+            Specifier::Private => Ok(Self::AccessModifier(AccessModifier::Private)),
+            Specifier::Protected => Ok(Self::AccessModifier(AccessModifier::Protected)),
+            Specifier::Public => Ok(Self::AccessModifier(AccessModifier::Public)),
+            _ => Err(())
+        }
+    }
 }
 
 impl From<MemberFunctionSpecifier> for Keyword {
@@ -204,48 +209,6 @@ impl From<AccessModifier> for MemberFunctionSpecifier {
     }
 }
 
-pub type MemberFunctionSpecifierNode<'script> = SyntaxNode<'script, MemberFunctionSpecifier>;
-
-impl NamedSyntaxNode for MemberFunctionSpecifierNode<'_> {
-    const NODE_KIND: &'static str = "member_func_specifier";
-}
-
-impl MemberFunctionSpecifierNode<'_> {
-    pub fn value(&self) -> MemberFunctionSpecifier {
-        let s = self.first_child(false).unwrap().tree_node.kind();
-        if let Ok(k) = Keyword::from_str(s) {
-            match k {
-                Keyword::Private => return MemberFunctionSpecifier::AccessModifier(AccessModifier::Private),
-                Keyword::Protected => return MemberFunctionSpecifier::AccessModifier(AccessModifier::Protected),
-                Keyword::Public => return MemberFunctionSpecifier::AccessModifier(AccessModifier::Public),
-                Keyword::Import => return MemberFunctionSpecifier::Import,
-                Keyword::Final => return MemberFunctionSpecifier::Final,
-                Keyword::Latent => return MemberFunctionSpecifier::Latent,
-                _ => {}
-            }
-        }
-
-        panic!("Unknown member function specifier: {} {}", s, self.range().debug())
-    }
-}
-
-impl Debug for MemberFunctionSpecifierNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {}", self.value(), self.range().debug())
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionSpecifierNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
-    }
-}
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -255,52 +218,25 @@ pub enum MemberFunctionFlavour {
     Timer
 }
 
+impl TryFrom<FunctionFlavour> for MemberFunctionFlavour {
+    type Error = ();
+
+    fn try_from(value: FunctionFlavour) -> Result<Self, Self::Error> {
+        match value {
+            FunctionFlavour::Cleanup => Ok(Self::Cleanup),
+            FunctionFlavour::Entry => Ok(Self::Entry),
+            FunctionFlavour::Timer => Ok(Self::Timer),
+            _ => Err(())
+        }
+    }
+}
+
 impl From<MemberFunctionFlavour> for Keyword {
     fn from(value: MemberFunctionFlavour) -> Self {
         match value {
             MemberFunctionFlavour::Entry => Keyword::Entry,
             MemberFunctionFlavour::Cleanup => Keyword::Cleanup,
             MemberFunctionFlavour::Timer => Keyword::Timer,
-        }
-    }
-}
-
-pub type MemberFunctionFlavourNode<'script> = SyntaxNode<'script, MemberFunctionFlavour>;
-
-impl NamedSyntaxNode for MemberFunctionFlavourNode<'_> {
-    const NODE_KIND: &'static str = "member_func_flavour";
-}
-
-impl MemberFunctionFlavourNode<'_> {
-    pub fn value(&self) -> MemberFunctionFlavour {
-        let s = self.first_child(false).unwrap().tree_node.kind();
-        if let Ok(k) = Keyword::from_str(s) {
-            match k {
-                Keyword::Entry => return MemberFunctionFlavour::Entry,
-                Keyword::Cleanup => return MemberFunctionFlavour::Cleanup,
-                Keyword::Timer => return MemberFunctionFlavour::Timer,
-                _ => {}
-            }
-        }
-
-        panic!("Unknown member function flavour: {} {}", s, self.range().debug())
-    }
-}
-
-impl Debug for MemberFunctionFlavourNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {}", self.value(), self.range().debug())
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionFlavourNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
         }
     }
 }

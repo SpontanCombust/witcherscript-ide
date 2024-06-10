@@ -1,6 +1,6 @@
 use std::fmt::Debug;
-use std::str::FromStr;
-use crate::{tokens::Keyword, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::tokens::Keyword;
+use super::Specifier;
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -8,6 +8,19 @@ pub enum AccessModifier {
     Private,
     Protected,
     Public
+}
+
+impl TryFrom<Specifier> for AccessModifier {
+    type Error = ();
+
+    fn try_from(value: Specifier) -> Result<Self, Self::Error> {
+        match value {
+            Specifier::Private => Ok(Self::Private),
+            Specifier::Protected => Ok(Self::Protected),
+            Specifier::Public => Ok(Self::Public),
+            _ => Err(())
+        }
+    }
 }
 
 impl From<AccessModifier> for Keyword {
@@ -28,6 +41,19 @@ pub enum ClassSpecifier {
     Statemachine
 }
 
+impl TryFrom<Specifier> for ClassSpecifier {
+    type Error = ();
+
+    fn try_from(value: Specifier) -> Result<Self, Self::Error> {
+        match value {
+            Specifier::Abstract => Ok(Self::Abstract),
+            Specifier::Import => Ok(Self::Import),
+            Specifier::Statemachine => Ok(Self::Statemachine),
+            _ => Err(())
+        }
+    }
+}
+
 impl From<ClassSpecifier> for Keyword {
     fn from(value: ClassSpecifier) -> Self {
         match value {
@@ -38,51 +64,26 @@ impl From<ClassSpecifier> for Keyword {
     }
 }
 
-pub type ClassSpecifierNode<'script> = SyntaxNode<'script, ClassSpecifier>;
-
-impl NamedSyntaxNode for ClassSpecifierNode<'_> {
-    const NODE_KIND: &'static str = "class_specifier";
-}
-
-impl ClassSpecifierNode<'_> {
-    pub fn value(&self) -> ClassSpecifier {
-        let s = self.first_child(false).unwrap().tree_node.kind();
-        if let Ok(k) = Keyword::from_str(s) {
-            match k {
-                Keyword::Import => return ClassSpecifier::Import,
-                Keyword::Abstract => return ClassSpecifier::Abstract,
-                Keyword::Statemachine => return ClassSpecifier::Statemachine,
-                _ => {}
-            }
-        }
-
-        panic!("Unknown class specifier: {} {}", s, self.range().debug());
-    }
-}
-
-impl Debug for ClassSpecifierNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {}", self.value(), self.range().debug())
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for ClassSpecifierNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
-    }
-}
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AutobindSpecifier {
     AccessModifier(AccessModifier),
     Optional
+}
+
+impl TryFrom<Specifier> for AutobindSpecifier {
+    type Error = ();
+
+    fn try_from(value: Specifier) -> Result<Self, Self::Error> {
+        match value {
+            Specifier::Optional => Ok(Self::Optional),
+            Specifier::Private => Ok(Self::AccessModifier(AccessModifier::Private)),
+            Specifier::Protected => Ok(Self::AccessModifier(AccessModifier::Protected)),
+            Specifier::Public => Ok(Self::AccessModifier(AccessModifier::Public)),
+            _ => Err(())
+        }
+    }
 }
 
 impl From<AutobindSpecifier> for Keyword {
@@ -97,46 +98,5 @@ impl From<AutobindSpecifier> for Keyword {
 impl From<AccessModifier> for AutobindSpecifier {
     fn from(value: AccessModifier) -> Self {
         Self::AccessModifier(value)
-    }
-}
-
-pub type AutobindSpecifierNode<'script> = SyntaxNode<'script, AutobindSpecifier>;
-
-impl NamedSyntaxNode for AutobindSpecifierNode<'_> {
-    const NODE_KIND: &'static str = "class_autobind_specifier";
-}
-
-impl AutobindSpecifierNode<'_> {
-    pub fn value(&self) -> AutobindSpecifier {
-        let s = self.first_child(false).unwrap().tree_node.kind();
-        if let Ok(k) = Keyword::from_str(s) {
-            match k {
-                Keyword::Private => return AutobindSpecifier::AccessModifier(AccessModifier::Private),
-                Keyword::Protected => return AutobindSpecifier::AccessModifier(AccessModifier::Protected),
-                Keyword::Public => return AutobindSpecifier::AccessModifier(AccessModifier::Public),
-                Keyword::Optional => return AutobindSpecifier::Optional,
-                _ => {}
-            }
-        }
-
-        panic!("Unknown class autobind specifier: {} {}", s, self.range().debug())
-    }
-}
-
-impl Debug for AutobindSpecifierNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {}", self.value(), self.range().debug())
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for AutobindSpecifierNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
     }
 }

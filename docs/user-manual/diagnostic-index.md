@@ -283,6 +283,41 @@ protected public function MakeDinner() { // (1)
 
 You can read more about access modifiers in programming languages [here](https://en.wikipedia.org/wiki/Access_modifiers).
 
+
+---
+
+### `incompatible-specifier`
+
+Different kinds of symbols can only take a predefined set of specifiers. A state for example cannot be at the same time a statemachine and thus it won't accept a `statemachine` specifier.
+
+```ts linenums="1" hl_lines="1"
+statemachine state Idle in Monster { // (1)
+    //...
+}
+```
+
+1. A state cannot be marked with `statemachine`
+
+
+---
+
+### `incompatible-function-flavour`
+
+Functions can additionally be marked with specifiers that you could call "flavours". They give them special attributes, like exposing them to the debug console if you add the `exec` keyword to the function. At most only one flavour can be specified. Some flavours can only be used in certain contexts, for example the aformentioned `exec` can only be used for global functions.
+
+```ts linenums="1" hl_lines="4"
+class CR4Player {
+    //...
+
+    public exec function LogHealth() { // (1)
+        LogChannel('Health', IntToString(this.GetHealth()));
+    }
+}
+```
+
+1. `exec` cannot be used with a class method. Move the function to the global scope.
+
+
 ---
 
 

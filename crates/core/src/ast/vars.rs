@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{attribs::MemberVarSpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{attribs::SpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -112,7 +112,7 @@ impl NamedSyntaxNode for MemberVarDeclarationNode<'_> {
 }
 
 impl<'script> MemberVarDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = MemberVarSpecifierNode<'script>> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
