@@ -10,7 +10,7 @@ mod tags {
 
 #[derive(Clone)]
 pub enum RootStatement<'script> {
-    Function(GlobalFunctionDeclarationNode<'script>),
+    Function(FunctionDeclarationNode<'script>),
     Class(ClassDeclarationNode<'script>),
     State(StateDeclarationNode<'script>),
     Struct(StructDeclarationNode<'script>),
@@ -37,7 +37,7 @@ impl<'script> RootStatementNode<'script> {
     pub fn value(self) -> RootStatement<'script> {
         let s = self.tree_node.kind();
         match s {
-            GlobalFunctionDeclarationNode::NODE_KIND => RootStatement::Function(self.into()),
+            FunctionDeclarationNode::NODE_KIND => RootStatement::Function(self.into()),
             ClassDeclarationNode::NODE_KIND => RootStatement::Class(self.into()),
             StateDeclarationNode::NODE_KIND => RootStatement::State(self.into()),
             StructDeclarationNode::NODE_KIND => RootStatement::Struct(self.into()),
@@ -63,7 +63,7 @@ impl<'script> TryFrom<AnyNode<'script>> for RootStatementNode<'script> {
         }
         
         match value.tree_node.kind() {
-            GlobalFunctionDeclarationNode::NODE_KIND    |
+            FunctionDeclarationNode::NODE_KIND          |
             ClassDeclarationNode::NODE_KIND             |
             StateDeclarationNode::NODE_KIND             |
             StructDeclarationNode::NODE_KIND            |
@@ -79,7 +79,7 @@ impl SyntaxNodeTraversal for RootStatementNode<'_> {
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         match self.clone().value() {
-            RootStatement::Function(s) => s.accept(visitor, ()),
+            RootStatement::Function(s) => s.accept(visitor, FunctionDeclarationTraversalContext::Global),
             RootStatement::Class(s) => s.accept(visitor, ()),
             RootStatement::State(s) => s.accept(visitor, ()),
             RootStatement::Struct(s) => s.accept(visitor, ()),

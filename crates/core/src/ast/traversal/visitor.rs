@@ -145,14 +145,14 @@ pub trait SyntaxNodeVisitor {
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, ctx: FunctionTraversalContext) {}
 
     /// Called when visiting a global function declaration.
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting global function declaration and possibly also children nodes specified in traversal policy.
-    fn exit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) {}
+    fn exit_global_func_decl(&mut self, n: &FunctionDeclarationNode) {}
 
     /// Called when visiting a member function declaration (i.e. a method).
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, ctx: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting member function declaration and possibly also children nodes specified in traversal policy.
-    fn exit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, ctx: PropertyTraversalContext) {}
+    fn exit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: PropertyTraversalContext) {}
 
     /// Called when visiting an event function declaration.
     fn visit_event_decl(&mut self, n: &EventDeclarationNode, ctx: PropertyTraversalContext) -> EventDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }

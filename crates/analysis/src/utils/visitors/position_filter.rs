@@ -146,8 +146,8 @@ impl SyntaxNodeVisitor for PositionFilter {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
-        let mut tp = GlobalFunctionDeclarationTraversalPolicy::default_to(false);
+    fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
+        let mut tp = FunctionDeclarationTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
@@ -166,15 +166,15 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
+    fn exit_global_func_decl(&mut self, _: &FunctionDeclarationNode) {
         self.currently_in_callable_range = false;
     }
 
 
 
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
-        let mut tp = MemberFunctionDeclarationTraversalPolicy::default_to(false);
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
+        let mut tp = FunctionDeclarationTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
@@ -193,7 +193,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: PropertyTraversalContext) {
         self.currently_in_callable_range = false;
     }
     

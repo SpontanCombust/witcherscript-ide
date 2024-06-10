@@ -5,8 +5,7 @@ use super::*;
 
 mod tags {
     pub struct EventDeclaration;
-    pub struct GlobalFunctionDeclaration;
-    pub struct MemberFunctionDeclaration;
+    pub struct FunctionDeclaration;
     pub struct FunctionParameters;
     pub struct FunctionParameterGroup;
     pub struct FunctionBlock;
@@ -82,13 +81,13 @@ impl SyntaxNodeTraversal for EventDeclarationNode<'_> {
 
 
 
-pub type GlobalFunctionDeclarationNode<'script> = SyntaxNode<'script, tags::GlobalFunctionDeclaration>;
+pub type FunctionDeclarationNode<'script> = SyntaxNode<'script, tags::FunctionDeclaration>;
 
-impl NamedSyntaxNode for GlobalFunctionDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "global_func_decl_stmt";
+impl NamedSyntaxNode for FunctionDeclarationNode<'_> {
+    const NODE_KIND: &'static str = "func_decl";
 }
 
-impl<'script> GlobalFunctionDeclarationNode<'script> {
+impl<'script> FunctionDeclarationNode<'script> {
     pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
@@ -114,9 +113,9 @@ impl<'script> GlobalFunctionDeclarationNode<'script> {
     }
 }
 
-impl Debug for GlobalFunctionDeclarationNode<'_> {
+impl Debug for FunctionDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("GlobalFunctionDeclaration {}", self.range().debug()))
+        f.debug_struct(&format!("FunctionDeclaration {}", self.range().debug()))
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("flavour", &self.flavour())
             .field("name", &self.name())
@@ -127,7 +126,7 @@ impl Debug for GlobalFunctionDeclarationNode<'_> {
     }
 }
 
-impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionDeclarationNode<'script> {
+impl<'script> TryFrom<AnyNode<'script>> for FunctionDeclarationNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
@@ -139,92 +138,39 @@ impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionDeclarationNode<'scrip
     }
 }
 
-impl SyntaxNodeTraversal for GlobalFunctionDeclarationNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
-        let tp = visitor.visit_global_func_decl(self);
-        if tp.traverse_params {
-            self.params().accept(visitor, FunctionTraversalContext::GlobalFunction);
-        }
-        if tp.traverse_definition {
-            self.definition().accept(visitor, FunctionTraversalContext::GlobalFunction);
-        }
-        visitor.exit_global_func_decl(self);
-    }
-}
-
-
-
-pub type MemberFunctionDeclarationNode<'script> = SyntaxNode<'script, tags::MemberFunctionDeclaration>;
-
-impl NamedSyntaxNode for MemberFunctionDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "member_func_decl_stmt";
-}
-
-impl<'script> MemberFunctionDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
-        self.field_children("specifiers").map(|n| n.into())
-    }
-
-    pub fn flavour(&self) -> Option<FunctionFlavourNode<'script>> {
-        self.field_child("flavour").map(|n| n.into())
-    }
-
-    pub fn name(&self) -> IdentifierNode<'script> {
-        self.field_child("name").unwrap().into()
-    }
-
-    pub fn params(&self) -> FunctionParametersNode<'script> {
-        self.field_child("params").unwrap().into()
-    }
-
-    pub fn return_type(&self) -> Option<TypeAnnotationNode<'script>> {
-        self.field_child("return_type").map(|n| n.into())
-    }
-
-    pub fn definition(&self) -> FunctionDefinitionNode<'script> {
-        self.field_child("definition").unwrap().into()
-    }
-}
-
-impl Debug for MemberFunctionDeclarationNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("MemberFunctionDeclaration {}", self.range().debug()))
-            .field("specifiers", &self.specifiers().collect::<Vec<_>>())
-            .field("flavour", &self.flavour())
-            .field("name", &self.name())
-            .field("params", &self.params())
-            .field("return_type", &self.return_type())
-            .field("definition", &self.definition())
-            .finish()
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionDeclarationNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
-    }
-}
-
-impl SyntaxNodeTraversal for MemberFunctionDeclarationNode<'_> {
-    type TraversalCtx = PropertyTraversalContext;
+impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
+    type TraversalCtx = FunctionDeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        let tp = visitor.visit_member_func_decl(self, ctx);
-        if tp.traverse_params {
-            self.params().accept(visitor, FunctionTraversalContext::MemberFunction);
+        if ctx == FunctionDeclarationTraversalContext::Global {
+            let tp = visitor.visit_global_func_decl(self);
+    
+            if tp.traverse_params {
+                self.params().accept(visitor, FunctionTraversalContext::GlobalFunction);
+            }
+            if tp.traverse_definition {
+                self.definition().accept(visitor, FunctionTraversalContext::GlobalFunction);
+            }
+
+            visitor.exit_global_func_decl(self);
+        } else {
+            let func_ctx = if ctx == FunctionDeclarationTraversalContext::ClassDefinition {
+                PropertyTraversalContext::ClassDefinition
+            } else {
+                PropertyTraversalContext::StateDefinition
+            };
+
+            let tp = visitor.visit_member_func_decl(self, func_ctx);
+    
+            if tp.traverse_params {
+                self.params().accept(visitor, FunctionTraversalContext::MemberFunction);
+            }
+            if tp.traverse_definition {
+                self.definition().accept(visitor, FunctionTraversalContext::MemberFunction);
+            }
+
+            visitor.exit_member_func_decl(self, func_ctx);
         }
-        if tp.traverse_definition {
-            self.definition().accept(visitor, FunctionTraversalContext::MemberFunction);
-        }
-        visitor.exit_member_func_decl(self, ctx);
     }
 }
 

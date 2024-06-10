@@ -132,21 +132,21 @@ impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
         self.chain_visit(move |link| link.visit_enum_variant_decl(n))
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+    fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_global_func_decl(n))        
     }
 
-    fn exit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) {
+    fn exit_global_func_decl(&mut self, n: &FunctionDeclarationNode) {
         self.chain_exit(move |link| link.exit_global_func_decl(n))
     }
 
 
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, ctx: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_member_func_decl(n, ctx))
     }
 
-    fn exit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, ctx: PropertyTraversalContext) {
+    fn exit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: PropertyTraversalContext) {
         self.chain_exit(move |link| link.exit_member_func_decl(n, ctx))
     }
 

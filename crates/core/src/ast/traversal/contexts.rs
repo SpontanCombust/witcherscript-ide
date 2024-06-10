@@ -47,6 +47,13 @@ pub enum PropertyTraversalContext {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FunctionDeclarationTraversalContext {
+    Global,
+    ClassDefinition,
+    StateDefinition
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FunctionTraversalContext {
     GlobalFunction,
     MemberFunction,

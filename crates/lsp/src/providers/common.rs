@@ -374,7 +374,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+    fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
@@ -389,7 +389,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let name = n.name();
 

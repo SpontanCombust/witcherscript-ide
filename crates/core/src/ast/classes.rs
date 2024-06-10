@@ -121,7 +121,7 @@ pub enum ClassStatement<'script> {
     DefaultsBlock(MemberDefaultsBlockNode<'script>),
     Hint(MemberHintNode<'script>),
     Autobind(AutobindDeclarationNode<'script>),
-    Method(MemberFunctionDeclarationNode<'script>),
+    Method(FunctionDeclarationNode<'script>),
     Event(EventDeclarationNode<'script>),
     Nop(NopNode<'script>)
 }
@@ -151,7 +151,7 @@ impl<'script> ClassStatementNode<'script> {
             MemberDefaultsBlockNode::NODE_KIND => ClassStatement::DefaultsBlock(self.into()),
             MemberHintNode::NODE_KIND => ClassStatement::Hint(self.into()),
             AutobindDeclarationNode::NODE_KIND => ClassStatement::Autobind(self.into()),
-            MemberFunctionDeclarationNode::NODE_KIND => ClassStatement::Method(self.into()),
+            FunctionDeclarationNode::NODE_KIND => ClassStatement::Method(self.into()),
             EventDeclarationNode::NODE_KIND => ClassStatement::Event(self.into()),
             NopNode::NODE_KIND => ClassStatement::Nop(self.into()),
             _ => panic!("Unknown class statement type: {} {}", self.tree_node.kind(), self.range().debug())
@@ -175,7 +175,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassStatementNode<'script> {
             MemberDefaultsBlockNode::NODE_KIND          |
             MemberHintNode::NODE_KIND                   |
             AutobindDeclarationNode::NODE_KIND          |
-            MemberFunctionDeclarationNode::NODE_KIND    |
+            FunctionDeclarationNode::NODE_KIND          |
             EventDeclarationNode::NODE_KIND             |
             NopNode::NODE_KIND                          => Ok(value.into()),
             _ => Err(())
@@ -193,7 +193,11 @@ impl SyntaxNodeTraversal for ClassStatementNode<'_> {
             ClassStatement::DefaultsBlock(s) => s.accept(visitor, ctx),
             ClassStatement::Hint(s) => s.accept(visitor, ctx),
             ClassStatement::Autobind(s) => s.accept(visitor, ctx),
-            ClassStatement::Method(s) => s.accept(visitor, ctx),
+            ClassStatement::Method(s) => s.accept(visitor, if ctx == PropertyTraversalContext::ClassDefinition {
+                FunctionDeclarationTraversalContext::ClassDefinition
+            } else {
+                FunctionDeclarationTraversalContext::StateDefinition
+            }),
             ClassStatement::Event(s) => s.accept(visitor, ctx),
             ClassStatement::Nop(_) => {},
         }

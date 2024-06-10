@@ -95,23 +95,23 @@ impl SyntaxNodeVisitor for SymbolPathBuilder<'_> {
 
 
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+    fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
         let name = n.name().value(self.doc);
         self.payload.borrow_mut().current_sympath = GlobalCallableSymbolPath::new(&name).into();
         TraversalPolicy::default_to(true)
     }
 
-    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
+    fn exit_global_func_decl(&mut self, _: &FunctionDeclarationNode) {
         self.payload.borrow_mut().current_sympath.pop();
     }
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
         let name = n.name().value(self.doc);
         self.payload.borrow_mut().current_sympath.push(&name, SymbolCategory::Callable);
         TraversalPolicy::default_to(true)
     }
 
-    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: PropertyTraversalContext) {
         self.payload.borrow_mut().current_sympath.pop();
     }
 

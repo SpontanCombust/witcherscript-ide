@@ -203,7 +203,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+    fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
@@ -233,7 +233,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
 
 
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {

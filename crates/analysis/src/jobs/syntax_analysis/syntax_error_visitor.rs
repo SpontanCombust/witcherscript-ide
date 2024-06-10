@@ -281,7 +281,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+    fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
         let mut traverse_params = false;
         let mut traverse_definition = false;
         if n.has_errors() {
@@ -305,13 +305,13 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
             }
         }
 
-        GlobalFunctionDeclarationTraversalPolicy { 
+        FunctionDeclarationTraversalPolicy { 
             traverse_params,
             traverse_definition
         }
     }
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
         let mut traverse_params = false;
         let mut traverse_definition = false;
         if n.has_errors() {
@@ -338,7 +338,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
             }
         }
         
-        MemberFunctionDeclarationTraversalPolicy { 
+        FunctionDeclarationTraversalPolicy { 
             traverse_params,
             traverse_definition
         }

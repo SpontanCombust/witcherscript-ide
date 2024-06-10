@@ -426,7 +426,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+    fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
         let mut traverse = false;
 
         let name_node = n.name();
@@ -494,20 +494,20 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             traverse = true;
         }
 
-        GlobalFunctionDeclarationTraversalPolicy { 
+        FunctionDeclarationTraversalPolicy { 
             traverse_params: traverse,
             traverse_definition: traverse
         }
     }
 
-    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
+    fn exit_global_func_decl(&mut self, _: &FunctionDeclarationNode) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             self.current_path.pop();
             self.current_param_ordinal = 0;
         }
     }
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
         let mut traverse = false;
 
         let name_node = n.name();
@@ -589,13 +589,13 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             traverse = true;
         }
 
-        MemberFunctionDeclarationTraversalPolicy {
+        FunctionDeclarationTraversalPolicy {
             traverse_params: traverse,
             traverse_definition: traverse
         }
     }
 
-    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: PropertyTraversalContext) {
         // pop only if visit managed to create the symbol
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             self.current_path.pop();
