@@ -33,6 +33,7 @@ impl Backend {
     async fn syntax_analysis(&self, script_paths: Vec<AbsPath>) {
         for path in &script_paths {
             self.reporter.clear_diagnostics(path, DiagnosticDomain::SyntaxAnalysis);
+            self.reporter.clear_diagnostics(path, DiagnosticDomain::ContextualSyntaxAnalysis);
         }
 
         let scripts = Arc::clone(&self.scripts);
@@ -47,6 +48,7 @@ impl Backend {
                         let script = &script_state.script;
                         let mut diags = Vec::new();
                         jobs::syntax_analysis(script, &mut diags);
+                        jobs::contextual_syntax_analysis(script, &mut diags);
                         drop(kv);
 
                         Some((script_path, diags))

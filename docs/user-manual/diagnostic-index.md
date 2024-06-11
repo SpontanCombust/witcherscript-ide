@@ -171,6 +171,80 @@ Diagnostic used for all other syntax error cases. Syntactical analysis is very b
 
 </br>
 
+## **Contextual Syntax Analysis**
+
+---
+
+### `incompatible-specifier`
+
+Specifiers are keywords that tell the WitcherScript compiler to give a code symbol some additional properties.
+Different kinds of symbols can only take a predefined set of specifiers. A state for example cannot be at the same time a statemachine and thus it won't accept a `statemachine` specifier.
+
+```ts linenums="1" hl_lines="1"
+statemachine state Idle in Monster { // (1)
+    //...
+}
+```
+
+1. A state cannot be marked with `statemachine`
+
+
+---
+
+### `incompatible-function-flavour`
+
+Functions can additionally be marked with specifiers that you could call "flavours". They give them special attributes, like exposing them to the debug console if you add the `exec` keyword to the function. At most only one flavour can be specified. Some flavours can only be used in certain contexts, for example the aformentioned `exec` can only be used for global functions.
+
+```ts linenums="1" hl_lines="4"
+class CR4Player {
+    //...
+
+    public exec function LogHealth() { // (1)
+        LogChannel('Health', IntToString(this.GetHealth()));
+    }
+}
+```
+
+1. `exec` cannot be used with a class method. Move the function to the global scope.
+
+
+---
+
+### `repeated-specifier`
+
+Repeating the same specifier for one code symbol is not allowed.
+
+```ts linenums="1" hl_lines="1"
+public saved public var piesEaten: int; // (1) 
+```
+
+1. Repeated specifier `public` for field `piesEaten`.
+
+
+---
+
+### `multiple-access-modifiers`
+
+Access modifiers are keywords that change the visibility of a field or method. This is a common feature in object oriented languages like WitcherScript. 
+Available access modifiers are `private`, `protected` and `public`. Only one of them can be used in the declaration.
+
+```ts linenums="1" hl_lines="1"
+protected public function MakeDinner() { // (1) 
+    // ...
+} 
+```
+
+1. Can't use both `protected` and `public` access modifiers. Use only one of these two.
+
+You can read more about access modifiers in programming languages [here](https://en.wikipedia.org/wiki/Access_modifiers).
+
+
+---
+
+
+
+</br>
+
 ## **Symbol Analysis**
 
 ---
@@ -253,74 +327,9 @@ var player: CR4Player<Ciri>; // (1)
 
 ---
 
-### `repeated-specifier`
-
-Specifiers are keywords that tell the WitcherScript compiler to give a code symbol some specific properties. For example adding the keyword `exec` before global function declaration will make that function accessible from the debug console in game.
-
-Repeating the same specifier for one code symbol is not allowed.
-
-```ts linenums="1" hl_lines="1"
-public saved public var piesEaten: int; // (1) 
-```
-
-1. Repeated specifier `public` for field `piesEaten`.
 
 
----
-
-### `multiple-access-modifiers`
-
-Access modifiers are keywords that change the visibility of a field or method. This is a common feature in object oriented languages like WitcherScript. 
-Available access modifiers are `private`, `protected` and `public`. Only one of them can be used in the declaration.
-
-```ts linenums="1" hl_lines="1"
-protected public function MakeDinner() { // (1) 
-    // ...
-} 
-```
-
-1. Can't use both `protected` and `public` access modifiers. Use only one of these two.
-
-You can read more about access modifiers in programming languages [here](https://en.wikipedia.org/wiki/Access_modifiers).
-
-
----
-
-### `incompatible-specifier`
-
-Different kinds of symbols can only take a predefined set of specifiers. A state for example cannot be at the same time a statemachine and thus it won't accept a `statemachine` specifier.
-
-```ts linenums="1" hl_lines="1"
-statemachine state Idle in Monster { // (1)
-    //...
-}
-```
-
-1. A state cannot be marked with `statemachine`
-
-
----
-
-### `incompatible-function-flavour`
-
-Functions can additionally be marked with specifiers that you could call "flavours". They give them special attributes, like exposing them to the debug console if you add the `exec` keyword to the function. At most only one flavour can be specified. Some flavours can only be used in certain contexts, for example the aformentioned `exec` can only be used for global functions.
-
-```ts linenums="1" hl_lines="4"
-class CR4Player {
-    //...
-
-    public exec function LogHealth() { // (1)
-        LogChannel('Health', IntToString(this.GetHealth()));
-    }
-}
-```
-
-1. `exec` cannot be used with a class method. Move the function to the global scope.
-
-
----
-
-
+</br>
 
 ## **Workspace Symbol Analysis**
 

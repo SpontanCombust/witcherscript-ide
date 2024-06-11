@@ -41,6 +41,7 @@ impl Into<lsp::Diagnostic> for Diagnostic {
 pub enum DiagnosticDomain {
     ProjectSystem,
     SyntaxAnalysis,
+    ContextualSyntaxAnalysis,
     SymbolAnalysis,
     WorkspaceSymbolAnalysis,
 }
@@ -69,16 +70,7 @@ pub enum DiagnosticKind {
     MissingSyntax(String),
     InvalidSyntax, // for all other syntax cases when it's impossible to determine
 
-    // symbol anaysis
-    SymbolNameTaken {
-        name: String,
-        precursor_file_path: Option<AbsPath>,
-        precursor_range: Option<lsp::Range>
-    },
-    MissingTypeArg,
-    UnnecessaryTypeArg,
-    RepeatedSpecifier,
-    MultipleAccessModifiers,
+    // contextual syntax analysis
     IncompatibleSpecifier {
         spec_name: String,
         sym_name: String
@@ -87,8 +79,19 @@ pub enum DiagnosticKind {
         flavour_name: String,
         sym_name: String
     },
+    RepeatedSpecifier,
+    MultipleAccessModifiers,
+    //TODO annotation check diagnostics
 
-
+    // symbol anaysis
+    SymbolNameTaken {
+        name: String,
+        precursor_file_path: Option<AbsPath>,
+        precursor_range: Option<lsp::Range>
+    },
+    MissingTypeArg,
+    UnnecessaryTypeArg,
+    
     // workspace symbol analysis
     SymbolNameTakenInDependency {
         name: String,
@@ -119,13 +122,13 @@ impl DiagnosticKind {
             | ProjectSelfDependency => DiagnosticDomain::ProjectSystem,
             MissingSyntax(_)
             | InvalidSyntax => DiagnosticDomain::SyntaxAnalysis,
+            IncompatibleSpecifier { .. } 
+            | IncompatibleFunctionFlavour { .. } 
+            | RepeatedSpecifier
+            | MultipleAccessModifiers => DiagnosticDomain::ContextualSyntaxAnalysis,
             SymbolNameTaken { .. }
             | MissingTypeArg
-            | UnnecessaryTypeArg
-            | RepeatedSpecifier
-            | MultipleAccessModifiers 
-            | IncompatibleSpecifier { .. } 
-            | IncompatibleFunctionFlavour { .. } => DiagnosticDomain::SymbolAnalysis,
+            | UnnecessaryTypeArg => DiagnosticDomain::SymbolAnalysis,
             SymbolNameTakenInDependency { .. } => DiagnosticDomain::WorkspaceSymbolAnalysis
         }
     }
@@ -146,14 +149,15 @@ impl DiagnosticKind {
 
             MissingSyntax(_) => lsp::DiagnosticSeverity::ERROR,
             InvalidSyntax => lsp::DiagnosticSeverity::ERROR,
+            
+            IncompatibleSpecifier { .. } => lsp::DiagnosticSeverity::ERROR,
+            IncompatibleFunctionFlavour { .. } => lsp::DiagnosticSeverity::ERROR,
+            RepeatedSpecifier => lsp::DiagnosticSeverity::ERROR,
+            MultipleAccessModifiers => lsp::DiagnosticSeverity::ERROR,
 
             SymbolNameTaken { .. } => lsp::DiagnosticSeverity::ERROR,
             MissingTypeArg => lsp::DiagnosticSeverity::ERROR,
             UnnecessaryTypeArg => lsp::DiagnosticSeverity::ERROR,
-            RepeatedSpecifier => lsp::DiagnosticSeverity::ERROR,
-            MultipleAccessModifiers => lsp::DiagnosticSeverity::ERROR,
-            IncompatibleSpecifier { .. } => lsp::DiagnosticSeverity::ERROR,
-            IncompatibleFunctionFlavour { .. } => lsp::DiagnosticSeverity::ERROR,
 
             SymbolNameTakenInDependency { .. } => lsp::DiagnosticSeverity::ERROR
         }
@@ -175,13 +179,14 @@ impl DiagnosticKind {
             MissingSyntax(s) => format!("Syntax error: expected {}", s),
             InvalidSyntax => "Syntax error: unexpected syntax".into(),
 
+            IncompatibleSpecifier { spec_name, sym_name } => format!("\"{}\" cannot be used for {}", spec_name, sym_name),
+            IncompatibleFunctionFlavour { flavour_name, sym_name } => format!("\"{}\" cannot be used for {}", flavour_name, sym_name),
+            RepeatedSpecifier => "Specifiers can not be repeating".into(),
+            MultipleAccessModifiers => "Only one access modifier is allowed".into(),
+
             SymbolNameTaken { name, .. } => format!("The name \"{}\" is defined multiple times", name),
             MissingTypeArg => "Missing type argument".into(),
             UnnecessaryTypeArg => "This type does not take any type arguments".into(),
-            RepeatedSpecifier => "Specifiers can not be repeating".into(),
-            MultipleAccessModifiers => "Only one access modifier is allowed".into(),
-            IncompatibleSpecifier { spec_name, sym_name } => format!("\"{}\" cannot be used for {}", spec_name, sym_name),
-            IncompatibleFunctionFlavour { flavour_name, sym_name } => format!("\"{}\" cannot be used for {}", flavour_name, sym_name),
 
             SymbolNameTakenInDependency { name, .. } => format!("The name \"{}\" is already defined in another content", name),
         }

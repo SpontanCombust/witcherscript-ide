@@ -164,29 +164,11 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 label_range: name_node.range()
             });
             
-            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                if let Ok(class_spec) = ClassSpecifier::try_from(spec) {
-                    if !sym.specifiers.insert(class_spec) {
-                        self.diagnostics.push(LocatedDiagnostic { 
-                            path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
-                            diagnostic: Diagnostic { 
-                                range, 
-                                kind: DiagnosticKind::RepeatedSpecifier
-                            }
-                        });
-                    }
-                } else {
-                    let spec_name = Keyword::from(spec).to_string();
-                    self.diagnostics.push(LocatedDiagnostic {
-                        path: self.symtab.script_root().join(&self.local_source_path).unwrap(),
-                        diagnostic: Diagnostic {
-                            range,
-                            kind: DiagnosticKind::IncompatibleSpecifier { spec_name, sym_name: "a class".into() }
-                        }
-                    })
-                } 
-            }
-    
+            sym.specifiers = n.specifiers()
+                .map(|sn| sn.value())
+                .filter_map(|s| ClassSpecifier::try_from(s).ok())
+                .collect();
+
             sym.base_path = n.base().map(|base| self.check_type_from_identifier(base));
 
 
@@ -234,28 +216,10 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 label_range: state_name_node.range()
             });
 
-            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                if let Ok(state_spec) = StateSpecifier::try_from(spec) {
-                    if !sym.specifiers.insert(state_spec) {
-                        self.diagnostics.push(LocatedDiagnostic { 
-                            path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
-                            diagnostic: Diagnostic { 
-                                range, 
-                                kind: DiagnosticKind::RepeatedSpecifier
-                            }
-                        });
-                    }
-                } else {
-                    let spec_name = Keyword::from(spec).to_string();
-                    self.diagnostics.push(LocatedDiagnostic {
-                        path: self.symtab.script_root().join(&self.local_source_path).unwrap(),
-                        diagnostic: Diagnostic {
-                            range,
-                            kind: DiagnosticKind::IncompatibleSpecifier { spec_name, sym_name: "a state".into() }
-                        }
-                    })
-                } 
-            }
+            sym.specifiers = n.specifiers()
+                .map(|sn| sn.value())
+                .filter_map(|s| StateSpecifier::try_from(s).ok())
+                .collect();
 
             sym.base_state_name = n.base().map(|base| base.value(&self.doc).to_string());
 
@@ -309,28 +273,10 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 label_range: name_node.range()
             });
 
-            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                if let Ok(struct_spec) = StructSpecifier::try_from(spec) {
-                    if !sym.specifiers.insert(struct_spec) {
-                        self.diagnostics.push(LocatedDiagnostic { 
-                            path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
-                            diagnostic: Diagnostic { 
-                                range, 
-                                kind: DiagnosticKind::RepeatedSpecifier
-                            }
-                        });
-                    }
-                } else {
-                    let spec_name = Keyword::from(spec).to_string();
-                    self.diagnostics.push(LocatedDiagnostic {
-                        path: self.symtab.script_root().join(&self.local_source_path).unwrap(),
-                        diagnostic: Diagnostic {
-                            range,
-                            kind: DiagnosticKind::IncompatibleSpecifier { spec_name, sym_name: "a struct".into() }
-                        }
-                    })
-                } 
-            }
+            sym.specifiers = n.specifiers()
+                .map(|sn| sn.value())
+                .filter_map(|s| StructSpecifier::try_from(s).ok())
+                .collect();
 
             sym.path().clone_into(&mut self.current_path);
             self.symtab.insert_primary_symbol(sym);
@@ -440,47 +386,14 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 label_range: name_node.range()
             });
 
-            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                if let Ok(global_func_spec) = GlobalFunctionSpecifier::try_from(spec) {
-                    if !sym.specifiers.insert(global_func_spec) {
-                        self.diagnostics.push(LocatedDiagnostic { 
-                            path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
-                            diagnostic: Diagnostic { 
-                                range, 
-                                kind: DiagnosticKind::RepeatedSpecifier
-                            }
-                        });
-                    }
-                } else {
-                    let spec_name = Keyword::from(spec).to_string();
-                    self.diagnostics.push(LocatedDiagnostic {
-                        path: self.symtab.script_root().join(&self.local_source_path).unwrap(),
-                        diagnostic: Diagnostic {
-                            range,
-                            kind: DiagnosticKind::IncompatibleSpecifier { spec_name, sym_name: "a global function".into() }
-                        }
-                    })
-                } 
-            }
+            sym.specifiers = n.specifiers()
+                .map(|sn| sn.value())
+                .filter_map(|s| GlobalFunctionSpecifier::try_from(s).ok())
+                .collect();
 
-            sym.flavour = if let Some((flavour, range)) = n.flavour().map(|f| (f.value(), f.range())) {
-                if let Ok(global_flavour) = GlobalFunctionFlavour::try_from(flavour) {
-                    Some(global_flavour)
-                } else {
-                    let flavour_name = Keyword::from(flavour).to_string();
-                    self.diagnostics.push(LocatedDiagnostic {
-                        path: self.symtab.script_root().join(&self.local_source_path).unwrap(),
-                        diagnostic: Diagnostic {
-                            range,
-                            kind: DiagnosticKind::IncompatibleFunctionFlavour { flavour_name, sym_name: "a global function".into() }
-                        }
-                    });
-
-                    None
-                }
-            } else {
-                None
-            };
+            sym.flavour = n.flavour()
+                .map(|flavn| flavn.value())
+                .and_then(|f| GlobalFunctionFlavour::try_from(f).ok());
 
             sym.return_type_path = if let Some(ret_typn) = n.return_type() {
                 self.check_type_from_type_annot(ret_typn)
@@ -525,61 +438,14 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 label_range: name_node.range()
             });
 
-            let mut found_access_modif_before = false;
-            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                if let Ok(member_func_spec) = MemberFunctionSpecifier::try_from(spec) {
-                    if matches!(member_func_spec, MemberFunctionSpecifier::AccessModifier(_)) {
-                        if found_access_modif_before {
-                            self.diagnostics.push(LocatedDiagnostic { 
-                                path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
-                                diagnostic: Diagnostic { 
-                                    range, 
-                                    kind: DiagnosticKind::MultipleAccessModifiers
-                                }
-                            });
-                        }
-                        found_access_modif_before = true;
-                    }
+            sym.specifiers = n.specifiers()
+                .map(|sn| sn.value())
+                .filter_map(|s| MemberFunctionSpecifier::try_from(s).ok())
+                .collect();
 
-                    if !sym.specifiers.insert(member_func_spec) {
-                        self.diagnostics.push(LocatedDiagnostic { 
-                            path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
-                            diagnostic: Diagnostic { 
-                                range, 
-                                kind: DiagnosticKind::RepeatedSpecifier
-                            }
-                        });
-                    }
-                } else {
-                    let spec_name = Keyword::from(spec).to_string();
-                    self.diagnostics.push(LocatedDiagnostic {
-                        path: self.symtab.script_root().join(&self.local_source_path).unwrap(),
-                        diagnostic: Diagnostic {
-                            range,
-                            kind: DiagnosticKind::IncompatibleSpecifier { spec_name, sym_name: "a method".into() }
-                        }
-                    })
-                }
-            }
-
-            sym.flavour = if let Some((flavour, range)) = n.flavour().map(|f| (f.value(), f.range())) {
-                if let Ok(member_flavour) = MemberFunctionFlavour::try_from(flavour) {
-                    Some(member_flavour)
-                } else {
-                    let flavour_name = Keyword::from(flavour).to_string();
-                    self.diagnostics.push(LocatedDiagnostic {
-                        path: self.symtab.script_root().join(&self.local_source_path).unwrap(),
-                        diagnostic: Diagnostic {
-                            range,
-                            kind: DiagnosticKind::IncompatibleFunctionFlavour { flavour_name, sym_name: "a method".into() }
-                        }
-                    });
-
-                    None
-                }
-            } else {
-                None
-            };
+            sym.flavour = n.flavour()
+                .map(|flavn| flavn.value())
+                .and_then(|f| MemberFunctionFlavour::try_from(f).ok());
 
             sym.return_type_path = if let Some(ret_typn) = n.return_type() {
                 self.check_type_from_type_annot(ret_typn)
@@ -641,29 +507,10 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     }
 
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: FunctionTraversalContext) {
-        let mut specifiers = SymbolSpecifiers::new();
-        for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-            if let Ok(param_spec) = FunctionParameterSpecifier::try_from(spec) {
-                if !specifiers.insert(param_spec) {
-                    self.diagnostics.push(LocatedDiagnostic { 
-                        path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
-                        diagnostic: Diagnostic { 
-                            range, 
-                            kind: DiagnosticKind::RepeatedSpecifier
-                        }
-                    });
-                }
-            } else {
-                let spec_name = Keyword::from(spec).to_string();
-                self.diagnostics.push(LocatedDiagnostic {
-                    path: self.symtab.script_root().join(&self.local_source_path).unwrap(),
-                    diagnostic: Diagnostic {
-                        range,
-                        kind: DiagnosticKind::IncompatibleSpecifier { spec_name, sym_name: "a function parameter".into() }
-                    }
-                })
-            }
-        }
+        let specifiers: SymbolSpecifiers<_> = n.specifiers()
+            .map(|sn| sn.value())
+            .filter_map(|s| FunctionParameterSpecifier::try_from(s).ok())
+            .collect();
 
         let type_path = self.check_type_from_type_annot(n.param_type());
 
@@ -694,43 +541,10 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             return;
         }
 
-        let mut specifiers = SymbolSpecifiers::new();
-        let mut found_access_modif_before = false;
-        for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-            if let Ok(member_var_spec) = MemberVarSpecifier::try_from(spec) {
-                if matches!(member_var_spec, MemberVarSpecifier::AccessModifier(_)) {
-                    if found_access_modif_before {
-                        self.diagnostics.push(LocatedDiagnostic { 
-                            path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
-                            diagnostic: Diagnostic { 
-                                range, 
-                                kind: DiagnosticKind::MultipleAccessModifiers
-                            }
-                        });
-                    }
-                    found_access_modif_before = true;
-                }
-
-                if !specifiers.insert(member_var_spec) {
-                    self.diagnostics.push(LocatedDiagnostic { 
-                        path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
-                        diagnostic: Diagnostic { 
-                            range, 
-                            kind: DiagnosticKind::RepeatedSpecifier
-                        }
-                    });
-                }
-            } else {
-                let spec_name = Keyword::from(spec).to_string();
-                self.diagnostics.push(LocatedDiagnostic {
-                    path: self.symtab.script_root().join(&self.local_source_path).unwrap(),
-                    diagnostic: Diagnostic {
-                        range,
-                        kind: DiagnosticKind::IncompatibleSpecifier { spec_name, sym_name: "a field".into() }
-                    }
-                })
-            }
-        }
+        let specifiers: SymbolSpecifiers<_> = n.specifiers()
+            .map(|sn| sn.value())
+            .filter_map(|s| MemberVarSpecifier::try_from(s).ok())
+            .collect();
 
         let type_path = self.check_type_from_type_annot(n.var_type());
 
@@ -782,42 +596,10 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 label_range: name_node.range()
             });
 
-            let mut found_access_modif_before = false;
-            for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
-                if let Ok(autobind_spec) = AutobindSpecifier::try_from(spec) {
-                    if matches!(autobind_spec, AutobindSpecifier::AccessModifier(_)) {
-                        if found_access_modif_before {
-                            self.diagnostics.push(LocatedDiagnostic { 
-                                path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
-                                diagnostic: Diagnostic { 
-                                    range, 
-                                    kind: DiagnosticKind::MultipleAccessModifiers
-                                }
-                            });
-                        }
-                        found_access_modif_before = true;
-                    }
-
-                    if !sym.specifiers.insert(autobind_spec) {
-                        self.diagnostics.push(LocatedDiagnostic { 
-                            path: self.symtab.script_root().join(&self.local_source_path).unwrap(),  
-                            diagnostic: Diagnostic { 
-                                range, 
-                                kind: DiagnosticKind::RepeatedSpecifier
-                            }
-                        });
-                    }
-                } else {
-                    let spec_name = Keyword::from(spec).to_string();
-                    self.diagnostics.push(LocatedDiagnostic {
-                        path: self.symtab.script_root().join(&self.local_source_path).unwrap(),
-                        diagnostic: Diagnostic {
-                            range,
-                            kind: DiagnosticKind::IncompatibleSpecifier { spec_name, sym_name: "an autobind".into() }
-                        }
-                    })
-                }
-            }
+            sym.specifiers = n.specifiers()
+                .map(|sn| sn.value())
+                .filter_map(|s| AutobindSpecifier::try_from(s).ok())
+                .collect();
 
             sym.type_path = self.check_type_from_type_annot(n.autobind_type());
 
