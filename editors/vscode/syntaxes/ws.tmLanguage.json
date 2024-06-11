@@ -6,6 +6,9 @@
 			"include": "#comments"
 		},
 		{
+			"include": "#annotations"
+		},
+		{
 			"include": "#keywords"
 		},
 		{
@@ -373,6 +376,21 @@
 					"comment": "treat the rest as variables",
 					"name": "support.variable.ws",
 					"match": "\\b\\w+\\b"
+				}
+			]
+		},
+		"annotations": {
+			"patterns": [
+				{
+					"match": "(@\\w+)(?:\\((\\w+)\\))?",
+					"captures": {
+						"1": {
+							"name": "meta.attribute.ws"
+						},
+						"2": {
+							"name": "support.type.ws"
+						}
+					}
 				}
 			]
 		}
