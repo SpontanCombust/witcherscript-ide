@@ -41,7 +41,7 @@ impl FunctionFlavourNode<'_> {
         if let Ok(k) = Keyword::from_str(s) {
             match k {
                 Keyword::Cleanup => return FunctionFlavour::Cleanup,
-                Keyword::Abstract => return FunctionFlavour::Entry,
+                Keyword::Entry => return FunctionFlavour::Entry,
                 Keyword::Exec => return FunctionFlavour::Exec,
                 Keyword::Quest => return FunctionFlavour::Quest,
                 Keyword::Reward => return FunctionFlavour::Reward,
