@@ -15,6 +15,7 @@ pub enum RootStatement<'script> {
     State(StateDeclarationNode<'script>),
     Struct(StructDeclarationNode<'script>),
     Enum(EnumDeclarationNode<'script>),
+    Var(MemberVarDeclarationNode<'script>), // needed for @addField
     Nop(NopNode<'script>)
 }
 
@@ -26,6 +27,7 @@ impl Debug for RootStatement<'_> {
             Self::State(n) => f.debug_maybe_alternate(n),
             Self::Struct(n) => f.debug_maybe_alternate(n),
             Self::Enum(n) => f.debug_maybe_alternate(n),
+            Self::Var(n) => f.debug_maybe_alternate(n),
             Self::Nop(n) => f.debug_maybe_alternate(n),
         }
     }
@@ -42,6 +44,7 @@ impl<'script> RootStatementNode<'script> {
             StateDeclarationNode::NODE_KIND => RootStatement::State(self.into()),
             StructDeclarationNode::NODE_KIND => RootStatement::Struct(self.into()),
             EnumDeclarationNode::NODE_KIND => RootStatement::Enum(self.into()),
+            MemberVarDeclarationNode::NODE_KIND => RootStatement::Var(self.into()),
             NopNode::NODE_KIND => RootStatement::Nop(self.into()),
             _ => panic!("Unknown script statement: {} {}", s, self.range().debug())
         }
@@ -68,6 +71,7 @@ impl<'script> TryFrom<AnyNode<'script>> for RootStatementNode<'script> {
             StateDeclarationNode::NODE_KIND             |
             StructDeclarationNode::NODE_KIND            |
             EnumDeclarationNode::NODE_KIND              |
+            MemberVarDeclarationNode::NODE_KIND         |
             NopNode::NODE_KIND                          => Ok(value.into()),
             _ => Err(())
         }
@@ -79,11 +83,12 @@ impl SyntaxNodeTraversal for RootStatementNode<'_> {
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         match self.clone().value() {
-            RootStatement::Function(s) => s.accept(visitor, FunctionDeclarationTraversalContext::Global),
+            RootStatement::Function(s) => s.accept(visitor, DeclarationTraversalContext::Global),
             RootStatement::Class(s) => s.accept(visitor, ()),
             RootStatement::State(s) => s.accept(visitor, ()),
             RootStatement::Struct(s) => s.accept(visitor, ()),
             RootStatement::Enum(s) => s.accept(visitor, ()),
+            RootStatement::Var(s) => s.accept(visitor, DeclarationTraversalContext::Global),
             RootStatement::Nop(_) => {},
         }
     }

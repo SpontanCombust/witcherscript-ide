@@ -233,7 +233,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
 
 
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
@@ -260,7 +260,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
@@ -295,7 +295,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
         self.range_stack.push(n.range());
 
         if n.var_type().spans_position(self.pos) {
@@ -309,7 +309,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
         self.range_stack.push(n.range());
 
         if n.name().spans_position(self.pos) {
@@ -337,7 +337,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         }
     }
 
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy {
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: DeclarationTraversalContext) -> MemberDefaultValueTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
@@ -349,7 +349,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: PropertyTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: DeclarationTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
         self.range_stack.push(n.range());
 
         TraversalPolicy::default_to(true)
@@ -367,7 +367,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, _: PropertyTraversalContext) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, _: DeclarationTraversalContext) {
         self.range_stack.push(n.range());
 
         if n.member().spans_position(self.pos) {

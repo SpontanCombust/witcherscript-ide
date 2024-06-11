@@ -173,7 +173,7 @@ impl SyntaxNodeVisitor for PositionFilter {
 
 
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
         let mut tp = FunctionDeclarationTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -193,11 +193,11 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: DeclarationTraversalContext) {
         self.currently_in_callable_range = false;
     }
     
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
         let mut tp = EventDeclarationTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -217,7 +217,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: DeclarationTraversalContext) {
         self.currently_in_callable_range = false;
     }
 
@@ -228,28 +228,28 @@ impl SyntaxNodeVisitor for PositionFilter {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, _: PropertyTraversalContext) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, _: DeclarationTraversalContext) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy {
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: DeclarationTraversalContext) -> MemberDefaultValueTraversalPolicy {
         let mut tp = MemberDefaultValueTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -265,7 +265,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: PropertyTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: DeclarationTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
         let mut tp = MemberDefaultsBlockTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);

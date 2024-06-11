@@ -38,19 +38,12 @@ pub enum ExpressionTraversalContext {
     TernaryConditionalExpressionAlt,
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PropertyTraversalContext {
+pub enum DeclarationTraversalContext {
+    Global,
     ClassDefinition,
     StateDefinition,
     StructDefinition
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FunctionDeclarationTraversalContext {
-    Global,
-    ClassDefinition,
-    StateDefinition
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

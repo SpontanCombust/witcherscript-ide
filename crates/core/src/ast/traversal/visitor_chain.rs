@@ -142,19 +142,19 @@ impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
 
 
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_member_func_decl(n, ctx))
     }
 
-    fn exit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: PropertyTraversalContext) {
+    fn exit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: DeclarationTraversalContext) {
         self.chain_exit(move |link| link.exit_member_func_decl(n, ctx))
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, ctx: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, ctx: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_event_decl(n, ctx))
     }
 
-    fn exit_event_decl(&mut self, n: &EventDeclarationNode, ctx: PropertyTraversalContext) {
+    fn exit_event_decl(&mut self, n: &EventDeclarationNode, ctx: DeclarationTraversalContext) {
         self.chain_exit(move |link| link.exit_event_decl(n, ctx))
     }
 
@@ -162,31 +162,31 @@ impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
         self.chain_visit(move |link| link.visit_func_param_group(n, ctx))
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: PropertyTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: DeclarationTraversalContext) {
         self.chain_visit(move |link| link.visit_member_var_decl(n, ctx))
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, ctx: PropertyTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, ctx: DeclarationTraversalContext) {
         self.chain_visit(move |link| link.visit_autobind_decl(n, ctx))
     }
 
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy {
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: DeclarationTraversalContext) -> MemberDefaultValueTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_member_default_val(n, ctx))
     }
 
-    fn exit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: PropertyTraversalContext) {
+    fn exit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: DeclarationTraversalContext) {
         self.chain_exit(move |link| link.exit_member_default_val(n, ctx))
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: PropertyTraversalContext) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: DeclarationTraversalContext) {
         self.chain_visit(move |link| link.visit_member_hint(n, ctx))
     }
 
-    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: PropertyTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: DeclarationTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_member_defaults_block(n, ctx))
     }
 
-    fn exit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: PropertyTraversalContext) {
+    fn exit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: DeclarationTraversalContext) {
         self.chain_exit(move |link| link.exit_member_defaults_block(n, ctx))
     }
 

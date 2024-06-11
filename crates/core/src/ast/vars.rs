@@ -148,7 +148,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberVarDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
-    type TraversalCtx = PropertyTraversalContext;
+    type TraversalCtx = DeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         visitor.visit_member_var_decl(self, ctx);

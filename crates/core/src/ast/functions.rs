@@ -65,7 +65,7 @@ impl<'script> TryFrom<AnyNode<'script>> for EventDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for EventDeclarationNode<'_> {
-    type TraversalCtx = PropertyTraversalContext;
+    type TraversalCtx = DeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_event_decl(self, ctx);
@@ -139,10 +139,10 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
-    type TraversalCtx = FunctionDeclarationTraversalContext;
+    type TraversalCtx = DeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        if ctx == FunctionDeclarationTraversalContext::Global {
+        if ctx == DeclarationTraversalContext::Global {
             let tp = visitor.visit_global_func_decl(self);
     
             if tp.traverse_params {
@@ -154,13 +154,7 @@ impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
 
             visitor.exit_global_func_decl(self);
         } else {
-            let func_ctx = if ctx == FunctionDeclarationTraversalContext::ClassDefinition {
-                PropertyTraversalContext::ClassDefinition
-            } else {
-                PropertyTraversalContext::StateDefinition
-            };
-
-            let tp = visitor.visit_member_func_decl(self, func_ctx);
+            let tp = visitor.visit_member_func_decl(self, ctx);
     
             if tp.traverse_params {
                 self.params().accept(visitor, FunctionTraversalContext::MemberFunction);
@@ -169,7 +163,7 @@ impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
                 self.definition().accept(visitor, FunctionTraversalContext::MemberFunction);
             }
 
-            visitor.exit_member_func_decl(self, func_ctx);
+            visitor.exit_member_func_decl(self, ctx);
         }
     }
 }

@@ -315,7 +315,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
         let var_type = n.var_type();
         
         if var_type.spans_position(self.pos) {
@@ -326,7 +326,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
         let name = n.name();
         let autobind_type = n.autobind_type();
 
@@ -338,7 +338,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         }
     }
 
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy {
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: DeclarationTraversalContext) -> MemberDefaultValueTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let member = n.member();
 
@@ -364,7 +364,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, _: PropertyTraversalContext) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, _: DeclarationTraversalContext) {
         let member = n.member();
 
         if member.spans_position(self.pos) {
@@ -389,7 +389,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
@@ -404,7 +404,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let name = n.name();
 

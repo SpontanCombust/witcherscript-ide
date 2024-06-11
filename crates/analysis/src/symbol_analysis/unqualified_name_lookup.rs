@@ -369,7 +369,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
         self.payload.borrow_mut().pop_scope();
     }
 
-    fn visit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
         let mut unl = self.payload.borrow_mut();
         let sympath_ctx = self.sympath_ctx.borrow();
 
@@ -389,11 +389,11 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: DeclarationTraversalContext) {
         self.payload.borrow_mut().pop_scope();
     }
 
-    fn visit_event_decl(&mut self, _: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, _: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
         let mut unl = self.payload.borrow_mut();
         let sympath_ctx = self.sympath_ctx.borrow();
 
@@ -413,7 +413,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: DeclarationTraversalContext) {
         self.payload.borrow_mut().pop_scope();
     }
 

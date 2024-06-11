@@ -118,17 +118,17 @@ pub trait SyntaxNodeVisitor {
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {}
 
     /// Called when visiting member variable (i.e. field) declaration.
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: PropertyTraversalContext) {}
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: DeclarationTraversalContext) {}
 
     /// Called when visiting a statement assigning a default value to a field.
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: DeclarationTraversalContext) -> MemberDefaultValueTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting a statement assigning a default value to a field and possibly also children nodes specified in traversal policy.
-    fn exit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: PropertyTraversalContext) {}
+    fn exit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: DeclarationTraversalContext) {}
 
     /// Called when visiting a `defaults` block.
-    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: PropertyTraversalContext) -> MemberDefaultsBlockTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: DeclarationTraversalContext) -> MemberDefaultsBlockTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visitng a `defaults` block and possibly also children nodes specified in traversal policy.
-    fn exit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: PropertyTraversalContext) {}
+    fn exit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: DeclarationTraversalContext) {}
 
     /// Called when visiting a default value assignment inside a `defaults` block.
     fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) -> MemberDefaultValueTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
@@ -136,10 +136,10 @@ pub trait SyntaxNodeVisitor {
     fn exit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) {}
 
     /// Called when visiting a statement noting some information about a perticular type field.
-    fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: PropertyTraversalContext) {}
+    fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: DeclarationTraversalContext) {}
     
     /// Called when visiting an autobind variable declaration.
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, ctx: PropertyTraversalContext) {}
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, ctx: DeclarationTraversalContext) {}
     
     /// Called when visiting a group of function parameters. This may mean a single parameter or multiple delimited names with common specifiers and a type.
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, ctx: FunctionTraversalContext) {}
@@ -150,14 +150,14 @@ pub trait SyntaxNodeVisitor {
     fn exit_global_func_decl(&mut self, n: &FunctionDeclarationNode) {}
 
     /// Called when visiting a member function declaration (i.e. a method).
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting member function declaration and possibly also children nodes specified in traversal policy.
-    fn exit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: PropertyTraversalContext) {}
+    fn exit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: DeclarationTraversalContext) {}
 
     /// Called when visiting an event function declaration.
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, ctx: PropertyTraversalContext) -> EventDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, ctx: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting member function declaration and possibly also children nodes specified in traversal policy.
-    fn exit_event_decl(&mut self, n: &EventDeclarationNode, ctx: PropertyTraversalContext) {}
+    fn exit_event_decl(&mut self, n: &EventDeclarationNode, ctx: DeclarationTraversalContext) {}
 
 
 

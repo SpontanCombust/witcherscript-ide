@@ -111,6 +111,6 @@ impl SyntaxNodeTraversal for StateBlockNode<'_> {
     type TraversalCtx = ();
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
-        self.iter().for_each(|s| s.accept(visitor, PropertyTraversalContext::StateDefinition));
+        self.iter().for_each(|s| s.accept(visitor, DeclarationTraversalContext::StateDefinition));
     }
 }

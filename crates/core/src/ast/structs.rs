@@ -106,7 +106,7 @@ impl SyntaxNodeTraversal for StructBlockNode<'_> {
     type TraversalCtx = ();
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
-        self.iter().for_each(|s| s.accept(visitor, ()));
+        self.iter().for_each(|s| s.accept(visitor, DeclarationTraversalContext::StructDefinition));
     }
 }
 
@@ -174,10 +174,9 @@ impl<'script> TryFrom<AnyNode<'script>> for StructPropertyNode<'script> {
 }
 
 impl SyntaxNodeTraversal for StructPropertyNode<'_> {
-    type TraversalCtx = ();
+    type TraversalCtx = DeclarationTraversalContext;
 
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
-        let ctx = PropertyTraversalContext::StructDefinition;
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         match self.clone().value() {
             StructProperty::Var(s) => s.accept(visitor, ctx),
             StructProperty::Default(s) => s.accept(visitor, ctx),
@@ -224,7 +223,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockNode<'script> {
 }
 
 impl SyntaxNodeTraversal for MemberDefaultsBlockNode<'_> {
-    type TraversalCtx = PropertyTraversalContext;
+    type TraversalCtx = DeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_member_defaults_block(self, ctx);
@@ -326,7 +325,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultValueNode<'script> {
 }
 
 impl SyntaxNodeTraversal for MemberDefaultValueNode<'_> {
-    type TraversalCtx = PropertyTraversalContext;
+    type TraversalCtx = DeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_member_default_val(self, ctx);
@@ -377,7 +376,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberHintNode<'script> {
 }
 
 impl SyntaxNodeTraversal for MemberHintNode<'_> {
-    type TraversalCtx = PropertyTraversalContext;
+    type TraversalCtx = DeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         visitor.visit_member_hint(self, ctx);

@@ -507,7 +507,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
         let mut traverse = false;
 
         let name_node = n.name();
@@ -595,7 +595,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: DeclarationTraversalContext) {
         // pop only if visit managed to create the symbol
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             self.current_path.pop();
@@ -603,7 +603,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
         let mut traverse = false;
 
         let name_node = n.name();
@@ -629,7 +629,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: DeclarationTraversalContext) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             self.current_path.pop();
             self.current_param_ordinal = 0;
@@ -685,7 +685,11 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: DeclarationTraversalContext) {
+        if ctx == DeclarationTraversalContext::Global {
+            return;
+        }
+
         let mut specifiers = SymbolSpecifiers::new();
         let mut found_access_modif_before = false;
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
@@ -762,7 +766,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
         let name_node = n.name();
         let autobind_name = name_node.value(&self.doc);
         let path = MemberDataSymbolPath::new(&self.current_path, &autobind_name);

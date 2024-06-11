@@ -229,7 +229,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
         if n.has_errors() {
             n.names().for_each(|name| { self.check_identifier(&name); } );
             self.check_type_annot(&n.var_type());
@@ -238,7 +238,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy {
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: DeclarationTraversalContext) -> MemberDefaultValueTraversalPolicy {
         let mut traverse_value = false;
         if n.has_errors() {
             self.check_identifier(&n.member());
@@ -254,7 +254,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, _: PropertyTraversalContext) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, _: DeclarationTraversalContext) {
         if n.has_errors() {
             self.check_identifier(&n.member());
             self.check_missing(&n.value(), "hint string");
@@ -263,7 +263,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
         if n.has_errors() {
             self.check_identifier(&n.name());
             self.check_type_annot(&n.autobind_type());
@@ -311,7 +311,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: PropertyTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
         let mut traverse_params = false;
         let mut traverse_definition = false;
         if n.has_errors() {
@@ -344,7 +344,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
         let mut traverse_params = false;
         let mut traverse_definition = false;
         if n.has_errors() {
@@ -377,7 +377,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: PropertyTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: DeclarationTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
         let traverse = if n.has_errors() {
             self.check_errors(n);
             true
