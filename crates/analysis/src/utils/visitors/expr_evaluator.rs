@@ -227,8 +227,8 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
         }
     }
 
-    fn exit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, ctx: ExpressionTraversalContext) {
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::MemberFieldExpressionAccessor).unwrap_or(false) {
+    fn exit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: ExpressionTraversalContext) {
+        if self.top().map(|e| e.ctx == ExpressionTraversalContext::MemberAccessExpressionAccessor).unwrap_or(false) {
             let accessor_path = self.pop().unwrap().path;
   
             let member = n.member().value(self.doc);

@@ -381,7 +381,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
 
 
 
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
@@ -509,7 +509,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, _: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
+    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, _: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {

@@ -431,7 +431,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
 
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let var_type = n.var_type();
 
@@ -472,7 +472,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         self.found_expression_ident(n, n.clone().into(), Some(cx));
     }
 
-    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, cx: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
+    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, cx: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let member = n.member();
 

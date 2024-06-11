@@ -200,11 +200,11 @@ impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
 
 
 
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, ctx: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, ctx: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_local_var_decl_stmt(n, ctx))
     }
 
-    fn exit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, ctx: StatementTraversalContext) {
+    fn exit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, ctx: StatementTraversalContext) {
         self.chain_exit(move |link| link.exit_local_var_decl_stmt(n, ctx))
     }
 
@@ -338,12 +338,12 @@ impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
         self.chain_exit(move |link| link.exit_unary_op_expr(n, ctx))
     }
 
-    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, ctx: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
-        self.chain_visit_traversable(move |link| link.visit_member_field_expr(n, ctx))
+    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
+        self.chain_visit_traversable(move |link| link.visit_member_access_expr(n, ctx))
     }
 
-    fn exit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, ctx: ExpressionTraversalContext) {
-        self.chain_exit(move |link| link.exit_member_field_expr(n, ctx))
+    fn exit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: ExpressionTraversalContext) {
+        self.chain_exit(move |link| link.exit_member_access_expr(n, ctx))
     }
 
     fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, ctx: ExpressionTraversalContext) -> TypeCastExpressionTraversalPolicy {

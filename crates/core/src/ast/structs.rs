@@ -16,7 +16,7 @@ mod tags {
 pub type StructDeclarationNode<'script> = SyntaxNode<'script, tags::StructDeclaration>;
 
 impl NamedSyntaxNode for StructDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "struct_decl_stmt";
+    const NODE_KIND: &'static str = "struct_decl";
 }
 
 impl<'script> StructDeclarationNode<'script> {
@@ -72,11 +72,11 @@ impl SyntaxNodeTraversal for StructDeclarationNode<'_> {
 pub type StructBlockNode<'script> = SyntaxNode<'script, tags::StructBlock>;
 
 impl NamedSyntaxNode for StructBlockNode<'_> {
-    const NODE_KIND: &'static str = "struct_block";
+    const NODE_KIND: &'static str = "struct_def";
 }
 
 impl<'script> StructBlockNode<'script> {
-    pub fn iter(&self) -> impl Iterator<Item = StructStatementNode> {
+    pub fn iter(&self) -> impl Iterator<Item = StructPropertyNode> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -113,7 +113,7 @@ impl SyntaxNodeTraversal for StructBlockNode<'_> {
 
 
 #[derive(Clone)]
-pub enum StructStatement<'script> {
+pub enum StructProperty<'script> {
     Var(MemberVarDeclarationNode<'script>),
     Default(MemberDefaultValueNode<'script>),
     DefaultsBlock(MemberDefaultsBlockNode<'script>),
@@ -121,7 +121,7 @@ pub enum StructStatement<'script> {
     Nop(NopNode<'script>)
 }
 
-impl Debug for StructStatement<'_> {
+impl Debug for StructProperty<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Var(n) => f.debug_maybe_alternate(n),
@@ -133,28 +133,28 @@ impl Debug for StructStatement<'_> {
     }
 }
 
-pub type StructStatementNode<'script> = SyntaxNode<'script, StructStatement<'script>>;
+pub type StructPropertyNode<'script> = SyntaxNode<'script, StructProperty<'script>>;
 
-impl<'script> StructStatementNode<'script> {
-    pub fn value(self) -> StructStatement<'script> {
+impl<'script> StructPropertyNode<'script> {
+    pub fn value(self) -> StructProperty<'script> {
         match self.tree_node.kind() {
-            MemberVarDeclarationNode::NODE_KIND => StructStatement::Var(self.into()),
-            MemberDefaultValueNode::NODE_KIND => StructStatement::Default(self.into()),
-            MemberDefaultsBlockNode::NODE_KIND => StructStatement::DefaultsBlock(self.into()),
-            MemberHintNode::NODE_KIND => StructStatement::Hint(self.into()),
-            NopNode::NODE_KIND => StructStatement::Nop(self.into()),
-            _ => panic!("Unknown struct statement type: {} {}", self.tree_node.kind(), self.range().debug())
+            MemberVarDeclarationNode::NODE_KIND => StructProperty::Var(self.into()),
+            MemberDefaultValueNode::NODE_KIND => StructProperty::Default(self.into()),
+            MemberDefaultsBlockNode::NODE_KIND => StructProperty::DefaultsBlock(self.into()),
+            MemberHintNode::NODE_KIND => StructProperty::Hint(self.into()),
+            NopNode::NODE_KIND => StructProperty::Nop(self.into()),
+            _ => panic!("Unknown struct property type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
 
-impl Debug for StructStatementNode<'_> {
+impl Debug for StructPropertyNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_maybe_alternate(&self.clone().value())
     }
 }
 
-impl<'script> TryFrom<AnyNode<'script>> for StructStatementNode<'script> {
+impl<'script> TryFrom<AnyNode<'script>> for StructPropertyNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
@@ -173,17 +173,17 @@ impl<'script> TryFrom<AnyNode<'script>> for StructStatementNode<'script> {
     }
 }
 
-impl SyntaxNodeTraversal for StructStatementNode<'_> {
+impl SyntaxNodeTraversal for StructPropertyNode<'_> {
     type TraversalCtx = ();
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
         let ctx = PropertyTraversalContext::StructDefinition;
         match self.clone().value() {
-            StructStatement::Var(s) => s.accept(visitor, ctx),
-            StructStatement::Default(s) => s.accept(visitor, ctx),
-            StructStatement::DefaultsBlock(s) => s.accept(visitor, ctx),
-            StructStatement::Hint(s) => s.accept(visitor, ctx),
-            StructStatement::Nop(_) => {},
+            StructProperty::Var(s) => s.accept(visitor, ctx),
+            StructProperty::Default(s) => s.accept(visitor, ctx),
+            StructProperty::DefaultsBlock(s) => s.accept(visitor, ctx),
+            StructProperty::Hint(s) => s.accept(visitor, ctx),
+            StructProperty::Nop(_) => {},
         }
     }
 }
@@ -193,7 +193,7 @@ impl SyntaxNodeTraversal for StructStatementNode<'_> {
 pub type MemberDefaultsBlockNode<'script> = SyntaxNode<'script, tags::MemberDefaultsBlock>;
 
 impl NamedSyntaxNode for MemberDefaultsBlockNode<'_> {
-    const NODE_KIND: &'static str = "member_defaults_block_stmt";
+    const NODE_KIND: &'static str = "member_default_val_block";
 }
 
 impl<'script> MemberDefaultsBlockNode<'script> {
@@ -240,7 +240,7 @@ impl SyntaxNodeTraversal for MemberDefaultsBlockNode<'_> {
 pub type MemberDefaultsBlockAssignmentNode<'script> = SyntaxNode<'script, tags::MemberDefaultsBlockAssignment>;
 
 impl NamedSyntaxNode for MemberDefaultsBlockAssignmentNode<'_> {
-    const NODE_KIND: &'static str = "member_defaults_block_assign";
+    const NODE_KIND: &'static str = "member_default_val_block_assign";
 }
 
 impl<'script> MemberDefaultsBlockAssignmentNode<'script> {
@@ -291,7 +291,7 @@ impl SyntaxNodeTraversal for MemberDefaultsBlockAssignmentNode<'_> {
 pub type MemberDefaultValueNode<'script> = SyntaxNode<'script, tags::MemberDefaultValue>;
 
 impl NamedSyntaxNode for MemberDefaultValueNode<'_> {
-    const NODE_KIND: &'static str = "member_default_val_stmt";
+    const NODE_KIND: &'static str = "member_default_val";
 }
 
 impl<'script> MemberDefaultValueNode<'script> {
@@ -342,7 +342,7 @@ impl SyntaxNodeTraversal for MemberDefaultValueNode<'_> {
 pub type MemberHintNode<'script> = SyntaxNode<'script, tags::MemberHint>;
 
 impl NamedSyntaxNode for MemberHintNode<'_> {
-    const NODE_KIND: &'static str = "member_hint_stmt";
+    const NODE_KIND: &'static str = "member_hint";
 }
 
 impl<'script> MemberHintNode<'script> {

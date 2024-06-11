@@ -295,7 +295,7 @@ impl SyntaxNodeVisitor for PositionFilter {
 
 
 
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
         let mut tp = VarDeclarationTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -645,7 +645,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, _: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
+    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, _: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
         let mut tp = MemberFieldExpressionTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);

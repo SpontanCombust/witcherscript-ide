@@ -55,9 +55,9 @@ pub trait SyntaxNodeVisitor {
     fn exit_array_expr(&mut self, n: &ArrayExpressionNode, ctx: ExpressionTraversalContext) {}
 
     /// Called when visiting an expression of accessing a field in an object.
-    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, ctx: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting an expression of accessing a field in an object and possibly also children nodes specified in traversal policy.
-    fn exit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, ctx: ExpressionTraversalContext) {}
+    fn exit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: ExpressionTraversalContext) {}
 
     /// Called when visiting an instantiation expression.
     fn visit_new_expr(&mut self, n: &NewExpressionNode, ctx: ExpressionTraversalContext) -> NewExpressionTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
@@ -163,9 +163,9 @@ pub trait SyntaxNodeVisitor {
 
 
     /// Called when visiting a local variable declaration inside a function.
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, ctx: StatementTraversalContext) -> VarDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, ctx: StatementTraversalContext) -> VarDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting a local variable declaration and possibly also children nodes specified in traversal policy.
-    fn exit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, ctx: StatementTraversalContext) {}
+    fn exit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, ctx: StatementTraversalContext) {}
 
     /// Called when visiting an expression statement inside a function.
     fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode, ctx: StatementTraversalContext) -> ExpressionStatementTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }

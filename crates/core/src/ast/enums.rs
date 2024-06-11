@@ -13,7 +13,7 @@ mod tags {
 pub type EnumDeclarationNode<'script> = SyntaxNode<'script, tags::EnumDeclaration>;
 
 impl NamedSyntaxNode for EnumDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "enum_decl_stmt";
+    const NODE_KIND: &'static str = "enum_decl";
 }
 
 impl<'script> EnumDeclarationNode<'script> {
@@ -64,7 +64,7 @@ impl SyntaxNodeTraversal for EnumDeclarationNode<'_> {
 pub type EnumBlockNode<'script> = SyntaxNode<'script, tags::EnumBlock>;
 
 impl NamedSyntaxNode for EnumBlockNode<'_> {
-    const NODE_KIND: &'static str = "enum_block";
+    const NODE_KIND: &'static str = "enum_def";
 }
 
 impl<'script> EnumBlockNode<'script> {

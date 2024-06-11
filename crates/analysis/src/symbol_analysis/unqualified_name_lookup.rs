@@ -417,7 +417,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
         self.payload.borrow_mut().pop_scope();
     }
 
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
         let mut unl = self.payload.borrow_mut();
         let sympath_ctx = self.sympath_ctx.borrow();
 

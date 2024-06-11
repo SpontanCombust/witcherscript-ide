@@ -420,7 +420,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
         let mut traverse_init_value = false;
         if n.has_errors() {
             n.names().for_each(|name| { self.check_identifier(&name); } );
@@ -683,7 +683,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, _: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
+    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, _: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
         let traverse_accessor = !self.check_expression(&n.accessor());
         self.check_identifier(&n.member());
 

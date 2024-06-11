@@ -5,7 +5,7 @@ use super::*;
 
 mod tags {
     pub struct TypeAnnotation;
-    pub struct VarDeclaration;
+    pub struct LocalVarDeclaration;
     pub struct MemberVarDeclaration;
 }
 
@@ -49,13 +49,13 @@ impl<'script> TryFrom<AnyNode<'script>> for TypeAnnotationNode<'script> {
 
 
 
-pub type VarDeclarationNode<'script> = SyntaxNode<'script, tags::VarDeclaration>;
+pub type LocalVarDeclarationNode<'script> = SyntaxNode<'script, tags::LocalVarDeclaration>;
 
-impl NamedSyntaxNode for VarDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "var_decl_stmt";
+impl NamedSyntaxNode for LocalVarDeclarationNode<'_> {
+    const NODE_KIND: &'static str = "local_var_decl_stmt";
 }
 
-impl<'script> VarDeclarationNode<'script> {
+impl<'script> LocalVarDeclarationNode<'script> {
     pub fn names(&self) -> impl Iterator<Item = IdentifierNode<'script>> {
         self.field_children("names").map(|n| n.into())
     }
@@ -69,9 +69,9 @@ impl<'script> VarDeclarationNode<'script> {
     }
 }
 
-impl Debug for VarDeclarationNode<'_> {
+impl Debug for LocalVarDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("VarDeclaration {}", self.range().debug()))
+        f.debug_struct(&format!("LocalVarDeclaration {}", self.range().debug()))
             .field("names", &self.names().collect::<Vec<_>>())
             .field("var_type", &self.var_type())
             .field("init_value", &self.init_value())
@@ -79,7 +79,7 @@ impl Debug for VarDeclarationNode<'_> {
     }
 }
 
-impl<'script> TryFrom<AnyNode<'script>> for VarDeclarationNode<'script> {
+impl<'script> TryFrom<AnyNode<'script>> for LocalVarDeclarationNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
@@ -91,13 +91,13 @@ impl<'script> TryFrom<AnyNode<'script>> for VarDeclarationNode<'script> {
     }
 }
 
-impl SyntaxNodeTraversal for VarDeclarationNode<'_> {
+impl SyntaxNodeTraversal for LocalVarDeclarationNode<'_> {
     type TraversalCtx = StatementTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_local_var_decl_stmt(self, ctx);
         if tp.traverse_init_value {
-            self.init_value().map(|init_value| init_value.accept(visitor, ExpressionTraversalContext::VarDeclarationInitValue));
+            self.init_value().map(|init_value| init_value.accept(visitor, ExpressionTraversalContext::LocalVarDeclarationInitValue));
         }
         visitor.exit_local_var_decl_stmt(self, ctx);
     }
@@ -108,7 +108,7 @@ impl SyntaxNodeTraversal for VarDeclarationNode<'_> {
 pub type MemberVarDeclarationNode<'script> = SyntaxNode<'script, tags::MemberVarDeclaration>;
 
 impl NamedSyntaxNode for MemberVarDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "member_var_decl_stmt";
+    const NODE_KIND: &'static str = "member_var_decl";
 }
 
 impl<'script> MemberVarDeclarationNode<'script> {

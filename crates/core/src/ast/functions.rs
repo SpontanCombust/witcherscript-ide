@@ -20,7 +20,7 @@ mod tags {
 pub type EventDeclarationNode<'script> = SyntaxNode<'script, tags::EventDeclaration>;
 
 impl NamedSyntaxNode for EventDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "event_decl_stmt";
+    const NODE_KIND: &'static str = "event_decl";
 }
 
 impl<'script> EventDeclarationNode<'script> {
@@ -240,7 +240,7 @@ impl SyntaxNodeTraversal for FunctionDefinitionNode<'_> {
 pub type FunctionBlockNode<'script> = SyntaxNode<'script, tags::FunctionBlock>;
 
 impl NamedSyntaxNode for FunctionBlockNode<'_> {
-    const NODE_KIND: &'static str = "func_block";
+    const NODE_KIND: &'static str = "func_def";
 }
 
 impl<'script> FunctionBlockNode<'script> {
@@ -383,7 +383,7 @@ impl SyntaxNodeTraversal for FunctionParameterGroupNode<'_> {
 
 #[derive(Clone)]
 pub enum FunctionStatement<'script> {
-    Var(VarDeclarationNode<'script>),
+    Var(LocalVarDeclarationNode<'script>),
     Expr(ExpressionStatementNode<'script>),
     For(ForLoopNode<'script>),
     While(WhileLoopNode<'script>),
@@ -423,7 +423,7 @@ pub type FunctionStatementNode<'script> = SyntaxNode<'script, FunctionStatement<
 impl<'script> FunctionStatementNode<'script> {
     pub fn value(self) -> FunctionStatement<'script> {
         match self.tree_node.kind() {
-            VarDeclarationNode::NODE_KIND => FunctionStatement::Var(self.into()),
+            LocalVarDeclarationNode::NODE_KIND => FunctionStatement::Var(self.into()),
             ExpressionStatementNode::NODE_KIND => FunctionStatement::Expr(self.into()),
             ForLoopNode::NODE_KIND => FunctionStatement::For(self.into()),
             WhileLoopNode::NODE_KIND => FunctionStatement::While(self.into()),
@@ -456,7 +456,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionStatementNode<'script> {
         }
 
         match value.tree_node.kind() {
-            VarDeclarationNode::NODE_KIND       |
+            LocalVarDeclarationNode::NODE_KIND       |
             ExpressionStatementNode::NODE_KIND  |
             ForLoopNode::NODE_KIND              |
             WhileLoopNode::NODE_KIND            |
@@ -665,7 +665,7 @@ impl SyntaxNodeTraversal for DeleteStatementNode<'_> {
 pub type CompoundStatementNode<'script> = SyntaxNode<'script, tags::CompoundStatement>;
 
 impl NamedSyntaxNode for CompoundStatementNode<'_> {
-    const NODE_KIND: &'static str = "func_block";
+    const NODE_KIND: &'static str = "compound_stmt";
 }
 
 impl<'script> CompoundStatementNode<'script> {

@@ -12,7 +12,7 @@ mod tags {
 pub type StateDeclarationNode<'script> = SyntaxNode<'script, tags::StateDeclaration>;
 
 impl NamedSyntaxNode for StateDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "state_decl_stmt";
+    const NODE_KIND: &'static str = "state_decl";
 }
 
 impl<'script> StateDeclarationNode<'script> {
@@ -77,11 +77,11 @@ impl SyntaxNodeTraversal for StateDeclarationNode<'_> {
 pub type StateBlockNode<'script> = SyntaxNode<'script, tags::StateBlock>;
 
 impl NamedSyntaxNode for StateBlockNode<'_> {
-    const NODE_KIND: &'static str = "class_block";
+    const NODE_KIND: &'static str = "state_def";
 }
 
 impl<'script> StateBlockNode<'script> {
-    pub fn iter(&self) -> impl Iterator<Item = ClassStatementNode<'script>> {
+    pub fn iter(&self) -> impl Iterator<Item = ClassPropertyNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }

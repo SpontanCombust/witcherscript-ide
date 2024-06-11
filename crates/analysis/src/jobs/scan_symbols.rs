@@ -819,7 +819,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
 
 
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
         let type_path = self.check_type_from_type_annot(n.var_type());
     
         for name_node in n.names() {
