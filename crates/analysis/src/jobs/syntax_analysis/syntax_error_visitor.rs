@@ -79,6 +79,16 @@ impl SyntaxErrorVisitor<'_> {
         }
     }
 
+    #[inline]
+    fn check_annotation(&mut self, n: &AnnotationNode) -> bool {
+        if n.has_errors() {
+            self.check_errors(n);
+            false
+        } else {
+            true
+        }
+    }
+
     fn check_errors<T>(&mut self, n: &SyntaxNode<'_, T>) {
         let errors = n.errors();
         if errors.is_empty() {
@@ -229,8 +239,25 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+        if n.has_errors() {
+            if let Some(annot) = n.annotation() {
+                self.check_annotation(&annot);
+            }
+
+            n.names().for_each(|name| { self.check_identifier(&name); } );
+            self.check_type_annot(&n.var_type());
+    
+            self.check_errors(n);
+        }
+    }
+
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
         if n.has_errors() {
+            if let Some(annot) = n.annotation() {
+                self.check_annotation(&annot);
+            }
+
             n.names().for_each(|name| { self.check_identifier(&name); } );
             self.check_type_annot(&n.var_type());
     
@@ -285,6 +312,10 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         let mut traverse_params = false;
         let mut traverse_definition = false;
         if n.has_errors() {
+            if let Some(annot) = n.annotation() {
+                self.check_annotation(&annot);
+            }
+
             self.check_identifier(&n.name());
             n.return_type().map(|n| self.check_type_annot(&n));
     
@@ -315,6 +346,10 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         let mut traverse_params = false;
         let mut traverse_definition = false;
         if n.has_errors() {
+            if let Some(annot) = n.annotation() {
+                self.check_annotation(&annot);
+            }
+            
             self.check_identifier(&n.name());
     
             if let Some(ret) = n.return_type() {

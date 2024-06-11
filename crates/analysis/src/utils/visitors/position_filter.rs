@@ -170,6 +170,13 @@ impl SyntaxNodeVisitor for PositionFilter {
         self.currently_in_callable_range = false;
     }
 
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+        self.currently_in_range = n.spans_position(self.pos);
+        if self.currently_in_range {
+            self.payload.borrow_mut().done = true;
+        }
+    }
+
 
 
 

@@ -117,6 +117,11 @@ pub trait SyntaxNodeVisitor {
     /// Called when visiting enum variant's declaration.
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {}
 
+    /// Called when visiting a variable declaration in the global scope.
+    /// THIS IS NOT LEGAL SYNTAX BY ITSELF.
+    /// It it allowed here purely to be able to parse @addField variables.
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {}
+
     /// Called when visiting member variable (i.e. field) declaration.
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: DeclarationTraversalContext) {}
 

@@ -99,6 +99,8 @@ impl SyntaxNodeVisitor for SymbolPathBuilder<'_> {
         let name = n.name().value(self.doc);
         self.payload.borrow_mut().current_sympath = GlobalCallableSymbolPath::new(&name).into();
         TraversalPolicy::default_to(true)
+
+        //TODO handle annotated functions
     }
 
     fn exit_global_func_decl(&mut self, _: &FunctionDeclarationNode) {

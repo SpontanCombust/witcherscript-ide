@@ -88,6 +88,10 @@ impl NamedSyntaxNode for FunctionDeclarationNode<'_> {
 }
 
 impl<'script> FunctionDeclarationNode<'script> {
+    pub fn annotation(&self) -> Option<AnnotationNode<'script>> {
+        self.field_child("annotation").map(|n| n.into())
+    }
+
     pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
@@ -116,6 +120,7 @@ impl<'script> FunctionDeclarationNode<'script> {
 impl Debug for FunctionDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct(&format!("FunctionDeclaration {}", self.range().debug()))
+            .field("annotation", &self.annotation())
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("flavour", &self.flavour())
             .field("name", &self.name())

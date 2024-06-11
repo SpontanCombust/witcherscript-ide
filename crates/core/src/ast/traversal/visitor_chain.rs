@@ -140,6 +140,10 @@ impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
         self.chain_exit(move |link| link.exit_global_func_decl(n))
     }
 
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+        self.chain_visit(move |link| link.visit_global_var_decl(n))
+    }
+
 
 
     fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {

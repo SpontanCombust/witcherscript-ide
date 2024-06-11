@@ -351,6 +351,8 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         unl.push_scope();
 
+        //TODO handle annotated functions
+
         if let Some((func_symtab, func_symvar)) = self.symtab_marcher.get_symbol_with_containing_table(&sympath_ctx.current_sympath) {
             if let Some(func) = func_symvar.try_as_global_func_ref() {
                 for ch in func_symtab.get_symbol_children_filtered(func) {

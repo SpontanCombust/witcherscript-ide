@@ -315,6 +315,10 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         }
     }
 
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+        //TODO handle annotated var
+    }
+
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
         let var_type = n.var_type();
         
@@ -375,6 +379,8 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
 
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
+        //TODO handle annotated functions
+
         if self.pos_filter_payload.borrow().done {
             let name = n.name();
 

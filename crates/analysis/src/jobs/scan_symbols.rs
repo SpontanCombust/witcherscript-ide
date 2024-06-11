@@ -507,6 +507,10 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+        //TODO handle annotated symbols
+    }
+
     fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
         let mut traverse = false;
 
