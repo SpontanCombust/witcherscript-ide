@@ -1,7 +1,7 @@
 use abs_path::AbsPath;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
-use witcherscript::tokens::Keyword;
+use witcherscript::{ast::AnnotationKind, tokens::Keyword};
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbol_table::iter::*;
 use witcherscript_analysis::symbol_analysis::symbol_table::marcher::SymbolTableMarcher;
@@ -727,31 +727,244 @@ impl RenderTooltip for VirtualParentVarSymbol {
 }
 
 impl RenderTooltip for AddedMemberFunctionSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
-        todo!()
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
+        buf.push_str(AnnotationKind::AddMethod.as_ref());
+        buf.push('(');
+        buf.push_str(&self.path().parent().unwrap_or_default().to_string());
+        buf.push(')');
+        buf.push('\n');
+
+        for spec in self.specifiers.iter() {
+            let kw: Keyword = spec.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        if let Some(flavour) = self.flavour.clone() {
+            let kw: Keyword = flavour.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        buf.push_str(Keyword::Function.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+
+        buf.push('(');
+
+        let mut params = symtab
+            .get_symbol_children_filtered(self)
+            .filter_map(|ch| {
+                if let CallableSymbolChild::Param(param) = ch {
+                    Some(param)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
+
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
+            param.render_partial(buf);
+        }
+        for param in params_iter {
+            buf.push_str(", ");
+            param.render_partial(buf);
+        }
+        
+        buf.push(')');
+
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.return_type_name()); 
     }
 }
 
 impl RenderTooltip for ReplacedMemberFunctionSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
-        todo!()
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
+        buf.push_str(AnnotationKind::ReplaceMethod.as_ref());
+        buf.push('(');
+        buf.push_str(&self.path().parent().unwrap_or_default().to_string());
+        buf.push(')');
+        buf.push('\n');
+
+        for spec in self.specifiers.iter() {
+            let kw: Keyword = spec.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        if let Some(flavour) = self.flavour.clone() {
+            let kw: Keyword = flavour.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        buf.push_str(Keyword::Function.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+
+        buf.push('(');
+
+        let mut params = symtab
+            .get_symbol_children_filtered(self)
+            .filter_map(|ch| {
+                if let CallableSymbolChild::Param(param) = ch {
+                    Some(param)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
+
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
+            param.render_partial(buf);
+        }
+        for param in params_iter {
+            buf.push_str(", ");
+            param.render_partial(buf);
+        }
+        
+        buf.push(')');
+
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.return_type_name()); 
     }
 }
 
 impl RenderTooltip for ReplacedGlobalFunctionSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
-        todo!()
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
+        buf.push_str(AnnotationKind::ReplaceMethod.as_ref());
+        buf.push('\n');
+
+        for spec in self.specifiers.iter() {
+            let kw: Keyword = spec.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        if let Some(flavour) = self.flavour.clone() {
+            let kw: Keyword = flavour.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        buf.push_str(Keyword::Function.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+
+        buf.push('(');
+
+        let mut params = symtab
+            .get_symbol_children_filtered(self)
+            .filter_map(|ch| {
+                if let CallableSymbolChild::Param(param) = ch {
+                    Some(param)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
+
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
+            param.render_partial(buf);
+        }
+        for param in params_iter {
+            buf.push_str(", ");
+            param.render_partial(buf);
+        }
+        
+        buf.push(')');
+
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.return_type_name()); 
     }
 }
 
 impl RenderTooltip for WrappedMemberFunctionSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
-        todo!()
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
+        buf.push_str(AnnotationKind::WrapMethod.as_ref());
+        buf.push('(');
+        buf.push_str(&self.path().parent().unwrap_or_default().to_string());
+        buf.push(')');
+        buf.push('\n');
+
+        // when wrapping functions you don't put any specifiers before `function`
+
+        buf.push_str(Keyword::Function.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+
+        buf.push('(');
+
+        let mut params = symtab
+            .get_symbol_children_filtered(self)
+            .filter_map(|ch| {
+                if let CallableSymbolChild::Param(param) = ch {
+                    Some(param)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
+
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
+            param.render_partial(buf);
+        }
+        for param in params_iter {
+            buf.push_str(", ");
+            param.render_partial(buf);
+        }
+        
+        buf.push(')');
+
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.return_type_name()); 
     }
 }
 
 impl RenderTooltip for AddedMemberVarSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
-        todo!()
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
+        buf.push_str(AnnotationKind::AddField.as_ref());
+        buf.push('(');
+        buf.push_str(&self.path().parent().unwrap_or_default().to_string());
+        buf.push(')');
+        buf.push('\n');
+
+        for spec in self.specifiers.iter() {
+            let kw: Keyword = spec.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        buf.push_str(Keyword::Var.as_ref());
+        buf.push(' ');
+        buf.push_str(self.name());
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.type_name());
     }
 }

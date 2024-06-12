@@ -114,6 +114,12 @@ impl<'a> SymbolTableMarcher<'a> {
         StateHierarchy::new(self.clone(), state_path)
     }
 
+    /// Iterate over replace/wrap annotation symbols.
+    #[inline]
+    pub fn annotation_chain(&self, annotated_sympath: &SymbolPath) -> AnnotationChain<'a> {
+        AnnotationChain::new(self.clone(), annotated_sympath)
+    }
+
 
     fn march<T, F>(&self, mut f: F) -> Option<T> 
     where F: FnMut(&MaskedSymbolTable<'a>) -> Option<T> {
@@ -292,5 +298,43 @@ impl<'a> Iterator for StateHierarchy<'a> {
         } else {
             None
         }
+    }
+}
+
+
+
+pub struct AnnotationChain<'a> {
+    sympath: SymbolPathBuf,
+    symtabs: Vec<MaskedSymbolTable<'a>>,
+    idx: usize,
+}
+
+impl<'a> AnnotationChain<'a> {
+    fn new(marcher: SymbolTableMarcher<'a>, path: &SymbolPath) -> Self {
+        Self {
+            sympath: path.to_owned(),
+            symtabs: marcher.inner,
+            idx: 0
+        }
+    }
+}
+
+impl<'a> Iterator for AnnotationChain<'a> {
+    type Item = &'a SymbolVariant;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.idx < self.symtabs.len() {
+            let symvar = self.symtabs[self.idx]
+                .get_symbol(&self.sympath)
+                .filter(|symvar| symvar.is_replaced_member_func() || symvar.is_replaced_global_func() || symvar.is_wrapped_member_func());
+
+            self.idx += 1;
+
+            if symvar.is_some() {
+                return symvar;
+            }
+        }
+
+        None
     }
 }

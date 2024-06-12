@@ -410,35 +410,35 @@ impl ToDocumentSymbol for ConstructorSymbol {
 impl ToDocumentSymbol for AddedMemberFunctionSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        todo!()
+        self.inner.to_doc_sym()
     }
 }
 
 impl ToDocumentSymbol for ReplacedMemberFunctionSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        todo!()
+        self.inner.to_doc_sym()
     }
 }
 
 impl ToDocumentSymbol for ReplacedGlobalFunctionSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        todo!()
+        self.inner.to_doc_sym()
     }
 }
 
 impl ToDocumentSymbol for WrappedMemberFunctionSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        todo!()
+        self.inner.to_doc_sym()
     }
 }
 
 impl ToDocumentSymbol for AddedMemberVarSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        todo!()
+        self.inner.to_doc_sym()
     }
 }
 

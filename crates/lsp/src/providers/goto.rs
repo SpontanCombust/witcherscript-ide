@@ -116,6 +116,16 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
                     }
                 }
             }
+            else if symvar.is_replaced_global_func() || symvar.is_replaced_member_func() || symvar.is_wrapped_member_func() {
+                let sympath = symvar.path();
+
+                let symtabs = backend.symtabs.read().await;
+                let symtabs_marcher = backend.march_symbol_tables(&symtabs, &content_path).await;
+
+                if let Some(first_loc) = symtabs_marcher.annotation_chain(&sympath).last().and_then(|v| v.location()) {
+                    *loc = first_loc.to_owned();
+                }
+            }
         }
 
         let target_uri = loc.as_ref()

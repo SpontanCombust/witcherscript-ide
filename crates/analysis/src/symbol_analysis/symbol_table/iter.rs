@@ -177,6 +177,21 @@ impl<'a> ChildrenSymbolsFilter<'a> for ArrayTypeFunctionSymbol {
     type ChildRef = &'a ArrayTypeFunctionParameterSymbol;
 }
 
+impl<'a> ChildrenSymbolsFilter<'a> for AddedMemberFunctionSymbol {
+    type ChildRef = CallableSymbolChild<'a>;
+}
+
+impl<'a> ChildrenSymbolsFilter<'a> for ReplacedMemberFunctionSymbol {
+    type ChildRef = CallableSymbolChild<'a>;
+}
+
+impl<'a> ChildrenSymbolsFilter<'a> for ReplacedGlobalFunctionSymbol {
+    type ChildRef = CallableSymbolChild<'a>;
+}
+
+impl<'a> ChildrenSymbolsFilter<'a> for WrappedMemberFunctionSymbol {
+    type ChildRef = CallableSymbolChild<'a>;
+}
 
 
 
