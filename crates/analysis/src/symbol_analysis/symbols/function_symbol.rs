@@ -3,6 +3,9 @@ use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
+pub const DEFAULT_FUNCTION_RETURN_TYPE_NAME: &'static str = "void";
+
+
 #[derive(Debug, Clone)]
 pub struct GlobalFunctionSymbol {
     path: GlobalCallableSymbolPath,
@@ -33,8 +36,6 @@ impl PrimarySymbol for GlobalFunctionSymbol {
 }
 
 impl GlobalFunctionSymbol {
-    pub const DEFAULT_RETURN_TYPE_NAME: &'static str = "void";
-
     pub fn new(path: GlobalCallableSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
@@ -78,8 +79,6 @@ impl LocatableSymbol for MemberFunctionSymbol {
 }
 
 impl MemberFunctionSymbol {
-    pub const DEFAULT_RETURN_TYPE_NAME: &'static str = "void";
-
     pub fn new(path: MemberCallableSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,

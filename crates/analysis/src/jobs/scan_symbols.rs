@@ -398,7 +398,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             sym.return_type_path = if let Some(ret_typn) = n.return_type() {
                 self.check_type_from_type_annot(ret_typn)
             } else {
-                TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new(GlobalFunctionSymbol::DEFAULT_RETURN_TYPE_NAME))
+                TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new(DEFAULT_FUNCTION_RETURN_TYPE_NAME))
             };
 
             sym.path().clone_into(&mut self.current_path);
@@ -450,7 +450,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             sym.return_type_path = if let Some(ret_typn) = n.return_type() {
                 self.check_type_from_type_annot(ret_typn)
             } else {
-                TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new(MemberFunctionSymbol::DEFAULT_RETURN_TYPE_NAME))
+                TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new(DEFAULT_FUNCTION_RETURN_TYPE_NAME))
             };
 
             sym.path().clone_into(&mut self.current_path);
