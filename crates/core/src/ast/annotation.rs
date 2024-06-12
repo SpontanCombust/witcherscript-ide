@@ -19,6 +19,26 @@ pub enum AnnotationKind {
     WrapMethod
 }
 
+impl AnnotationKind {
+    pub fn requires_arg(&self) -> bool {
+        match self {
+            AnnotationKind::AddMethod => true,
+            AnnotationKind::AddField => true,
+            AnnotationKind::ReplaceMethod => false,
+            AnnotationKind::WrapMethod => true,
+        }
+    }
+
+    pub fn arg_type(&self) -> Option<&'static str> {
+        match self {
+            AnnotationKind::AddMethod => Some("a class identifier"),
+            AnnotationKind::AddField => Some("a class identifier"),
+            AnnotationKind::ReplaceMethod => Some("a class identifier"),
+            AnnotationKind::WrapMethod => Some("a class identifier"),
+        }
+    }
+}
+
 pub const WRAPPED_METHOD_NAME: &'static str = "wrappedMethod";
 
 

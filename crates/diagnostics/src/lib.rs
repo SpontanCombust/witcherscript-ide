@@ -81,7 +81,15 @@ pub enum DiagnosticKind {
     },
     RepeatedSpecifier,
     MultipleAccessModifiers,
-    //TODO annotation check diagnostics
+    InvalidAnnotation,
+    InvalidAnnotationPlacement,
+    MissingAnnotationArgument {
+        missing: String
+    },
+    IncompatibleAnnotation {
+        expected_sym: String
+    },
+    GlobalScopeVarDecl,
 
     // symbol anaysis
     SymbolNameTaken {
@@ -125,7 +133,12 @@ impl DiagnosticKind {
             IncompatibleSpecifier { .. } 
             | IncompatibleFunctionFlavour { .. } 
             | RepeatedSpecifier
-            | MultipleAccessModifiers => DiagnosticDomain::ContextualSyntaxAnalysis,
+            | MultipleAccessModifiers 
+            | InvalidAnnotation 
+            | InvalidAnnotationPlacement 
+            | MissingAnnotationArgument { .. }
+            | IncompatibleAnnotation { .. } 
+            | GlobalScopeVarDecl => DiagnosticDomain::ContextualSyntaxAnalysis,
             SymbolNameTaken { .. }
             | MissingTypeArg
             | UnnecessaryTypeArg => DiagnosticDomain::SymbolAnalysis,
@@ -154,6 +167,11 @@ impl DiagnosticKind {
             IncompatibleFunctionFlavour { .. } => lsp::DiagnosticSeverity::ERROR,
             RepeatedSpecifier => lsp::DiagnosticSeverity::ERROR,
             MultipleAccessModifiers => lsp::DiagnosticSeverity::ERROR,
+            InvalidAnnotation => lsp::DiagnosticSeverity::ERROR,
+            InvalidAnnotationPlacement => lsp::DiagnosticSeverity::ERROR,
+            MissingAnnotationArgument { .. } => lsp::DiagnosticSeverity::ERROR,
+            IncompatibleAnnotation { .. } => lsp::DiagnosticSeverity::ERROR,
+            GlobalScopeVarDecl => lsp::DiagnosticSeverity::ERROR,
 
             SymbolNameTaken { .. } => lsp::DiagnosticSeverity::ERROR,
             MissingTypeArg => lsp::DiagnosticSeverity::ERROR,
@@ -183,6 +201,11 @@ impl DiagnosticKind {
             IncompatibleFunctionFlavour { flavour_name, sym_name } => format!("\"{}\" cannot be used for {}", flavour_name, sym_name),
             RepeatedSpecifier => "Specifiers can not be repeating".into(),
             MultipleAccessModifiers => "Only one access modifier is allowed".into(),
+            InvalidAnnotation => "Unsupported annotation".into(),
+            InvalidAnnotationPlacement => "Annotations can only be used at the global scope".into(),
+            MissingAnnotationArgument { missing } => format!("This annotation requires {missing} argument"),
+            IncompatibleAnnotation { expected_sym } => format!("The annotation expects {}", expected_sym),
+            GlobalScopeVarDecl => "Syntax error: variable declarations in the global scope are not allowed unless you use the @addField annotation.".into(),
 
             SymbolNameTaken { name, .. } => format!("The name \"{}\" is defined multiple times", name),
             MissingTypeArg => "Missing type argument".into(),

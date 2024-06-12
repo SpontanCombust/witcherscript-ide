@@ -46,9 +46,10 @@ impl Backend {
                     if let Some(kv) = scripts.get(&script_path) {
                         let script_state = kv.value();
                         let script = &script_state.script;
+                        let doc = &script_state.buffer;
                         let mut diags = Vec::new();
                         jobs::syntax_analysis(script, &mut diags);
-                        jobs::contextual_syntax_analysis(script, &mut diags);
+                        jobs::contextual_syntax_analysis(script, doc, &mut diags);
                         drop(kv);
 
                         Some((script_path, diags))

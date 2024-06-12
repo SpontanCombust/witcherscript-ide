@@ -237,6 +237,12 @@ impl<'a> TextDocumentPositionResolver<'a> {
             }
         }
     }
+
+    fn visit_annotation(&mut self, n: &AnnotationNode) {
+        if let Some(arg) = n.arg().filter(|arg| arg.spans_position(self.pos)) {
+            self.found_type_ident(&arg);
+        }
+    }
 }
 
 
@@ -316,12 +322,23 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
-        //TODO handle annotated var
+        let var_type = n.var_type();
+        
+        if var_type.spans_position(self.pos) {
+            self.visit_type_annotation(&var_type);
+        }
+        else if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
+            self.visit_annotation(&annot);
+        }
+        else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
+            self.found_data_decl_ident(&name);
+        }
     }
 
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
         let var_type = n.var_type();
         
+        // not checking the annotation, because it'll be erroneous anyways
         if var_type.spans_position(self.pos) {
             self.visit_type_annotation(&var_type);
         }
@@ -347,7 +364,6 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let member = n.member();
 
             if member.spans_position(self.pos) {
-                // self.found_unqualified_data_ident(&member);
                 self.found_expression_ident(&member, member.clone().into(), None);
             }
         }
@@ -360,7 +376,6 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let member = n.member();
 
             if member.spans_position(self.pos) {
-                // self.found_unqualified_data_ident(&member);
                 self.found_expression_ident(&member, member.clone().into(), None);
             }
         }
@@ -372,20 +387,20 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         let member = n.member();
 
         if member.spans_position(self.pos) {
-            // self.found_unqualified_data_ident(&member);
             self.found_expression_ident(&member, member.clone().into(), None);
         }
     }
 
 
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
-        //TODO handle annotated functions
-
         if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
             if name.spans_position(self.pos) {
                 self.found_callable_decl_ident(&name);
+            }
+            else if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
+                self.visit_annotation(&annot);
             }
             else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
                 self.visit_type_annotation(&rt);
@@ -399,6 +414,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
+            // not checking the annotation, because it'll be erroneous anyways
             if name.spans_position(self.pos) {
                 self.found_callable_decl_ident(&name);
             }
@@ -470,11 +486,6 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_identifier_expr(&mut self, n: &IdentifierNode, cx: ExpressionTraversalContext) {
-        // if cx == ExpressionTraversalContext::FunctionCallExpressionFunc {
-        //     self.found_unqualified_callable_ident(n);
-        // } else {
-        //     self.found_unqualified_data_ident(n);
-        // };
         self.found_expression_ident(n, n.clone().into(), Some(cx));
     }
 
@@ -483,11 +494,6 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             let member = n.member();
 
             if member.spans_position(self.pos) {
-                // if cx == ExpressionTraversalContext::FunctionCallExpressionFunc {
-                //     self.found_qualified_callable_ident(&member);
-                // } else {
-                //     self.found_qualified_data_ident(&member);
-                // };
                 self.found_expression_ident(&member, n.clone().into(), Some(cx));
             }
         }

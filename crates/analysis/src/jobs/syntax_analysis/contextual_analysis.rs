@@ -1,12 +1,15 @@
+use std::str::FromStr;
+use lsp_types as lsp;
 use smallvec::SmallVec;
-use witcherscript::{ast::*, attribs::*, tokens::Keyword, Script};
+use witcherscript::{ast::*, attribs::*, script_document::ScriptDocument, tokens::*, NamedSyntaxNode, Script};
 use witcherscript_diagnostics::{Diagnostic, DiagnosticKind};
 
 
 /// For situations where a valid syntax tree is produced by tree-sitter, 
 /// but we can still deduce some based only of the AST.
-pub fn contextual_syntax_analysis(script: &Script, diagnostics: &mut Vec<Diagnostic>) {
+pub fn contextual_syntax_analysis(script: &Script, doc: &ScriptDocument, diagnostics: &mut Vec<Diagnostic>) {
     let mut visitor = ContextualSyntaxAnalysis {
+        doc,
         diagnostics
     };
 
@@ -14,7 +17,57 @@ pub fn contextual_syntax_analysis(script: &Script, diagnostics: &mut Vec<Diagnos
 }
 
 struct ContextualSyntaxAnalysis<'a> {
+    doc: &'a ScriptDocument,
     diagnostics: &'a mut Vec<Diagnostic>
+}
+
+impl ContextualSyntaxAnalysis<'_> {
+    fn visit_annotation(&mut self, n: &AnnotationNode, annotated_node_kind: &str, annotated_node_range: lsp::Range) {
+        let annot_name = n.name();
+        match AnnotationKind::from_str(&annot_name.value(self.doc)) {
+            Ok(kind) => {
+                if kind.requires_arg() && n.arg().is_none() {
+                    self.diagnostics.push(Diagnostic {
+                        range: annot_name.range(),
+                        kind: DiagnosticKind::MissingAnnotationArgument { 
+                            missing: kind.arg_type().unwrap_or_default().to_string()
+                        }
+                    })
+                }
+
+                match kind {
+                    AnnotationKind::AddMethod
+                    | AnnotationKind::ReplaceMethod
+                    | AnnotationKind::WrapMethod => {
+                        if annotated_node_kind != FunctionDeclarationNode::NODE_KIND {
+                            self.diagnostics.push(Diagnostic {
+                                range: annotated_node_range,
+                                kind: DiagnosticKind::IncompatibleAnnotation { 
+                                    expected_sym: "a method declaration".into()
+                                }
+                            })
+                        }
+                    },
+                    AnnotationKind::AddField => {
+                        if annotated_node_kind != MemberVarDeclarationNode::NODE_KIND {
+                            self.diagnostics.push(Diagnostic {
+                                range: annotated_node_range,
+                                kind: DiagnosticKind::IncompatibleAnnotation { 
+                                    expected_sym: "a field declaration".into()
+                                }
+                            })
+                        }
+                    }
+                }
+            },
+            Err(_) => {
+                self.diagnostics.push(Diagnostic {
+                    range: annot_name.range(),
+                    kind: DiagnosticKind::InvalidAnnotation
+                })
+            },
+        }
+    }
 }
 
 impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
@@ -103,6 +156,10 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
     }
 
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
+        if let Some(annot) = n.annotation() {
+            self.visit_annotation(&annot, FunctionDeclarationNode::NODE_KIND, n.range());
+        }
+
         let mut specifiers = SmallVec::<[GlobalFunctionSpecifier; 2]>::new();
 
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
@@ -141,6 +198,15 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
     }
 
     fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+        if let Some(annot) = n.annotation() {
+            self.visit_annotation(&annot, MemberVarDeclarationNode::NODE_KIND, n.range());
+        } else {
+            self.diagnostics.push(Diagnostic {
+                range: n.range(),
+                kind: DiagnosticKind::GlobalScopeVarDecl
+            })
+        }
+
         let mut specifiers = SmallVec::<[MemberVarSpecifier; 6]>::new();
         let mut found_access_modif_before = false;
 
@@ -175,6 +241,13 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
     }
 
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
+        if let Some(range) = n.annotation().map(|ann| ann.range()) {
+            self.diagnostics.push(Diagnostic {
+                range,
+                kind: DiagnosticKind::InvalidAnnotationPlacement
+            })
+        }
+
         let mut specifiers = SmallVec::<[MemberVarSpecifier; 6]>::new();
         let mut found_access_modif_before = false;
 
@@ -209,6 +282,13 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
     }
 
     fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
+        if let Some(range) = n.annotation().map(|ann| ann.range()) {
+            self.diagnostics.push(Diagnostic {
+                range,
+                kind: DiagnosticKind::InvalidAnnotationPlacement
+            })
+        }
+
         let mut specifiers = SmallVec::<[MemberFunctionSpecifier; 4]>::new();
         let mut found_access_modif_before = false;
 
