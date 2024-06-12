@@ -156,6 +156,10 @@ impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
     type TraversalCtx = DeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        visitor.visit_member_var_decl(self, ctx);
+        if ctx == DeclarationTraversalContext::Global {
+            visitor.visit_global_var_decl(self);
+        } else {
+            visitor.visit_member_var_decl(self, ctx);
+        }
     }
 }
