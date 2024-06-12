@@ -120,11 +120,11 @@ impl<'a> ExpressionEvaluator<'a> {
                 },
                 SymbolVariant::ParentVar(s) => s.type_path().to_owned(),
                 SymbolVariant::VirtualParentVar(s) => s.type_path().to_owned(),
-                SymbolVariant::AddedMemberFunc(s) => s.return_type_path.clone().into(),
-                SymbolVariant::ReplacedMemberFunc(s) => s.return_type_path.clone().into(),
-                SymbolVariant::ReplacedGlobalFunc(s) => s.return_type_path.clone().into(),
-                SymbolVariant::WrappedMemberFunc(s) => s.return_type_path.clone().into(),
-                SymbolVariant::AddedMemberVar(s) => s.type_path.clone().into()
+                SymbolVariant::MemberFuncInjector(s) => s.return_type_path.clone().into(),
+                SymbolVariant::MemberFuncReplacer(s) => s.return_type_path.clone().into(),
+                SymbolVariant::GlobalFuncReplacer(s) => s.return_type_path.clone().into(),
+                SymbolVariant::MemberFuncWrapper(s) => s.return_type_path.clone().into(),
+                SymbolVariant::MemberVarInjector(s) => s.type_path.clone().into()
             }
         } else {
             SymbolPathBuf::unknown(SymbolCategory::Type)

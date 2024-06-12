@@ -326,7 +326,7 @@ impl<'a> Iterator for AnnotationChain<'a> {
         while self.idx < self.symtabs.len() {
             let symvar = self.symtabs[self.idx]
                 .get_symbol(&self.sympath)
-                .filter(|symvar| symvar.is_replaced_member_func() || symvar.is_replaced_global_func() || symvar.is_wrapped_member_func());
+                .filter(|symvar| symvar.is_member_func_replacer() || symvar.is_global_func_replacer() || symvar.is_member_func_wrapper());
 
             self.idx += 1;
 

@@ -177,19 +177,19 @@ impl<'a> ChildrenSymbolsFilter<'a> for ArrayTypeFunctionSymbol {
     type ChildRef = &'a ArrayTypeFunctionParameterSymbol;
 }
 
-impl<'a> ChildrenSymbolsFilter<'a> for AddedMemberFunctionSymbol {
+impl<'a> ChildrenSymbolsFilter<'a> for MemberFunctionInjectorSymbol {
     type ChildRef = CallableSymbolChild<'a>;
 }
 
-impl<'a> ChildrenSymbolsFilter<'a> for ReplacedMemberFunctionSymbol {
+impl<'a> ChildrenSymbolsFilter<'a> for MemberFunctionReplacerSymbol {
     type ChildRef = CallableSymbolChild<'a>;
 }
 
-impl<'a> ChildrenSymbolsFilter<'a> for ReplacedGlobalFunctionSymbol {
+impl<'a> ChildrenSymbolsFilter<'a> for GlobalFunctionReplacerSymbol {
     type ChildRef = CallableSymbolChild<'a>;
 }
 
-impl<'a> ChildrenSymbolsFilter<'a> for WrappedMemberFunctionSymbol {
+impl<'a> ChildrenSymbolsFilter<'a> for MemberFunctionWrapperSymbol {
     type ChildRef = CallableSymbolChild<'a>;
 }
 

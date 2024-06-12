@@ -6,13 +6,13 @@ use super::*;
 /// Corresponding to @addMethod(Class) functions
 #[derive(Debug, Clone, Shrinkwrap)]
 #[shrinkwrap(mutable)]
-pub struct AddedMemberFunctionSymbol {
+pub struct MemberFunctionInjectorSymbol {
     pub inner: MemberFunctionSymbol
 }
 
-impl Symbol for AddedMemberFunctionSymbol {
+impl Symbol for MemberFunctionInjectorSymbol {
     fn typ(&self) -> SymbolType {
-        SymbolType::AddedMemberFunction
+        SymbolType::MemberFunctionInjector
     }
 
     fn path(&self) -> &SymbolPath {
@@ -20,18 +20,18 @@ impl Symbol for AddedMemberFunctionSymbol {
     }
 }
 
-impl LocatableSymbol for AddedMemberFunctionSymbol {
+impl LocatableSymbol for MemberFunctionInjectorSymbol {
     fn location(&self) -> &SymbolLocation {
         &self.inner.location()
     }
 }
 
-impl PrimarySymbol for AddedMemberFunctionSymbol { }
+impl PrimarySymbol for MemberFunctionInjectorSymbol { }
 
-impl AddedMemberFunctionSymbol {
-    pub fn new(path: MemberCallableSymbolPath, location: SymbolLocation) -> Self {
+impl MemberFunctionInjectorSymbol {
+    pub fn new(inner: MemberFunctionSymbol) -> Self {
         Self {
-            inner: MemberFunctionSymbol::new(path, location)
+            inner
         }
     }
 }
@@ -41,13 +41,13 @@ impl AddedMemberFunctionSymbol {
 /// Corresponding to @replaceMethod(Class) functions
 #[derive(Debug, Clone, Shrinkwrap)]
 #[shrinkwrap(mutable)]
-pub struct ReplacedMemberFunctionSymbol {
+pub struct MemberFunctionReplacerSymbol {
     pub inner: MemberFunctionSymbol
 }
 
-impl Symbol for ReplacedMemberFunctionSymbol {
+impl Symbol for MemberFunctionReplacerSymbol {
     fn typ(&self) -> SymbolType {
-        SymbolType::ReplacedMemberFunction
+        SymbolType::MemberFunctionReplacer
     }
 
     fn path(&self) -> &SymbolPath {
@@ -55,18 +55,18 @@ impl Symbol for ReplacedMemberFunctionSymbol {
     }
 }
 
-impl LocatableSymbol for ReplacedMemberFunctionSymbol {
+impl LocatableSymbol for MemberFunctionReplacerSymbol {
     fn location(&self) -> &SymbolLocation {
         &self.inner.location()
     }
 }
 
-impl PrimarySymbol for ReplacedMemberFunctionSymbol { }
+impl PrimarySymbol for MemberFunctionReplacerSymbol { }
 
-impl ReplacedMemberFunctionSymbol {
-    pub fn new(path: MemberCallableSymbolPath, location: SymbolLocation) -> Self {
+impl MemberFunctionReplacerSymbol {
+    pub fn new(inner: MemberFunctionSymbol) -> Self {
         Self {
-            inner: MemberFunctionSymbol::new(path, location)
+            inner
         }
     }
 }
@@ -76,13 +76,13 @@ impl ReplacedMemberFunctionSymbol {
 /// Corresponding to @replaceMethod functions
 #[derive(Debug, Clone, Shrinkwrap)]
 #[shrinkwrap(mutable)]
-pub struct ReplacedGlobalFunctionSymbol {
+pub struct GlobalFunctionReplacerSymbol {
     pub inner: GlobalFunctionSymbol
 }
 
-impl Symbol for ReplacedGlobalFunctionSymbol {
+impl Symbol for GlobalFunctionReplacerSymbol {
     fn typ(&self) -> SymbolType {
-        SymbolType::ReplacedGlobalFunction
+        SymbolType::GlobalFunctionReplacer
     }
 
     fn path(&self) -> &SymbolPath {
@@ -90,18 +90,18 @@ impl Symbol for ReplacedGlobalFunctionSymbol {
     }
 }
 
-impl LocatableSymbol for ReplacedGlobalFunctionSymbol {
+impl LocatableSymbol for GlobalFunctionReplacerSymbol {
     fn location(&self) -> &SymbolLocation {
         &self.inner.location()
     }
 }
 
-impl PrimarySymbol for ReplacedGlobalFunctionSymbol { }
+impl PrimarySymbol for GlobalFunctionReplacerSymbol { }
 
-impl ReplacedGlobalFunctionSymbol {
-    pub fn new(path: GlobalCallableSymbolPath, location: SymbolLocation) -> Self {
+impl GlobalFunctionReplacerSymbol {
+    pub fn new(inner: GlobalFunctionSymbol) -> Self {
         Self {
-            inner: GlobalFunctionSymbol::new(path, location)
+            inner
         }
     }
 }
@@ -111,13 +111,13 @@ impl ReplacedGlobalFunctionSymbol {
 /// Corresponding to @wrapMethod(Class) functions
 #[derive(Debug, Clone, Shrinkwrap)]
 #[shrinkwrap(mutable)]
-pub struct WrappedMemberFunctionSymbol {
+pub struct MemberFunctionWrapperSymbol {
     pub inner: MemberFunctionSymbol
 }
 
-impl Symbol for WrappedMemberFunctionSymbol {
+impl Symbol for MemberFunctionWrapperSymbol {
     fn typ(&self) -> SymbolType {
-        SymbolType::WrappedMemberFunction
+        SymbolType::MemberFunctionWrapper
     }
 
     fn path(&self) -> &SymbolPath {
@@ -125,18 +125,18 @@ impl Symbol for WrappedMemberFunctionSymbol {
     }
 }
 
-impl LocatableSymbol for WrappedMemberFunctionSymbol {
+impl LocatableSymbol for MemberFunctionWrapperSymbol {
     fn location(&self) -> &SymbolLocation {
         &self.inner.location()
     }
 }
 
-impl PrimarySymbol for WrappedMemberFunctionSymbol { }
+impl PrimarySymbol for MemberFunctionWrapperSymbol { }
 
-impl WrappedMemberFunctionSymbol {
-    pub fn new(path: MemberCallableSymbolPath, location: SymbolLocation) -> Self {
+impl MemberFunctionWrapperSymbol {
+    pub fn new(inner: MemberFunctionSymbol) -> Self {
         Self {
-            inner: MemberFunctionSymbol::new(path, location)
+            inner
         }
     }
 }
@@ -146,13 +146,13 @@ impl WrappedMemberFunctionSymbol {
 /// Corresponding to @addField(Class) vars
 #[derive(Debug, Clone, Shrinkwrap)]
 #[shrinkwrap(mutable)]
-pub struct AddedMemberVarSymbol {
+pub struct MemberVarInjectorSymbol {
     pub inner: MemberVarSymbol
 }
 
-impl Symbol for AddedMemberVarSymbol {
+impl Symbol for MemberVarInjectorSymbol {
     fn typ(&self) -> SymbolType {
-        SymbolType::AddedMemberVar
+        SymbolType::MemberVarInjector
     }
 
     fn path(&self) -> &SymbolPath {
@@ -160,18 +160,18 @@ impl Symbol for AddedMemberVarSymbol {
     }
 }
 
-impl LocatableSymbol for AddedMemberVarSymbol {
+impl LocatableSymbol for MemberVarInjectorSymbol {
     fn location(&self) -> &SymbolLocation {
         &self.inner.location()
     }
 }
 
-impl PrimarySymbol for AddedMemberVarSymbol { }
+impl PrimarySymbol for MemberVarInjectorSymbol { }
 
-impl AddedMemberVarSymbol {
-    pub fn new(path: MemberDataSymbolPath, location: SymbolLocation) -> Self {
+impl MemberVarInjectorSymbol {
+    pub fn new(inner: MemberVarSymbol) -> Self {
         Self {
-            inner: MemberVarSymbol::new(path, location)
+            inner
         }
     }
 }

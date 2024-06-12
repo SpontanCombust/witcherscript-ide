@@ -20,10 +20,10 @@ pub enum SymbolVariant {
     MemberFunc(MemberFunctionSymbol),
     Event(EventSymbol),
     Constructor(ConstructorSymbol),
-    AddedMemberFunc(AddedMemberFunctionSymbol),
-    ReplacedMemberFunc(ReplacedMemberFunctionSymbol),
-    ReplacedGlobalFunc(ReplacedGlobalFunctionSymbol),
-    WrappedMemberFunc(WrappedMemberFunctionSymbol),
+    MemberFuncInjector(MemberFunctionInjectorSymbol),
+    MemberFuncReplacer(MemberFunctionReplacerSymbol),
+    GlobalFuncReplacer(GlobalFunctionReplacerSymbol),
+    MemberFuncWrapper(MemberFunctionWrapperSymbol),
 
     // data
     Primitive(PrimitiveTypeSymbol),
@@ -38,7 +38,7 @@ pub enum SymbolVariant {
     StateSuperVar(StateSuperVarSymbol),
     ParentVar(ParentVarSymbol),
     VirtualParentVar(VirtualParentVarSymbol),
-    AddedMemberVar(AddedMemberVarSymbol)
+    MemberVarInjector(MemberVarInjectorSymbol)
 }
 
 impl std::fmt::Debug for SymbolVariant {
@@ -68,11 +68,11 @@ impl std::fmt::Debug for SymbolVariant {
             Self::ParentVar(s) => s.fmt(f),
             Self::VirtualParentVar(s) => s.fmt(f),
 
-            Self::AddedMemberFunc(s) => s.fmt(f),
-            Self::ReplacedMemberFunc(s) => s.fmt(f),
-            Self::ReplacedGlobalFunc(s) => s.fmt(f),
-            Self::WrappedMemberFunc(s) => s.fmt(f),
-            Self::AddedMemberVar(s) => s.fmt(f)
+            Self::MemberFuncInjector(s) => s.fmt(f),
+            Self::MemberFuncReplacer(s) => s.fmt(f),
+            Self::GlobalFuncReplacer(s) => s.fmt(f),
+            Self::MemberFuncWrapper(s) => s.fmt(f),
+            Self::MemberVarInjector(s) => s.fmt(f)
         }
     }
 }
@@ -104,11 +104,11 @@ impl SymbolVariant {
             Self::ParentVar(s) => s.typ(),
             Self::VirtualParentVar(s) => s.typ(),
 
-            Self::AddedMemberFunc(s) => s.typ(),
-            Self::ReplacedMemberFunc(s) => s.typ(),
-            Self::ReplacedGlobalFunc(s) => s.typ(),
-            Self::WrappedMemberFunc(s) => s.typ(),
-            Self::AddedMemberVar(s) => s.typ()
+            Self::MemberFuncInjector(s) => s.typ(),
+            Self::MemberFuncReplacer(s) => s.typ(),
+            Self::GlobalFuncReplacer(s) => s.typ(),
+            Self::MemberFuncWrapper(s) => s.typ(),
+            Self::MemberVarInjector(s) => s.typ()
         }
     }
 
@@ -138,11 +138,11 @@ impl SymbolVariant {
             Self::ParentVar(s) => s.path(),
             Self::VirtualParentVar(s) => s.path(),
 
-            Self::AddedMemberFunc(s) => s.path(),
-            Self::ReplacedMemberFunc(s) => s.path(),
-            Self::ReplacedGlobalFunc(s) => s.path(),
-            Self::WrappedMemberFunc(s) => s.path(),
-            Self::AddedMemberVar(s) => s.path()
+            Self::MemberFuncInjector(s) => s.path(),
+            Self::MemberFuncReplacer(s) => s.path(),
+            Self::GlobalFuncReplacer(s) => s.path(),
+            Self::MemberFuncWrapper(s) => s.path(),
+            Self::MemberVarInjector(s) => s.path()
         }
     }
 
@@ -172,11 +172,11 @@ impl SymbolVariant {
             Self::ParentVar(s) => s.name(),
             Self::VirtualParentVar(s) => s.name(),
 
-            Self::AddedMemberFunc(s) => s.name(),
-            Self::ReplacedMemberFunc(s) => s.name(),
-            Self::ReplacedGlobalFunc(s) => s.name(),
-            Self::WrappedMemberFunc(s) => s.name(),
-            Self::AddedMemberVar(s) => s.name()
+            Self::MemberFuncInjector(s) => s.name(),
+            Self::MemberFuncReplacer(s) => s.name(),
+            Self::GlobalFuncReplacer(s) => s.name(),
+            Self::MemberFuncWrapper(s) => s.name(),
+            Self::MemberVarInjector(s) => s.name()
         }
     }
 
@@ -206,11 +206,11 @@ impl SymbolVariant {
             Self::ParentVar(_) => None,
             Self::VirtualParentVar(_) => None,
 
-            Self::AddedMemberFunc(s) => Some(s.location()),
-            Self::ReplacedMemberFunc(s) => Some(s.location()),
-            Self::ReplacedGlobalFunc(s) => Some(s.location()),
-            Self::WrappedMemberFunc(s) => Some(s.location()),
-            Self::AddedMemberVar(s) => Some(s.location())
+            Self::MemberFuncInjector(s) => Some(s.location()),
+            Self::MemberFuncReplacer(s) => Some(s.location()),
+            Self::GlobalFuncReplacer(s) => Some(s.location()),
+            Self::MemberFuncWrapper(s) => Some(s.location()),
+            Self::MemberVarInjector(s) => Some(s.location())
         }
     }
 }
@@ -354,32 +354,32 @@ impl From<VirtualParentVarSymbol> for SymbolVariant {
     }
 }
 
-impl From<AddedMemberFunctionSymbol> for SymbolVariant {
-    fn from(value: AddedMemberFunctionSymbol) -> Self {
-        Self::AddedMemberFunc(value)
+impl From<MemberFunctionInjectorSymbol> for SymbolVariant {
+    fn from(value: MemberFunctionInjectorSymbol) -> Self {
+        Self::MemberFuncInjector(value)
     }
 }
 
-impl From<ReplacedMemberFunctionSymbol> for SymbolVariant {
-    fn from(value: ReplacedMemberFunctionSymbol) -> Self {
-        Self::ReplacedMemberFunc(value)
+impl From<MemberFunctionReplacerSymbol> for SymbolVariant {
+    fn from(value: MemberFunctionReplacerSymbol) -> Self {
+        Self::MemberFuncReplacer(value)
     }
 }
 
-impl From<ReplacedGlobalFunctionSymbol> for SymbolVariant {
-    fn from(value: ReplacedGlobalFunctionSymbol) -> Self {
-        Self::ReplacedGlobalFunc(value)
+impl From<GlobalFunctionReplacerSymbol> for SymbolVariant {
+    fn from(value: GlobalFunctionReplacerSymbol) -> Self {
+        Self::GlobalFuncReplacer(value)
     }
 }
 
-impl From<WrappedMemberFunctionSymbol> for SymbolVariant {
-    fn from(value: WrappedMemberFunctionSymbol) -> Self {
-        Self::WrappedMemberFunc(value)
+impl From<MemberFunctionWrapperSymbol> for SymbolVariant {
+    fn from(value: MemberFunctionWrapperSymbol) -> Self {
+        Self::MemberFuncWrapper(value)
     }
 }
 
-impl From<AddedMemberVarSymbol> for SymbolVariant {
-    fn from(value: AddedMemberVarSymbol) -> Self {
-        Self::AddedMemberVar(value)
+impl From<MemberVarInjectorSymbol> for SymbolVariant {
+    fn from(value: MemberVarInjectorSymbol) -> Self {
+        Self::MemberVarInjector(value)
     }
 }

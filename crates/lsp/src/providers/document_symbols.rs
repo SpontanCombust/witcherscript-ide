@@ -407,35 +407,35 @@ impl ToDocumentSymbol for ConstructorSymbol {
     }
 }
 
-impl ToDocumentSymbol for AddedMemberFunctionSymbol {
+impl ToDocumentSymbol for MemberFunctionInjectorSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         self.inner.to_doc_sym()
     }
 }
 
-impl ToDocumentSymbol for ReplacedMemberFunctionSymbol {
+impl ToDocumentSymbol for MemberFunctionReplacerSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         self.inner.to_doc_sym()
     }
 }
 
-impl ToDocumentSymbol for ReplacedGlobalFunctionSymbol {
+impl ToDocumentSymbol for GlobalFunctionReplacerSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         self.inner.to_doc_sym()
     }
 }
 
-impl ToDocumentSymbol for WrappedMemberFunctionSymbol {
+impl ToDocumentSymbol for MemberFunctionWrapperSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         self.inner.to_doc_sym()
     }
 }
 
-impl ToDocumentSymbol for AddedMemberVarSymbol {
+impl ToDocumentSymbol for MemberVarInjectorSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         self.inner.to_doc_sym()
@@ -468,11 +468,11 @@ impl ToDocumentSymbol for SymbolVariant {
             SymbolVariant::ParentVar(s) => s.to_doc_sym(),
             SymbolVariant::VirtualParentVar(s) => s.to_doc_sym(),
             SymbolVariant::Constructor(s) => s.to_doc_sym(),
-            SymbolVariant::AddedMemberFunc(s) => s.to_doc_sym(),
-            SymbolVariant::ReplacedMemberFunc(s) => s.to_doc_sym(),
-            SymbolVariant::ReplacedGlobalFunc(s) => s.to_doc_sym(),
-            SymbolVariant::WrappedMemberFunc(s) => s.to_doc_sym(),
-            SymbolVariant::AddedMemberVar(s) => s.to_doc_sym(),
+            SymbolVariant::MemberFuncInjector(s) => s.to_doc_sym(),
+            SymbolVariant::MemberFuncReplacer(s) => s.to_doc_sym(),
+            SymbolVariant::GlobalFuncReplacer(s) => s.to_doc_sym(),
+            SymbolVariant::MemberFuncWrapper(s) => s.to_doc_sym(),
+            SymbolVariant::MemberVarInjector(s) => s.to_doc_sym(),
         }
     }
 }

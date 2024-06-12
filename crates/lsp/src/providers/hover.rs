@@ -110,11 +110,11 @@ impl RenderTooltip for SymbolVariant {
             SymbolVariant::StateSuperVar(s) => s.render(buf, symtab, marcher),
             SymbolVariant::ParentVar(s) => s.render(buf, symtab, marcher),
             SymbolVariant::VirtualParentVar(s) => s.render(buf, symtab, marcher),
-            SymbolVariant::AddedMemberFunc(s) => s.render(buf, symtab, marcher),
-            SymbolVariant::ReplacedMemberFunc(s) => s.render(buf, symtab, marcher),
-            SymbolVariant::ReplacedGlobalFunc(s) => s.render(buf, symtab, marcher),
-            SymbolVariant::WrappedMemberFunc(s) => s.render(buf, symtab, marcher),
-            SymbolVariant::AddedMemberVar(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::MemberFuncInjector(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::MemberFuncReplacer(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::GlobalFuncReplacer(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::MemberFuncWrapper(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::MemberVarInjector(s) => s.render(buf, symtab, marcher),
         }
     }
 }
@@ -726,7 +726,7 @@ impl RenderTooltip for VirtualParentVarSymbol {
     }
 }
 
-impl RenderTooltip for AddedMemberFunctionSymbol {
+impl RenderTooltip for MemberFunctionInjectorSymbol {
     fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(AnnotationKind::AddMethod.as_ref());
         buf.push('(');
@@ -784,7 +784,7 @@ impl RenderTooltip for AddedMemberFunctionSymbol {
     }
 }
 
-impl RenderTooltip for ReplacedMemberFunctionSymbol {
+impl RenderTooltip for MemberFunctionReplacerSymbol {
     fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(AnnotationKind::ReplaceMethod.as_ref());
         buf.push('(');
@@ -842,7 +842,7 @@ impl RenderTooltip for ReplacedMemberFunctionSymbol {
     }
 }
 
-impl RenderTooltip for ReplacedGlobalFunctionSymbol {
+impl RenderTooltip for GlobalFunctionReplacerSymbol {
     fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(AnnotationKind::ReplaceMethod.as_ref());
         buf.push('\n');
@@ -897,7 +897,7 @@ impl RenderTooltip for ReplacedGlobalFunctionSymbol {
     }
 }
 
-impl RenderTooltip for WrappedMemberFunctionSymbol {
+impl RenderTooltip for MemberFunctionWrapperSymbol {
     fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(AnnotationKind::WrapMethod.as_ref());
         buf.push('(');
@@ -945,7 +945,7 @@ impl RenderTooltip for WrappedMemberFunctionSymbol {
     }
 }
 
-impl RenderTooltip for AddedMemberVarSymbol {
+impl RenderTooltip for MemberVarInjectorSymbol {
     fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
         buf.push_str(AnnotationKind::AddField.as_ref());
         buf.push('(');

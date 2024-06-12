@@ -116,7 +116,7 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
                     }
                 }
             }
-            else if symvar.is_replaced_global_func() || symvar.is_replaced_member_func() || symvar.is_wrapped_member_func() {
+            else if symvar.is_global_func_replacer() || symvar.is_member_func_replacer() || symvar.is_member_func_wrapper() {
                 let sympath = symvar.path();
 
                 let symtabs = backend.symtabs.read().await;

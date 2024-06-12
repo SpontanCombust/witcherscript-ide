@@ -41,10 +41,10 @@ pub enum SymbolType {
     MemberFunction,
     Event,
     Constructor,
-    AddedMemberFunction,
-    ReplacedMemberFunction,
-    ReplacedGlobalFunction,
-    WrappedMemberFunction,
+    MemberFunctionInjector,
+    MemberFunctionReplacer,
+    GlobalFunctionReplacer,
+    MemberFunctionWrapper,
     
     // data
     EnumVariant,
@@ -57,7 +57,7 @@ pub enum SymbolType {
     SuperVar,
     ParentVar,
     VirtualParentVar,
-    AddedMemberVar,
+    MemberVarInjector,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -87,15 +87,15 @@ impl SymbolType {
             | SuperVar
             | ParentVar
             | VirtualParentVar 
-            | AddedMemberVar => SymbolCategory::Data,
+            | MemberVarInjector => SymbolCategory::Data,
             GlobalFunction 
             | MemberFunction 
             | Event 
             | Constructor 
-            | AddedMemberFunction 
-            | ReplacedMemberFunction 
-            | ReplacedGlobalFunction 
-            | WrappedMemberFunction => SymbolCategory::Callable,
+            | MemberFunctionInjector 
+            | MemberFunctionReplacer 
+            | GlobalFunctionReplacer 
+            | MemberFunctionWrapper => SymbolCategory::Callable,
         }
     }
 }
