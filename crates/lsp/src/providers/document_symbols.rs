@@ -407,6 +407,41 @@ impl ToDocumentSymbol for ConstructorSymbol {
     }
 }
 
+impl ToDocumentSymbol for AddedMemberFunctionSymbol {
+    #[inline]
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        todo!()
+    }
+}
+
+impl ToDocumentSymbol for ReplacedMemberFunctionSymbol {
+    #[inline]
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        todo!()
+    }
+}
+
+impl ToDocumentSymbol for ReplacedGlobalFunctionSymbol {
+    #[inline]
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        todo!()
+    }
+}
+
+impl ToDocumentSymbol for WrappedMemberFunctionSymbol {
+    #[inline]
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        todo!()
+    }
+}
+
+impl ToDocumentSymbol for AddedMemberVarSymbol {
+    #[inline]
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        todo!()
+    }
+}
+
 impl ToDocumentSymbol for SymbolVariant {
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         match self {
@@ -432,7 +467,12 @@ impl ToDocumentSymbol for SymbolVariant {
             SymbolVariant::StateSuperVar(s) => s.to_doc_sym(),
             SymbolVariant::ParentVar(s) => s.to_doc_sym(),
             SymbolVariant::VirtualParentVar(s) => s.to_doc_sym(),
-            SymbolVariant::Constructor(s) => s.to_doc_sym()
+            SymbolVariant::Constructor(s) => s.to_doc_sym(),
+            SymbolVariant::AddedMemberFunc(s) => s.to_doc_sym(),
+            SymbolVariant::ReplacedMemberFunc(s) => s.to_doc_sym(),
+            SymbolVariant::ReplacedGlobalFunc(s) => s.to_doc_sym(),
+            SymbolVariant::WrappedMemberFunc(s) => s.to_doc_sym(),
+            SymbolVariant::AddedMemberVar(s) => s.to_doc_sym(),
         }
     }
 }

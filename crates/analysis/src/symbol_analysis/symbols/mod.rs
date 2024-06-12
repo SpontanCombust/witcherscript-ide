@@ -10,6 +10,7 @@ mod class_symbol;
 mod state_symbol;
 mod array_type_symbol;
 mod symbol_specifiers;
+mod annotated_symbols;
 mod symbol_variant;
 mod location;
 
@@ -25,5 +26,6 @@ pub use class_symbol::*;
 pub use array_type_symbol::*;
 pub use state_symbol::*;
 pub use symbol_specifiers::*;
+pub use annotated_symbols::*;
 pub use symbol_variant::*;
 pub use location::*;

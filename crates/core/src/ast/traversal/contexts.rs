@@ -3,6 +3,7 @@
 //! a class, a state or a struct.
 
 
+//TODO maybe replace separate enums with just one, but pass around a stack of these contexts
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExpressionTraversalContext {
     MemberDefaultValue,

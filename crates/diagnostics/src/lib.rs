@@ -205,7 +205,7 @@ impl DiagnosticKind {
             InvalidAnnotationPlacement => "Annotations can only be used at the global scope".into(),
             MissingAnnotationArgument { missing } => format!("This annotation requires {missing} argument"),
             IncompatibleAnnotation { expected_sym } => format!("The annotation expects {}", expected_sym),
-            GlobalScopeVarDecl => "Syntax error: variable declarations in the global scope are not allowed unless you use the @addField annotation.".into(),
+            GlobalScopeVarDecl => "Syntax error: variable declarations in the global scope are not allowed unless you intend to use the @addField annotation.".into(),
 
             SymbolNameTaken { name, .. } => format!("The name \"{}\" is defined multiple times", name),
             MissingTypeArg => "Missing type argument".into(),

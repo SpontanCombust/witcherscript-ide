@@ -110,6 +110,11 @@ impl RenderTooltip for SymbolVariant {
             SymbolVariant::StateSuperVar(s) => s.render(buf, symtab, marcher),
             SymbolVariant::ParentVar(s) => s.render(buf, symtab, marcher),
             SymbolVariant::VirtualParentVar(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::AddedMemberFunc(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::ReplacedMemberFunc(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::ReplacedGlobalFunc(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::WrappedMemberFunc(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::AddedMemberVar(s) => s.render(buf, symtab, marcher),
         }
     }
 }
@@ -718,5 +723,35 @@ impl RenderTooltip for VirtualParentVarSymbol {
         buf.push(':');
         buf.push(' ');
         buf.push_str(self.type_name());
+    }
+}
+
+impl RenderTooltip for AddedMemberFunctionSymbol {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+        todo!()
+    }
+}
+
+impl RenderTooltip for ReplacedMemberFunctionSymbol {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+        todo!()
+    }
+}
+
+impl RenderTooltip for ReplacedGlobalFunctionSymbol {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+        todo!()
+    }
+}
+
+impl RenderTooltip for WrappedMemberFunctionSymbol {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+        todo!()
+    }
+}
+
+impl RenderTooltip for AddedMemberVarSymbol {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+        todo!()
     }
 }
