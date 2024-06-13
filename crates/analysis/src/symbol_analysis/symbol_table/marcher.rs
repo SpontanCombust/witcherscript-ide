@@ -114,10 +114,13 @@ impl<'a> SymbolTableMarcher<'a> {
         StateHierarchy::new(self.clone(), state_path)
     }
 
-    /// Iterate over replace/wrap annotation symbols and the original function symbol at the end.
+    /// Iterate over symbols with the same symbol path accross the marcher.
+    /// Normally a path conflict (i.e. redefinition) in the dependency tree means an error.
+    /// It is not the case with @wrapMethod/@replaceMethod symbols however.
+    /// This way you can check for example the location of the wrapped method.
     #[inline]
-    pub fn annotation_chain(&self, annotated_sympath: &SymbolPath) -> AnnotationChain<'a> {
-        AnnotationChain::new(self.clone(), annotated_sympath)
+    pub fn redefinition_chain(&self, annotated_sympath: &SymbolPath) -> RedefinitionChain<'a> {
+        RedefinitionChain::new(self.clone(), annotated_sympath)
     }
 
 
@@ -304,13 +307,13 @@ impl<'a> Iterator for StateHierarchy<'a> {
 
 
 
-pub struct AnnotationChain<'a> {
+pub struct RedefinitionChain<'a> {
     sympath: SymbolPathBuf,
     symtabs: Vec<MaskedSymbolTable<'a>>,
     idx: usize,
 }
 
-impl<'a> AnnotationChain<'a> {
+impl<'a> RedefinitionChain<'a> {
     fn new(marcher: SymbolTableMarcher<'a>, path: &SymbolPath) -> Self {
         Self {
             sympath: path.to_owned(),
@@ -320,7 +323,7 @@ impl<'a> AnnotationChain<'a> {
     }
 }
 
-impl<'a> Iterator for AnnotationChain<'a> {
+impl<'a> Iterator for RedefinitionChain<'a> {
     type Item = &'a SymbolVariant;
 
     fn next(&mut self) -> Option<Self::Item> {

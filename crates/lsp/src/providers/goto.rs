@@ -35,7 +35,7 @@ pub async fn goto_definition(backend: &Backend, params: lsp::GotoDefinitionParam
                     .skip_first_step(true);
 
                 let wrapped_loc = symtabs_marcher
-                    .annotation_chain(&wrapped_method_sym.wrapped_path())
+                    .redefinition_chain(&wrapped_method_sym.wrapped_path())
                     .skip(1).next()
                     .and_then(|v| v.location());
 
@@ -138,7 +138,7 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
                 let symtabs = backend.symtabs.read().await;
                 let symtabs_marcher = backend.march_symbol_tables(&symtabs, &content_path).await;
 
-                if let Some(first_loc) = symtabs_marcher.annotation_chain(&sympath).last().and_then(|v| v.location()) {
+                if let Some(first_loc) = symtabs_marcher.redefinition_chain(&sympath).last().and_then(|v| v.location()) {
                     loc = Some(first_loc.to_owned());
                 }
             }
@@ -149,7 +149,7 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
                     .skip_first_step(true);
 
                 let wrapped_loc = symtabs_marcher
-                    .annotation_chain(&wrapped_method_sym.wrapped_path())
+                    .redefinition_chain(&wrapped_method_sym.wrapped_path())
                     .skip(1).next()
                     .and_then(|v| v.location());
 
