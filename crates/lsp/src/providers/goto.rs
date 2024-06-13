@@ -25,19 +25,35 @@ pub async fn goto_definition(backend: &Backend, params: lsp::GotoDefinitionParam
 
     if let Some(inspected) = inspect_symbol_at_position(backend, &content_path, &doc_path, params.text_document_position_params.position).await {
         let origin_selection_range = Some(inspected.origin_selection_range);
+        let mut loc = inspected.loc;
 
-        let target_uri = inspected
-            .loc.as_ref()
+        if let Some(symvar) = inspected.symvar {
+            if let Some(wrapped_method_sym) = symvar.try_as_wrapped_method_ref() {
+                let symtabs = backend.symtabs.read().await;
+                let symtabs_marcher = backend
+                    .march_symbol_tables(&symtabs, &content_path).await
+                    .skip_first_step(true);
+
+                let wrapped_loc = symtabs_marcher
+                    .annotation_chain(&wrapped_method_sym.wrapped_path())
+                    .skip(1).next()
+                    .and_then(|v| v.location());
+
+                if let Some(wrapped_loc) = wrapped_loc {
+                    loc = Some(wrapped_loc.to_owned());
+                }
+            }
+        }
+
+        let target_uri = loc.as_ref()
             .map(|loc| loc.abs_source_path().to_uri())
             .unwrap_or(params.text_document_position_params.text_document.uri.clone());
 
-        let target_range = inspected
-            .loc.as_ref()
+        let target_range = loc.as_ref()
             .map(|loc| loc.range)
             .unwrap_or(inspected.origin_selection_range);
 
-        let target_selection_range = inspected
-            .loc.as_ref()
+        let target_selection_range = loc.as_ref()
             .map(|loc| loc.label_range)
             .unwrap_or(inspected.origin_selection_range);
 
@@ -75,7 +91,7 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
         let origin_selection_range = Some(inspected.origin_selection_range);
 
         let mut loc = inspected.loc;
-        if let (Some(symvar), Some(loc)) = (inspected.symvar, &mut loc) {
+        if let Some(symvar) = inspected.symvar {
             // if the inspected symbol is a method or an event
             // attempt to find the very first declaration of the callable
             // because normally you get the location of the last override of the function
@@ -98,7 +114,7 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
                     for class in symtabs_marcher.class_hierarchy(&parent_path).skip(1) {
                         let base_func_path = class.path().join_component(func_name, SymbolCategory::Callable);
                         if let Some(base_func_loc) = symtabs_marcher.locate_symbol(&base_func_path) {
-                            *loc = base_func_loc.to_owned();
+                            loc = Some(base_func_loc.to_owned());
                         }
                     }
                 } 
@@ -106,13 +122,13 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
                     for state in symtabs_marcher.state_hierarchy(&parent_path).skip(1) {
                         let base_func_path = state.path().join_component(func_name, SymbolCategory::Callable);
                         if let Some(base_func_loc) = symtabs_marcher.locate_symbol(&base_func_path) {
-                            *loc = base_func_loc.to_owned();
+                            loc = Some(base_func_loc.to_owned());
                         }
                     }
 
                     let base_func_path = BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME).join_component(func_name, SymbolCategory::Callable);
                     if let Some(base_func_loc) = symtabs_marcher.locate_symbol(&base_func_path) {
-                        *loc = base_func_loc.to_owned();
+                        loc = Some(base_func_loc.to_owned());
                     }
                 }
             }
@@ -123,7 +139,22 @@ pub async fn goto_declaration(backend: &Backend, params: lsp::request::GotoDecla
                 let symtabs_marcher = backend.march_symbol_tables(&symtabs, &content_path).await;
 
                 if let Some(first_loc) = symtabs_marcher.annotation_chain(&sympath).last().and_then(|v| v.location()) {
-                    *loc = first_loc.to_owned();
+                    loc = Some(first_loc.to_owned());
+                }
+            }
+            else if let Some(wrapped_method_sym) = symvar.try_as_wrapped_method_ref() {
+                let symtabs = backend.symtabs.read().await;
+                let symtabs_marcher = backend
+                    .march_symbol_tables(&symtabs, &content_path).await
+                    .skip_first_step(true);
+
+                let wrapped_loc = symtabs_marcher
+                    .annotation_chain(&wrapped_method_sym.wrapped_path())
+                    .skip(1).next()
+                    .and_then(|v| v.location());
+
+                if let Some(wrapped_loc) = wrapped_loc {
+                    loc = Some(wrapped_loc.to_owned());
                 }
             }
         }
@@ -176,19 +207,17 @@ pub async fn goto_type_definition(backend: &Backend, params: lsp::request::GotoT
         }
 
         let origin_selection_range = Some(inspected.origin_selection_range);
+        let loc = inspected.loc;
 
-        let target_uri = inspected
-            .loc.as_ref()
+        let target_uri = loc.as_ref()
             .map(|loc| loc.abs_source_path().to_uri())
             .unwrap_or(params.text_document_position_params.text_document.uri.clone());
 
-        let target_range = inspected
-            .loc.as_ref()
+        let target_range = loc.as_ref()
             .map(|loc| loc.range)
             .unwrap_or(inspected.origin_selection_range);
 
-        let target_selection_range = inspected
-            .loc.as_ref()
+        let target_selection_range = loc.as_ref()
             .map(|loc| loc.label_range)
             .unwrap_or(inspected.origin_selection_range);
 
