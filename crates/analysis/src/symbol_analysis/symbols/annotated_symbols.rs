@@ -1,4 +1,5 @@
 use shrinkwraprs::Shrinkwrap;
+use witcherscript::ast::WRAPPED_METHOD_NAME;
 use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
@@ -138,6 +139,37 @@ impl MemberFunctionWrapperSymbol {
         Self {
             inner
         }
+    }
+}
+
+
+/// Corresponding to the special `wrappedMethod()` function valid inside @wrapMethod function's scope
+#[derive(Debug, Clone)]
+pub struct WrappedMethodSymbol {
+    path: MemberCallableSymbolPath,
+    wrapped_path: MemberCallableSymbolPath
+}
+
+impl Symbol for WrappedMethodSymbol {
+    fn typ(&self) -> SymbolType {
+        SymbolType::WrappedMethod
+    }
+
+    fn path(&self) -> &SymbolPath {
+        &self.path
+    }
+}
+
+impl WrappedMethodSymbol {
+    pub fn new(wrapper_path: &MemberCallableSymbolPath) -> Self {
+        Self {
+            path: MemberCallableSymbolPath::new(&wrapper_path, WRAPPED_METHOD_NAME),
+            wrapped_path: wrapper_path.to_owned(), // wrapped and wrapper paths are the same
+        }
+    }
+
+    pub fn wrapped_path(&self) -> &MemberCallableSymbolPath {
+        &self.wrapped_path
     }
 }
 

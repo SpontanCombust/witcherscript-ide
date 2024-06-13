@@ -19,10 +19,9 @@ pub trait LocatableSymbol: Symbol {
     fn location(&self) -> &SymbolLocation;
 }
 
-/// A symbol with no parent (its path has only a single component) and can be associated with a file it was declared in
-pub trait PrimarySymbol: LocatableSymbol {
-
-}
+/// A symbol that can be used to group together an entire family of symbols.
+/// This is used to associate symbols with source paths, even if those symbols cannot be located, but their primary symbol parents can.
+pub trait PrimarySymbol: LocatableSymbol { }
 
 
 
@@ -45,6 +44,7 @@ pub enum SymbolType {
     MemberFunctionReplacer,
     GlobalFunctionReplacer,
     MemberFunctionWrapper,
+    WrappedMethod,
     
     // data
     EnumVariant,
@@ -95,7 +95,8 @@ impl SymbolType {
             | MemberFunctionInjector 
             | MemberFunctionReplacer 
             | GlobalFunctionReplacer 
-            | MemberFunctionWrapper => SymbolCategory::Callable,
+            | MemberFunctionWrapper
+            | WrappedMethod => SymbolCategory::Callable,
         }
     }
 }

@@ -124,7 +124,14 @@ impl<'a> ExpressionEvaluator<'a> {
                 SymbolVariant::MemberFuncReplacer(s) => s.return_type_path.clone().into(),
                 SymbolVariant::GlobalFuncReplacer(s) => s.return_type_path.clone().into(),
                 SymbolVariant::MemberFuncWrapper(s) => s.return_type_path.clone().into(),
-                SymbolVariant::MemberVarInjector(s) => s.type_path.clone().into()
+                SymbolVariant::MemberVarInjector(s) => s.type_path.clone().into(),
+                SymbolVariant::WrappedMethod(s) => {
+                    self.symtab_marcher
+                        .get_symbol(s.wrapped_path())
+                        .and_then(|v| v.try_as_member_func_wrapper_ref())
+                        .map(|wrapper| wrapper.return_type_path.clone().into())
+                        .unwrap_or(SymbolPathBuf::unknown(SymbolCategory::Type))
+                }
             }
         } else {
             SymbolPathBuf::unknown(SymbolCategory::Type)

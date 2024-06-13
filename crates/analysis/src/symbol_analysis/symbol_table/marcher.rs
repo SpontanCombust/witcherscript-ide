@@ -114,7 +114,7 @@ impl<'a> SymbolTableMarcher<'a> {
         StateHierarchy::new(self.clone(), state_path)
     }
 
-    /// Iterate over replace/wrap annotation symbols.
+    /// Iterate over replace/wrap annotation symbols and the original function symbol at the end.
     #[inline]
     pub fn annotation_chain(&self, annotated_sympath: &SymbolPath) -> AnnotationChain<'a> {
         AnnotationChain::new(self.clone(), annotated_sympath)
@@ -325,8 +325,7 @@ impl<'a> Iterator for AnnotationChain<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.idx < self.symtabs.len() {
             let symvar = self.symtabs[self.idx]
-                .get_symbol(&self.sympath)
-                .filter(|symvar| symvar.is_member_func_replacer() || symvar.is_global_func_replacer() || symvar.is_member_func_wrapper());
+                .get_symbol(&self.sympath);
 
             self.idx += 1;
 

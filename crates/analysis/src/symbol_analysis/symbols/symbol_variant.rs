@@ -24,6 +24,7 @@ pub enum SymbolVariant {
     MemberFuncReplacer(MemberFunctionReplacerSymbol),
     GlobalFuncReplacer(GlobalFunctionReplacerSymbol),
     MemberFuncWrapper(MemberFunctionWrapperSymbol),
+    WrappedMethod(WrappedMethodSymbol),
 
     // data
     Primitive(PrimitiveTypeSymbol),
@@ -72,7 +73,8 @@ impl std::fmt::Debug for SymbolVariant {
             Self::MemberFuncReplacer(s) => s.fmt(f),
             Self::GlobalFuncReplacer(s) => s.fmt(f),
             Self::MemberFuncWrapper(s) => s.fmt(f),
-            Self::MemberVarInjector(s) => s.fmt(f)
+            Self::MemberVarInjector(s) => s.fmt(f),
+            Self::WrappedMethod(s) => s.fmt(f),
         }
     }
 }
@@ -108,7 +110,8 @@ impl SymbolVariant {
             Self::MemberFuncReplacer(s) => s.typ(),
             Self::GlobalFuncReplacer(s) => s.typ(),
             Self::MemberFuncWrapper(s) => s.typ(),
-            Self::MemberVarInjector(s) => s.typ()
+            Self::MemberVarInjector(s) => s.typ(),
+            Self::WrappedMethod(s) => s.typ(),
         }
     }
 
@@ -142,7 +145,8 @@ impl SymbolVariant {
             Self::MemberFuncReplacer(s) => s.path(),
             Self::GlobalFuncReplacer(s) => s.path(),
             Self::MemberFuncWrapper(s) => s.path(),
-            Self::MemberVarInjector(s) => s.path()
+            Self::MemberVarInjector(s) => s.path(),
+            Self::WrappedMethod(s) => s.path(),
         }
     }
 
@@ -176,7 +180,8 @@ impl SymbolVariant {
             Self::MemberFuncReplacer(s) => s.name(),
             Self::GlobalFuncReplacer(s) => s.name(),
             Self::MemberFuncWrapper(s) => s.name(),
-            Self::MemberVarInjector(s) => s.name()
+            Self::MemberVarInjector(s) => s.name(),
+            Self::WrappedMethod(s) => s.name(),
         }
     }
 
@@ -210,7 +215,8 @@ impl SymbolVariant {
             Self::MemberFuncReplacer(s) => Some(s.location()),
             Self::GlobalFuncReplacer(s) => Some(s.location()),
             Self::MemberFuncWrapper(s) => Some(s.location()),
-            Self::MemberVarInjector(s) => Some(s.location())
+            Self::MemberVarInjector(s) => Some(s.location()),
+            Self::WrappedMethod(_) => None,
         }
     }
 }
@@ -381,5 +387,11 @@ impl From<MemberFunctionWrapperSymbol> for SymbolVariant {
 impl From<MemberVarInjectorSymbol> for SymbolVariant {
     fn from(value: MemberVarInjectorSymbol) -> Self {
         Self::MemberVarInjector(value)
+    }
+}
+
+impl From<WrappedMethodSymbol> for SymbolVariant {
+    fn from(value: WrappedMethodSymbol) -> Self {
+        Self::WrappedMethod(value)
     }
 }

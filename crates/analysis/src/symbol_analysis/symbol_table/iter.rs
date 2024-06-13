@@ -63,7 +63,7 @@ pub trait ChildrenSymbolsFilter<'a>: Symbol {
     type ChildRef: TryFrom<&'a SymbolVariant> + 'a;
 }
 
-
+//FIXME missing this, super
 pub enum ClassSymbolChild<'st> {
     Var(&'st MemberVarSymbol),
     Autobind(&'st AutobindSymbol),
@@ -89,7 +89,7 @@ impl<'a> ChildrenSymbolsFilter<'a> for ClassSymbol {
     type ChildRef = ClassSymbolChild<'a>;
 }
 
-
+//FIXME missing this, super, parent, virtual_parent
 pub type StateSymbolChild<'st> = ClassSymbolChild<'st>;
 
 impl<'a> ChildrenSymbolsFilter<'a> for StateSymbol {
@@ -189,31 +189,49 @@ impl<'a> ChildrenSymbolsFilter<'a> for GlobalFunctionReplacerSymbol {
     type ChildRef = CallableSymbolChild<'a>;
 }
 
+
+pub enum FunctionWrapperSymbolChild<'a> {
+    Param(&'a FunctionParameterSymbol),
+    LocalVar(&'a LocalVarSymbol),
+    WrappedMethod(&'a WrappedMethodSymbol)
+}
+
+impl<'a> TryFrom<&'a SymbolVariant> for FunctionWrapperSymbolChild<'a> {
+    type Error = ();
+
+    fn try_from(value: &'a SymbolVariant) -> Result<Self, Self::Error> {
+        match value {
+            SymbolVariant::WrappedMethod(s) => Ok(FunctionWrapperSymbolChild::WrappedMethod(s)),
+            SymbolVariant::FuncParam(s) => Ok(FunctionWrapperSymbolChild::Param(s)),
+            SymbolVariant::LocalVar(s) => Ok(FunctionWrapperSymbolChild::LocalVar(s)),
+            _ => Err(())
+        }
+    }
+}
+
 impl<'a> ChildrenSymbolsFilter<'a> for MemberFunctionWrapperSymbol {
-    type ChildRef = CallableSymbolChild<'a>;
+    type ChildRef = FunctionWrapperSymbolChild<'a>;
 }
 
 
 
 /// Iterate over primary symbols associated with a script file at a given path
 pub struct FilePrimarySymbols<'st> {
-    symtab: &'st SymbolTable,
-    primary_paths: Vec<SymbolPathBuf>,
-    primary_path_idx: usize
+    iter: Box<dyn Iterator<Item = &'st SymbolVariant> + Send + 'st>
 }
 
 impl<'st> FilePrimarySymbols<'st> {
     pub(super) fn new(symtab: &'st SymbolTable, local_source_path: &Path) -> Self {
-        let primary_paths = 
-            symtab.source_path_assocs
+        let roots = symtab.source_path_assocs
             .get(local_source_path)
-            .cloned()
+            .map(|v| v.as_slice())
             .unwrap_or_default();
 
+        let iter = roots.iter()
+            .filter_map(|root| symtab.symbols.get(root));
+
         Self {
-            symtab,
-            primary_paths,
-            primary_path_idx: 0
+            iter: Box::new(iter)
         }
     }
 }
@@ -222,17 +240,15 @@ impl<'st> Iterator for FilePrimarySymbols<'st> {
     type Item = &'st SymbolVariant;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let sympath = self.primary_paths.get(self.primary_path_idx)?;
-        let item = self.symtab.get_symbol(sympath);
-        self.primary_path_idx += 1;
-        item
+        self.iter.next()
     }
 }
 
 
 /// Iterate over symbols associated with a script file at a given path
 pub struct FileSymbols<'st> {
-    iter: Box<dyn Iterator<Item = &'st SymbolVariant> + 'st>
+    iter: Box<dyn Iterator<Item = &'st SymbolVariant> + Send + 'st>,
+    local_source_path: PathBuf
 }
 
 impl<'st> FileSymbols<'st> {
@@ -249,7 +265,8 @@ impl<'st> FileSymbols<'st> {
             .flatten();
 
         Self {
-            iter: Box::new(iter)
+            iter: Box::new(iter),
+            local_source_path: local_source_path.to_owned()
         }
     }
 } 
@@ -258,7 +275,20 @@ impl<'st> Iterator for FileSymbols<'st> {
     type Item = &'st SymbolVariant;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next()
+        if let Some(item) = self.iter.next() {
+            // Normally all symbols under one parent path are associated with the same source path.
+            // Symbols created using annotations are an exception to this.
+            // Their symbol paths can reference symbols from other source paths.
+            // We have to skip over them and all of their children.
+            if item.location().map(|loc| loc.local_source_path.as_ref() != self.local_source_path).unwrap_or(false) {
+                let injector_path = item.path().to_owned();
+                self.iter.find(|v| !v.path().starts_with(&injector_path))
+            } else {
+                Some(item)
+            }
+        } else {
+            None
+        }
     }
 }
 

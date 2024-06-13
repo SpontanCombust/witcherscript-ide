@@ -115,6 +115,7 @@ impl RenderTooltip for SymbolVariant {
             SymbolVariant::GlobalFuncReplacer(s) => s.render(buf, symtab, marcher),
             SymbolVariant::MemberFuncWrapper(s) => s.render(buf, symtab, marcher),
             SymbolVariant::MemberVarInjector(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::WrappedMethod(s) => s.render(buf, symtab, marcher),
         }
     }
 }
@@ -917,7 +918,7 @@ impl RenderTooltip for MemberFunctionWrapperSymbol {
         let mut params = symtab
             .get_symbol_children_filtered(self)
             .filter_map(|ch| {
-                if let CallableSymbolChild::Param(param) = ch {
+                if let FunctionWrapperSymbolChild::Param(param) = ch {
                     Some(param)
                 } else {
                     None
@@ -966,5 +967,14 @@ impl RenderTooltip for MemberVarInjectorSymbol {
         buf.push(':');
         buf.push(' ');
         buf.push_str(self.type_name());
+    }
+}
+
+impl RenderTooltip for WrappedMethodSymbol {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+        // skip the wrapper function to get to either another wrapper or the original function
+        if let Some(wrapped) = marcher.annotation_chain(&self.wrapped_path()).skip(1).next() {
+            wrapped.render(buf, symtab, marcher)
+        }
     }
 }

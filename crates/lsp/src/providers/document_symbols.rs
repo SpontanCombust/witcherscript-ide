@@ -442,6 +442,13 @@ impl ToDocumentSymbol for MemberVarInjectorSymbol {
     }
 }
 
+impl ToDocumentSymbol for WrappedMethodSymbol {
+    #[inline]
+    fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
+        None
+    }
+}
+
 impl ToDocumentSymbol for SymbolVariant {
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
         match self {
@@ -473,6 +480,7 @@ impl ToDocumentSymbol for SymbolVariant {
             SymbolVariant::GlobalFuncReplacer(s) => s.to_doc_sym(),
             SymbolVariant::MemberFuncWrapper(s) => s.to_doc_sym(),
             SymbolVariant::MemberVarInjector(s) => s.to_doc_sym(),
+            SymbolVariant::WrappedMethod(s) => s.to_doc_sym()
         }
     }
 }
