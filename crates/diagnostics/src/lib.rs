@@ -87,7 +87,8 @@ pub enum DiagnosticKind {
         missing: String
     },
     IncompatibleAnnotation {
-        expected_sym: String
+        annotation_name: String,
+        expected_text: String
     },
     GlobalScopeVarDecl,
 
@@ -207,10 +208,10 @@ impl DiagnosticKind {
             IncompatibleFunctionFlavour { flavour_name, sym_name } => format!("\"{}\" cannot be used for {}", flavour_name, sym_name),
             RepeatedSpecifier => "Specifiers can not be repeating".into(),
             MultipleAccessModifiers => "Only one access modifier is allowed".into(),
-            InvalidAnnotation => "Unsupported annotation".into(),
+            InvalidAnnotation => "Unknown annotation".into(),
             InvalidAnnotationPlacement => "Annotations can only be used at the global scope".into(),
             MissingAnnotationArgument { missing } => format!("This annotation requires {missing} argument"),
-            IncompatibleAnnotation { expected_sym } => format!("The annotation expects {}", expected_sym),
+            IncompatibleAnnotation { annotation_name, expected_text } => format!("{} may only be used for {}", annotation_name, expected_text),
             GlobalScopeVarDecl => "Syntax error: variable declarations in the global scope are not allowed unless you intend to use the @addField annotation.".into(),
 
             SymbolNameTaken { name, .. } => format!("The name \"{}\" is defined multiple times", name),
