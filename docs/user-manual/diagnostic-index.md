@@ -241,6 +241,93 @@ You can read more about access modifiers in programming languages [here](https:/
 
 ---
 
+### `invalid-annotation`
+
+Detected a use of an unknown annotation. See the official WitcherScript guide for REDkit to know which annotations are avaialble.
+
+```ts linenums="1" hl_lines="1"
+@addFunction(CR4Player) // (1)
+function MountDragon(force: bool) {
+    // ...
+}
+```
+
+1. Used unknown `@addFunction` annotation. Did you mean `@addMethod`?
+
+
+---
+
+### `invalid-annotation-placement`
+
+Annotations can only be used in the global context. Using them inside classes for example is erroneous.
+
+```ts linenums="1" hl_lines="2"
+class Cannon {
+    @addField(Ship) // (1)
+    public var ammunition: int;
+    // ...
+}
+```
+
+1. Using annotations inside classes is invalid. Add the field outside of the class definition.
+
+
+---
+
+### `missing-annotation-argument`
+
+Some annotations require an argument. For example the `@wrapMethod` annotation requires a type argument that will decide which class's method will be wrapped.
+
+```ts linenums="1" hl_lines="1"
+@wrapMethod // (1)
+function OnSpawned() {
+    // ...
+}
+```
+
+1. Missing class name
+
+
+---
+
+### `incompatible-annotation`
+
+Annotations expect a specific code fragment below.
+
+```ts linenums="1" hl_lines="1"
+@addField(CR4Player) // (1)
+function SetE3Hairstyle() {
+    // ...
+}
+```
+
+1. `@addField` annotation expects a var declaration.
+
+
+---
+
+### `global-scope-var-decl`
+
+WitcherScript does not support global variable declarations. The only context when it is valid is after the `@addField` annotation.
+
+```ts linenums="1" hl_lines="10"
+class Mod1 {
+    // ...
+}
+
+class Mod2 {
+    // ...
+}
+
+
+var modsInstalled: int; // (1)
+```
+
+1. Variable declaration not allowed here.
+
+
+---
+
 
 
 </br>
@@ -323,6 +410,31 @@ var player: CR4Player<Ciri>; // (1)
 ```
 
 1. Class `CR4Player` does not take any type arguments. Remove `<Ciri>`.
+
+
+---
+
+### `same-content-annotation`
+
+Annotations are meant to extend types already existing in the Witcher 3 script code base or types defined in other mods. Even if it may be possible to `@wrapMethod` that is defined in the same mod WIDE discourages this behaviour in favour of simply editing those types instead of using annotations. 
+
+```ts linenums="1" title="modSkillFramework/content/scripts/skill_framework.ws"
+class SkillFramework {
+    public function DefineSkill(skillName: name) {
+        // ...
+    }
+}
+```
+
+```ts linenums="1" hl_lines="2"
+@wrapMethod(SkillFramework)
+function DefineSkill(skillName: name) { // (1)
+    LogChannel('SF', "Skill defined: " + skillName);
+    wrappedMethod(skillName);
+}
+```
+
+1. Putting this in the same mod will work for the script compiler, but will yield undefined behaviour for WIDE.
 
 
 ---
