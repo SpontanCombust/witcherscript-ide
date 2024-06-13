@@ -264,7 +264,7 @@ function commandImportVanillaScripts(): Cmd {
                     SeeManual = "See manual"
                 }
 
-                const manualUri = vscode.Uri.parse("https://spontancombust.github.io/witcherscript-ide/user-manual/project-system/");
+                const manualUri = vscode.Uri.parse("https://spontancombust.github.io/witcherscript-ide/user-manual/");
 
                 const answer = await vscode.window.showErrorMessage(
                     "No project available to import scripts into.\n" +

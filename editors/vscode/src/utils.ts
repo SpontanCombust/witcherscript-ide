@@ -11,7 +11,7 @@ export async function showForeignScriptWarning(context: vscode.ExtensionContext)
             SeeManual = "See manual"
         }
 
-        const manualUri = vscode.Uri.parse("https://spontancombust.github.io/witcherscript-ide/user-manual/project-system/");
+        const manualUri = vscode.Uri.parse("https://spontancombust.github.io/witcherscript-ide/user-manual/");
 
         const answer = await vscode.window.showWarningMessage(
             "This script file is not included through any workspace project or their dependencies.\n" +
