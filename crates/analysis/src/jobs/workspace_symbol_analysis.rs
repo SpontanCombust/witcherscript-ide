@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use rayon::iter::{IntoParallelIterator, ParallelExtend, ParallelIterator};
 use witcherscript_diagnostics::{Diagnostic, DiagnosticKind, LocatedDiagnostic};
-use crate::symbol_analysis::symbol_table::{marcher::SymbolTableMarcher, SymbolTable};
+use crate::symbol_analysis::{symbol_table::{marcher::SymbolTableMarcher, SymbolTable}, symbols::SymbolType};
 
 
 pub fn workspace_symbol_analysis(target_symtab: &SymbolTable, marcher: SymbolTableMarcher, local_source_paths: Vec<PathBuf>, diagnostics: &mut Vec<LocatedDiagnostic>) {
@@ -10,6 +10,9 @@ pub fn workspace_symbol_analysis(target_symtab: &SymbolTable, marcher: SymbolTab
     let diags_iter = local_source_paths.into_par_iter()
         .map(|p| target_symtab.get_primary_symbols_for_source(&p))
         .flatten_iter()
+        // ignore conflicts with annotation symbols
+        // they are expected to have the same symbol paths
+        .filter(|p| !matches!(p.typ(), SymbolType::MemberFunctionWrapper | SymbolType::MemberFunctionReplacer | SymbolType::GlobalFunctionReplacer))
         .filter_map(|primary| {
             let primary_loc = primary.location().unwrap(); // primary symbols always have location
             if let Err(err) = marcher.test_contains_symbol(primary.path()) {
