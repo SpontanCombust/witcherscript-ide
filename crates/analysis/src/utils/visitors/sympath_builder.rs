@@ -96,11 +96,17 @@ impl SyntaxNodeVisitor for SymbolPathBuilder<'_> {
 
 
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
-        let name = n.name().value(self.doc);
-        self.payload.borrow_mut().current_sympath = GlobalCallableSymbolPath::new(&name).into();
-        TraversalPolicy::default_to(true)
+        let mut payload = self.payload.borrow_mut();
+        payload.current_sympath.clear();
 
-        //TODO handle annotated functions
+        if let Some(class_name) = n.annotation().and_then(|annot| annot.arg()) {
+            payload.current_sympath.push(&class_name.value(self.doc), SymbolCategory::Type);
+        }
+            
+        let name = n.name().value(self.doc);
+        payload.current_sympath.push(&name, SymbolCategory::Callable);
+
+        TraversalPolicy::default_to(true)
     }
 
     fn exit_global_func_decl(&mut self, _: &FunctionDeclarationNode) {

@@ -182,6 +182,45 @@ impl<'a> UnqualifiedNameLookupBuilder<'a> {
         let (self_, payload) = Self::new(doc, sympath_ctx, symtab_marcher);
         (Rc::new(RefCell::new(self_)), payload)
     }
+
+
+    fn build_for_class(&self, unl: &mut UnqualifiedNameLookup, class_path: &SymbolPath) {
+        let mut inherit_chain = self.symtab_marcher
+            .class_hierarchy(class_path)
+            .collect::<Vec<_>>();
+
+        // we want to iterate classes starting from the most base class
+        inherit_chain.reverse();
+
+        // with each class in the inheritance chain we add properties to the UNL that `this` inherits from
+        // if any functions are overriden in child classes, the record gets overwritten
+        for class in inherit_chain {
+            if let Some(class_symtab) = self.symtab_marcher.find_table_containing_symbol(class.path()) {
+                for ch in class_symtab.get_symbol_children_filtered(class) {
+                    match ch {
+                        ClassSymbolChild::Var(s) => {
+                            if class.path() == class_path || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path().to_owned());
+                            }
+                        },
+                        ClassSymbolChild::Autobind(s) => {
+                            if class.path() == class_path || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path().to_owned());
+                            }
+                        },
+                        ClassSymbolChild::Method(s) => {
+                            if class.path() == class_path || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path().to_owned());
+                            }
+                        },
+                        ClassSymbolChild::Event(s) => {
+                            unl.insert(s.path().to_owned());
+                        },
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
@@ -195,42 +234,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
         let sympath_ctx = self.sympath_ctx.borrow();
 
         unl.push_scope();
-
-        let mut inherit_chain = self.symtab_marcher
-            .class_hierarchy(&sympath_ctx.current_sympath)
-            .collect::<Vec<_>>();
-
-        // we want to iterate classes starting from the most base class
-        inherit_chain.reverse();
-
-        // with each class in the inheritance chain we add properties to the UNL that `this` inherits from
-        // if any functions are overriden in child classes, the record gets overwritten
-        for class in inherit_chain {
-            if let Some(class_symtab) = self.symtab_marcher.find_table_containing_symbol(class.path()) {
-                for ch in class_symtab.get_symbol_children_filtered(class) {
-                    match ch {
-                        ClassSymbolChild::Var(s) => {
-                            if class.path() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
-                                unl.insert(s.path().to_owned());
-                            }
-                        },
-                        ClassSymbolChild::Autobind(s) => {
-                            if class.path() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
-                                unl.insert(s.path().to_owned());
-                            }
-                        },
-                        ClassSymbolChild::Method(s) => {
-                            if class.path() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
-                                unl.insert(s.path().to_owned());
-                            }
-                        },
-                        ClassSymbolChild::Event(s) => {
-                            unl.insert(s.path().to_owned());
-                        },
-                    }
-                }
-            }
-        }
+        self.build_for_class(&mut unl, &sympath_ctx.current_sympath);
 
         TraversalPolicy::default_to(true)
     }
@@ -351,8 +355,6 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         unl.push_scope();
 
-        //TODO handle annotated functions
-
         if let Some((func_symtab, func_symvar)) = self.symtab_marcher.get_symbol_with_containing_table(&sympath_ctx.current_sympath) {
             if let Some(func) = func_symvar.try_as_global_func_ref() {
                 for ch in func_symtab.get_symbol_children_filtered(func) {
@@ -360,6 +362,50 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
                         unl.insert(s.path().to_owned());
                     }
                     // local vars will be pushed dynamically as a function will go on
+                }
+            }
+            else if let Some(func) = func_symvar.try_as_member_func_injector_ref() {
+                let class_path = func.path().parent().unwrap_or_default();
+                self.build_for_class(&mut unl, class_path);
+
+                for ch in func_symtab.get_symbol_children_filtered(func) {
+                    if let CallableSymbolChild::Param(s) = ch {
+                        unl.insert(s.path().to_owned());
+                    }
+                }
+            }
+            else if let Some(func) = func_symvar.try_as_member_func_replacer_ref() {
+                let class_path = func.path().parent().unwrap_or_default();
+                self.build_for_class(&mut unl, class_path);
+
+                for ch in func_symtab.get_symbol_children_filtered(func) {
+                    if let CallableSymbolChild::Param(s) = ch {
+                        unl.insert(s.path().to_owned());
+                    }
+                }
+            }
+            else if let Some(func) = func_symvar.try_as_global_func_replacer_ref() {
+                for ch in func_symtab.get_symbol_children_filtered(func) {
+                    if let CallableSymbolChild::Param(s) = ch {
+                        unl.insert(s.path().to_owned());
+                    }
+                }
+            }
+            else if let Some(func) = func_symvar.try_as_member_func_wrapper_ref() {
+                let class_path = func.path().parent().unwrap_or_default();
+                self.build_for_class(&mut unl, class_path);
+                
+                for ch in func_symtab.get_symbol_children_filtered(func) {
+                    match ch {
+                        FunctionWrapperSymbolChild::Param(s) => {
+                            unl.insert(s.path().to_owned())
+                        },
+                        FunctionWrapperSymbolChild::WrappedMethod(s) => {
+                            unl.insert(s.path().to_owned())
+                        },
+                        _ => {}
+                    }
+                    
                 }
             }
         }
