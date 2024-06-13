@@ -382,7 +382,7 @@
 		"annotations": {
 			"patterns": [
 				{
-					"match": "(@\\w+)(?:\\((\\w+)\\))?",
+					"match": "(@\\w+)(?:\\(\\s*(\\w+)\\s*\\))?",
 					"captures": {
 						"1": {
 							"name": "meta.attribute.ws"
