@@ -119,6 +119,12 @@
         "enablement": "witcherscript-ide.languageServerActive && witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
       },
       {
+        "command": "witcherscript-ide.debug.showScriptCst",
+        "title": "Show script CST",
+        "category": "WitcherScript-IDE (debug)",
+        "enablement": "witcherscript-ide.languageServerActive && witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
+      },
+      {
         "command": "witcherscript-ide.debug.contentGraphDot",
         "title": "Show content graph",
         "category": "WitcherScript-IDE (debug)",

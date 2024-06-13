@@ -123,6 +123,25 @@ pub mod debug {
         pub const METHOD: &'static str = "witcherscript-ide/debug/scriptAst";
     }
 
+    /// Returns script file's CST (Concrete Syntax Tree) representation
+    pub mod script_cst {
+        use super::*;
+    
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Parameters {
+            pub script_uri: lsp::Url
+        }
+        
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Response {
+            pub cst: String
+        }
+    
+        pub const METHOD: &'static str = "witcherscript-ide/debug/scriptCst";
+    }
+
     /// Returns the content graph visualization in graphviz .dot format
     pub mod content_graph_dot {
         use super::*;

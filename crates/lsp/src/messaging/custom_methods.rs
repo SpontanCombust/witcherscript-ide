@@ -339,6 +339,29 @@ impl Backend {
             self.reporter.log_error("Imported files do no belong to a known content!").await;
         }
     }
+
+    pub async fn handle_debug_script_cst_request(&self, params: requests::debug::script_cst::Parameters) -> Result<requests::debug::script_cst::Response> {
+        let script_path: AbsPath;
+        if let Ok(path) = AbsPath::try_from(params.script_uri) {
+            script_path = path;
+        } else {
+            return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
+        }
+
+        let script_entry = self.scripts.get(&script_path).ok_or(jsonrpc::Error {
+            code: jsonrpc::ErrorCode::ServerError(-1080),
+            message: "Script file not found".into(),
+            data: None
+        })?;
+
+        let script = &script_entry.script;
+        let cst = script.root_node().cst_to_string();
+        drop(script_entry);
+
+        Ok(requests::debug::script_cst::Response { 
+            cst
+        })
+    }
 }
 
 

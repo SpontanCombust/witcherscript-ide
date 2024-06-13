@@ -23,6 +23,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
     if (cfg.enableDebugFeatures) {
         context.subscriptions.push(
             vscode.commands.registerCommand("witcherscript-ide.debug.showScriptAst", commandShowScriptAst(context)),
+            vscode.commands.registerCommand("witcherscript-ide.debug.showScriptCst", commandShowScriptCst(context)),
             vscode.commands.registerCommand("witcherscript-ide.debug.contentGraphDot", commandContentGraphDot()),
             vscode.commands.registerCommand("witcherscript-ide.debug.showScriptSymbols", commandShowScriptSymbols()),
             vscode.commands.registerCommand("witcherscript-ide.debug.clearGlobalState", commandClearGlobalState(context))
@@ -478,8 +479,6 @@ function commandShowScriptSymbols(): Cmd {
     };
 }
 
-
-
 function commandClearGlobalState(context: vscode.ExtensionContext): Cmd {
     return async () => {
         const keys = context.globalState.keys();
@@ -494,6 +493,58 @@ function commandClearGlobalState(context: vscode.ExtensionContext): Cmd {
                 await context.globalState.update(selected, undefined);
             }
         }
+    }
+}
+
+function commandShowScriptCst(context: vscode.ExtensionContext): Cmd {
+    return async () => {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor) {
+            return;
+        }
+
+        const scriptPath = activeEditor.document.uri.fsPath;
+        const scriptLine = activeEditor.selection.active.line + 1;
+        const uri = vscode.Uri
+            .file(scriptPath + tdcp.ScriptCstProvider.pathSuffix)
+            .with({ scheme: tdcp.ScriptCstProvider.scheme });
+        
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const options: vscode.TextDocumentShowOptions = {
+            viewColumn: vscode.ViewColumn.Beside,
+            preview: false,
+            preserveFocus: true
+        };
+
+        tdcp.ScriptCstProvider.getInstance().eventEmitter.fire(uri);
+        
+        vscode.window.showTextDocument(doc, options).then(async editor => {
+            const cstText = editor.document.getText();
+            const match = cstText.search(new RegExp("\\[" + scriptLine));
+            if (match != -1) {
+                const targetPos = editor.document.positionAt(match);
+                editor.revealRange(new vscode.Range(targetPos, targetPos), vscode.TextEditorRevealType.AtTop);
+            }
+
+            const rememberedChoices = state.RememberedChoices.Memento.fetchOrDefault(context);
+            // using the same memento for AST warning for simplicity
+            if (!rememberedChoices.neverShowAgainDebugAstNotif) { 
+                enum Answer {
+                    Close = "I understand",
+                    NeverShowAgain = "Never show this message again"
+                }
+
+                const answer = await vscode.window.showInformationMessage(
+                    "Beware! Displayed ranges in the CST may not be accurate if your document is formatted using tabs instead of spaces",
+                    Answer.Close, Answer.NeverShowAgain
+                );
+
+                if (answer == Answer.NeverShowAgain) {
+                    rememberedChoices.neverShowAgainDebugAstNotif = true;
+                    rememberedChoices.store(context);
+                }
+            }
+        });
     }
 }
 
