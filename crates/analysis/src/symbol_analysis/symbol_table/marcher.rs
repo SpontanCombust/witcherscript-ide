@@ -164,7 +164,8 @@ impl<'a> MaskedSymbolTable<'a> {
         if let Some(occupying) = self.get_symbol(path) {
             Err(PathOccupiedError {
                 occupied_path: occupying.path().to_sympath_buf(),
-                occupied_location: occupying.location().cloned()
+                occupied_location: occupying.location().cloned(),
+                occupied_typ: occupying.typ()
             })
         } else {
             Ok(())

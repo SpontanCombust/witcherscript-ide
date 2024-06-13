@@ -99,6 +99,10 @@ pub enum DiagnosticKind {
     },
     MissingTypeArg,
     UnnecessaryTypeArg,
+    SameContentAnnotation {
+        original_file_path: Option<AbsPath>,
+        original_range: Option<lsp::Range>
+    },
     
     // workspace symbol analysis
     SymbolNameTakenInDependency {
@@ -141,7 +145,8 @@ impl DiagnosticKind {
             | GlobalScopeVarDecl => DiagnosticDomain::ContextualSyntaxAnalysis,
             SymbolNameTaken { .. }
             | MissingTypeArg
-            | UnnecessaryTypeArg => DiagnosticDomain::SymbolAnalysis,
+            | UnnecessaryTypeArg 
+            | SameContentAnnotation { .. } => DiagnosticDomain::SymbolAnalysis,
             SymbolNameTakenInDependency { .. } => DiagnosticDomain::WorkspaceSymbolAnalysis
         }
     }
@@ -176,6 +181,7 @@ impl DiagnosticKind {
             SymbolNameTaken { .. } => lsp::DiagnosticSeverity::ERROR,
             MissingTypeArg => lsp::DiagnosticSeverity::ERROR,
             UnnecessaryTypeArg => lsp::DiagnosticSeverity::ERROR,
+            SameContentAnnotation { .. } => lsp::DiagnosticSeverity::WARNING,
 
             SymbolNameTakenInDependency { .. } => lsp::DiagnosticSeverity::ERROR
         }
@@ -210,6 +216,7 @@ impl DiagnosticKind {
             SymbolNameTaken { name, .. } => format!("The name \"{}\" is defined multiple times", name),
             MissingTypeArg => "Missing type argument".into(),
             UnnecessaryTypeArg => "This type does not take any type arguments".into(),
+            SameContentAnnotation { .. } => "WIDE does not support creating annotations for types from the same content. Doing so will result in undefined behaviour.".into(),
 
             SymbolNameTakenInDependency { name, .. } => format!("The name \"{}\" is already defined in another content", name),
         }
@@ -227,6 +234,11 @@ impl DiagnosticKind {
             SymbolNameTakenInDependency { precursor_file_path, precursor_range, .. } if precursor_file_path.is_some() => Some(DiagnosticRelatedInfo {
                 path: precursor_file_path.clone().unwrap(),
                 range: precursor_range.unwrap_or_default(),
+                message: "Name originally defined here".into()
+            }),
+            SameContentAnnotation { original_file_path, original_range } if original_range.is_some() => Some(DiagnosticRelatedInfo {
+                path: original_file_path.clone().unwrap(),
+                range: original_range.unwrap_or_default(),
                 message: "Name originally defined here".into()
             }),
             _ => None

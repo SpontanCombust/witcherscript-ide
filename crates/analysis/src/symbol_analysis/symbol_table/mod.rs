@@ -29,15 +29,18 @@ pub struct SymbolTable {
 #[error("symbol path already occupied")]
 pub struct PathOccupiedError {
     pub occupied_path: SymbolPathBuf,
-    pub occupied_location: Option<SymbolLocation>
+    pub occupied_typ: SymbolType,
+    pub occupied_location: Option<SymbolLocation>,
 }
 
 #[derive(Debug, Clone, Error)]
 #[error("symbol could not be merged into another a symbol table")]
 pub struct MergeConflictError {
     pub occupied_path: SymbolPathBuf,
+    pub occupied_typ: SymbolType,
     pub occupied_location: Option<SymbolLocation>,
-    pub incoming_location: SymbolLocation
+    pub incoming_location: SymbolLocation,
+    pub incoming_typ: SymbolType
 }
 
 
@@ -95,7 +98,8 @@ impl SymbolTable {
         if let Some(occupying) = self.symbols.get(path) {
             Err(PathOccupiedError {
                 occupied_path: occupying.path().to_sympath_buf(),
-                occupied_location: occupying.location().cloned()
+                occupied_location: occupying.location().cloned(),
+                occupied_typ: occupying.typ()
             })
         } else {
             Ok(())
@@ -226,8 +230,10 @@ impl SymbolTable {
                 if let Some(incoming_location) = incoming_variant.location().cloned() {
                     errors.push(MergeConflictError {
                         occupied_path: occupying_variant.path().to_owned(),
+                        occupied_typ: occupying_variant.typ(),
                         occupied_location: occupying_variant.location().cloned(),
-                        incoming_location
+                        incoming_typ: incoming_variant.typ(),
+                        incoming_location,
                     });
                 }
             } else {
