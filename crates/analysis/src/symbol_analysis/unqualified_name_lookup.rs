@@ -216,6 +216,9 @@ impl<'a> UnqualifiedNameLookupBuilder<'a> {
                         ClassSymbolChild::Event(s) => {
                             unl.insert(s.path().to_owned());
                         },
+                        // these are special reserved names, they cannot be overshadowed
+                        ClassSymbolChild::ThisVar(_)
+                        | ClassSymbolChild::SuperVar(_) => { }
                     }
                 }
             }
@@ -273,6 +276,9 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
                         ClassSymbolChild::Event(s) => {
                             unl.insert(s.path().to_owned());
                         },
+                        // these are special reserved names, they cannot be overshadowed
+                        ClassSymbolChild::ThisVar(_)
+                        | ClassSymbolChild::SuperVar(_) => { }
                     }
                 }
             }
@@ -306,6 +312,11 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
                         StateSymbolChild::Event(s) => {
                             unl.insert(s.path().to_owned());
                         },
+                        // these are special reserved names, they cannot be overshadowed
+                        StateSymbolChild::ThisVar(_)
+                        | StateSymbolChild::SuperVar(_)
+                        | StateSymbolChild::ParentVar(_)
+                        | StateSymbolChild::VirtualParentVar(_) => { }
                     }
                 }
             }

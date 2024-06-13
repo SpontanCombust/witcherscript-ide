@@ -63,12 +63,14 @@ pub trait ChildrenSymbolsFilter<'a>: Symbol {
     type ChildRef: TryFrom<&'a SymbolVariant> + 'a;
 }
 
-//FIXME missing this, super
+
 pub enum ClassSymbolChild<'st> {
     Var(&'st MemberVarSymbol),
     Autobind(&'st AutobindSymbol),
     Method(&'st MemberFunctionSymbol),
-    Event(&'st EventSymbol)
+    Event(&'st EventSymbol),
+    ThisVar(&'st ThisVarSymbol),
+    SuperVar(&'st SuperVarSymbol)
 }
 
 impl<'a> TryFrom<&'a SymbolVariant> for ClassSymbolChild<'a> {
@@ -80,6 +82,8 @@ impl<'a> TryFrom<&'a SymbolVariant> for ClassSymbolChild<'a> {
             SymbolVariant::Autobind(s) => Ok(ClassSymbolChild::Autobind(s)),
             SymbolVariant::MemberFunc(s) => Ok(ClassSymbolChild::Method(s)),
             SymbolVariant::Event(s) => Ok(ClassSymbolChild::Event(s)),
+            SymbolVariant::ThisVar(s) => Ok(ClassSymbolChild::ThisVar(s)),
+            SymbolVariant::SuperVar(s) => Ok(ClassSymbolChild::SuperVar(s)),
             _ => Err(())
         }
     }
@@ -89,8 +93,35 @@ impl<'a> ChildrenSymbolsFilter<'a> for ClassSymbol {
     type ChildRef = ClassSymbolChild<'a>;
 }
 
-//FIXME missing this, super, parent, virtual_parent
-pub type StateSymbolChild<'st> = ClassSymbolChild<'st>;
+
+pub enum StateSymbolChild<'st> {
+    Var(&'st MemberVarSymbol),
+    Autobind(&'st AutobindSymbol),
+    Method(&'st MemberFunctionSymbol),
+    Event(&'st EventSymbol),
+    ThisVar(&'st ThisVarSymbol),
+    SuperVar(&'st SuperVarSymbol),
+    ParentVar(&'st ParentVarSymbol),
+    VirtualParentVar(&'st VirtualParentVarSymbol)
+}
+
+impl<'a> TryFrom<&'a SymbolVariant> for StateSymbolChild<'a> {
+    type Error = ();
+
+    fn try_from(value: &'a SymbolVariant) -> Result<Self, Self::Error> {
+        match value {
+            SymbolVariant::MemberVar(s) => Ok(StateSymbolChild::Var(s)),
+            SymbolVariant::Autobind(s) => Ok(StateSymbolChild::Autobind(s)),
+            SymbolVariant::MemberFunc(s) => Ok(StateSymbolChild::Method(s)),
+            SymbolVariant::Event(s) => Ok(StateSymbolChild::Event(s)),
+            SymbolVariant::ThisVar(s) => Ok(StateSymbolChild::ThisVar(s)),
+            SymbolVariant::SuperVar(s) => Ok(StateSymbolChild::SuperVar(s)),
+            SymbolVariant::ParentVar(s) => Ok(StateSymbolChild::ParentVar(s)),
+            SymbolVariant::VirtualParentVar(s) => Ok(StateSymbolChild::VirtualParentVar(s)),
+            _ => Err(())
+        }
+    }
+}
 
 impl<'a> ChildrenSymbolsFilter<'a> for StateSymbol {
     type ChildRef = StateSymbolChild<'a>;
