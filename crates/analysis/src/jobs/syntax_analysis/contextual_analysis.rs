@@ -243,7 +243,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: DeclarationTraversalContext) {
         if let Some(range) = n.annotation().map(|ann| ann.range()) {
             self.diagnostics.push(Diagnostic {
                 range,
@@ -257,6 +257,13 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if let Ok(var_spec) = MemberVarSpecifier::try_from(spec) {
                 if matches!(var_spec, MemberVarSpecifier::AccessModifier(_)) {
+                    if ctx == DeclarationTraversalContext::StructDefinition {
+                        let spec_name = Keyword::from(spec).to_string();
+                        self.diagnostics.push(Diagnostic {
+                            range,
+                            kind: DiagnosticKind::IncompatibleSpecifier { spec_name, sym_name: "a struct field".into() }
+                        })
+                    }
                     if found_access_modif_before {
                         self.diagnostics.push(Diagnostic { 
                             range, 

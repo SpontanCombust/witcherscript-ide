@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use crate::tokens::Keyword;
 use super::{AccessModifier, Specifier};
 
-//TODO split to ClassFieldSpecifier and StructFieldSpecifier (AccessModifier is not allowed in structs)
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MemberVarSpecifier {
     AccessModifier(AccessModifier),
