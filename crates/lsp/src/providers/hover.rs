@@ -11,63 +11,65 @@ use crate::Backend;
 use super::common::{resolve_text_document_position, PositionTargetKind};
 
 
-pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option<lsp::Hover>> {
-    let doc_path = AbsPath::try_from(params.text_document_position_params.text_document.uri.clone()).unwrap();
-
-    if doc_path.extension().unwrap_or_default() != "ws" {
-        return Ok(None);
-    }
-
-    let content_path;
-    if let Some(path) = backend.scripts.get(&doc_path).and_then(|ss| ss.content_info.as_ref().map(|ci| ci.content_path.to_owned())) {
-        content_path = path;
-    } 
-    else {
-        // backend.client.send_notification::<notifications::client::show_foreign_script_warning::Type>(()).await;
-        return Ok(None);
-    }
-
-    let symtabs = backend.symtabs.read().await;
-    let symtabs_marcher = backend.march_symbol_tables(&symtabs, &content_path).await;
+impl Backend {
+    pub async fn hover_impl(&self, params: lsp::HoverParams) -> Result<Option<lsp::Hover>> {
+        let doc_path = AbsPath::try_from(params.text_document_position_params.text_document.uri.clone()).unwrap();
     
-    let script_state;
-    if let Some(ss) = backend.scripts.get(&doc_path) {
-        script_state = ss;
-    } else {
-        return Ok(None);
-    }
-
-    let position_target = resolve_text_document_position(params.text_document_position_params.position, &script_state, symtabs_marcher.clone());
-    drop(script_state);
-    
-    if let Some(position_target) = position_target {
-        let mut value = None;
-
-        if let Some(sympath) = position_target.target_symbol_path(&symtabs_marcher) {
-            let category = sympath
-            .components().last()
-            .map(|c| c.category)
-            .unwrap_or(SymbolCategory::Type);
-
-            let mut buf = String::new();
-            symtabs_marcher.get_symbol_with_containing_table(&sympath)
-                .map(|(symtab, symvar)| symvar.render(&mut buf, symtab, &symtabs_marcher))
-                .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
-
-            value = Some(buf);
-        } else if let PositionTargetKind::ArrayTypeIdentifier = position_target.kind {
-            value = Some("array<T>".to_string());
+        if doc_path.extension().unwrap_or_default() != "ws" {
+            return Ok(None);
         }
-
-        Ok(value.map(|value| lsp::Hover {
-            contents: lsp::HoverContents::Scalar(lsp::MarkedString::LanguageString(lsp::LanguageString {
-                language: Backend::LANGUAGE_ID.to_string(),
-                value,
-            })),
-            range: None
-        }))
-    } else {
-        Ok(None)
+    
+        let content_path;
+        if let Some(path) = self.scripts.get(&doc_path).and_then(|ss| ss.content_info.as_ref().map(|ci| ci.content_path.to_owned())) {
+            content_path = path;
+        } 
+        else {
+            // backend.client.send_notification::<notifications::client::show_foreign_script_warning::Type>(()).await;
+            return Ok(None);
+        }
+    
+        let symtabs = self.symtabs.read().await;
+        let symtabs_marcher = self.march_symbol_tables(&symtabs, &content_path).await;
+        
+        let script_state;
+        if let Some(ss) = self.scripts.get(&doc_path) {
+            script_state = ss;
+        } else {
+            return Ok(None);
+        }
+    
+        let position_target = resolve_text_document_position(params.text_document_position_params.position, &script_state, symtabs_marcher.clone());
+        drop(script_state);
+        
+        if let Some(position_target) = position_target {
+            let mut value = None;
+    
+            if let Some(sympath) = position_target.target_symbol_path(&symtabs_marcher) {
+                let category = sympath
+                .components().last()
+                .map(|c| c.category)
+                .unwrap_or(SymbolCategory::Type);
+    
+                let mut buf = String::new();
+                symtabs_marcher.get_symbol_with_containing_table(&sympath)
+                    .map(|(symtab, symvar)| symvar.render(&mut buf, symtab, &symtabs_marcher))
+                    .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
+    
+                value = Some(buf);
+            } else if let PositionTargetKind::ArrayTypeIdentifier = position_target.kind {
+                value = Some("array<T>".to_string());
+            }
+    
+            Ok(value.map(|value| lsp::Hover {
+                contents: lsp::HoverContents::Scalar(lsp::MarkedString::LanguageString(lsp::LanguageString {
+                    language: Backend::LANGUAGE_ID.to_string(),
+                    value,
+                })),
+                range: None
+            }))
+        } else {
+            Ok(None)
+        }
     }
 }
 

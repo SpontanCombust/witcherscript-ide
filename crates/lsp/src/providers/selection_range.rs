@@ -7,56 +7,58 @@ use witcherscript_analysis::utils::{PositionFilter, PositionFilterPayload};
 use crate::Backend;
 
 
-pub async fn selection_range(backend: &Backend, params: lsp::SelectionRangeParams) -> Result<Option<Vec<lsp::SelectionRange>>> {
-    let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
-
-    if doc_path.extension().unwrap_or_default() != "ws" {
-        return Ok(None);
-    }
+impl Backend {
+    pub async fn selection_range_impl(&self, params: lsp::SelectionRangeParams) -> Result<Option<Vec<lsp::SelectionRange>>> {
+        let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
     
-    if let Some(script_state) = backend.scripts.get(&doc_path) {
-        let mut found_ranges = Vec::with_capacity(params.positions.len());
-
-        let (pos_filter, payload) = PositionFilter::new_rc(lsp::Position::default());
-        let resolver = SelectionRangeResolver::new_rc(payload.clone());
-
-        for pos in params.positions {
-            resolver.borrow_mut().reset(pos);
-            pos_filter.borrow_mut().reset(pos);
-
-            let mut chain = SyntaxNodeVisitorChain::new()
-                .link_rc(pos_filter.clone())
-                .link_rc(resolver.clone());
-
-            script_state.script.visit_nodes(&mut chain);
-
-            let resolver_ref = resolver.borrow();
-            if !resolver_ref.range_stack.is_empty() {
-                let mut sr = lsp::SelectionRange {
-                    range: resolver_ref.range_stack[0],
-                    parent: None
-                };
-
-                for range in resolver_ref.range_stack.iter().skip(1) {
-                    sr = lsp::SelectionRange {
-                        range: range.clone(),
-                        parent: Some(Box::new(sr))
-                    };
-                }
-
-                found_ranges.push(sr);
-            } 
-            else {
-                found_ranges.push(lsp::SelectionRange {
-                    range: lsp::Range::default(),
-                    parent: None
-                })
-            }
+        if doc_path.extension().unwrap_or_default() != "ws" {
+            return Ok(None);
         }
-
-        Ok(Some(found_ranges))
-    } else {
-        Ok(None)
+        
+        if let Some(script_state) = self.scripts.get(&doc_path) {
+            let mut found_ranges = Vec::with_capacity(params.positions.len());
+    
+            let (pos_filter, payload) = PositionFilter::new_rc(lsp::Position::default());
+            let resolver = SelectionRangeResolver::new_rc(payload.clone());
+    
+            for pos in params.positions {
+                resolver.borrow_mut().reset(pos);
+                pos_filter.borrow_mut().reset(pos);
+    
+                let mut chain = SyntaxNodeVisitorChain::new()
+                    .link_rc(pos_filter.clone())
+                    .link_rc(resolver.clone());
+    
+                script_state.script.visit_nodes(&mut chain);
+    
+                let resolver_ref = resolver.borrow();
+                if !resolver_ref.range_stack.is_empty() {
+                    let mut sr = lsp::SelectionRange {
+                        range: resolver_ref.range_stack[0],
+                        parent: None
+                    };
+    
+                    for range in resolver_ref.range_stack.iter().skip(1) {
+                        sr = lsp::SelectionRange {
+                            range: range.clone(),
+                            parent: Some(Box::new(sr))
+                        };
+                    }
+    
+                    found_ranges.push(sr);
+                } 
+                else {
+                    found_ranges.push(lsp::SelectionRange {
+                        range: lsp::Range::default(),
+                        parent: None
+                    })
+                }
+            }
+    
+            Ok(Some(found_ranges))
+        } else {
+            Ok(None)
+        }
     }
 }
 
