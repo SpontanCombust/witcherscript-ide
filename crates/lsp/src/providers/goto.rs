@@ -2,7 +2,7 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript_analysis::symbol_analysis::{symbol_path::SymbolPathBuf, symbols::*};
-use crate::{Backend, messaging::notifications};
+use crate::{notifications, Backend};
 use super::common::resolve_text_document_position;
 
 

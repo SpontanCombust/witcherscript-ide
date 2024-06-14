@@ -1,7 +1,7 @@
-use messaging::{notifications, requests};
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::{LanguageServer, LspService, Server};
+use crate::providers::custom::*;
 
 
 mod backend;
@@ -11,7 +11,8 @@ mod providers;
 mod config;
 mod reporting;
 mod tasks;
-mod messaging;
+mod requests;
+mod notifications;
 
 
 #[tower_lsp::async_trait]
@@ -102,15 +103,15 @@ async fn main() {
     let (stdin, stdout) = (tokio::io::stdin(), tokio::io::stdout());
 
     let (service, socket) = LspService::build(|client| Backend::new(client))
-        .custom_method(requests::projects::create::METHOD, Backend::handle_projects_create_request)
-        .custom_method(requests::projects::list::METHOD, Backend::handle_projects_list_request)
-        .custom_method(requests::projects::vanilla_dependency_content::METHOD, Backend::handle_projects_vanilla_dependency_content_request)
-        .custom_method(requests::scripts::parent_content::METHOD, Backend::handle_scripts_parent_content_request)
-        .custom_method(requests::debug::script_ast::METHOD, Backend::handle_debug_script_ast_request)
-        .custom_method(requests::debug::script_cst::METHOD, Backend::handle_debug_script_cst_request)
-        .custom_method(requests::debug::content_graph_dot::METHOD, Backend::handle_debug_content_graph_dot_request)
-        .custom_method(requests::debug::script_symbols::METHOD, Backend::handle_debug_script_symbols_request)
-        .custom_method(notifications::projects::did_import_scripts::METHOD, Backend::handle_projects_did_import_scripts_notification)
+        .custom_method(requests::projects::create::METHOD, Backend::create_project)
+        .custom_method(requests::projects::list::METHOD, Backend::project_list)
+        .custom_method(requests::projects::vanilla_dependency_content::METHOD, Backend::vanilla_dependency_content)
+        .custom_method(requests::scripts::parent_content::METHOD, Backend::parent_content)
+        .custom_method(requests::debug::script_ast::METHOD, Backend::script_ast)
+        .custom_method(requests::debug::script_cst::METHOD, Backend::script_cst)
+        .custom_method(requests::debug::content_graph_dot::METHOD, Backend::content_graph_dot)
+        .custom_method(requests::debug::script_symbols::METHOD, Backend::script_symbols)
+        .custom_method(notifications::projects::did_import_scripts::METHOD, Backend::did_import_scripts)
         .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
