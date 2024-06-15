@@ -64,6 +64,12 @@ Shows the Abstract Syntax Tree  of the currently focused on script as it is uder
 Warning: if document's identation is done with tabs instead of spaces it may not show accurate symbol span data.  
 Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
 
+### `witcherscript-ide.debug.showScriptCst`
+*"Show script CST"*  
+Shows the Concrete Syntax Tree  of the currently focused on script as it is uderstood by the language server.
+Warning: if document's identation is done with tabs instead of spaces it may not show accurate symbol span data.  
+Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
+
 ### `witcherscript-ide.debug.contentGraphDot`
 *"Show content graph"*  
 Shows the graph in Graphviz .dot format representing the overall content dependency graph of the workspace.  
