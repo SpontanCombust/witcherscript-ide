@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import * as commands from './commands';
 import * as config from './config';
 import * as providers from './providers';
-import * as lc from './lang_client';
+import * as lc from './lsp/lang_client';
 
 
 export function activate(context: vscode.ExtensionContext) {

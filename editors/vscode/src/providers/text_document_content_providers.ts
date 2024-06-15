@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { getLanguageClient } from "./../lang_client"
-import * as requests from './../requests';
+import { getLanguageClient } from "../lsp/lang_client"
+import * as requests from '../lsp/requests';
 
 
 export class ScriptAstProvider implements vscode.TextDocumentContentProvider {
