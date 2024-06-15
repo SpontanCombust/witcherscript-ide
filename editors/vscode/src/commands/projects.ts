@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as lsp from 'vscode-languageclient/node';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 
@@ -11,6 +12,12 @@ import { Cmd } from './index'
 
 export function commandInitProject(context: vscode.ExtensionContext): Cmd {
     return async () => {
+        const client = getLanguageClient();
+        if (client == undefined) {
+            vscode.window.showErrorMessage("Language Server needs to be active!");
+            return;
+        }
+
         const initialDirUri = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : undefined;
 
         const projectDirUri = await vscode.window.showOpenDialog({
@@ -45,12 +52,18 @@ export function commandInitProject(context: vscode.ExtensionContext): Cmd {
         }
 
 
-        await initializeProjectInDirectory(projectDirUri, projectName, context);
+        await initializeProjectInDirectory(client, projectDirUri, projectName, context);
     }
 }
 
 export function commandCreateProject(context: vscode.ExtensionContext): Cmd {
     return async () => {
+        const client = getLanguageClient();
+        if (client == undefined) {
+            vscode.window.showErrorMessage("Language Server needs to be active!");
+            return;
+        }
+
         const projectName = await vscode.window.showInputBox({
             prompt: "Enter the name of the project",
             ignoreFocusOut: true,
@@ -89,7 +102,7 @@ export function commandCreateProject(context: vscode.ExtensionContext): Cmd {
 
 
         const projectDirUri = vscode.Uri.file(projectDir);
-        await initializeProjectInDirectory(projectDirUri, projectName, context);
+        await initializeProjectInDirectory(client, projectDirUri, projectName, context);
     }
 }
 
@@ -102,13 +115,7 @@ function validateProjectName(input: string): string | undefined {
     }
 }
 
-async function initializeProjectInDirectory(projectDirUri: vscode.Uri, projectName: string, context: vscode.ExtensionContext) {
-    const client = getLanguageClient();
-    if (client == undefined) {
-        vscode.window.showErrorMessage("Language Server is not active!");
-        return;
-    }
-
+async function initializeProjectInDirectory(client: lsp.LanguageClient, projectDirUri: vscode.Uri, projectName: string, context: vscode.ExtensionContext) {
     let manifestUri: vscode.Uri;
     try {
         const params: requests.projects.create.Parameters = {

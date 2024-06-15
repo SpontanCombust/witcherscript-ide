@@ -96,14 +96,12 @@
       {
         "command": "witcherscript-ide.projects.init",
         "title": "Initialize a WitcherScript project in existing directory...",
-        "category": "WitcherScript-IDE",
-        "enablement": "witcherscript-ide.languageServerActive"
+        "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.projects.create",
         "title": "Create a new WitcherScript project...",
-        "category": "WitcherScript-IDE",
-        "enablement": "witcherscript-ide.languageServerActive"
+        "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.scripts.importVanilla",
