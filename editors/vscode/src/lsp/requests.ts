@@ -79,6 +79,18 @@ export namespace debug {
         export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/debug/scriptAst");
     }
 
+    export namespace scriptCst {
+        export interface Parameters {
+            scriptUri: string
+        }
+    
+        export interface Response {
+            cst: string
+        }
+    
+        export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/debug/scriptCst");
+    }
+
     export namespace contentGraphDot {
         export interface Parameters {
 

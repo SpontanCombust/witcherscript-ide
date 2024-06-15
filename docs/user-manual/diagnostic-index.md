@@ -171,6 +171,167 @@ Diagnostic used for all other syntax error cases. Syntactical analysis is very b
 
 </br>
 
+## **Contextual Syntax Analysis**
+
+---
+
+### `incompatible-specifier`
+
+Specifiers are keywords that tell the WitcherScript compiler to give a code symbol some additional properties.
+Different kinds of symbols can only take a predefined set of specifiers. A state for example cannot be at the same time a statemachine and thus it won't accept a `statemachine` specifier.
+
+```ts linenums="1" hl_lines="1"
+statemachine state Idle in Monster { // (1)
+    //...
+}
+```
+
+1. A state cannot be marked with `statemachine`
+
+
+---
+
+### `incompatible-function-flavour`
+
+Functions can additionally be marked with specifiers that you could call "flavours". They give them special attributes, like exposing them to the debug console if you add the `exec` keyword to the function. At most only one flavour can be specified. Some flavours can only be used in certain contexts, for example the aformentioned `exec` can only be used for global functions.
+
+```ts linenums="1" hl_lines="4"
+class CR4Player {
+    //...
+
+    public exec function LogHealth() { // (1)
+        LogChannel('Health', IntToString(this.GetHealth()));
+    }
+}
+```
+
+1. `exec` cannot be used with a class method. Move the function to the global scope.
+
+
+---
+
+### `repeated-specifier`
+
+Repeating the same specifier for one code symbol is not allowed.
+
+```ts linenums="1" hl_lines="1"
+public saved public var piesEaten: int; // (1) 
+```
+
+1. Repeated specifier `public` for field `piesEaten`.
+
+
+---
+
+### `multiple-access-modifiers`
+
+Access modifiers are keywords that change the visibility of a field or method. This is a common feature in object oriented languages like WitcherScript. 
+Available access modifiers are `private`, `protected` and `public`. Only one of them can be used in the declaration.
+
+```ts linenums="1" hl_lines="1"
+protected public function MakeDinner() { // (1) 
+    // ...
+} 
+```
+
+1. Can't use both `protected` and `public` access modifiers. Use only one of these two.
+
+You can read more about access modifiers in programming languages [here](https://en.wikipedia.org/wiki/Access_modifiers).
+
+
+---
+
+### `invalid-annotation`
+
+Detected a use of an unknown annotation. See the official WitcherScript guide for REDkit to know which annotations are avaialble.
+
+```ts linenums="1" hl_lines="1"
+@addFunction(CR4Player) // (1)
+function MountDragon(force: bool) {
+    // ...
+}
+```
+
+1. Used unknown `@addFunction` annotation. Did you mean `@addMethod`?
+
+
+---
+
+### `invalid-annotation-placement`
+
+Annotations can only be used in the global context. Using them inside classes for example is erroneous.
+
+```ts linenums="1" hl_lines="2"
+class Cannon {
+    @addField(Ship) // (1)
+    public var ammunition: int;
+    // ...
+}
+```
+
+1. Using annotations inside classes is invalid. Add the field outside of the class definition.
+
+
+---
+
+### `missing-annotation-argument`
+
+Some annotations require an argument. For example the `@wrapMethod` annotation requires a type argument that will decide which class's method will be wrapped.
+
+```ts linenums="1" hl_lines="1"
+@wrapMethod // (1)
+function OnSpawned() {
+    // ...
+}
+```
+
+1. Missing class name
+
+
+---
+
+### `incompatible-annotation`
+
+Annotations expect a specific code fragment below.
+
+```ts linenums="1" hl_lines="1"
+@addField(CR4Player) // (1)
+function SetE3Hairstyle() {
+    // ...
+}
+```
+
+1. `@addField` annotation expects a var declaration.
+
+
+---
+
+### `global-scope-var-decl`
+
+WitcherScript does not support global variable declarations. The only context when it is valid is after the `@addField` annotation.
+
+```ts linenums="1" hl_lines="10"
+class Mod1 {
+    // ...
+}
+
+class Mod2 {
+    // ...
+}
+
+
+var modsInstalled: int; // (1)
+```
+
+1. Variable declaration not allowed here.
+
+
+---
+
+
+
+</br>
+
 ## **Symbol Analysis**
 
 ---
@@ -253,39 +414,34 @@ var player: CR4Player<Ciri>; // (1)
 
 ---
 
-### `repeated-specifier`
+### `same-content-annotation`
 
-Specifiers are keywords that tell the WitcherScript compiler to give a code symbol some specific properties. For example adding the keyword `exec` before global function declaration will make that function accessible from the debug console in game.
+Annotations are meant to extend types already existing in the Witcher 3 script code base or types defined in other mods. Even if it may be possible to `@wrapMethod` that is defined in the same mod WIDE discourages this behaviour in favour of simply editing those types instead of using annotations. 
 
-Repeating the same specifier for one code symbol is not allowed.
-
-```ts linenums="1" hl_lines="1"
-public saved public var piesEaten: int; // (1) 
+```ts linenums="1" title="modSkillFramework/content/scripts/skill_framework.ws"
+class SkillFramework {
+    public function DefineSkill(skillName: name) {
+        // ...
+    }
+}
 ```
 
-1. Repeated specifier `public` for field `piesEaten`.
+```ts linenums="1" hl_lines="2"
+@wrapMethod(SkillFramework)
+function DefineSkill(skillName: name) { // (1)
+    LogChannel('SF', "Skill defined: " + skillName);
+    wrappedMethod(skillName);
+}
+```
+
+1. Putting this in the same mod will work for the script compiler, but will yield undefined behaviour for WIDE.
 
 
 ---
 
-### `multiple-access-modifiers`
-
-Access modifiers are keywords that change the visibility of a field or method. This is a common feature in object oriented languages like WitcherScript. 
-Available access modifiers are `private`, `protected` and `public`. Only one of them can be used in the declaration.
-
-```ts linenums="1" hl_lines="1"
-protected public function MakeDinner() { // (1) 
-    // ...
-} 
-```
-
-1. Can't use both `protected` and `public` access modifiers. Use only one of these two.
-
-You can read more about access modifiers in programming languages [here](https://en.wikipedia.org/wiki/Access_modifiers).
-
----
 
 
+</br>
 
 ## **Workspace Symbol Analysis**
 

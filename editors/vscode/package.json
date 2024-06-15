@@ -60,6 +60,7 @@
         "witcherscript-ide.gameDirectory": {
           "type": "string",
           "default": "",
+          "order": 0,
           "markdownDescription": "Path to Witcher 3's root game directory (containing bin, content, Mods folders etc.). This will effectively add `content` and `Mods` folders to content repositories."
         },
         "witcherscript-ide.contentRepositories": {
@@ -68,21 +69,25 @@
             "type": "string"
           },
           "default": [],
+          "order": 1,
           "markdownDescription": "Paths to custom directories containing WitcherScript contents."
         },
         "witcherscript-ide.languageServer.enable": {
           "type": "boolean",
           "default": true,
+          "order": 2,
           "markdownDescription": "Enable the language server. You can disable this if you only want syntax highlighting (change requires extension reload)."
         },
         "witcherscript-ide.languageServer.syntaxAnalysis": {
           "type": "boolean",
           "default": true,
+          "order": 3,
           "markdownDescription": "Enables syntax analysis in the language server."
         },
         "witcherscript-ide.debug.enableDebugFeatures": {
           "type": "boolean",
           "default": false,
+          "order": 4,
           "markdownDescription": "Enable debug features (change requires extension reload)."
         }
       }
@@ -91,14 +96,12 @@
       {
         "command": "witcherscript-ide.projects.init",
         "title": "Initialize a WitcherScript project in existing directory...",
-        "category": "WitcherScript-IDE",
-        "enablement": "witcherscript-ide.languageServerActive"
+        "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.projects.create",
         "title": "Create a new WitcherScript project...",
-        "category": "WitcherScript-IDE",
-        "enablement": "witcherscript-ide.languageServerActive"
+        "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.scripts.importVanilla",
@@ -115,6 +118,12 @@
       {
         "command": "witcherscript-ide.debug.showScriptAst",
         "title": "Show script AST",
+        "category": "WitcherScript-IDE (debug)",
+        "enablement": "witcherscript-ide.languageServerActive && witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
+      },
+      {
+        "command": "witcherscript-ide.debug.showScriptCst",
+        "title": "Show script CST",
         "category": "WitcherScript-IDE (debug)",
         "enablement": "witcherscript-ide.languageServerActive && witcherscript-ide.debugFeaturesEnabled && editorLangId == 'witcherscript'"
       },

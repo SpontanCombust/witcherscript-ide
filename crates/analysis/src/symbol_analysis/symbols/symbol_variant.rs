@@ -20,6 +20,11 @@ pub enum SymbolVariant {
     MemberFunc(MemberFunctionSymbol),
     Event(EventSymbol),
     Constructor(ConstructorSymbol),
+    MemberFuncInjector(MemberFunctionInjectorSymbol),
+    MemberFuncReplacer(MemberFunctionReplacerSymbol),
+    GlobalFuncReplacer(GlobalFunctionReplacerSymbol),
+    MemberFuncWrapper(MemberFunctionWrapperSymbol),
+    WrappedMethod(WrappedMethodSymbol),
 
     // data
     Primitive(PrimitiveTypeSymbol),
@@ -34,6 +39,7 @@ pub enum SymbolVariant {
     StateSuperVar(StateSuperVarSymbol),
     ParentVar(ParentVarSymbol),
     VirtualParentVar(VirtualParentVarSymbol),
+    MemberVarInjector(MemberVarInjectorSymbol)
 }
 
 impl std::fmt::Debug for SymbolVariant {
@@ -62,6 +68,13 @@ impl std::fmt::Debug for SymbolVariant {
             Self::StateSuperVar(s) => s.fmt(f),
             Self::ParentVar(s) => s.fmt(f),
             Self::VirtualParentVar(s) => s.fmt(f),
+
+            Self::MemberFuncInjector(s) => s.fmt(f),
+            Self::MemberFuncReplacer(s) => s.fmt(f),
+            Self::GlobalFuncReplacer(s) => s.fmt(f),
+            Self::MemberFuncWrapper(s) => s.fmt(f),
+            Self::MemberVarInjector(s) => s.fmt(f),
+            Self::WrappedMethod(s) => s.fmt(f),
         }
     }
 }
@@ -69,113 +82,141 @@ impl std::fmt::Debug for SymbolVariant {
 impl SymbolVariant {
     pub fn typ(&self) -> SymbolType {
         match self {
-            SymbolVariant::Class(s) => s.typ(),
-            SymbolVariant::State(s) => s.typ(),
-            SymbolVariant::Struct(s) => s.typ(),
-            SymbolVariant::Enum(s) => s.typ(),
-            SymbolVariant::Array(s) => s.typ(),
-            SymbolVariant::ArrayFunc(s) => s.typ(),
-            SymbolVariant::ArrayFuncParam(s) => s.typ(),
-            SymbolVariant::GlobalFunc(s) => s.typ(),
-            SymbolVariant::MemberFunc(s) => s.typ(),
-            SymbolVariant::Event(s) => s.typ(),
-            SymbolVariant::Constructor(s) => s.typ(),
-            SymbolVariant::Primitive(s) => s.typ(),
-            SymbolVariant::EnumVariant(s) => s.typ(),
-            SymbolVariant::FuncParam(s) => s.typ(),
-            SymbolVariant::GlobalVar(s) => s.typ(),
-            SymbolVariant::MemberVar(s) => s.typ(),
-            SymbolVariant::Autobind(s) => s.typ(),
-            SymbolVariant::LocalVar(s) => s.typ(),
-            SymbolVariant::ThisVar(s) => s.typ(),
-            SymbolVariant::SuperVar(s) => s.typ(),
-            SymbolVariant::StateSuperVar(s) => s.typ(),
-            SymbolVariant::ParentVar(s) => s.typ(),
-            SymbolVariant::VirtualParentVar(s) => s.typ(),
+            Self::Class(s) => s.typ(),
+            Self::State(s) => s.typ(),
+            Self::Struct(s) => s.typ(),
+            Self::Enum(s) => s.typ(),
+            Self::Array(s) => s.typ(),
+            Self::ArrayFunc(s) => s.typ(),
+            Self::ArrayFuncParam(s) => s.typ(),
+            Self::GlobalFunc(s) => s.typ(),
+            Self::MemberFunc(s) => s.typ(),
+            Self::Event(s) => s.typ(),
+            Self::Constructor(s) => s.typ(),
+            Self::Primitive(s) => s.typ(),
+            Self::EnumVariant(s) => s.typ(),
+            Self::FuncParam(s) => s.typ(),
+            Self::GlobalVar(s) => s.typ(),
+            Self::MemberVar(s) => s.typ(),
+            Self::Autobind(s) => s.typ(),
+            Self::LocalVar(s) => s.typ(),
+            Self::ThisVar(s) => s.typ(),
+            Self::SuperVar(s) => s.typ(),
+            Self::StateSuperVar(s) => s.typ(),
+            Self::ParentVar(s) => s.typ(),
+            Self::VirtualParentVar(s) => s.typ(),
+
+            Self::MemberFuncInjector(s) => s.typ(),
+            Self::MemberFuncReplacer(s) => s.typ(),
+            Self::GlobalFuncReplacer(s) => s.typ(),
+            Self::MemberFuncWrapper(s) => s.typ(),
+            Self::MemberVarInjector(s) => s.typ(),
+            Self::WrappedMethod(s) => s.typ(),
         }
     }
 
     pub fn path(&self) -> &SymbolPath {
         match self {
-            SymbolVariant::Class(s) => s.path(),
-            SymbolVariant::State(s) => s.path(),
-            SymbolVariant::Struct(s) => s.path(),
-            SymbolVariant::Enum(s) => s.path(),
-            SymbolVariant::Array(s) => s.path(),
-            SymbolVariant::ArrayFunc(s) => s.path(),
-            SymbolVariant::ArrayFuncParam(s) => s.path(),
-            SymbolVariant::GlobalFunc(s) => s.path(),
-            SymbolVariant::MemberFunc(s) => s.path(),
-            SymbolVariant::Event(s) => s.path(),
-            SymbolVariant::Constructor(s) => s.path(),
-            SymbolVariant::Primitive(s) => s.path(),
-            SymbolVariant::EnumVariant(s) => s.path(),
-            SymbolVariant::FuncParam(s) => s.path(),
-            SymbolVariant::GlobalVar(s) => s.path(),
-            SymbolVariant::MemberVar(s) => s.path(),
-            SymbolVariant::Autobind(s) => s.path(),
-            SymbolVariant::LocalVar(s) => s.path(),
-            SymbolVariant::ThisVar(s) => s.path(),
-            SymbolVariant::SuperVar(s) => s.path(),
-            SymbolVariant::StateSuperVar(s) => s.path(),
-            SymbolVariant::ParentVar(s) => s.path(),
-            SymbolVariant::VirtualParentVar(s) => s.path(),
+            Self::Class(s) => s.path(),
+            Self::State(s) => s.path(),
+            Self::Struct(s) => s.path(),
+            Self::Enum(s) => s.path(),
+            Self::Array(s) => s.path(),
+            Self::ArrayFunc(s) => s.path(),
+            Self::ArrayFuncParam(s) => s.path(),
+            Self::GlobalFunc(s) => s.path(),
+            Self::MemberFunc(s) => s.path(),
+            Self::Event(s) => s.path(),
+            Self::Constructor(s) => s.path(),
+            Self::Primitive(s) => s.path(),
+            Self::EnumVariant(s) => s.path(),
+            Self::FuncParam(s) => s.path(),
+            Self::GlobalVar(s) => s.path(),
+            Self::MemberVar(s) => s.path(),
+            Self::Autobind(s) => s.path(),
+            Self::LocalVar(s) => s.path(),
+            Self::ThisVar(s) => s.path(),
+            Self::SuperVar(s) => s.path(),
+            Self::StateSuperVar(s) => s.path(),
+            Self::ParentVar(s) => s.path(),
+            Self::VirtualParentVar(s) => s.path(),
+
+            Self::MemberFuncInjector(s) => s.path(),
+            Self::MemberFuncReplacer(s) => s.path(),
+            Self::GlobalFuncReplacer(s) => s.path(),
+            Self::MemberFuncWrapper(s) => s.path(),
+            Self::MemberVarInjector(s) => s.path(),
+            Self::WrappedMethod(s) => s.path(),
         }
     }
 
     pub fn name(&self) -> &str {
         match self {
-            SymbolVariant::Class(s) => s.name(),
-            SymbolVariant::State(s) => s.name(),
-            SymbolVariant::Struct(s) => s.name(),
-            SymbolVariant::Enum(s) => s.name(),
-            SymbolVariant::Array(s) => s.name(),
-            SymbolVariant::ArrayFunc(s) => s.name(),
-            SymbolVariant::ArrayFuncParam(s) => s.name(),
-            SymbolVariant::GlobalFunc(s) => s.name(),
-            SymbolVariant::MemberFunc(s) => s.name(),
-            SymbolVariant::Event(s) => s.name(),
-            SymbolVariant::Constructor(s) => s.name(),
-            SymbolVariant::Primitive(s) => s.name(),
-            SymbolVariant::EnumVariant(s) => s.name(),
-            SymbolVariant::FuncParam(s) => s.name(),
-            SymbolVariant::GlobalVar(s) => s.name(),
-            SymbolVariant::MemberVar(s) => s.name(),
-            SymbolVariant::Autobind(s) => s.name(),
-            SymbolVariant::LocalVar(s) => s.name(),
-            SymbolVariant::ThisVar(s) => s.name(),
-            SymbolVariant::SuperVar(s) => s.name(),
-            SymbolVariant::StateSuperVar(s) => s.name(),
-            SymbolVariant::ParentVar(s) => s.name(),
-            SymbolVariant::VirtualParentVar(s) => s.name(),
+            Self::Class(s) => s.name(),
+            Self::State(s) => s.name(),
+            Self::Struct(s) => s.name(),
+            Self::Enum(s) => s.name(),
+            Self::Array(s) => s.name(),
+            Self::ArrayFunc(s) => s.name(),
+            Self::ArrayFuncParam(s) => s.name(),
+            Self::GlobalFunc(s) => s.name(),
+            Self::MemberFunc(s) => s.name(),
+            Self::Event(s) => s.name(),
+            Self::Constructor(s) => s.name(),
+            Self::Primitive(s) => s.name(),
+            Self::EnumVariant(s) => s.name(),
+            Self::FuncParam(s) => s.name(),
+            Self::GlobalVar(s) => s.name(),
+            Self::MemberVar(s) => s.name(),
+            Self::Autobind(s) => s.name(),
+            Self::LocalVar(s) => s.name(),
+            Self::ThisVar(s) => s.name(),
+            Self::SuperVar(s) => s.name(),
+            Self::StateSuperVar(s) => s.name(),
+            Self::ParentVar(s) => s.name(),
+            Self::VirtualParentVar(s) => s.name(),
+
+            Self::MemberFuncInjector(s) => s.name(),
+            Self::MemberFuncReplacer(s) => s.name(),
+            Self::GlobalFuncReplacer(s) => s.name(),
+            Self::MemberFuncWrapper(s) => s.name(),
+            Self::MemberVarInjector(s) => s.name(),
+            Self::WrappedMethod(s) => s.name(),
         }
     }
 
     pub fn location(&self) -> Option<&SymbolLocation> {
         match self {
-            SymbolVariant::Class(s) => Some(s.location()),
-            SymbolVariant::State(s) => Some(s.location()),
-            SymbolVariant::Struct(s) => Some(s.location()),
-            SymbolVariant::Enum(s) => Some(s.location()),
-            SymbolVariant::Array(_) => None,
-            SymbolVariant::ArrayFunc(_) => None,
-            SymbolVariant::ArrayFuncParam(_) => None,
-            SymbolVariant::GlobalFunc(s) => Some(s.location()),
-            SymbolVariant::MemberFunc(s) => Some(s.location()),
-            SymbolVariant::Event(s) => Some(s.location()),
-            SymbolVariant::Constructor(s) => Some(s.location()),
-            SymbolVariant::Primitive(_) => None,
-            SymbolVariant::EnumVariant(s) => Some(s.location()),
-            SymbolVariant::FuncParam(s) => Some(s.location()),
-            SymbolVariant::GlobalVar(_) => None,
-            SymbolVariant::MemberVar(s) => Some(s.location()),
-            SymbolVariant::Autobind(s) => Some(s.location()),
-            SymbolVariant::LocalVar(s) => Some(s.location()),
-            SymbolVariant::ThisVar(_) => None,
-            SymbolVariant::SuperVar(_) => None,
-            SymbolVariant::StateSuperVar(_) => None,
-            SymbolVariant::ParentVar(_) => None,
-            SymbolVariant::VirtualParentVar(_) => None,
+            Self::Class(s) => Some(s.location()),
+            Self::State(s) => Some(s.location()),
+            Self::Struct(s) => Some(s.location()),
+            Self::Enum(s) => Some(s.location()),
+            Self::Array(_) => None,
+            Self::ArrayFunc(_) => None,
+            Self::ArrayFuncParam(_) => None,
+            Self::GlobalFunc(s) => Some(s.location()),
+            Self::MemberFunc(s) => Some(s.location()),
+            Self::Event(s) => Some(s.location()),
+            Self::Constructor(s) => Some(s.location()),
+            Self::Primitive(_) => None,
+            Self::EnumVariant(s) => Some(s.location()),
+            Self::FuncParam(s) => Some(s.location()),
+            Self::GlobalVar(_) => None,
+            Self::MemberVar(s) => Some(s.location()),
+            Self::Autobind(s) => Some(s.location()),
+            Self::LocalVar(s) => Some(s.location()),
+            Self::ThisVar(_) => None,
+            Self::SuperVar(_) => None,
+            Self::StateSuperVar(_) => None,
+            Self::ParentVar(_) => None,
+            Self::VirtualParentVar(_) => None,
+
+            Self::MemberFuncInjector(s) => Some(s.location()),
+            Self::MemberFuncReplacer(s) => Some(s.location()),
+            Self::GlobalFuncReplacer(s) => Some(s.location()),
+            Self::MemberFuncWrapper(s) => Some(s.location()),
+            Self::MemberVarInjector(s) => Some(s.location()),
+            Self::WrappedMethod(_) => None,
         }
     }
 }
@@ -316,5 +357,41 @@ impl From<ParentVarSymbol> for SymbolVariant {
 impl From<VirtualParentVarSymbol> for SymbolVariant {
     fn from(value: VirtualParentVarSymbol) -> Self {
         Self::VirtualParentVar(value)
+    }
+}
+
+impl From<MemberFunctionInjectorSymbol> for SymbolVariant {
+    fn from(value: MemberFunctionInjectorSymbol) -> Self {
+        Self::MemberFuncInjector(value)
+    }
+}
+
+impl From<MemberFunctionReplacerSymbol> for SymbolVariant {
+    fn from(value: MemberFunctionReplacerSymbol) -> Self {
+        Self::MemberFuncReplacer(value)
+    }
+}
+
+impl From<GlobalFunctionReplacerSymbol> for SymbolVariant {
+    fn from(value: GlobalFunctionReplacerSymbol) -> Self {
+        Self::GlobalFuncReplacer(value)
+    }
+}
+
+impl From<MemberFunctionWrapperSymbol> for SymbolVariant {
+    fn from(value: MemberFunctionWrapperSymbol) -> Self {
+        Self::MemberFuncWrapper(value)
+    }
+}
+
+impl From<MemberVarInjectorSymbol> for SymbolVariant {
+    fn from(value: MemberVarInjectorSymbol) -> Self {
+        Self::MemberVarInjector(value)
+    }
+}
+
+impl From<WrappedMethodSymbol> for SymbolVariant {
+    fn from(value: WrappedMethodSymbol) -> Self {
+        Self::WrappedMethod(value)
     }
 }

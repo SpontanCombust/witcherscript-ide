@@ -5,8 +5,7 @@ use super::*;
 
 mod tags {
     pub struct EventDeclaration;
-    pub struct GlobalFunctionDeclaration;
-    pub struct MemberFunctionDeclaration;
+    pub struct FunctionDeclaration;
     pub struct FunctionParameters;
     pub struct FunctionParameterGroup;
     pub struct FunctionBlock;
@@ -21,7 +20,7 @@ mod tags {
 pub type EventDeclarationNode<'script> = SyntaxNode<'script, tags::EventDeclaration>;
 
 impl NamedSyntaxNode for EventDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "event_decl_stmt";
+    const NODE_KIND: &'static str = "event_decl";
 }
 
 impl<'script> EventDeclarationNode<'script> {
@@ -66,7 +65,7 @@ impl<'script> TryFrom<AnyNode<'script>> for EventDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for EventDeclarationNode<'_> {
-    type TraversalCtx = PropertyTraversalContext;
+    type TraversalCtx = DeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         let tp = visitor.visit_event_decl(self, ctx);
@@ -82,18 +81,22 @@ impl SyntaxNodeTraversal for EventDeclarationNode<'_> {
 
 
 
-pub type GlobalFunctionDeclarationNode<'script> = SyntaxNode<'script, tags::GlobalFunctionDeclaration>;
+pub type FunctionDeclarationNode<'script> = SyntaxNode<'script, tags::FunctionDeclaration>;
 
-impl NamedSyntaxNode for GlobalFunctionDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "global_func_decl_stmt";
+impl NamedSyntaxNode for FunctionDeclarationNode<'_> {
+    const NODE_KIND: &'static str = "func_decl";
 }
 
-impl<'script> GlobalFunctionDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = GlobalFunctionSpecifierNode<'script>> {
+impl<'script> FunctionDeclarationNode<'script> {
+    pub fn annotation(&self) -> Option<AnnotationNode<'script>> {
+        self.field_child("annotation").map(|n| n.into())
+    }
+
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
-    pub fn flavour(&self) -> Option<GlobalFunctionFlavourNode<'script>> {
+    pub fn flavour(&self) -> Option<FunctionFlavourNode<'script>> {
         self.field_child("flavour").map(|n| n.into())
     }
 
@@ -114,9 +117,10 @@ impl<'script> GlobalFunctionDeclarationNode<'script> {
     }
 }
 
-impl Debug for GlobalFunctionDeclarationNode<'_> {
+impl Debug for FunctionDeclarationNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("GlobalFunctionDeclaration {}", self.range().debug()))
+        f.debug_struct(&format!("FunctionDeclaration {}", self.range().debug()))
+            .field("annotation", &self.annotation())
             .field("specifiers", &self.specifiers().collect::<Vec<_>>())
             .field("flavour", &self.flavour())
             .field("name", &self.name())
@@ -127,7 +131,7 @@ impl Debug for GlobalFunctionDeclarationNode<'_> {
     }
 }
 
-impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionDeclarationNode<'script> {
+impl<'script> TryFrom<AnyNode<'script>> for FunctionDeclarationNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
@@ -139,92 +143,33 @@ impl<'script> TryFrom<AnyNode<'script>> for GlobalFunctionDeclarationNode<'scrip
     }
 }
 
-impl SyntaxNodeTraversal for GlobalFunctionDeclarationNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
-        let tp = visitor.visit_global_func_decl(self);
-        if tp.traverse_params {
-            self.params().accept(visitor, FunctionTraversalContext::GlobalFunction);
-        }
-        if tp.traverse_definition {
-            self.definition().accept(visitor, FunctionTraversalContext::GlobalFunction);
-        }
-        visitor.exit_global_func_decl(self);
-    }
-}
-
-
-
-pub type MemberFunctionDeclarationNode<'script> = SyntaxNode<'script, tags::MemberFunctionDeclaration>;
-
-impl NamedSyntaxNode for MemberFunctionDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "member_func_decl_stmt";
-}
-
-impl<'script> MemberFunctionDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = MemberFunctionSpecifierNode<'script>> {
-        self.field_children("specifiers").map(|n| n.into())
-    }
-
-    pub fn flavour(&self) -> Option<MemberFunctionFlavourNode<'script>> {
-        self.field_child("flavour").map(|n| n.into())
-    }
-
-    pub fn name(&self) -> IdentifierNode<'script> {
-        self.field_child("name").unwrap().into()
-    }
-
-    pub fn params(&self) -> FunctionParametersNode<'script> {
-        self.field_child("params").unwrap().into()
-    }
-
-    pub fn return_type(&self) -> Option<TypeAnnotationNode<'script>> {
-        self.field_child("return_type").map(|n| n.into())
-    }
-
-    pub fn definition(&self) -> FunctionDefinitionNode<'script> {
-        self.field_child("definition").unwrap().into()
-    }
-}
-
-impl Debug for MemberFunctionDeclarationNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("MemberFunctionDeclaration {}", self.range().debug()))
-            .field("specifiers", &self.specifiers().collect::<Vec<_>>())
-            .field("flavour", &self.flavour())
-            .field("name", &self.name())
-            .field("params", &self.params())
-            .field("return_type", &self.return_type())
-            .field("definition", &self.definition())
-            .finish()
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for MemberFunctionDeclarationNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
-    }
-}
-
-impl SyntaxNodeTraversal for MemberFunctionDeclarationNode<'_> {
-    type TraversalCtx = PropertyTraversalContext;
+impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
+    type TraversalCtx = DeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        let tp = visitor.visit_member_func_decl(self, ctx);
-        if tp.traverse_params {
-            self.params().accept(visitor, FunctionTraversalContext::MemberFunction);
+        if ctx == DeclarationTraversalContext::Global {
+            let tp = visitor.visit_global_func_decl(self);
+    
+            if tp.traverse_params {
+                self.params().accept(visitor, FunctionTraversalContext::GlobalFunction);
+            }
+            if tp.traverse_definition {
+                self.definition().accept(visitor, FunctionTraversalContext::GlobalFunction);
+            }
+
+            visitor.exit_global_func_decl(self);
+        } else {
+            let tp = visitor.visit_member_func_decl(self, ctx);
+    
+            if tp.traverse_params {
+                self.params().accept(visitor, FunctionTraversalContext::MemberFunction);
+            }
+            if tp.traverse_definition {
+                self.definition().accept(visitor, FunctionTraversalContext::MemberFunction);
+            }
+
+            visitor.exit_member_func_decl(self, ctx);
         }
-        if tp.traverse_definition {
-            self.definition().accept(visitor, FunctionTraversalContext::MemberFunction);
-        }
-        visitor.exit_member_func_decl(self, ctx);
     }
 }
 
@@ -294,7 +239,7 @@ impl SyntaxNodeTraversal for FunctionDefinitionNode<'_> {
 pub type FunctionBlockNode<'script> = SyntaxNode<'script, tags::FunctionBlock>;
 
 impl NamedSyntaxNode for FunctionBlockNode<'_> {
-    const NODE_KIND: &'static str = "func_block";
+    const NODE_KIND: &'static str = "func_def";
 }
 
 impl<'script> FunctionBlockNode<'script> {
@@ -390,7 +335,7 @@ impl NamedSyntaxNode for FunctionParameterGroupNode<'_> {
 }
 
 impl<'script> FunctionParameterGroupNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = FunctionParameterSpecifierNode<'script>> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
@@ -437,7 +382,7 @@ impl SyntaxNodeTraversal for FunctionParameterGroupNode<'_> {
 
 #[derive(Clone)]
 pub enum FunctionStatement<'script> {
-    Var(VarDeclarationNode<'script>),
+    Var(LocalVarDeclarationNode<'script>),
     Expr(ExpressionStatementNode<'script>),
     For(ForLoopNode<'script>),
     While(WhileLoopNode<'script>),
@@ -477,7 +422,7 @@ pub type FunctionStatementNode<'script> = SyntaxNode<'script, FunctionStatement<
 impl<'script> FunctionStatementNode<'script> {
     pub fn value(self) -> FunctionStatement<'script> {
         match self.tree_node.kind() {
-            VarDeclarationNode::NODE_KIND => FunctionStatement::Var(self.into()),
+            LocalVarDeclarationNode::NODE_KIND => FunctionStatement::Var(self.into()),
             ExpressionStatementNode::NODE_KIND => FunctionStatement::Expr(self.into()),
             ForLoopNode::NODE_KIND => FunctionStatement::For(self.into()),
             WhileLoopNode::NODE_KIND => FunctionStatement::While(self.into()),
@@ -510,7 +455,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionStatementNode<'script> {
         }
 
         match value.tree_node.kind() {
-            VarDeclarationNode::NODE_KIND       |
+            LocalVarDeclarationNode::NODE_KIND       |
             ExpressionStatementNode::NODE_KIND  |
             ForLoopNode::NODE_KIND              |
             WhileLoopNode::NODE_KIND            |
@@ -719,7 +664,7 @@ impl SyntaxNodeTraversal for DeleteStatementNode<'_> {
 pub type CompoundStatementNode<'script> = SyntaxNode<'script, tags::CompoundStatement>;
 
 impl NamedSyntaxNode for CompoundStatementNode<'_> {
-    const NODE_KIND: &'static str = "func_block";
+    const NODE_KIND: &'static str = "compound_stmt";
 }
 
 impl<'script> CompoundStatementNode<'script> {

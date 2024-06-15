@@ -120,6 +120,18 @@ impl<'a> ExpressionEvaluator<'a> {
                 },
                 SymbolVariant::ParentVar(s) => s.type_path().to_owned(),
                 SymbolVariant::VirtualParentVar(s) => s.type_path().to_owned(),
+                SymbolVariant::MemberFuncInjector(s) => s.return_type_path.clone().into(),
+                SymbolVariant::MemberFuncReplacer(s) => s.return_type_path.clone().into(),
+                SymbolVariant::GlobalFuncReplacer(s) => s.return_type_path.clone().into(),
+                SymbolVariant::MemberFuncWrapper(s) => s.return_type_path.clone().into(),
+                SymbolVariant::MemberVarInjector(s) => s.type_path.clone().into(),
+                SymbolVariant::WrappedMethod(s) => {
+                    self.symtab_marcher
+                        .get_symbol(s.wrapped_path())
+                        .and_then(|v| v.try_as_member_func_wrapper_ref())
+                        .map(|wrapper| wrapper.return_type_path.clone().into())
+                        .unwrap_or(SymbolPathBuf::unknown(SymbolCategory::Type))
+                }
             }
         } else {
             SymbolPathBuf::unknown(SymbolCategory::Type)
@@ -227,8 +239,8 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
         }
     }
 
-    fn exit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, ctx: ExpressionTraversalContext) {
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::MemberFieldExpressionAccessor).unwrap_or(false) {
+    fn exit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: ExpressionTraversalContext) {
+        if self.top().map(|e| e.ctx == ExpressionTraversalContext::MemberAccessExpressionAccessor).unwrap_or(false) {
             let accessor_path = self.pop().unwrap().path;
   
             let member = n.member().value(self.doc);

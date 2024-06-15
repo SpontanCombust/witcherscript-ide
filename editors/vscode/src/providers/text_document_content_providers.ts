@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { getLanguageClient } from "./../lang_client"
-import * as requests from './../requests';
+import { getLanguageClient } from "../lsp/lang_client"
+import * as requests from '../lsp/requests';
 
 
 export class ScriptAstProvider implements vscode.TextDocumentContentProvider {
@@ -53,7 +53,55 @@ export class ScriptAstProvider implements vscode.TextDocumentContentProvider {
     get onDidChange(): vscode.Event<vscode.Uri> {
         return this.eventEmitter.event;
     }
-} 
+}
+
+
+export class ScriptCstProvider implements vscode.TextDocumentContentProvider {
+    private static instance: ScriptCstProvider;
+
+    private constructor() {}
+    public static getInstance(): ScriptCstProvider {
+        if (!ScriptCstProvider.instance) {
+            ScriptCstProvider.instance = new ScriptCstProvider();
+        }
+
+        return ScriptCstProvider.instance;
+    }
+
+
+    public static readonly scheme = "witcherscript-ide-cst";
+    public static readonly pathSuffix = " - CST";
+
+    public eventEmitter = new vscode.EventEmitter<vscode.Uri>();
+
+
+    provideTextDocumentContent(uri: vscode.Uri): vscode.ProviderResult<string> {
+        const client = getLanguageClient();
+        if (client == undefined) {
+            vscode.window.showErrorMessage("Language Server is not active!");
+            return;
+        }
+
+        uri = vscode.Uri.file(uri.fsPath.substring(0, uri.fsPath.length - ScriptCstProvider.pathSuffix.length));
+
+        const params: requests.debug.scriptCst.Parameters = {
+            scriptUri: client.code2ProtocolConverter.asUri(uri)
+        }
+        return client.sendRequest(requests.debug.scriptCst.type, params).then(
+            (response) => {
+                return response.cst;
+            },
+            (error) => {
+                vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+                return ""
+            }
+        )
+    }
+
+    get onDidChange(): vscode.Event<vscode.Uri> {
+        return this.eventEmitter.event;
+    }
+}
 
 
 export class ContentGraphDotProvider implements vscode.TextDocumentContentProvider {

@@ -49,6 +49,16 @@ where S: SymbolSpecifier + std::fmt::Debug {
     }
 }
 
+impl<S> FromIterator<S> for SymbolSpecifiers<S>
+where S: SymbolSpecifier {
+    fn from_iter<T: IntoIterator<Item = S>>(iter: T) -> Self {
+        Self {
+            vec: iter.into_iter().collect(),
+            phantom: PhantomData
+        }
+    }
+}
+
 
 pub trait SymbolSpecifier: std::cmp::PartialEq + Copy {
     type BackingArray: smallvec::Array<Item = Self>;

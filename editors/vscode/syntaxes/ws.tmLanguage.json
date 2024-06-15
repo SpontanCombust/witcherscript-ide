@@ -6,6 +6,12 @@
 			"include": "#comments"
 		},
 		{
+			"include": "#tooltips"
+		},
+		{
+			"include": "#annotations"
+		},
+		{
 			"include": "#keywords"
 		},
 		{
@@ -22,6 +28,9 @@
 		},
 		{
 			"include": "#type-arg"
+		},
+		{
+			"include": "#primitives"
 		},
 		{
 			"include": "#expressions"
@@ -373,6 +382,57 @@
 					"comment": "treat the rest as variables",
 					"name": "support.variable.ws",
 					"match": "\\b\\w+\\b"
+				}
+			]
+		},
+		"primitives": {
+			"comment": "Native primitive and string-like types",
+			"match": "\\b(void|Byte|byte|Int8|Int32|int|Uint64|Float|float|Bool|bool|String|string|CName|name)\\b",
+			"captures": {
+				"1": {
+					"name": "support.type.ws"
+				}
+			}
+		},
+		"tooltips": {
+			"comment": "Highlighting specifically for tooltips",
+			"patterns": [
+				{
+					"match": "\\b(theGame|theServer|thePlayer|theCamera|theUI|theSound|theDebug|theTimer|theInput|theTelemetry|parent|super|this|virtual_parent)\\b : (\\w+)",
+					"captures": {
+						"1": {
+							"name": "variable.language.ws"
+						},
+						"2": {
+							"name": "support.type.ws"
+						}
+					}
+				},
+				{
+					"match": "\\b(array)\\b<(T)>",
+					"captures": {
+						"1": {
+							"name": "support.type.ws"
+						},
+						"2": {
+							"name": "support.type.ws"
+						}
+					}
+				}
+			]
+		},
+		"annotations": {
+			"patterns": [
+				{
+					"match": "(@\\w+)(?:\\(\\s*(\\w+)\\s*\\))?",
+					"captures": {
+						"1": {
+							"name": "meta.attribute.ws"
+						},
+						"2": {
+							"name": "support.type.ws"
+						}
+					}
 				}
 			]
 		}

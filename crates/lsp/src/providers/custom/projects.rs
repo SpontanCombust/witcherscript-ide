@@ -1,20 +1,24 @@
 use std::io::Write;
-use tower_lsp::{jsonrpc, lsp_types as lsp};
-use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
-use witcherscript_project::content::VANILLA_CONTENT_NAME;
-use witcherscript_project::Manifest;
-use crate::{Backend, ScriptStateContentInfo};
-use super::notifications;
-use super::requests::{self, ContentInfo};
+use tower_lsp::lsp_types as lsp;
+use tower_lsp::jsonrpc::{self, Result};
+use witcherscript_project::{content::VANILLA_CONTENT_NAME, Manifest};
+use crate::{notifications, requests::{self, ContentInfo}, Backend};
 
 
-// CAUTION!!!
-// Do not change already existing ServerError codes.
-// If you have to, make sure to update them on the client side in they're explicitly checked for.
+pub trait LangaugeServerCustomProjects {
+    async fn create_project(&self, params: requests::projects::create::Parameters) -> Result<requests::projects::create::Response>;
 
-impl Backend {
-    pub async fn handle_projects_create_request(&self, params: requests::projects::create::Parameters) -> Result<requests::projects::create::Response> {
+    async fn vanilla_dependency_content(&self, params: requests::projects::vanilla_dependency_content::Parameters) -> Result<requests::projects::vanilla_dependency_content::Response>;
+
+    async fn project_list(&self, params: requests::projects::list::Parameters) -> Result<requests::projects::list::Response>;
+
+    async fn did_import_scripts(&self, params: notifications::projects::did_import_scripts::Parameters);
+}
+
+
+impl LangaugeServerCustomProjects for Backend {
+    async fn create_project(&self, params: requests::projects::create::Parameters) -> Result<requests::projects::create::Response> {
         let project_dir: AbsPath;
         if let Ok(path) = AbsPath::try_from(params.directory_uri) {
             project_dir = path;
@@ -106,83 +110,25 @@ impl Backend {
             })
         }
 
+
+        let created_in_workspace = self.workspace_roots
+            .read().await
+            .iter()
+            .any(|root| project_dir.starts_with(root));
+
+        if created_in_workspace {
+            let backend = self.clone();
+            tokio::spawn(async move {
+                backend.build_content_graph(false).await;
+            });
+        }
+
         Ok(requests::projects::create::Response { 
             manifest_uri: manifest_path.into()
         })
     }
 
-    pub async fn handle_debug_script_ast_request(&self, params: requests::debug::script_ast::Parameters) -> Result<requests::debug::script_ast::Response> {
-        let script_path: AbsPath;
-        if let Ok(path) = AbsPath::try_from(params.script_uri) {
-            script_path = path;
-        } else {
-            return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
-        }
-
-        let script_entry = self.scripts.get(&script_path).ok_or(jsonrpc::Error {
-            code: jsonrpc::ErrorCode::ServerError(-1010),
-            message: "Script file not found".into(),
-            data: None
-        })?;
-
-        let ast = format!("{:#?}", script_entry.value().script.root_node());
-        drop(script_entry);
-
-        Ok(requests::debug::script_ast::Response { 
-            ast
-        })
-    }
-
-    pub async fn handle_scripts_parent_content_request(&self, params: requests::scripts::parent_content::Parameters) -> Result<requests::scripts::parent_content::Response>  {
-        let script_path: AbsPath;
-        if let Ok(path) = AbsPath::try_from(params.script_uri) {
-            script_path = path;
-        } else {
-            return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
-        }
-
-        let script_state;
-        if let Some(ss) = self.scripts.get(&script_path) {
-            script_state = ss;
-        } else {
-            return Err(jsonrpc::Error {
-                code: jsonrpc::ErrorCode::ServerError(-1020),
-                message: "This script file is uknown to the langauge server".into(),
-                data: None
-            })
-        }
-
-        let parent_content_path;
-        if let Some(content_info) = &script_state.content_info {
-            parent_content_path = content_info.content_path.clone();
-        } else {
-            return Err(jsonrpc::Error {
-                code: jsonrpc::ErrorCode::ServerError(-1021),
-                message: "Script does not belong to any content in the content graph".into(),
-                data: None
-            })
-        }
-
-        if let Some(n) = self.content_graph.read().await.get_node_by_path(&parent_content_path) {
-            Ok(requests::scripts::parent_content::Response {
-                parent_content_info: ContentInfo { 
-                    content_uri: parent_content_path.into(), 
-                    scripts_root_uri: n.content.source_tree_root().to_uri(), 
-                    content_name: n.content.content_name().into(),
-                    is_in_workspace: n.in_workspace,
-                    is_in_repository: n.in_repository
-                }
-            })
-        } else {
-            Err(jsonrpc::Error {
-                code: jsonrpc::ErrorCode::ServerError(-1022),
-                message: "Could not find content in content graph".into(),
-                data: None
-            })
-        }
-    }
-
-    pub async fn handle_projects_vanilla_dependency_content_request(&self, params: requests::projects::vanilla_dependency_content::Parameters) -> Result<requests::projects::vanilla_dependency_content::Response> {
+    async fn vanilla_dependency_content(&self, params: requests::projects::vanilla_dependency_content::Parameters) -> Result<requests::projects::vanilla_dependency_content::Response> {
         let project_path: AbsPath;
         if let Ok(abs_path) = AbsPath::try_from(params.project_uri) {
             project_path = abs_path;
@@ -225,7 +171,7 @@ impl Backend {
         }
     }
 
-    pub async fn handle_projects_list_request(&self, params: requests::projects::list::Parameters) -> Result<requests::projects::list::Response> {
+    async fn project_list(&self, params: requests::projects::list::Parameters) -> Result<requests::projects::list::Response> {
         let only_from_workspace = params.only_from_workspace.unwrap_or(true);
 
         let mut project_infos = Vec::new();
@@ -250,79 +196,7 @@ impl Backend {
         })
     }
 
-    pub async fn handle_debug_content_graph_dot_request(&self, _params: requests::debug::content_graph_dot::Parameters) -> Result<requests::debug::content_graph_dot::Response> {
-        let graph = self.content_graph.read().await;
-
-        let mut dot_graph = String::new();
-        dot_graph += "digraph {\n";
-        dot_graph += "\tcomment=\"Edge direction is: dependant ---> dependency. Edge label denotes dependency priority.\"\n";
-        dot_graph += "\trankdir=\"BT\"\n";
-        dot_graph += "\n";
-
-        for n in graph.nodes() {
-            let content_name = n.content.content_name();
-            let content_uri = lsp::Url::from_file_path(n.content.path()).unwrap().to_string();
-            dot_graph += &format!("\t{content_name} [URL=\"{content_uri}\"]\n");
-        }
-
-        dot_graph += "\n";
-
-        for n in graph.nodes() {
-            let content_name = n.content.content_name();
-            for dep in graph.direct_dependencies(n.content.path()) {
-                let dep_name = dep.content.content_name();
-                let prio = graph.dependency_priority(n.content.path(), dep.content.path()).unwrap_or(-1);
-                dot_graph += &format!("\t{content_name} -> {dep_name} [label={prio}]\n");
-            }
-        }
-
-        dot_graph += "}";
-
-        Ok(requests::debug::content_graph_dot::Response {
-            dot_graph
-        })
-    }
-
-    pub async fn handle_debug_script_symbols_request(&self, params: requests::debug::script_symbols::Parameters) -> Result<requests::debug::script_symbols::Response> {
-        let script_path: AbsPath;
-        if let Ok(path) = AbsPath::try_from(params.script_uri) {
-            script_path = path;
-        } else {
-            return Err(jsonrpc::Error::invalid_params("script_uri parameter is not a valid file URI"));
-        }
-
-        let content_info: ScriptStateContentInfo;
-        if let Some(ci) = self.scripts.get(&script_path).and_then(|ss| ss.content_info.clone()) {
-            content_info = ci;
-        } else {
-            return Err(jsonrpc::Error {
-                code: jsonrpc::ErrorCode::ServerError(-1060),
-                message: "Script file does not belong to any known content".into(),
-                data: None
-            });
-        }
-
-        let symtabs = self.symtabs.read().await;
-        let symtab_ref;
-        if let Some(symtab) = symtabs.get(&content_info.content_path) {
-            symtab_ref = symtab;
-        } else {
-            return Err(jsonrpc::Error {
-                code: jsonrpc::ErrorCode::ServerError(-1061),
-                message: "Symbol table for the content could not be found".into(),
-                data: None
-            });
-        }
-
-        let sym_iter = symtab_ref.get_symbols_for_source(&content_info.source_tree_path.local());
-        let script_symbols = format!("{:#?}", sym_iter.collect::<Vec<_>>());
-
-        Ok(requests::debug::script_symbols::Response {
-            symbols: script_symbols
-        })
-    }
-
-    pub async fn handle_projects_did_import_scripts_notification(&self, params: notifications::projects::did_import_scripts::Parameters) {
+    async fn did_import_scripts(&self, params: notifications::projects::did_import_scripts::Parameters) {
         let paths: Vec<AbsPath> = 
             params.imported_scripts_uris.into_iter()
             .filter_map(|uri| AbsPath::try_from(uri).ok())

@@ -79,6 +79,16 @@ impl SyntaxErrorVisitor<'_> {
         }
     }
 
+    #[inline]
+    fn check_annotation(&mut self, n: &AnnotationNode) -> bool {
+        if n.has_errors() {
+            self.check_errors(n);
+            false
+        } else {
+            true
+        }
+    }
+
     fn check_errors<T>(&mut self, n: &SyntaxNode<'_, T>) {
         let errors = n.errors();
         if errors.is_empty() {
@@ -229,8 +239,12 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
         if n.has_errors() {
+            if let Some(annot) = n.annotation() {
+                self.check_annotation(&annot);
+            }
+
             n.names().for_each(|name| { self.check_identifier(&name); } );
             self.check_type_annot(&n.var_type());
     
@@ -238,7 +252,20 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
+        if n.has_errors() {
+            if let Some(annot) = n.annotation() {
+                self.check_annotation(&annot);
+            }
+
+            n.names().for_each(|name| { self.check_identifier(&name); } );
+            self.check_type_annot(&n.var_type());
+    
+            self.check_errors(n);
+        }
+    }
+
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: DeclarationTraversalContext) -> MemberDefaultValueTraversalPolicy {
         let mut traverse_value = false;
         if n.has_errors() {
             self.check_identifier(&n.member());
@@ -254,7 +281,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, _: PropertyTraversalContext) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, _: DeclarationTraversalContext) {
         if n.has_errors() {
             self.check_identifier(&n.member());
             self.check_missing(&n.value(), "hint string");
@@ -263,7 +290,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
         if n.has_errors() {
             self.check_identifier(&n.name());
             self.check_type_annot(&n.autobind_type());
@@ -281,10 +308,14 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+    fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
         let mut traverse_params = false;
         let mut traverse_definition = false;
         if n.has_errors() {
+            if let Some(annot) = n.annotation() {
+                self.check_annotation(&annot);
+            }
+
             self.check_identifier(&n.name());
             n.return_type().map(|n| self.check_type_annot(&n));
     
@@ -305,16 +336,20 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
             }
         }
 
-        GlobalFunctionDeclarationTraversalPolicy { 
+        FunctionDeclarationTraversalPolicy { 
             traverse_params,
             traverse_definition
         }
     }
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
         let mut traverse_params = false;
         let mut traverse_definition = false;
         if n.has_errors() {
+            if let Some(annot) = n.annotation() {
+                self.check_annotation(&annot);
+            }
+            
             self.check_identifier(&n.name());
     
             if let Some(ret) = n.return_type() {
@@ -338,13 +373,13 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
             }
         }
         
-        MemberFunctionDeclarationTraversalPolicy { 
+        FunctionDeclarationTraversalPolicy { 
             traverse_params,
             traverse_definition
         }
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
         let mut traverse_params = false;
         let mut traverse_definition = false;
         if n.has_errors() {
@@ -377,7 +412,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: PropertyTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: DeclarationTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
         let traverse = if n.has_errors() {
             self.check_errors(n);
             true
@@ -420,7 +455,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
         let mut traverse_init_value = false;
         if n.has_errors() {
             n.names().for_each(|name| { self.check_identifier(&name); } );
@@ -683,7 +718,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, _: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
+    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, _: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
         let traverse_accessor = !self.check_expression(&n.accessor());
         self.check_identifier(&n.member());
 

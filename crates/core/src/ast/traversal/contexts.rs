@@ -3,6 +3,7 @@
 //! a class, a state or a struct.
 
 
+//TODO maybe replace separate enums with just one, but pass around a stack of these contexts
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExpressionTraversalContext {
     MemberDefaultValue,
@@ -18,14 +19,14 @@ pub enum ExpressionTraversalContext {
     IfConditionalCond,
     SwitchConditionalCond,
     SwitchConditionalCaseLabel,
-    VarDeclarationInitValue,
+    LocalVarDeclarationInitValue,
 
     NestedExpressionInner,
     FunctionCallExpressionFunc,
     FunctionCallArg,
     ArrayExpressionAccessor,
     ArrayExpressionIndex,
-    MemberFieldExpressionAccessor,
+    MemberAccessExpressionAccessor,
     NewExpressionLifetimeObj,
     TypeCastExpressionValue,
     UnaryOperationExpressionRight,
@@ -38,9 +39,9 @@ pub enum ExpressionTraversalContext {
     TernaryConditionalExpressionAlt,
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PropertyTraversalContext {
+pub enum DeclarationTraversalContext {
+    Global,
     ClassDefinition,
     StateDefinition,
     StructDefinition

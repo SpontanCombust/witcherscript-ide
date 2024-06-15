@@ -1,6 +1,6 @@
 use witcherscript_project::SourceMask;
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
-use super::{ClassSymbol, PathOccupiedError, StateSymbol, Symbol, SymbolLocation, SymbolTable, SymbolVariant};
+use super::{ClassSymbol, PathOccupiedError, StateSymbol, Symbol, SymbolTable, SymbolVariant};
 
 
 /// A type that can perform data fetching operations on many symbol tables
@@ -67,8 +67,25 @@ impl<'a> SymbolTableMarcher<'a> {
     }
 
     #[inline]
-    pub fn find_table_containing_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolTable> {
+    pub fn find_table_with_symbol_path(&self, path: &SymbolPath) -> Option<&'a SymbolTable> {
         self.march(|masked| if masked.contains_symbol(path) { Some(masked.symtab) } else { None })   
+    }
+    
+    /// As opposed to [`SymbolTableMarcher::find_table_with_symbol_path`] it looks for the exact table
+    /// that contains the given symbol. It does this by comparing the `scripts_root` in its location.
+    /// Because of that for the exact symbol to be found it needs to be a [`LocatableSymbol`].
+    /// This is in most part only useful when dealing with annotated symbols.
+    /// 
+    /// [`LocatableSymbol`]: crate::symbol_analysis::symbols::LocatableSymbol
+    #[inline]
+    pub fn find_table_with_symbol(&self, symvar: &SymbolVariant) -> Option<&'a SymbolTable> {
+        self.march(|masked| {
+            if masked.get_symbol(symvar.path()).filter(|v| v.location() == symvar.location()).is_some() { 
+                Some(masked.symtab) 
+            } else { 
+                None 
+            }
+        })   
     }
 
     #[inline]
@@ -77,7 +94,7 @@ impl<'a> SymbolTableMarcher<'a> {
     }
 
     #[inline]
-    pub fn get_symbol_with_containing_table(&self, path: &SymbolPath) -> Option<(&'a SymbolTable, &'a SymbolVariant)> {
+    pub fn get_symbol_with_table(&self, path: &SymbolPath) -> Option<(&'a SymbolTable, &'a SymbolVariant)> {
         self.march(|masked| {
             if let Some(symvar) = masked.get_symbol(path) {
                 Some((masked.symtab, symvar))
@@ -85,16 +102,6 @@ impl<'a> SymbolTableMarcher<'a> {
                 None
             }
         })
-    }
-
-    #[inline]
-    pub fn locate_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolLocation> {
-        self.march(|masked| masked.locate_symbol(path))
-    }
-
-    #[inline]
-    pub fn get_symbol_with_location(&self, path: &SymbolPath) -> Option<(&'a SymbolVariant, &'a SymbolLocation)> {
-        self.march(|masked| masked.get_symbol_with_location(path))
     }
 
     #[inline]
@@ -112,6 +119,15 @@ impl<'a> SymbolTableMarcher<'a> {
     #[inline]
     pub fn state_hierarchy(&self, state_path: &SymbolPath) -> StateHierarchy<'a> {
         StateHierarchy::new(self.clone(), state_path)
+    }
+
+    /// Iterate over symbols with the same symbol path accross the marcher.
+    /// Normally a path conflict (i.e. redefinition) in the dependency tree means an error.
+    /// It is not the case with @wrapMethod/@replaceMethod symbols however.
+    /// This way you can check for example the location of the wrapped method.
+    #[inline]
+    pub fn redefinition_chain(&self, annotated_sympath: &SymbolPath) -> RedefinitionChain<'a> {
+        RedefinitionChain::new(self.clone(), annotated_sympath)
     }
 
 
@@ -158,21 +174,12 @@ impl<'a> MaskedSymbolTable<'a> {
         if let Some(occupying) = self.get_symbol(path) {
             Err(PathOccupiedError {
                 occupied_path: occupying.path().to_sympath_buf(),
-                occupied_location: occupying.location().cloned()
+                occupied_location: occupying.location().cloned(),
+                occupied_typ: occupying.typ()
             })
         } else {
             Ok(())
         }
-    }
-
-    fn locate_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolLocation> {
-        self.get_symbol(path).and_then(|symvar| symvar.location())
-    }
-
-    fn get_symbol_with_location(&self, path: &SymbolPath) -> Option<(&'a SymbolVariant, &'a SymbolLocation)> {
-        let symvar = self.get_symbol(path)?;
-        let loc = symvar.location()?;
-        Some((symvar, loc))
     }
 }
 
@@ -292,5 +299,42 @@ impl<'a> Iterator for StateHierarchy<'a> {
         } else {
             None
         }
+    }
+}
+
+
+
+pub struct RedefinitionChain<'a> {
+    sympath: SymbolPathBuf,
+    symtabs: Vec<MaskedSymbolTable<'a>>,
+    idx: usize,
+}
+
+impl<'a> RedefinitionChain<'a> {
+    fn new(marcher: SymbolTableMarcher<'a>, path: &SymbolPath) -> Self {
+        Self {
+            sympath: path.to_owned(),
+            symtabs: marcher.inner,
+            idx: 0
+        }
+    }
+}
+
+impl<'a> Iterator for RedefinitionChain<'a> {
+    type Item = &'a SymbolVariant;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.idx < self.symtabs.len() {
+            let symvar = self.symtabs[self.idx]
+                .get_symbol(&self.sympath);
+
+            self.idx += 1;
+
+            if symvar.is_some() {
+                return symvar;
+            }
+        }
+
+        None
     }
 }

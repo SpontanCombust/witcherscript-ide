@@ -7,56 +7,58 @@ use witcherscript_analysis::utils::{PositionFilter, PositionFilterPayload};
 use crate::Backend;
 
 
-pub async fn selection_range(backend: &Backend, params: lsp::SelectionRangeParams) -> Result<Option<Vec<lsp::SelectionRange>>> {
-    let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
-
-    if doc_path.extension().unwrap_or_default() != "ws" {
-        return Ok(None);
-    }
+impl Backend {
+    pub async fn selection_range_impl(&self, params: lsp::SelectionRangeParams) -> Result<Option<Vec<lsp::SelectionRange>>> {
+        let doc_path = AbsPath::try_from(params.text_document.uri.clone()).unwrap();
     
-    if let Some(script_state) = backend.scripts.get(&doc_path) {
-        let mut found_ranges = Vec::with_capacity(params.positions.len());
-
-        let (pos_filter, payload) = PositionFilter::new_rc(lsp::Position::default());
-        let resolver = SelectionRangeResolver::new_rc(payload.clone());
-
-        for pos in params.positions {
-            resolver.borrow_mut().reset(pos);
-            pos_filter.borrow_mut().reset(pos);
-
-            let mut chain = SyntaxNodeVisitorChain::new()
-                .link_rc(pos_filter.clone())
-                .link_rc(resolver.clone());
-
-            script_state.script.visit_nodes(&mut chain);
-
-            let resolver_ref = resolver.borrow();
-            if !resolver_ref.range_stack.is_empty() {
-                let mut sr = lsp::SelectionRange {
-                    range: resolver_ref.range_stack[0],
-                    parent: None
-                };
-
-                for range in resolver_ref.range_stack.iter().skip(1) {
-                    sr = lsp::SelectionRange {
-                        range: range.clone(),
-                        parent: Some(Box::new(sr))
-                    };
-                }
-
-                found_ranges.push(sr);
-            } 
-            else {
-                found_ranges.push(lsp::SelectionRange {
-                    range: lsp::Range::default(),
-                    parent: None
-                })
-            }
+        if doc_path.extension().unwrap_or_default() != "ws" {
+            return Ok(None);
         }
-
-        Ok(Some(found_ranges))
-    } else {
-        Ok(None)
+        
+        if let Some(script_state) = self.scripts.get(&doc_path) {
+            let mut found_ranges = Vec::with_capacity(params.positions.len());
+    
+            let (pos_filter, payload) = PositionFilter::new_rc(lsp::Position::default());
+            let resolver = SelectionRangeResolver::new_rc(payload.clone());
+    
+            for pos in params.positions {
+                resolver.borrow_mut().reset(pos);
+                pos_filter.borrow_mut().reset(pos);
+    
+                let mut chain = SyntaxNodeVisitorChain::new()
+                    .link_rc(pos_filter.clone())
+                    .link_rc(resolver.clone());
+    
+                script_state.script.visit_nodes(&mut chain);
+    
+                let resolver_ref = resolver.borrow();
+                if !resolver_ref.range_stack.is_empty() {
+                    let mut sr = lsp::SelectionRange {
+                        range: resolver_ref.range_stack[0],
+                        parent: None
+                    };
+    
+                    for range in resolver_ref.range_stack.iter().skip(1) {
+                        sr = lsp::SelectionRange {
+                            range: range.clone(),
+                            parent: Some(Box::new(sr))
+                        };
+                    }
+    
+                    found_ranges.push(sr);
+                } 
+                else {
+                    found_ranges.push(lsp::SelectionRange {
+                        range: lsp::Range::default(),
+                        parent: None
+                    })
+                }
+            }
+    
+            Ok(Some(found_ranges))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -91,6 +93,19 @@ impl SelectionRangeResolver {
         else if let Some(type_arg) = n.type_arg() {
             if type_arg.spans_position(self.pos) {
                 self.visit_type_annotation(&type_arg);
+            }
+        }
+    }
+
+    fn visit_annotation(&mut self, n: &AnnotationNode) {
+        self.range_stack.push(n.range());
+
+        if n.name().spans_position(self.pos) {
+            self.range_stack.push(n.name().range());
+        }
+        else if let Some(arg) = n.arg() {
+            if arg.spans_position(self.pos) {
+                self.range_stack.push(arg.range());
             }
         }
     }
@@ -203,11 +218,14 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         }
     }
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+    fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
-            if n.name().spans_position(self.pos) {
+            if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
+                self.visit_annotation(&annot);
+            }
+            else if n.name().spans_position(self.pos) {
                 self.range_stack.push(n.name().range());
             }
             else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
@@ -230,14 +248,34 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+        self.range_stack.push(n.range());
+
+        if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
+            self.visit_annotation(&annot);
+        }
+        else if n.var_type().spans_position(self.pos) {
+            self.visit_type_annotation(&n.var_type());
+        }
+        else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
+            self.range_stack.push(name.range());
+        }
+        else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
+            self.range_stack.push(spec.range());
+        }
+    }
 
 
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
+
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
-            if n.name().spans_position(self.pos) {
+            if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
+                self.visit_annotation(&annot);
+            }
+            else if n.name().spans_position(self.pos) {
                 self.range_stack.push(n.name().range());
             }
             else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
@@ -260,7 +298,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
@@ -295,10 +333,13 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
         self.range_stack.push(n.range());
 
-        if n.var_type().spans_position(self.pos) {
+        if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
+            self.visit_annotation(&annot);
+        }
+        else if n.var_type().spans_position(self.pos) {
             self.visit_type_annotation(&n.var_type());
         }
         else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
@@ -309,7 +350,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: PropertyTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
         self.range_stack.push(n.range());
 
         if n.name().spans_position(self.pos) {
@@ -337,7 +378,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         }
     }
 
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: PropertyTraversalContext) -> MemberDefaultValueTraversalPolicy {
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: DeclarationTraversalContext) -> MemberDefaultValueTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
@@ -349,7 +390,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: PropertyTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: DeclarationTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
         self.range_stack.push(n.range());
 
         TraversalPolicy::default_to(true)
@@ -367,7 +408,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, _: PropertyTraversalContext) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, _: DeclarationTraversalContext) {
         self.range_stack.push(n.range());
 
         if n.member().spans_position(self.pos) {
@@ -381,7 +422,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
 
 
 
-    fn visit_local_var_decl_stmt(&mut self, n: &VarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
@@ -509,7 +550,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_field_expr(&mut self, n: &MemberFieldExpressionNode, _: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
+    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, _: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {

@@ -12,8 +12,12 @@ use crate::{config::Config, reporting::Reporter};
 
 
 
-#[derive(Debug)]
+#[derive(Clone, Shrinkwrap)]
 pub struct Backend {
+    inner: Arc<BackendInner>
+}
+
+pub struct BackendInner {
     pub client: Client,
     pub config: RwLock<Config>,
     pub workspace_roots: RwLock<Vec<AbsPath>>,
@@ -91,15 +95,17 @@ impl Backend {
 
     pub fn new(client: Client) -> Self {
         Self {
-            config: RwLock::new(Config::default()),
-            workspace_roots: RwLock::new(Vec::new()),
-            reporter: Reporter::new(client.clone()),
-            client,
-
-            content_graph: RwLock::new(ContentGraph::new()),
-            source_trees: SourceTreeMap::new(),
-            scripts: Arc::new(ScriptStates::new()),
-            symtabs: RwLock::new(SymbolTables::new())
+            inner: Arc::new(BackendInner {
+                config: RwLock::new(Config::default()),
+                workspace_roots: RwLock::new(Vec::new()),
+                reporter: Reporter::new(client.clone()),
+                client,
+    
+                content_graph: RwLock::new(ContentGraph::new()),
+                source_trees: SourceTreeMap::new(),
+                scripts: Arc::new(ScriptStates::new()),
+                symtabs: RwLock::new(SymbolTables::new())
+            })
         }
     }
 

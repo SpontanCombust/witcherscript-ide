@@ -13,7 +13,7 @@ mod tags {
     pub struct FunctionCallExpression;
     pub struct FunctionCallArguments;
     pub struct ArrayExpression;
-    pub struct MemberFieldExpression;
+    pub struct MemberAccessExpression;
     pub struct NewExpression;
     pub struct TypeCastExpression;
     pub struct UnaryOperationExpression;
@@ -433,13 +433,13 @@ impl SyntaxNodeTraversal for ArrayExpressionNode<'_> {
 
 
 
-pub type MemberFieldExpressionNode<'script> = SyntaxNode<'script, tags::MemberFieldExpression>;
+pub type MemberAccessExpressionNode<'script> = SyntaxNode<'script, tags::MemberAccessExpression>;
 
-impl NamedSyntaxNode for MemberFieldExpressionNode<'_> {
-    const NODE_KIND: &'static str = "member_field_expr";
+impl NamedSyntaxNode for MemberAccessExpressionNode<'_> {
+    const NODE_KIND: &'static str = "member_access_expr";
 }
 
-impl<'script> MemberFieldExpressionNode<'script> {
+impl<'script> MemberAccessExpressionNode<'script> {
     pub fn accessor(&self) -> ExpressionNode<'script> {
         self.field_child("accessor").unwrap().into()
     }
@@ -449,16 +449,16 @@ impl<'script> MemberFieldExpressionNode<'script> {
     }
 }
 
-impl Debug for MemberFieldExpressionNode<'_> {
+impl Debug for MemberAccessExpressionNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("MemberFieldExpression {}", self.range().debug()))
+        f.debug_struct(&format!("MemberAccessExpression {}", self.range().debug()))
             .field("accessor", &self.accessor())
             .field("member", &self.member())
             .finish()
     }
 }
 
-impl<'script> TryFrom<AnyNode<'script>> for MemberFieldExpressionNode<'script> {
+impl<'script> TryFrom<AnyNode<'script>> for MemberAccessExpressionNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
@@ -470,15 +470,15 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberFieldExpressionNode<'script> {
     }
 }
 
-impl SyntaxNodeTraversal for MemberFieldExpressionNode<'_> {
+impl SyntaxNodeTraversal for MemberAccessExpressionNode<'_> {
     type TraversalCtx = ExpressionTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        let tp = visitor.visit_member_field_expr(self, ctx);
+        let tp = visitor.visit_member_access_expr(self, ctx);
         if tp.traverse_accessor {
-            self.accessor().accept(visitor, ExpressionTraversalContext::MemberFieldExpressionAccessor);
+            self.accessor().accept(visitor, ExpressionTraversalContext::MemberAccessExpressionAccessor);
         }
-        visitor.exit_member_field_expr(self, ctx);
+        visitor.exit_member_access_expr(self, ctx);
     }
 }
 
@@ -829,7 +829,7 @@ pub enum Expression<'script> {
     Identifier(IdentifierNode<'script>),
     FunctionCall(FunctionCallExpressionNode<'script>),
     Array(ArrayExpressionNode<'script>),
-    MemberField(MemberFieldExpressionNode<'script>),
+    MemberAccess(MemberAccessExpressionNode<'script>),
     New(NewExpressionNode<'script>),
     TypeCast(TypeCastExpressionNode<'script>),
     UnaryOperation(UnaryOperationExpressionNode<'script>),
@@ -850,7 +850,7 @@ impl Debug for Expression<'_> {
             Self::Identifier(n) => f.debug_maybe_alternate(n),
             Self::FunctionCall(n) => f.debug_maybe_alternate(n),
             Self::Array(n) => f.debug_maybe_alternate(n),
-            Self::MemberField(n) => f.debug_maybe_alternate(n),
+            Self::MemberAccess(n) => f.debug_maybe_alternate(n),
             Self::New(n) => f.debug_maybe_alternate(n),
             Self::TypeCast(n) => f.debug_maybe_alternate(n),
             Self::UnaryOperation(n) => f.debug_maybe_alternate(n),
@@ -872,7 +872,7 @@ impl<'script> ExpressionNode<'script> {
             NewExpressionNode::NODE_KIND => Expression::New(self.into()),
             UnaryOperationExpressionNode::NODE_KIND => Expression::UnaryOperation(self.into()),
             TypeCastExpressionNode::NODE_KIND => Expression::TypeCast(self.into()),
-            MemberFieldExpressionNode::NODE_KIND => Expression::MemberField(self.into()),
+            MemberAccessExpressionNode::NODE_KIND => Expression::MemberAccess(self.into()),
             FunctionCallExpressionNode::NODE_KIND => Expression::FunctionCall(self.into()),
             ArrayExpressionNode::NODE_KIND => Expression::Array(self.into()),
             NestedExpressionNode::NODE_KIND => Expression::Nested(self.into()),
@@ -914,7 +914,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
             NewExpressionNode::NODE_KIND          |
             UnaryOperationExpressionNode::NODE_KIND         |
             TypeCastExpressionNode::NODE_KIND               |
-            MemberFieldExpressionNode::NODE_KIND            |
+            MemberAccessExpressionNode::NODE_KIND            |
             FunctionCallExpressionNode::NODE_KIND           |
             ArrayExpressionNode::NODE_KIND                  |
             NestedExpressionNode::NODE_KIND                 |
@@ -989,8 +989,8 @@ impl<'script> From<ArrayExpressionNode<'script>> for ExpressionNode<'script> {
     }
 }
 
-impl<'script> From<MemberFieldExpressionNode<'script>> for ExpressionNode<'script> {
-    fn from(value: MemberFieldExpressionNode<'script>) -> Self {
+impl<'script> From<MemberAccessExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: MemberAccessExpressionNode<'script>) -> Self {
         value.into()
     }
 }
@@ -1045,7 +1045,7 @@ impl SyntaxNodeTraversal for ExpressionNode<'_> {
             Expression::Identifier(n) => n.accept(visitor, ctx),
             Expression::FunctionCall(n) => n.accept(visitor, ctx),
             Expression::Array(n) => n.accept(visitor, ctx),
-            Expression::MemberField(n) => n.accept(visitor, ctx),
+            Expression::MemberAccess(n) => n.accept(visitor, ctx),
             Expression::New(n) => n.accept(visitor, ctx),
             Expression::TypeCast(n) => n.accept(visitor, ctx),
             Expression::UnaryOperation(n) => n.accept(visitor, ctx),

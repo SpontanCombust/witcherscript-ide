@@ -95,33 +95,41 @@ impl SyntaxNodeVisitor for SymbolPathBuilder<'_> {
 
 
 
-    fn visit_global_func_decl(&mut self, n: &GlobalFunctionDeclarationNode) -> GlobalFunctionDeclarationTraversalPolicy {
+    fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
+        let mut payload = self.payload.borrow_mut();
+        payload.current_sympath.clear();
+
+        if let Some(class_name) = n.annotation().and_then(|annot| annot.arg()) {
+            payload.current_sympath.push(&class_name.value(self.doc), SymbolCategory::Type);
+        }
+            
         let name = n.name().value(self.doc);
-        self.payload.borrow_mut().current_sympath = GlobalCallableSymbolPath::new(&name).into();
+        payload.current_sympath.push(&name, SymbolCategory::Callable);
+
         TraversalPolicy::default_to(true)
     }
 
-    fn exit_global_func_decl(&mut self, _: &GlobalFunctionDeclarationNode) {
+    fn exit_global_func_decl(&mut self, _: &FunctionDeclarationNode) {
         self.payload.borrow_mut().current_sympath.pop();
     }
 
-    fn visit_member_func_decl(&mut self, n: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) -> MemberFunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
         let name = n.name().value(self.doc);
         self.payload.borrow_mut().current_sympath.push(&name, SymbolCategory::Callable);
         TraversalPolicy::default_to(true)
     }
 
-    fn exit_member_func_decl(&mut self, _: &MemberFunctionDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: DeclarationTraversalContext) {
         self.payload.borrow_mut().current_sympath.pop();
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: PropertyTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
         let name = n.name().value(self.doc);
         self.payload.borrow_mut().current_sympath.push(&name, SymbolCategory::Callable);
         TraversalPolicy::default_to(true)
     }
 
-    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: PropertyTraversalContext) {
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: DeclarationTraversalContext) {
         self.payload.borrow_mut().current_sympath.pop();
     }
 }

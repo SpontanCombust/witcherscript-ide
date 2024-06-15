@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{attribs::StateSpecifierNode, tokens::IdentifierNode, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{attribs::SpecifierNode, tokens::IdentifierNode, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -12,11 +12,11 @@ mod tags {
 pub type StateDeclarationNode<'script> = SyntaxNode<'script, tags::StateDeclaration>;
 
 impl NamedSyntaxNode for StateDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "state_decl_stmt";
+    const NODE_KIND: &'static str = "state_decl";
 }
 
 impl<'script> StateDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = StateSpecifierNode<'script>> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
@@ -77,11 +77,11 @@ impl SyntaxNodeTraversal for StateDeclarationNode<'_> {
 pub type StateBlockNode<'script> = SyntaxNode<'script, tags::StateBlock>;
 
 impl NamedSyntaxNode for StateBlockNode<'_> {
-    const NODE_KIND: &'static str = "class_block";
+    const NODE_KIND: &'static str = "state_def";
 }
 
 impl<'script> StateBlockNode<'script> {
-    pub fn iter(&self) -> impl Iterator<Item = ClassStatementNode<'script>> {
+    pub fn iter(&self) -> impl Iterator<Item = ClassPropertyNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -111,6 +111,6 @@ impl SyntaxNodeTraversal for StateBlockNode<'_> {
     type TraversalCtx = ();
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
-        self.iter().for_each(|s| s.accept(visitor, PropertyTraversalContext::StateDefinition));
+        self.iter().for_each(|s| s.accept(visitor, DeclarationTraversalContext::StateDefinition));
     }
 }

@@ -164,24 +164,19 @@ impl<'script, T> SyntaxNode<'script, T> {
     }
 
 
-    /// Returns tree-sitter's node structure in a form of XML.
-    /// Use for debugging purposes.
-    pub fn debug_ts_tree(&self, doc: &ScriptDocument) -> String {
+    /// Returns tree-sitter's Concrete Syntax Tree in string representation
+    pub fn cst_to_string(&self) -> String {
         self.use_cursor(|mut cursor| {
             let mut buf = String::new();
     
             let mut needs_newline = false;
             let mut indent_level = 0;
             let mut did_visit_children = false;
-            let mut tags: Vec<&str> = Vec::new();
-    
             loop {
                 let node = cursor.node();
                 let is_named = node.is_named();
                 if did_visit_children {
                     if is_named {
-                        let tag = tags.pop();
-                        buf += &format!("</{}>\n", tag.expect("there is a tag"));
                         needs_newline = true;
                     }
                     if cursor.goto_next_sibling() {
@@ -193,36 +188,37 @@ impl<'script, T> SyntaxNode<'script, T> {
                         break;
                     }
                 } else {
-                    if is_named {
-                        if needs_newline {
-                            buf += &format!("\n");
-                        }
-                        for _ in 0..indent_level {
-                            buf += &format!("  ");
-                        }
-                        buf += &format!("<{}", node.kind());
-                        if let Some(field_name) = cursor.field_name() {
-                            buf += &format!(" type=\"{}\"", field_name);
-                        }
-                        buf += &format!(">");
-                        tags.push(node.kind());
-                        needs_newline = true;
+                    if needs_newline {
+                        buf.push('\n');
                     }
+                    for _ in 0..indent_level {
+                        buf.push_str("  ");
+                    }
+                    let start = node.start_position();
+                    let end = node.end_position();
+                    if let Some(field_name) = cursor.field_name() {
+                        buf.push_str(&format!("{field_name}: "));
+                    }
+
+                    if is_named {
+                        buf.push_str(node.kind());
+                    } else {
+                        buf.push_str(&format!("\"{}\"", node.kind()));
+                    }
+
+                    buf.push_str(&format!(" [{}, {}] - [{}, {}]",
+                        start.row + 1,
+                        start.column + 1,
+                        end.row + 1,
+                        end.column + 1
+                    ));
+                    needs_newline = true;
+                    
                     if cursor.goto_first_child() {
                         did_visit_children = false;
                         indent_level += 1;
                     } else {
-                        let node_range = node.range();
-                        let lsp_range = lsp::Range::new(
-                            lsp::Position::new(node_range.start_point.row as u32, node_range.start_point.column as u32),
-                            lsp::Position::new(node_range.end_point.row as u32, node_range.end_point.column as u32)
-                        );
-    
-                        buf += &doc.text_at(lsp_range);
                         did_visit_children = true;
-                    }
-                    if node.is_missing() {
-                        buf += &format!("MISSING");
                     }
                 }
             }

@@ -477,12 +477,12 @@ impl BitAnd for MemberDefaultsBlockTraversalPolicy {
 
 
 #[derive(Debug, Clone)]
-pub struct GlobalFunctionDeclarationTraversalPolicy {
+pub struct FunctionDeclarationTraversalPolicy {
     pub traverse_params: bool,
     pub traverse_definition: bool
 }
 
-impl TraversalPolicy for GlobalFunctionDeclarationTraversalPolicy {
+impl TraversalPolicy for FunctionDeclarationTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
@@ -492,35 +492,7 @@ impl TraversalPolicy for GlobalFunctionDeclarationTraversalPolicy {
     }
 }
 
-impl BitAnd for GlobalFunctionDeclarationTraversalPolicy {
-    type Output = Self;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        Self {
-            traverse_params: self.traverse_params && rhs.traverse_params,
-            traverse_definition: self.traverse_definition && rhs.traverse_definition
-        }
-    }
-}
-
-
-#[derive(Debug, Clone)]
-pub struct MemberFunctionDeclarationTraversalPolicy {
-    pub traverse_params: bool,
-    pub traverse_definition: bool
-}
-
-impl TraversalPolicy for MemberFunctionDeclarationTraversalPolicy {
-    #[inline(always)]
-    fn default_to(value: bool) -> Self {
-        Self {
-            traverse_params: value,
-            traverse_definition: value
-        }
-    }
-}
-
-impl BitAnd for MemberFunctionDeclarationTraversalPolicy {
+impl BitAnd for FunctionDeclarationTraversalPolicy {
     type Output = Self;
 
     fn bitand(self, rhs: Self) -> Self::Output {

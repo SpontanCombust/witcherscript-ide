@@ -1,7 +1,6 @@
 use std::fmt::Debug;
-use std::str::FromStr;
-use crate::{tokens::Keyword, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use super::AccessModifier;
+use crate::tokens::Keyword;
+use super::{AccessModifier, Specifier};
 
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -12,6 +11,24 @@ pub enum MemberVarSpecifier {
     Import,
     Inlined,
     Saved,
+}
+
+impl TryFrom<Specifier> for MemberVarSpecifier {
+    type Error = ();
+
+    fn try_from(value: Specifier) -> Result<Self, Self::Error> {
+        match value {
+            Specifier::Const => Ok(Self::Const),
+            Specifier::Editable => Ok(Self::Editable),
+            Specifier::Import => Ok(Self::Import),
+            Specifier::Inlined => Ok(Self::Inlined),
+            Specifier::Private => Ok(Self::AccessModifier(AccessModifier::Private)),
+            Specifier::Protected => Ok(Self::AccessModifier(AccessModifier::Protected)),
+            Specifier::Public => Ok(Self::AccessModifier(AccessModifier::Public)),
+            Specifier::Saved => Ok(Self::Saved),
+            _ => Err(())
+        }
+    }
 }
 
 impl From<MemberVarSpecifier> for Keyword {
@@ -30,50 +47,5 @@ impl From<MemberVarSpecifier> for Keyword {
 impl From<AccessModifier> for MemberVarSpecifier {
     fn from(value: AccessModifier) -> Self {
         Self::AccessModifier(value)
-    }
-}
-
-pub type MemberVarSpecifierNode<'script> = SyntaxNode<'script, MemberVarSpecifier>;
-
-impl NamedSyntaxNode for MemberVarSpecifierNode<'_> {
-    const NODE_KIND: &'static str = "member_var_specifier";
-}
-
-impl MemberVarSpecifierNode<'_> {
-    pub fn value(&self) -> MemberVarSpecifier {
-        let s = self.first_child(false).unwrap().tree_node.kind();
-        if let Ok(k) = Keyword::from_str(s)  {
-            match k {
-                Keyword::Private => return MemberVarSpecifier::AccessModifier(AccessModifier::Private),
-                Keyword::Protected => return MemberVarSpecifier::AccessModifier(AccessModifier::Protected),
-                Keyword::Public => return MemberVarSpecifier::AccessModifier(AccessModifier::Public),
-                Keyword::Const => return MemberVarSpecifier::Const,
-                Keyword::Editable => return MemberVarSpecifier::Editable,
-                Keyword::Import => return MemberVarSpecifier::Import,
-                Keyword::Inlined => return MemberVarSpecifier::Inlined,
-                Keyword::Saved => return MemberVarSpecifier::Saved,
-                _ => {}
-            }
-        }
-
-        panic!("Unknown member var specifier: {} {}", s, self.range().debug())
-    }
-}
-
-impl Debug for MemberVarSpecifierNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {}", self.value(), self.range().debug())
-    }
-}
-
-impl<'script> TryFrom<AnyNode<'script>> for MemberVarSpecifierNode<'script> {
-    type Error = ();
-
-    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
-        if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
-        } else {
-            Err(())
-        }
     }
 }

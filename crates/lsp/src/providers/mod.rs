@@ -10,4 +10,6 @@ pub mod document_symbols;
 pub mod goto;
 pub mod hover;
 
+pub mod custom;
+
 mod common;

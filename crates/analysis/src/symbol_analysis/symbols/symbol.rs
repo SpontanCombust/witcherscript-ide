@@ -19,10 +19,9 @@ pub trait LocatableSymbol: Symbol {
     fn location(&self) -> &SymbolLocation;
 }
 
-/// A symbol with no parent (its path has only a single component) and can be associated with a file it was declared in
-pub trait PrimarySymbol: LocatableSymbol {
-
-}
+/// A symbol that can be used to group together an entire family of symbols.
+/// This is used to associate symbols with source paths, even if those symbols cannot be located, but their primary symbol parents can.
+pub trait PrimarySymbol: LocatableSymbol { }
 
 
 
@@ -41,6 +40,11 @@ pub enum SymbolType {
     MemberFunction,
     Event,
     Constructor,
+    MemberFunctionInjector,
+    MemberFunctionReplacer,
+    GlobalFunctionReplacer,
+    MemberFunctionWrapper,
+    WrappedMethod,
     
     // data
     EnumVariant,
@@ -53,6 +57,7 @@ pub enum SymbolType {
     SuperVar,
     ParentVar,
     VirtualParentVar,
+    MemberVarInjector,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -66,10 +71,32 @@ impl SymbolType {
     pub fn category(&self) -> SymbolCategory {
         use SymbolType::*;
         match self {
-            Type | Enum | Struct | Class | State | Array => SymbolCategory::Type,
-            EnumVariant | Parameter | GlobalVar | MemberVar | Autobind | LocalVar | 
-            ThisVar | SuperVar | ParentVar | VirtualParentVar => SymbolCategory::Data,
-            GlobalFunction | MemberFunction | Event | Constructor => SymbolCategory::Callable,
+            Type 
+            | Enum
+            | Struct
+            | Class
+            | State
+            | Array   => SymbolCategory::Type,
+            EnumVariant     
+            | Parameter
+            | GlobalVar
+            | MemberVar
+            | Autobind
+            | LocalVar
+            | ThisVar
+            | SuperVar
+            | ParentVar
+            | VirtualParentVar 
+            | MemberVarInjector => SymbolCategory::Data,
+            GlobalFunction 
+            | MemberFunction 
+            | Event 
+            | Constructor 
+            | MemberFunctionInjector 
+            | MemberFunctionReplacer 
+            | GlobalFunctionReplacer 
+            | MemberFunctionWrapper
+            | WrappedMethod => SymbolCategory::Callable,
         }
     }
 }

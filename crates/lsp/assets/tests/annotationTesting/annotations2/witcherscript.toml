@@ -1,0 +1,14 @@
+# Basic information about this project
+[content]
+name = "annotations2"
+version = "1.0.0"
+authors = []
+game_version = "4.04"
+
+# Any dependencies that this project might need
+[dependencies]
+content0 = true
+annotations1 = { path = "../annotations1" }
+
+# For details check the manual
+# https://spontancombust.github.io/witcherscript-ide/user-manual/project-system/#manifest-format

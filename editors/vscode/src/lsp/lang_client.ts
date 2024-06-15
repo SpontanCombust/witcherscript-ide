@@ -2,8 +2,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
-import * as state from './state';
-import * as config from './config';
+import * as state from '../state';
+import * as config from '../config';
 import * as handlers from './handlers';
 
 

@@ -14,11 +14,11 @@ mod tags {
 pub type ClassDeclarationNode<'script> = SyntaxNode<'script, tags::ClassDeclaration>;
 
 impl NamedSyntaxNode for ClassDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "class_decl_stmt";
+    const NODE_KIND: &'static str = "class_decl";
 }
 
 impl<'script> ClassDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = ClassSpecifierNode<'script>> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
@@ -75,11 +75,11 @@ impl SyntaxNodeTraversal for ClassDeclarationNode<'_> {
 pub type ClassBlockNode<'script> = SyntaxNode<'script, tags::ClassBlock>;
 
 impl NamedSyntaxNode for ClassBlockNode<'_> {
-    const NODE_KIND: &'static str = "class_block";
+    const NODE_KIND: &'static str = "class_def";
 }
 
 impl<'script> ClassBlockNode<'script> {
-    pub fn iter(&self) -> impl Iterator<Item = ClassStatementNode<'script>> {
+    pub fn iter(&self) -> impl Iterator<Item = ClassPropertyNode<'script>> {
         self.named_children().map(|n| n.into())
     }
 }
@@ -109,24 +109,24 @@ impl SyntaxNodeTraversal for ClassBlockNode<'_> {
     type TraversalCtx = ();
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
-        self.iter().for_each(|s| s.accept(visitor, PropertyTraversalContext::ClassDefinition));
+        self.iter().for_each(|s| s.accept(visitor, DeclarationTraversalContext::ClassDefinition));
     }
 }
 
 
 #[derive(Clone)]
-pub enum ClassStatement<'script> {
+pub enum ClassProperty<'script> {
     Var(MemberVarDeclarationNode<'script>),
     Default(MemberDefaultValueNode<'script>),
     DefaultsBlock(MemberDefaultsBlockNode<'script>),
     Hint(MemberHintNode<'script>),
     Autobind(AutobindDeclarationNode<'script>),
-    Method(MemberFunctionDeclarationNode<'script>),
+    Method(FunctionDeclarationNode<'script>),
     Event(EventDeclarationNode<'script>),
     Nop(NopNode<'script>)
 }
 
-impl Debug for ClassStatement<'_> {
+impl Debug for ClassProperty<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Var(n) => f.debug_maybe_alternate(n),
@@ -141,31 +141,31 @@ impl Debug for ClassStatement<'_> {
     }
 } 
 
-pub type ClassStatementNode<'script> = SyntaxNode<'script, ClassStatement<'script>>;
+pub type ClassPropertyNode<'script> = SyntaxNode<'script, ClassProperty<'script>>;
 
-impl<'script> ClassStatementNode<'script> {
-    pub fn value(self) -> ClassStatement<'script> {
+impl<'script> ClassPropertyNode<'script> {
+    pub fn value(self) -> ClassProperty<'script> {
         match self.tree_node.kind() {
-            MemberVarDeclarationNode::NODE_KIND => ClassStatement::Var(self.into()),
-            MemberDefaultValueNode::NODE_KIND => ClassStatement::Default(self.into()),
-            MemberDefaultsBlockNode::NODE_KIND => ClassStatement::DefaultsBlock(self.into()),
-            MemberHintNode::NODE_KIND => ClassStatement::Hint(self.into()),
-            AutobindDeclarationNode::NODE_KIND => ClassStatement::Autobind(self.into()),
-            MemberFunctionDeclarationNode::NODE_KIND => ClassStatement::Method(self.into()),
-            EventDeclarationNode::NODE_KIND => ClassStatement::Event(self.into()),
-            NopNode::NODE_KIND => ClassStatement::Nop(self.into()),
-            _ => panic!("Unknown class statement type: {} {}", self.tree_node.kind(), self.range().debug())
+            MemberVarDeclarationNode::NODE_KIND => ClassProperty::Var(self.into()),
+            MemberDefaultValueNode::NODE_KIND => ClassProperty::Default(self.into()),
+            MemberDefaultsBlockNode::NODE_KIND => ClassProperty::DefaultsBlock(self.into()),
+            MemberHintNode::NODE_KIND => ClassProperty::Hint(self.into()),
+            AutobindDeclarationNode::NODE_KIND => ClassProperty::Autobind(self.into()),
+            FunctionDeclarationNode::NODE_KIND => ClassProperty::Method(self.into()),
+            EventDeclarationNode::NODE_KIND => ClassProperty::Event(self.into()),
+            NopNode::NODE_KIND => ClassProperty::Nop(self.into()),
+            _ => panic!("Unknown class property type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
 }
 
-impl Debug for ClassStatementNode<'_> {
+impl Debug for ClassPropertyNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_maybe_alternate(&self.clone().value())
     }
 }
 
-impl<'script> TryFrom<AnyNode<'script>> for ClassStatementNode<'script> {
+impl<'script> TryFrom<AnyNode<'script>> for ClassPropertyNode<'script> {
     type Error = ();
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
@@ -175,7 +175,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassStatementNode<'script> {
             MemberDefaultsBlockNode::NODE_KIND          |
             MemberHintNode::NODE_KIND                   |
             AutobindDeclarationNode::NODE_KIND          |
-            MemberFunctionDeclarationNode::NODE_KIND    |
+            FunctionDeclarationNode::NODE_KIND          |
             EventDeclarationNode::NODE_KIND             |
             NopNode::NODE_KIND                          => Ok(value.into()),
             _ => Err(())
@@ -183,19 +183,19 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassStatementNode<'script> {
     }
 }
 
-impl SyntaxNodeTraversal for ClassStatementNode<'_> {
-    type TraversalCtx = PropertyTraversalContext;
+impl SyntaxNodeTraversal for ClassPropertyNode<'_> {
+    type TraversalCtx = DeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         match self.clone().value() {
-            ClassStatement::Var(s) => s.accept(visitor, ctx),
-            ClassStatement::Default(s) => s.accept(visitor, ctx),
-            ClassStatement::DefaultsBlock(s) => s.accept(visitor, ctx),
-            ClassStatement::Hint(s) => s.accept(visitor, ctx),
-            ClassStatement::Autobind(s) => s.accept(visitor, ctx),
-            ClassStatement::Method(s) => s.accept(visitor, ctx),
-            ClassStatement::Event(s) => s.accept(visitor, ctx),
-            ClassStatement::Nop(_) => {},
+            ClassProperty::Var(s) => s.accept(visitor, ctx),
+            ClassProperty::Default(s) => s.accept(visitor, ctx),
+            ClassProperty::DefaultsBlock(s) => s.accept(visitor, ctx),
+            ClassProperty::Hint(s) => s.accept(visitor, ctx),
+            ClassProperty::Autobind(s) => s.accept(visitor, ctx),
+            ClassProperty::Method(s) => s.accept(visitor, ctx),
+            ClassProperty::Event(s) => s.accept(visitor, ctx),
+            ClassProperty::Nop(_) => {},
         }
     }
 }
@@ -205,11 +205,11 @@ impl SyntaxNodeTraversal for ClassStatementNode<'_> {
 pub type AutobindDeclarationNode<'script> = SyntaxNode<'script, tags::AutobindDeclaration>;
 
 impl NamedSyntaxNode for AutobindDeclarationNode<'_> {
-    const NODE_KIND: &'static str = "autobind_stmt";
+    const NODE_KIND: &'static str = "autobind_decl";
 }
 
 impl<'script> AutobindDeclarationNode<'script> {
-    pub fn specifiers(&self) -> impl Iterator<Item = AutobindSpecifierNode> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
         self.field_children("specifiers").map(|n| n.into())
     }
 
@@ -256,7 +256,7 @@ impl<'script> TryFrom<AnyNode<'script>> for AutobindDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for AutobindDeclarationNode<'_> {
-    type TraversalCtx = PropertyTraversalContext;
+    type TraversalCtx = DeclarationTraversalContext;
 
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
         visitor.visit_autobind_decl(self, ctx);

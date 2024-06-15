@@ -41,6 +41,7 @@ impl Into<lsp::Diagnostic> for Diagnostic {
 pub enum DiagnosticDomain {
     ProjectSystem,
     SyntaxAnalysis,
+    ContextualSyntaxAnalysis,
     SymbolAnalysis,
     WorkspaceSymbolAnalysis,
 }
@@ -69,6 +70,28 @@ pub enum DiagnosticKind {
     MissingSyntax(String),
     InvalidSyntax, // for all other syntax cases when it's impossible to determine
 
+    // contextual syntax analysis
+    IncompatibleSpecifier {
+        spec_name: String,
+        sym_name: String
+    },
+    IncompatibleFunctionFlavour {
+        flavour_name: String,
+        sym_name: String
+    },
+    RepeatedSpecifier,
+    MultipleAccessModifiers,
+    InvalidAnnotation,
+    InvalidAnnotationPlacement,
+    MissingAnnotationArgument {
+        missing: String
+    },
+    IncompatibleAnnotation {
+        annotation_name: String,
+        expected_text: String
+    },
+    GlobalScopeVarDecl,
+
     // symbol anaysis
     SymbolNameTaken {
         name: String,
@@ -77,9 +100,11 @@ pub enum DiagnosticKind {
     },
     MissingTypeArg,
     UnnecessaryTypeArg,
-    RepeatedSpecifier,
-    MultipleAccessModifiers,
-
+    SameContentAnnotation {
+        original_file_path: Option<AbsPath>,
+        original_range: Option<lsp::Range>
+    },
+    
     // workspace symbol analysis
     SymbolNameTakenInDependency {
         name: String,
@@ -110,11 +135,19 @@ impl DiagnosticKind {
             | ProjectSelfDependency => DiagnosticDomain::ProjectSystem,
             MissingSyntax(_)
             | InvalidSyntax => DiagnosticDomain::SyntaxAnalysis,
+            IncompatibleSpecifier { .. } 
+            | IncompatibleFunctionFlavour { .. } 
+            | RepeatedSpecifier
+            | MultipleAccessModifiers 
+            | InvalidAnnotation 
+            | InvalidAnnotationPlacement 
+            | MissingAnnotationArgument { .. }
+            | IncompatibleAnnotation { .. } 
+            | GlobalScopeVarDecl => DiagnosticDomain::ContextualSyntaxAnalysis,
             SymbolNameTaken { .. }
             | MissingTypeArg
-            | UnnecessaryTypeArg
-            | RepeatedSpecifier
-            | MultipleAccessModifiers => DiagnosticDomain::SymbolAnalysis,
+            | UnnecessaryTypeArg 
+            | SameContentAnnotation { .. } => DiagnosticDomain::SymbolAnalysis,
             SymbolNameTakenInDependency { .. } => DiagnosticDomain::WorkspaceSymbolAnalysis
         }
     }
@@ -135,12 +168,21 @@ impl DiagnosticKind {
 
             MissingSyntax(_) => lsp::DiagnosticSeverity::ERROR,
             InvalidSyntax => lsp::DiagnosticSeverity::ERROR,
+            
+            IncompatibleSpecifier { .. } => lsp::DiagnosticSeverity::ERROR,
+            IncompatibleFunctionFlavour { .. } => lsp::DiagnosticSeverity::ERROR,
+            RepeatedSpecifier => lsp::DiagnosticSeverity::ERROR,
+            MultipleAccessModifiers => lsp::DiagnosticSeverity::ERROR,
+            InvalidAnnotation => lsp::DiagnosticSeverity::ERROR,
+            InvalidAnnotationPlacement => lsp::DiagnosticSeverity::ERROR,
+            MissingAnnotationArgument { .. } => lsp::DiagnosticSeverity::ERROR,
+            IncompatibleAnnotation { .. } => lsp::DiagnosticSeverity::ERROR,
+            GlobalScopeVarDecl => lsp::DiagnosticSeverity::ERROR,
 
             SymbolNameTaken { .. } => lsp::DiagnosticSeverity::ERROR,
             MissingTypeArg => lsp::DiagnosticSeverity::ERROR,
             UnnecessaryTypeArg => lsp::DiagnosticSeverity::ERROR,
-            RepeatedSpecifier => lsp::DiagnosticSeverity::ERROR,
-            MultipleAccessModifiers => lsp::DiagnosticSeverity::ERROR,
+            SameContentAnnotation { .. } => lsp::DiagnosticSeverity::WARNING,
 
             SymbolNameTakenInDependency { .. } => lsp::DiagnosticSeverity::ERROR
         }
@@ -162,11 +204,20 @@ impl DiagnosticKind {
             MissingSyntax(s) => format!("Syntax error: expected {}", s),
             InvalidSyntax => "Syntax error: unexpected syntax".into(),
 
+            IncompatibleSpecifier { spec_name, sym_name } => format!("\"{}\" cannot be used for {}", spec_name, sym_name),
+            IncompatibleFunctionFlavour { flavour_name, sym_name } => format!("\"{}\" cannot be used for {}", flavour_name, sym_name),
+            RepeatedSpecifier => "Specifiers can not be repeating".into(),
+            MultipleAccessModifiers => "Only one access modifier is allowed".into(),
+            InvalidAnnotation => "Unknown annotation".into(),
+            InvalidAnnotationPlacement => "Annotations can only be used at the global scope".into(),
+            MissingAnnotationArgument { missing } => format!("This annotation requires {missing} argument"),
+            IncompatibleAnnotation { annotation_name, expected_text } => format!("{} may only be used for {}", annotation_name, expected_text),
+            GlobalScopeVarDecl => "Syntax error: variable declarations in the global scope are not allowed unless you intend to use the @addField annotation.".into(),
+
             SymbolNameTaken { name, .. } => format!("The name \"{}\" is defined multiple times", name),
             MissingTypeArg => "Missing type argument".into(),
             UnnecessaryTypeArg => "This type does not take any type arguments".into(),
-            RepeatedSpecifier => "Specifiers can not be repeating".into(),
-            MultipleAccessModifiers => "Only one access modifier is allowed".into(),
+            SameContentAnnotation { .. } => "WIDE does not support creating annotations for types from the same content. Doing so will result in undefined behaviour.".into(),
 
             SymbolNameTakenInDependency { name, .. } => format!("The name \"{}\" is already defined in another content", name),
         }
@@ -184,6 +235,11 @@ impl DiagnosticKind {
             SymbolNameTakenInDependency { precursor_file_path, precursor_range, .. } if precursor_file_path.is_some() => Some(DiagnosticRelatedInfo {
                 path: precursor_file_path.clone().unwrap(),
                 range: precursor_range.unwrap_or_default(),
+                message: "Name originally defined here".into()
+            }),
+            SameContentAnnotation { original_file_path, original_range } if original_range.is_some() => Some(DiagnosticRelatedInfo {
+                path: original_file_path.clone().unwrap(),
+                range: original_range.unwrap_or_default(),
                 message: "Name originally defined here".into()
             }),
             _ => None

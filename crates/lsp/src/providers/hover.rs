@@ -1,7 +1,7 @@
 use abs_path::AbsPath;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
-use witcherscript::tokens::Keyword;
+use witcherscript::{ast::AnnotationKind, tokens::Keyword};
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbol_table::iter::*;
 use witcherscript_analysis::symbol_analysis::symbol_table::marcher::SymbolTableMarcher;
@@ -11,63 +11,65 @@ use crate::Backend;
 use super::common::{resolve_text_document_position, PositionTargetKind};
 
 
-pub async fn hover(backend: &Backend, params: lsp::HoverParams) -> Result<Option<lsp::Hover>> {
-    let doc_path = AbsPath::try_from(params.text_document_position_params.text_document.uri.clone()).unwrap();
-
-    if doc_path.extension().unwrap_or_default() != "ws" {
-        return Ok(None);
-    }
-
-    let content_path;
-    if let Some(path) = backend.scripts.get(&doc_path).and_then(|ss| ss.content_info.as_ref().map(|ci| ci.content_path.to_owned())) {
-        content_path = path;
-    } 
-    else {
-        // backend.client.send_notification::<notifications::client::show_foreign_script_warning::Type>(()).await;
-        return Ok(None);
-    }
-
-    let symtabs = backend.symtabs.read().await;
-    let symtabs_marcher = backend.march_symbol_tables(&symtabs, &content_path).await;
+impl Backend {
+    pub async fn hover_impl(&self, params: lsp::HoverParams) -> Result<Option<lsp::Hover>> {
+        let doc_path = AbsPath::try_from(params.text_document_position_params.text_document.uri.clone()).unwrap();
     
-    let script_state;
-    if let Some(ss) = backend.scripts.get(&doc_path) {
-        script_state = ss;
-    } else {
-        return Ok(None);
-    }
-
-    let position_target = resolve_text_document_position(params.text_document_position_params.position, &script_state, symtabs_marcher.clone());
-    drop(script_state);
-    
-    if let Some(position_target) = position_target {
-        let mut value = None;
-
-        if let Some(sympath) = position_target.target_symbol_path(&symtabs_marcher) {
-            let category = sympath
-            .components().last()
-            .map(|c| c.category)
-            .unwrap_or(SymbolCategory::Type);
-
-            let mut buf = String::new();
-            symtabs_marcher.get_symbol_with_containing_table(&sympath)
-                .map(|(symtab, symvar)| symvar.render(&mut buf, symtab, &symtabs_marcher))
-                .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
-
-            value = Some(buf);
-        } else if let PositionTargetKind::ArrayTypeIdentifier = position_target.kind {
-            value = Some("array<T>".to_string());
+        if doc_path.extension().unwrap_or_default() != "ws" {
+            return Ok(None);
         }
-
-        Ok(value.map(|value| lsp::Hover {
-            contents: lsp::HoverContents::Scalar(lsp::MarkedString::LanguageString(lsp::LanguageString {
-                language: Backend::LANGUAGE_ID.to_string(),
-                value,
-            })),
-            range: None
-        }))
-    } else {
-        Ok(None)
+    
+        let content_path;
+        if let Some(path) = self.scripts.get(&doc_path).and_then(|ss| ss.content_info.as_ref().map(|ci| ci.content_path.to_owned())) {
+            content_path = path;
+        } 
+        else {
+            // backend.client.send_notification::<notifications::client::show_foreign_script_warning::Type>(()).await;
+            return Ok(None);
+        }
+    
+        let symtabs = self.symtabs.read().await;
+        let symtabs_marcher = self.march_symbol_tables(&symtabs, &content_path).await;
+        
+        let script_state;
+        if let Some(ss) = self.scripts.get(&doc_path) {
+            script_state = ss;
+        } else {
+            return Ok(None);
+        }
+    
+        let position_target = resolve_text_document_position(params.text_document_position_params.position, &script_state, symtabs_marcher.clone());
+        drop(script_state);
+        
+        if let Some(position_target) = position_target {
+            let mut value = None;
+    
+            if let Some(sympath) = position_target.target_symbol_path(&symtabs_marcher) {
+                let category = sympath
+                .components().last()
+                .map(|c| c.category)
+                .unwrap_or(SymbolCategory::Type);
+    
+                let mut buf = String::new();
+                symtabs_marcher.get_symbol_with_table(&sympath)
+                    .map(|(symtab, symvar)| symvar.render(&mut buf, symtab, &symtabs_marcher))
+                    .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
+    
+                value = Some(buf);
+            } else if let PositionTargetKind::ArrayTypeIdentifier = position_target.kind {
+                value = Some("array<T>".to_string());
+            }
+    
+            Ok(value.map(|value| lsp::Hover {
+                contents: lsp::HoverContents::Scalar(lsp::MarkedString::LanguageString(lsp::LanguageString {
+                    language: Backend::LANGUAGE_ID.to_string(),
+                    value,
+                })),
+                range: None
+            }))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -110,6 +112,12 @@ impl RenderTooltip for SymbolVariant {
             SymbolVariant::StateSuperVar(s) => s.render(buf, symtab, marcher),
             SymbolVariant::ParentVar(s) => s.render(buf, symtab, marcher),
             SymbolVariant::VirtualParentVar(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::MemberFuncInjector(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::MemberFuncReplacer(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::GlobalFuncReplacer(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::MemberFuncWrapper(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::MemberVarInjector(s) => s.render(buf, symtab, marcher),
+            SymbolVariant::WrappedMethod(s) => s.render(buf, symtab, marcher),
         }
     }
 }
@@ -718,5 +726,267 @@ impl RenderTooltip for VirtualParentVarSymbol {
         buf.push(':');
         buf.push(' ');
         buf.push_str(self.type_name());
+    }
+}
+
+impl RenderTooltip for MemberFunctionInjectorSymbol {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
+        buf.push_str(AnnotationKind::AddMethod.as_ref());
+        buf.push('(');
+        buf.push_str(&self.path().parent().unwrap_or_default().to_string());
+        buf.push(')');
+        buf.push('\n');
+
+        for spec in self.specifiers.iter() {
+            let kw: Keyword = spec.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        if let Some(flavour) = self.flavour.clone() {
+            let kw: Keyword = flavour.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        buf.push_str(Keyword::Function.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+
+        buf.push('(');
+
+        let mut params = symtab
+            .get_symbol_children_filtered(self)
+            .filter_map(|ch| {
+                if let CallableSymbolChild::Param(param) = ch {
+                    Some(param)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
+
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
+            param.render_partial(buf);
+        }
+        for param in params_iter {
+            buf.push_str(", ");
+            param.render_partial(buf);
+        }
+        
+        buf.push(')');
+
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.return_type_name()); 
+    }
+}
+
+impl RenderTooltip for MemberFunctionReplacerSymbol {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
+        buf.push_str(AnnotationKind::ReplaceMethod.as_ref());
+        buf.push('(');
+        buf.push_str(&self.path().parent().unwrap_or_default().to_string());
+        buf.push(')');
+        buf.push('\n');
+
+        for spec in self.specifiers.iter() {
+            let kw: Keyword = spec.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        if let Some(flavour) = self.flavour.clone() {
+            let kw: Keyword = flavour.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        buf.push_str(Keyword::Function.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+
+        buf.push('(');
+
+        let mut params = symtab
+            .get_symbol_children_filtered(self)
+            .filter_map(|ch| {
+                if let CallableSymbolChild::Param(param) = ch {
+                    Some(param)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
+
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
+            param.render_partial(buf);
+        }
+        for param in params_iter {
+            buf.push_str(", ");
+            param.render_partial(buf);
+        }
+        
+        buf.push(')');
+
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.return_type_name()); 
+    }
+}
+
+impl RenderTooltip for GlobalFunctionReplacerSymbol {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
+        buf.push_str(AnnotationKind::ReplaceMethod.as_ref());
+        buf.push('\n');
+
+        for spec in self.specifiers.iter() {
+            let kw: Keyword = spec.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        if let Some(flavour) = self.flavour.clone() {
+            let kw: Keyword = flavour.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        buf.push_str(Keyword::Function.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+
+        buf.push('(');
+
+        let mut params = symtab
+            .get_symbol_children_filtered(self)
+            .filter_map(|ch| {
+                if let CallableSymbolChild::Param(param) = ch {
+                    Some(param)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
+
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
+            param.render_partial(buf);
+        }
+        for param in params_iter {
+            buf.push_str(", ");
+            param.render_partial(buf);
+        }
+        
+        buf.push(')');
+
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.return_type_name()); 
+    }
+}
+
+impl RenderTooltip for MemberFunctionWrapperSymbol {
+    fn render(&self, buf: &mut String, symtab: &SymbolTable, _: &SymbolTableMarcher<'_>) {
+        buf.push_str(AnnotationKind::WrapMethod.as_ref());
+        buf.push('(');
+        buf.push_str(&self.path().parent().unwrap_or_default().to_string());
+        buf.push(')');
+        buf.push('\n');
+
+        // when wrapping functions you don't put any specifiers before `function`
+
+        buf.push_str(Keyword::Function.as_ref());
+        buf.push(' ');
+
+        buf.push_str(self.name());
+
+        buf.push('(');
+
+        let mut params = symtab
+            .get_symbol_children_filtered(self)
+            .filter_map(|ch| {
+                if let FunctionWrapperSymbolChild::Param(param) = ch {
+                    Some(param)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        params.sort_by(|param1, param2| param1.ordinal.cmp(&param2.ordinal));
+
+        let mut params_iter = params.into_iter();
+        if let Some(param) = params_iter.next() {
+            param.render_partial(buf);
+        }
+        for param in params_iter {
+            buf.push_str(", ");
+            param.render_partial(buf);
+        }
+        
+        buf.push(')');
+
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.return_type_name()); 
+    }
+}
+
+impl RenderTooltip for MemberVarInjectorSymbol {
+    fn render(&self, buf: &mut String, _: &SymbolTable, _: &SymbolTableMarcher<'_>) {
+        buf.push_str(AnnotationKind::AddField.as_ref());
+        buf.push('(');
+        buf.push_str(&self.path().parent().unwrap_or_default().to_string());
+        buf.push(')');
+        buf.push('\n');
+
+        for spec in self.specifiers.iter() {
+            let kw: Keyword = spec.into();
+            buf.push_str(kw.as_ref());
+            buf.push(' ');
+        }
+
+        buf.push_str(Keyword::Var.as_ref());
+        buf.push(' ');
+        buf.push_str(self.name());
+        buf.push(' ');
+        buf.push(':');
+        buf.push(' ');
+        buf.push_str(self.type_name());
+    }
+}
+
+impl RenderTooltip for WrappedMethodSymbol {
+    fn render(&self, buf: &mut String, _: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+        let mut rendered = false;
+
+        // skip the wrapper function to get to either another wrapper or the original function
+        if let Some(wrapped) = marcher.redefinition_chain(&self.wrapped_path()).skip(1).next() {
+            // wrapped symbol should be in other content, so we need to fetch the correct one for it
+            if let Some(symtab) = marcher.find_table_with_symbol(wrapped) {
+                wrapped.render(buf, symtab, marcher);
+                rendered = true;
+            }
+        }
+
+        if !rendered {
+            buf.push_str(&SymbolPathBuf::unknown(SymbolCategory::Callable).to_string());
+        }
     }
 }
