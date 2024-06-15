@@ -9,13 +9,24 @@ use witcherscript_project::Manifest;
 use crate::Backend;
 
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct InitializationOptions {
     native_content_uri: lsp::Url,
     game_directory: PathBuf,
     content_repositories: Vec<PathBuf>,
     enable_syntax_analysis: bool
+}
+
+impl std::fmt::Debug for InitializationOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("InitializationOptions")
+            .field("native_content_uri", &self.native_content_uri.to_string())
+            .field("game_directory", &self.game_directory)
+            .field("content_repositories", &self.content_repositories)
+            .field("enable_syntax_analysis", &self.enable_syntax_analysis)
+            .finish()
+    }
 }
 
 impl Backend {
