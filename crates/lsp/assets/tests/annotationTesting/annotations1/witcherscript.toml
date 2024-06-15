@@ -1,0 +1,15 @@
+# Basic information about this project
+[content]
+name = "annotations1"
+description = ""
+version = "1.0.0"
+authors = []
+game_version = "4.04"
+scripts_root = "scripts"
+
+# Any dependencies that this project might need
+[dependencies]
+content0 = true
+
+# For details check the manual
+# https://spontancombust.github.io/witcherscript-ide/user-manual/project-system/#manifest-format
