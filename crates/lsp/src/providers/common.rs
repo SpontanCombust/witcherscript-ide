@@ -331,7 +331,17 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
             self.visit_annotation(&annot);
         }
         else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-            self.found_data_decl_ident(&name);
+            let class_path = n.annotation()
+                .and_then(|annot| annot.arg())
+                .map(|arg| arg.value(self.doc))
+                .map(|class_name| SymbolPathBuf::new(&class_name, SymbolCategory::Type))
+                .unwrap_or_default();
+
+            self.found_target = Some(PositionTarget { 
+                range: n.range(),
+                kind: PositionTargetKind::DataDeclarationNameIdentifier(name.value(self.doc).to_string()),
+                sympath_ctx: class_path,
+            });
         }
     }
 
