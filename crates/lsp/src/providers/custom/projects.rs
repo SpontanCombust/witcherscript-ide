@@ -110,7 +110,18 @@ impl LangaugeServerCustomProjects for Backend {
             })
         }
 
-        //TODO reload content graph if manifest was created in workspace
+
+        let created_in_workspace = self.workspace_roots
+            .read().await
+            .iter()
+            .any(|root| project_dir.starts_with(root));
+
+        if created_in_workspace {
+            let backend = self.clone();
+            tokio::spawn(async move {
+                backend.build_content_graph(false).await;
+            });
+        }
 
         Ok(requests::projects::create::Response { 
             manifest_uri: manifest_path.into()
