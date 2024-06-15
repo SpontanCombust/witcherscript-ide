@@ -70,6 +70,23 @@ impl<'a> SymbolTableMarcher<'a> {
     pub fn find_table_with_symbol_path(&self, path: &SymbolPath) -> Option<&'a SymbolTable> {
         self.march(|masked| if masked.contains_symbol(path) { Some(masked.symtab) } else { None })   
     }
+    
+    /// As opposed to [`SymbolTableMarcher::find_table_with_symbol_path`] it looks for the exact table
+    /// that contains the given symbol. It does this by comparing the `scripts_root` in its location.
+    /// Because of that for the exact symbol to be found it needs to be a [`LocatableSymbol`].
+    /// This is in most part only useful when dealing with annotated symbols.
+    /// 
+    /// [`LocatableSymbol`]: crate::symbol_analysis::symbols::LocatableSymbol
+    #[inline]
+    pub fn find_table_with_symbol(&self, symvar: &SymbolVariant) -> Option<&'a SymbolTable> {
+        self.march(|masked| {
+            if masked.get_symbol(symvar.path()).filter(|v| v.location() == symvar.location()).is_some() { 
+                Some(masked.symtab) 
+            } else { 
+                None 
+            }
+        })   
+    }
 
     #[inline]
     pub fn get_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolVariant> {

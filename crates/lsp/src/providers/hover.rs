@@ -973,10 +973,13 @@ impl RenderTooltip for MemberVarInjectorSymbol {
 }
 
 impl RenderTooltip for WrappedMethodSymbol {
-    fn render(&self, buf: &mut String, symtab: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
+    fn render(&self, buf: &mut String, _: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
         // skip the wrapper function to get to either another wrapper or the original function
         if let Some(wrapped) = marcher.redefinition_chain(&self.wrapped_path()).skip(1).next() {
-            wrapped.render(buf, symtab, marcher)
+            // wrapped symbol should be in other content, so we need to fetch the correct one for it
+            if let Some(symtab) = marcher.find_table_with_symbol(wrapped) {
+                wrapped.render(buf, symtab, marcher)
+            }
         }
     }
 }
