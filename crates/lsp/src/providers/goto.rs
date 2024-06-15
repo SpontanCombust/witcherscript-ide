@@ -112,7 +112,7 @@ impl Backend {
                     if parent_sym_typ == SymbolType::Class {
                         for class in symtabs_marcher.class_hierarchy(&parent_path).skip(1) {
                             let base_func_path = class.path().join_component(func_name, SymbolCategory::Callable);
-                            if let Some(base_func_loc) = symtabs_marcher.locate_symbol(&base_func_path) {
+                            if let Some(base_func_loc) = symtabs_marcher.get_symbol(&base_func_path).and_then(|v| v.location()) {
                                 loc = Some(base_func_loc.to_owned());
                             }
                         }
@@ -120,13 +120,13 @@ impl Backend {
                     else if parent_sym_typ == SymbolType::State {
                         for state in symtabs_marcher.state_hierarchy(&parent_path).skip(1) {
                             let base_func_path = state.path().join_component(func_name, SymbolCategory::Callable);
-                            if let Some(base_func_loc) = symtabs_marcher.locate_symbol(&base_func_path) {
+                            if let Some(base_func_loc) = symtabs_marcher.get_symbol(&base_func_path).and_then(|v| v.location()) {
                                 loc = Some(base_func_loc.to_owned());
                             }
                         }
     
                         let base_func_path = BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME).join_component(func_name, SymbolCategory::Callable);
-                        if let Some(base_func_loc) = symtabs_marcher.locate_symbol(&base_func_path) {
+                        if let Some(base_func_loc) = symtabs_marcher.get_symbol(&base_func_path).and_then(|v| v.location()) {
                             loc = Some(base_func_loc.to_owned());
                         }
                     }

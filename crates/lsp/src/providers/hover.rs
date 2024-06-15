@@ -51,7 +51,7 @@ impl Backend {
                 .unwrap_or(SymbolCategory::Type);
     
                 let mut buf = String::new();
-                symtabs_marcher.get_symbol_with_containing_table(&sympath)
+                symtabs_marcher.get_symbol_with_table(&sympath)
                     .map(|(symtab, symvar)| symvar.render(&mut buf, symtab, &symtabs_marcher))
                     .unwrap_or_else(|| buf = SymbolPathBuf::unknown(category).to_string());
     

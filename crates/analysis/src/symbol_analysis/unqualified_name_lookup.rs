@@ -195,7 +195,7 @@ impl<'a> UnqualifiedNameLookupBuilder<'a> {
         // with each class in the inheritance chain we add properties to the UNL that `this` inherits from
         // if any functions are overriden in child classes, the record gets overwritten
         for class in inherit_chain {
-            if let Some(class_symtab) = self.symtab_marcher.find_table_containing_symbol(class.path()) {
+            if let Some(class_symtab) = self.symtab_marcher.find_table_with_symbol_path(class.path()) {
                 for ch in class_symtab.get_symbol_children_filtered(class) {
                     match ch {
                         ClassSymbolChild::Var(s) => {
@@ -254,7 +254,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         // all state types inherit properties from this one class
         let base_type_path = BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME);
-        if let Some((base_type_symtab, base_type_symvar)) = self.symtab_marcher.get_symbol_with_containing_table(&base_type_path) {
+        if let Some((base_type_symtab, base_type_symvar)) = self.symtab_marcher.get_symbol_with_table(&base_type_path) {
             if let Some(class) = base_type_symvar.try_as_class_ref() {
                 for ch in base_type_symtab.get_symbol_children_filtered(class) {
                     match ch {
@@ -291,7 +291,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
         inherit_chain.reverse();
 
         for state in inherit_chain {
-            if let Some(state_symtab) = self.symtab_marcher.find_table_containing_symbol(state.path()) {
+            if let Some(state_symtab) = self.symtab_marcher.find_table_with_symbol_path(state.path()) {
                 for ch in state_symtab.get_symbol_children_filtered(state) {
                     match ch {
                         StateSymbolChild::Var(s) => {
@@ -335,7 +335,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         unl.push_scope();
 
-        if let Some((struct_symtab, struct_symvar)) = self.symtab_marcher.get_symbol_with_containing_table(&sympath_ctx.current_sympath) {
+        if let Some((struct_symtab, struct_symvar)) = self.symtab_marcher.get_symbol_with_table(&sympath_ctx.current_sympath) {
             if let Some(struct_sym) = struct_symvar.try_as_struct_ref() {
                 for s in struct_symtab.get_symbol_children_filtered(struct_sym) {
                     unl.insert(s.path().to_owned());
@@ -366,7 +366,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         unl.push_scope();
 
-        if let Some((func_symtab, func_symvar)) = self.symtab_marcher.get_symbol_with_containing_table(&sympath_ctx.current_sympath) {
+        if let Some((func_symtab, func_symvar)) = self.symtab_marcher.get_symbol_with_table(&sympath_ctx.current_sympath) {
             if let Some(func) = func_symvar.try_as_global_func_ref() {
                 for ch in func_symtab.get_symbol_children_filtered(func) {
                     if let CallableSymbolChild::Param(s) = ch {
@@ -434,7 +434,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         unl.push_scope();
 
-        if let Some((func_symtab, func_symvar)) = self.symtab_marcher.get_symbol_with_containing_table(&sympath_ctx.current_sympath) {
+        if let Some((func_symtab, func_symvar)) = self.symtab_marcher.get_symbol_with_table(&sympath_ctx.current_sympath) {
             if let Some(func) = func_symvar.try_as_member_func_ref() {
                 for ch in func_symtab.get_symbol_children_filtered(func) {
                     if let CallableSymbolChild::Param(s) = ch {
@@ -458,7 +458,7 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
 
         unl.push_scope();
 
-        if let Some((event_symtab, event_symvar)) = self.symtab_marcher.get_symbol_with_containing_table(&sympath_ctx.current_sympath) {
+        if let Some((event_symtab, event_symvar)) = self.symtab_marcher.get_symbol_with_table(&sympath_ctx.current_sympath) {
             if let Some(event) = event_symvar.try_as_event_ref() {
                 for ch in event_symtab.get_symbol_children_filtered(event) {
                     if let CallableSymbolChild::Param(s) = ch {

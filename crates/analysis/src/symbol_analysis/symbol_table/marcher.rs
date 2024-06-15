@@ -1,6 +1,6 @@
 use witcherscript_project::SourceMask;
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
-use super::{ClassSymbol, PathOccupiedError, StateSymbol, Symbol, SymbolLocation, SymbolTable, SymbolVariant};
+use super::{ClassSymbol, PathOccupiedError, StateSymbol, Symbol, SymbolTable, SymbolVariant};
 
 
 /// A type that can perform data fetching operations on many symbol tables
@@ -67,7 +67,7 @@ impl<'a> SymbolTableMarcher<'a> {
     }
 
     #[inline]
-    pub fn find_table_containing_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolTable> {
+    pub fn find_table_with_symbol_path(&self, path: &SymbolPath) -> Option<&'a SymbolTable> {
         self.march(|masked| if masked.contains_symbol(path) { Some(masked.symtab) } else { None })   
     }
 
@@ -77,7 +77,7 @@ impl<'a> SymbolTableMarcher<'a> {
     }
 
     #[inline]
-    pub fn get_symbol_with_containing_table(&self, path: &SymbolPath) -> Option<(&'a SymbolTable, &'a SymbolVariant)> {
+    pub fn get_symbol_with_table(&self, path: &SymbolPath) -> Option<(&'a SymbolTable, &'a SymbolVariant)> {
         self.march(|masked| {
             if let Some(symvar) = masked.get_symbol(path) {
                 Some((masked.symtab, symvar))
@@ -85,16 +85,6 @@ impl<'a> SymbolTableMarcher<'a> {
                 None
             }
         })
-    }
-
-    #[inline]
-    pub fn locate_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolLocation> {
-        self.march(|masked| masked.locate_symbol(path))
-    }
-
-    #[inline]
-    pub fn get_symbol_with_location(&self, path: &SymbolPath) -> Option<(&'a SymbolVariant, &'a SymbolLocation)> {
-        self.march(|masked| masked.get_symbol_with_location(path))
     }
 
     #[inline]
@@ -173,16 +163,6 @@ impl<'a> MaskedSymbolTable<'a> {
         } else {
             Ok(())
         }
-    }
-
-    fn locate_symbol(&self, path: &SymbolPath) -> Option<&'a SymbolLocation> {
-        self.get_symbol(path).and_then(|symvar| symvar.location())
-    }
-
-    fn get_symbol_with_location(&self, path: &SymbolPath) -> Option<(&'a SymbolVariant, &'a SymbolLocation)> {
-        let symvar = self.get_symbol(path)?;
-        let loc = symvar.location()?;
-        Some((symvar, loc))
     }
 }
 

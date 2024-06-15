@@ -118,17 +118,6 @@ impl SymbolTable {
         self.symbols.get(path)
     }
 
-    #[inline]
-    pub fn locate_symbol<'a>(&'a self, path: &SymbolPath) -> Option<&'a SymbolLocation> {
-        self.get_symbol(path).and_then(|symvar| symvar.location())
-    }
-
-    pub fn get_symbol_with_location<'a>(&'a self, path: &SymbolPath) -> Option<(&'a SymbolVariant, &'a SymbolLocation)> {
-        let symvar = self.get_symbol(path)?;
-        let loc = symvar.location()?;
-        Some((symvar, loc))
-    }
- 
     pub fn remove_symbols_for_source(&mut self, local_source_path: &Path) {
         let for_removal: Vec<_> = 
             self.get_symbols_for_source(local_source_path)
