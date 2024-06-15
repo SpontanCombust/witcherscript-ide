@@ -3,8 +3,29 @@
 # Changelog
 
 
+## v0.3.1
+**Annotation support**
+
+### Features
+- Added support for code annotations introduced Witcher 3 update `4.04a_REDkit_Update_2` on 06.06.2024
+- Added more descriptive errors when adding improper specifiers in code (e.g. access modifier for struct fields)
+
+### Fixes
+- Established a specific order in which configuration settings get shown. They should no longer be listed in seemingly random order
+- New projects now should get automatically detected when they get created inside the workspace
+- Improved syntax highlighting of tooltips involving primitive types, special variables (e.g. `this`) and global variables (e.g. `thePlayer`)
+- Fixed not being able to use "Create/Initialize project" commands when not already being in a workspace with existing script project(s)
+
+### Commands
+- Added a debug command to inspect Concrete Syntax Tree of a script
+
+### Other changes
+- Message shown when trying to access language features from the level of a non-project script will now direct to the main "User manual" page instead of "Project System" subpage
+- Reorganized LSP server and client code for readability
+
+
 ## v0.3.0
-Code symbols update
+**Code symbols update**
 
 With this release we also establish an acronym for the project, that being ***WIDE*** (**W**itcherScript **I**ntegrated **D**evelopment **E**nvironment). 
 It is also finally getting some visual branding!
@@ -52,7 +73,7 @@ It is also finally getting some visual branding!
 
 
 ## v0.2.1
-REDKit project support & fixes
+**REDKit project support & fixes**
 
 ### Features
 - Added support for REDKit projects
@@ -78,7 +99,7 @@ REDKit project support & fixes
 
 
 ## v0.2.0
-Project system update
+**Project system update**
 
 ### Features
 - Added a project system for WitcherScript, check the user manual for details
@@ -100,7 +121,7 @@ Project system update
 
 
 ## v0.1.0
-Initial release
+**Initial release**
 
 ### Editor
 - Added syntax highlighting
