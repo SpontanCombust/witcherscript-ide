@@ -354,7 +354,8 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
             | BinaryOperator::Sum
             | BinaryOperator::Diff
             | BinaryOperator::BitAnd
-            | BinaryOperator::BitOr => left_path,
+            | BinaryOperator::BitOr
+            | BinaryOperator::BitXor => left_path,
             BinaryOperator::And
             | BinaryOperator::Or
             | BinaryOperator::Equal

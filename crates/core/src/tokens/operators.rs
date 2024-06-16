@@ -60,6 +60,7 @@ pub enum BinaryOperator {
     Diff,
     BitAnd,
     BitOr,
+    BitXor,
     And,
     Or,
     Equal,
@@ -79,6 +80,7 @@ impl BinaryOperatorNode<'_> {
             "binary_op_and" => BinaryOperator::And,
             "binary_op_bitor" => BinaryOperator::BitOr,
             "binary_op_bitand" => BinaryOperator::BitAnd,
+            "binary_op_bitxor" => BinaryOperator::BitXor,
             "binary_op_eq" => BinaryOperator::Equal,
             "binary_op_neq" => BinaryOperator::NotEqual,
             "binary_op_gt" => BinaryOperator::Greater,
@@ -115,6 +117,7 @@ impl<'script> TryFrom<AnyNode<'script>> for BinaryOperatorNode<'script> {
             "binary_op_and"     |
             "binary_op_bitor"   |
             "binary_op_bitand"  |
+            "binary_op_bitxor"  |
             "binary_op_eq"      |
             "binary_op_neq"     |
             "binary_op_gt"      |
@@ -138,9 +141,10 @@ pub enum AssignmentOperator {
     Direct,
     Mult,
     Div,
-    Mod,
     Sum,
-    Diff
+    Diff,
+    BitAnd,
+    BitOr
 }
 
 pub type AssignmentOperatorNode<'script> = SyntaxNode<'script, AssignmentOperator>;
@@ -153,7 +157,8 @@ impl AssignmentOperatorNode<'_> {
             "assign_op_diff" => AssignmentOperator::Diff,
             "assign_op_mult" => AssignmentOperator::Mult,
             "assign_op_div" => AssignmentOperator::Div,
-            "assign_op_mod" => AssignmentOperator::Mod,
+            "assign_op_bitand" => AssignmentOperator::BitAnd,
+            "assign_op_bitor" => AssignmentOperator::BitOr,
             _ => panic!("Unknown assignment operator: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
@@ -180,7 +185,8 @@ impl<'script> TryFrom<AnyNode<'script>> for AssignmentOperatorNode<'script> {
             "assign_op_diff"    |
             "assign_op_mult"    |
             "assign_op_div"     |
-            "assign_op_mod" => Ok(value.into()),
+            "assign_op_bitand"  |
+            "assign_op_bitor" => Ok(value.into()),
             _ => Err(())
         }
     }
@@ -254,8 +260,8 @@ impl OperatorTraits for BinaryOperator {
         match self {
             BinaryOperator::Equal           |
             BinaryOperator::NotEqual        |
-            BinaryOperator::Lesser            |
-            BinaryOperator::LesserOrEqual     |
+            BinaryOperator::Lesser          |
+            BinaryOperator::LesserOrEqual   |
             BinaryOperator::Greater         |
             BinaryOperator::GreaterOrEqual  => true,
             _ => false
@@ -267,10 +273,9 @@ impl OperatorTraits for AssignmentOperator {
     fn is_arithmetic(&self) -> bool {
         match self {
             AssignmentOperator::Mult  |
-            AssignmentOperator::Div     |
-            AssignmentOperator::Mod  |
-            AssignmentOperator::Sum     |
-            AssignmentOperator::Diff     => true,
+            AssignmentOperator::Div   |
+            AssignmentOperator::Sum   |
+            AssignmentOperator::Diff  => true,
             _ => false
         }
     }
@@ -280,7 +285,11 @@ impl OperatorTraits for AssignmentOperator {
     }
 
     fn is_bitwise(&self) -> bool {
-        false
+        match self {
+            AssignmentOperator::BitAnd |
+            AssignmentOperator::BitOr => true,
+            _ => false
+        }
     }
 
     fn is_relational(&self) -> bool {
