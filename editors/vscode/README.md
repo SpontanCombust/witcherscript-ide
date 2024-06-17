@@ -2,6 +2,8 @@
 
 ***WIDE*** (**W**itcherScript **I**ntegrated **D**evelopment **E**nvironment) is an unofficial Witcher 3 modding tooling aimed at improving developer experience by supplying them with powerful code analysis tools in the form of an editor extension.
 
+The goal is to provide a full set of features that the [ScriptStudio](https://witcher-games.fandom.com/wiki/Script_Studio) offers and more while at the same time being open-source.
+
 This extension provides support for Witcher 3's scripting language WitcherScript.
 
 
