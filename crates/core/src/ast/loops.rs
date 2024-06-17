@@ -58,21 +58,27 @@ impl<'script> TryFrom<AnyNode<'script>> for ForLoopNode<'script> {
 }
 
 impl SyntaxNodeTraversal for ForLoopNode<'_> {
-    type TraversalCtx = StatementTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_for_stmt(self, ctx);
         if tp.traverse_init {
-            self.init().map(|init| init.accept(visitor, ExpressionTraversalContext::ForLoopInit));
+            ctx.push(TraversalContext::ForLoopInit);
+            self.init().map(|init| init.accept(visitor, ctx));
+            ctx.pop();
         }
         if tp.traverse_cond {
-            self.cond().map(|cond| cond.accept(visitor, ExpressionTraversalContext::ForLoopCond));
+            ctx.push(TraversalContext::ForLoopCond);
+            self.cond().map(|cond| cond.accept(visitor, ctx));
+            ctx.pop();
         }
         if tp.traverse_iter {
-            self.iter().map(|iter| iter.accept(visitor, ExpressionTraversalContext::ForLoopIter));
+            ctx.push(TraversalContext::ForLoopIter);
+            self.iter().map(|iter| iter.accept(visitor, ctx));
+            ctx.pop();
         }
         if tp.traverse_body {
-            self.body().accept(visitor, StatementTraversalContext::ForLoopBody);
+            ctx.push(TraversalContext::ForLoopBody);
+            self.body().accept(visitor, ctx);
+            ctx.pop();
         }
         visitor.exit_for_stmt(self, ctx);
     }
@@ -118,15 +124,17 @@ impl<'script> TryFrom<AnyNode<'script>> for WhileLoopNode<'script> {
 }
 
 impl SyntaxNodeTraversal for WhileLoopNode<'_> {
-    type TraversalCtx = StatementTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_while_stmt(self, ctx);
         if tp.traverse_cond {
-            self.cond().accept(visitor, ExpressionTraversalContext::WhileLoopCond);
+            ctx.push(TraversalContext::WhileLoopCond);
+            self.cond().accept(visitor, ctx);
+            ctx.pop();
         }
         if tp.traverse_body {
-            self.body().accept(visitor, StatementTraversalContext::WhileLoopBody);
+            ctx.push(TraversalContext::WhileLoopBody);
+            self.body().accept(visitor, ctx);
+            ctx.pop();
         }
         visitor.exit_while_stmt(self, ctx);
     }
@@ -172,15 +180,17 @@ impl<'script> TryFrom<AnyNode<'script>> for DoWhileLoopNode<'script> {
 }
 
 impl SyntaxNodeTraversal for DoWhileLoopNode<'_> {
-    type TraversalCtx = StatementTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_do_while_stmt(self, ctx);
         if tp.traverse_cond {
-            self.cond().accept(visitor, ExpressionTraversalContext::DoWhileLoopCond);
+            ctx.push(TraversalContext::DoWhileLoopCond);
+            self.cond().accept(visitor, ctx);
+            ctx.pop();
         }
         if tp.traverse_body {
-            self.body().accept(visitor, StatementTraversalContext::DoWhileLoopBody);
+            ctx.push(TraversalContext::DoWhileLoopBody);
+            self.body().accept(visitor, ctx);
+            ctx.pop();
         }
         visitor.exit_do_while_stmt(self, ctx);
     }

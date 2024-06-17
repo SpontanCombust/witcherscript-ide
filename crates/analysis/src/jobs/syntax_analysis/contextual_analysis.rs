@@ -305,7 +305,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: DeclarationTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: &TraversalContextStack) {
         if let Some(range) = n.annotation().map(|ann| ann.range()) {
             self.diagnostics.push(Diagnostic {
                 range,
@@ -319,7 +319,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if let Ok(var_spec) = MemberVarSpecifier::try_from(spec) {
                 if matches!(var_spec, MemberVarSpecifier::AccessModifier(_)) {
-                    if ctx == DeclarationTraversalContext::StructDefinition {
+                    if ctx.contains(TraversalContext::Struct) {
                         let spec_name = Keyword::from(spec).to_string();
                         self.diagnostics.push(Diagnostic {
                             range,
@@ -353,7 +353,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         }
     }
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {
         if let Some(range) = n.annotation().map(|ann| ann.range()) {
             self.diagnostics.push(Diagnostic {
                 range,
@@ -369,7 +369,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) {
         let mut specifiers = SmallVec::<[AutobindSpecifier; 2]>::new();
         let mut found_access_modif_before = false;
 
@@ -403,7 +403,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         }
     }
 
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: FunctionTraversalContext) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) {
         let mut specifiers = SmallVec::<[FunctionParameterSpecifier; 2]>::new();
 
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {

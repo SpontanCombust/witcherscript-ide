@@ -59,12 +59,12 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for ClassDeclarationNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_class_decl(self);
         if tp.traverse_definition {
-            self.definition().accept(visitor, ());
+            ctx.push(TraversalContext::Class);
+            self.definition().accept(visitor, ctx);
+            ctx.pop();
         }
         visitor.exit_class_decl(self);
     }
@@ -106,10 +106,8 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassBlockNode<'script> {
 }
 
 impl SyntaxNodeTraversal for ClassBlockNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
-        self.iter().for_each(|s| s.accept(visitor, DeclarationTraversalContext::ClassDefinition));
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        self.iter().for_each(|s| s.accept(visitor, ctx));
     }
 }
 
@@ -184,9 +182,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassPropertyNode<'script> {
 }
 
 impl SyntaxNodeTraversal for ClassPropertyNode<'_> {
-    type TraversalCtx = DeclarationTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         match self.clone().value() {
             ClassProperty::Var(s) => s.accept(visitor, ctx),
             ClassProperty::Default(s) => s.accept(visitor, ctx),
@@ -256,9 +252,7 @@ impl<'script> TryFrom<AnyNode<'script>> for AutobindDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for AutobindDeclarationNode<'_> {
-    type TraversalCtx = DeclarationTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         visitor.visit_autobind_decl(self, ctx);
     }
 }

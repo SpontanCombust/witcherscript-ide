@@ -56,12 +56,12 @@ impl<'script> TryFrom<AnyNode<'script>> for StructDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for StructDeclarationNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_struct_decl(self);
         if tp.traverse_definition {
-            self.definition().accept(visitor, ());
+            ctx.push(TraversalContext::Struct);
+            self.definition().accept(visitor, ctx);
+            ctx.pop();
         }
         visitor.exit_struct_decl(self);
     }
@@ -103,10 +103,8 @@ impl<'script> TryFrom<AnyNode<'script>> for StructBlockNode<'script> {
 }
 
 impl SyntaxNodeTraversal for StructBlockNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
-        self.iter().for_each(|s| s.accept(visitor, DeclarationTraversalContext::StructDefinition));
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        self.iter().for_each(|s| s.accept(visitor, ctx));
     }
 }
 
@@ -174,9 +172,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StructPropertyNode<'script> {
 }
 
 impl SyntaxNodeTraversal for StructPropertyNode<'_> {
-    type TraversalCtx = DeclarationTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         match self.clone().value() {
             StructProperty::Var(s) => s.accept(visitor, ctx),
             StructProperty::Default(s) => s.accept(visitor, ctx),
@@ -223,12 +219,10 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockNode<'script> {
 }
 
 impl SyntaxNodeTraversal for MemberDefaultsBlockNode<'_> {
-    type TraversalCtx = DeclarationTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_member_defaults_block(self, ctx);
         if tp.traverse {
-            self.iter().for_each(|n| n.accept(visitor, ()));
+            self.iter().for_each(|n| n.accept(visitor, ctx));
         }
         visitor.exit_member_defaults_block(self, ctx);
     }
@@ -274,14 +268,14 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockAssignmentNode<'s
 }
 
 impl SyntaxNodeTraversal for MemberDefaultsBlockAssignmentNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
-        let tp = visitor.visit_member_defaults_block_assignment(self);
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        let tp = visitor.visit_member_defaults_block_assignment(self, ctx);
         if tp.traverse_value {
-            self.value().accept(visitor, ExpressionTraversalContext::MemberDefaultValue);
+            ctx.push(TraversalContext::MemberDefaultValue);
+            self.value().accept(visitor, ctx);
+            ctx.pop();
         }
-        visitor.exit_member_defaults_block_assignment(self);
+        visitor.exit_member_defaults_block_assignment(self, ctx);
     }
 }
 
@@ -325,12 +319,12 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultValueNode<'script> {
 }
 
 impl SyntaxNodeTraversal for MemberDefaultValueNode<'_> {
-    type TraversalCtx = DeclarationTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_member_default_val(self, ctx);
         if tp.traverse_value {
-            self.value().accept(visitor, ExpressionTraversalContext::MemberDefaultValue);
+            ctx.push(TraversalContext::MemberDefaultValue);
+            self.value().accept(visitor, ctx);
+            ctx.pop();
         }
         visitor.exit_member_default_val(self, ctx);
     }
@@ -376,9 +370,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberHintNode<'script> {
 }
 
 impl SyntaxNodeTraversal for MemberHintNode<'_> {
-    type TraversalCtx = DeclarationTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         visitor.visit_member_hint(self, ctx);
     }
 }

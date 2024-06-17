@@ -92,12 +92,12 @@ impl<'script> TryFrom<AnyNode<'script>> for LocalVarDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for LocalVarDeclarationNode<'_> {
-    type TraversalCtx = StatementTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_local_var_decl_stmt(self, ctx);
         if tp.traverse_init_value {
-            self.init_value().map(|init_value| init_value.accept(visitor, ExpressionTraversalContext::LocalVarDeclarationInitValue));
+            ctx.push(TraversalContext::LocalVarDeclarationInitValue);
+            self.init_value().map(|init_value| init_value.accept(visitor, ctx));
+            ctx.pop();
         }
         visitor.exit_local_var_decl_stmt(self, ctx);
     }
@@ -153,10 +153,8 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberVarDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
-    type TraversalCtx = DeclarationTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        if ctx == DeclarationTraversalContext::Global {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        if ctx.top() == TraversalContext::Global {
             visitor.visit_global_var_decl(self);
         } else {
             visitor.visit_member_var_decl(self, ctx);

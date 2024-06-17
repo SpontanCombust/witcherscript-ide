@@ -180,7 +180,7 @@ impl SyntaxNodeVisitor for PositionFilter {
 
 
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {
         let mut tp = FunctionDeclarationTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -200,11 +200,11 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: DeclarationTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: &TraversalContextStack) {
         self.currently_in_callable_range = false;
     }
     
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: &TraversalContextStack) -> EventDeclarationTraversalPolicy {
         let mut tp = EventDeclarationTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -224,39 +224,39 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: DeclarationTraversalContext) {
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: &TraversalContextStack) {
         self.currently_in_callable_range = false;
     }
 
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: FunctionTraversalContext) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, _: DeclarationTraversalContext) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: DeclarationTraversalContext) -> MemberDefaultValueTraversalPolicy {
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
         let mut tp = MemberDefaultValueTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -272,7 +272,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: DeclarationTraversalContext) -> MemberDefaultsBlockTraversalPolicy {
+    fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, _: &TraversalContextStack) -> MemberDefaultsBlockTraversalPolicy {
         let mut tp = MemberDefaultsBlockTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -283,7 +283,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) -> MemberDefaultValueTraversalPolicy {
+    fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode, _: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
         let mut tp = MemberDefaultValueTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -302,7 +302,7 @@ impl SyntaxNodeVisitor for PositionFilter {
 
 
 
-    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: &TraversalContextStack) -> VarDeclarationTraversalPolicy {
         let mut tp = VarDeclarationTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -318,7 +318,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_compound_stmt(&mut self, n: &CompoundStatementNode, _: StatementTraversalContext) -> CompoundStatementTraversalPolicy {
+    fn visit_compound_stmt(&mut self, n: &CompoundStatementNode, _: &TraversalContextStack) -> CompoundStatementTraversalPolicy {
         let mut tp = CompoundStatementTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -329,7 +329,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_for_stmt(&mut self, n: &ForLoopNode, _: StatementTraversalContext) -> ForLoopTraversalPolicy {
+    fn visit_for_stmt(&mut self, n: &ForLoopNode, _: &TraversalContextStack) -> ForLoopTraversalPolicy {
         let mut tp = ForLoopTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -354,7 +354,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_while_stmt(&mut self, n: &WhileLoopNode, _: StatementTraversalContext) -> WhileLoopTraversalPolicy {
+    fn visit_while_stmt(&mut self, n: &WhileLoopNode, _: &TraversalContextStack) -> WhileLoopTraversalPolicy {
         let mut tp = WhileLoopTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -373,7 +373,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_do_while_stmt(&mut self, n: &DoWhileLoopNode, _: StatementTraversalContext) -> DoWhileLoopTraversalPolicy {
+    fn visit_do_while_stmt(&mut self, n: &DoWhileLoopNode, _: &TraversalContextStack) -> DoWhileLoopTraversalPolicy {
         let mut tp = DoWhileLoopTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -392,7 +392,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_if_stmt(&mut self, n: &IfConditionalNode, _: StatementTraversalContext) -> IfConditionalTraversalPolicy {
+    fn visit_if_stmt(&mut self, n: &IfConditionalNode, _: &TraversalContextStack) -> IfConditionalTraversalPolicy {
         let mut tp = IfConditionalTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -414,7 +414,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode, _: StatementTraversalContext) -> SwitchConditionalTraversalPolicy {
+    fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode, _: &TraversalContextStack) -> SwitchConditionalTraversalPolicy {
         let mut tp = SwitchConditionalTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -433,7 +433,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode) -> SwitchConditionalCaseLabelTraversalPolicy {
+    fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode, _: &TraversalContextStack) -> SwitchConditionalCaseLabelTraversalPolicy {
         let mut tp = SwitchConditionalCaseLabelTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -449,28 +449,28 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode) {
+    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_break_stmt(&mut self, n: &BreakStatementNode, _: StatementTraversalContext) {
+    fn visit_break_stmt(&mut self, n: &BreakStatementNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, _: StatementTraversalContext) {
+    fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_delete_stmt(&mut self, n: &DeleteStatementNode, _: StatementTraversalContext) -> DeleteStatementTraversalPolicy {
+    fn visit_delete_stmt(&mut self, n: &DeleteStatementNode, _: &TraversalContextStack) -> DeleteStatementTraversalPolicy {
         let mut tp = DeleteStatementTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -486,7 +486,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_return_stmt(&mut self, n: &ReturnStatementNode, _: StatementTraversalContext) -> ReturnStatementTraversalPolicy {
+    fn visit_return_stmt(&mut self, n: &ReturnStatementNode, _: &TraversalContextStack) -> ReturnStatementTraversalPolicy {
         let mut tp = ReturnStatementTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -502,7 +502,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode, _: StatementTraversalContext) -> ExpressionStatementTraversalPolicy {
+    fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode, _: &TraversalContextStack) -> ExpressionStatementTraversalPolicy {
         let mut tp = ExpressionStatementTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -518,7 +518,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_nop_stmt(&mut self, n: &NopNode, _: StatementTraversalContext) {
+    fn visit_nop_stmt(&mut self, n: &NopNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
@@ -528,7 +528,7 @@ impl SyntaxNodeVisitor for PositionFilter {
 
 
 
-    fn visit_nested_expr(&mut self, n: &NestedExpressionNode, _: ExpressionTraversalContext) -> NestedExpressionTraversalPolicy {
+    fn visit_nested_expr(&mut self, n: &NestedExpressionNode, _: &TraversalContextStack) -> NestedExpressionTraversalPolicy {
         let mut tp = NestedExpressionTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -544,7 +544,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_assign_op_expr(&mut self, n: &AssignmentOperationExpressionNode, _: ExpressionTraversalContext) -> AssignmentOperationExpressionTraversalPolicy {
+    fn visit_assign_op_expr(&mut self, n: &AssignmentOperationExpressionNode, _: &TraversalContextStack) -> AssignmentOperationExpressionTraversalPolicy {
         let mut tp = AssignmentOperationExpressionTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -563,7 +563,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_binary_op_expr(&mut self, n: &BinaryOperationExpressionNode, _: ExpressionTraversalContext) -> BinaryOperationExpressionTraversalPolicy {
+    fn visit_binary_op_expr(&mut self, n: &BinaryOperationExpressionNode, _: &TraversalContextStack) -> BinaryOperationExpressionTraversalPolicy {
         let mut tp = BinaryOperationExpressionTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -582,7 +582,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_unary_op_expr(&mut self, n: &UnaryOperationExpressionNode, _: ExpressionTraversalContext) -> UnaryOperationExpressionTraversalPolicy {
+    fn visit_unary_op_expr(&mut self, n: &UnaryOperationExpressionNode, _: &TraversalContextStack) -> UnaryOperationExpressionTraversalPolicy {
         let mut tp = UnaryOperationExpressionTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -598,7 +598,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_new_expr(&mut self, n: &NewExpressionNode, _: ExpressionTraversalContext) -> NewExpressionTraversalPolicy {
+    fn visit_new_expr(&mut self, n: &NewExpressionNode, _: &TraversalContextStack) -> NewExpressionTraversalPolicy {
         let mut tp = NewExpressionTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -614,7 +614,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, _: ExpressionTraversalContext) -> TypeCastExpressionTraversalPolicy {
+    fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, _: &TraversalContextStack) -> TypeCastExpressionTraversalPolicy {
         let mut tp = TypeCastExpressionTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -630,7 +630,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode, _: ExpressionTraversalContext) -> TernaryConditionalExpressionTraversalPolicy {
+    fn visit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode, _: &TraversalContextStack) -> TernaryConditionalExpressionTraversalPolicy {
         let mut tp = TernaryConditionalExpressionTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -652,7 +652,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, _: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
+    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, _: &TraversalContextStack) -> MemberFieldExpressionTraversalPolicy {
         let mut tp = MemberFieldExpressionTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -668,7 +668,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_array_expr(&mut self, n: &ArrayExpressionNode, _: ExpressionTraversalContext) -> ArrayExpressionTraversalPolicy {
+    fn visit_array_expr(&mut self, n: &ArrayExpressionNode, _: &TraversalContextStack) -> ArrayExpressionTraversalPolicy {
         let mut tp = ArrayExpressionTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -687,7 +687,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_func_call_expr(&mut self, n: &FunctionCallExpressionNode, _: ExpressionTraversalContext) -> FunctionCallExpressionTraversalPolicy {
+    fn visit_func_call_expr(&mut self, n: &FunctionCallExpressionNode, _: &TraversalContextStack) -> FunctionCallExpressionTraversalPolicy {
         let mut tp = FunctionCallExpressionTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -706,7 +706,7 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_func_call_arg(&mut self, n: &FunctionCallArgument) -> FunctionCallArgumentTraversalPolicy {
+    fn visit_func_call_arg(&mut self, n: &FunctionCallArgument, _: &TraversalContextStack) -> FunctionCallArgumentTraversalPolicy {
         let mut tp = FunctionCallArgumentTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);
@@ -724,42 +724,42 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_identifier_expr(&mut self, n: &IdentifierNode, _: ExpressionTraversalContext) {
+    fn visit_identifier_expr(&mut self, n: &IdentifierNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_literal_expr(&mut self, n: &LiteralNode, _: ExpressionTraversalContext) {
+    fn visit_literal_expr(&mut self, n: &LiteralNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_this_expr(&mut self, n: &ThisExpressionNode, _: ExpressionTraversalContext) {
+    fn visit_this_expr(&mut self, n: &ThisExpressionNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_super_expr(&mut self, n: &SuperExpressionNode, _: ExpressionTraversalContext) {
+    fn visit_super_expr(&mut self, n: &SuperExpressionNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_parent_expr(&mut self, n: &ParentExpressionNode, _: ExpressionTraversalContext) {
+    fn visit_parent_expr(&mut self, n: &ParentExpressionNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
     }
 
-    fn visit_virtual_parent_expr(&mut self, n: &VirtualParentExpressionNode, _: ExpressionTraversalContext) {
+    fn visit_virtual_parent_expr(&mut self, n: &VirtualParentExpressionNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;

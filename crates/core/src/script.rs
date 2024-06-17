@@ -2,7 +2,7 @@ use std::io;
 use ropey::Rope;
 use thiserror::Error;
 use tree_sitter::{Parser, Tree, LanguageError};
-use crate::{ast::{RootNode, SyntaxNodeTraversal, SyntaxNodeVisitor}, script_document::ScriptDocument};
+use crate::{ast::{RootNode, SyntaxNodeTraversal, SyntaxNodeVisitor, TraversalContextStack}, script_document::ScriptDocument};
 
 
 #[derive(Debug, Clone)]
@@ -80,6 +80,7 @@ impl Script {
     }
 
     pub fn visit_nodes<V: SyntaxNodeVisitor>(&self, visitor: &mut V) {
-        self.root_node().accept(visitor, ());
+        let mut ctx = TraversalContextStack::new();
+        self.root_node().accept(visitor, &mut ctx);
     }
 }

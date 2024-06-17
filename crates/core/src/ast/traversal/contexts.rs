@@ -3,23 +3,45 @@
 //! a class, a state or a struct.
 
 
-//TODO maybe replace separate enums with just one, but pass around a stack of these contexts
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ExpressionTraversalContext {
+pub enum TraversalContext {
+    Global,
+
+    Class,
+    State,
+    Struct,
+    Enum,
+    GlobalFunction,
+
+    MemberFunction,
+    Event,
     MemberDefaultValue,
-    
+
+    LocalVarDeclarationInitValue,
+
     ExpressionStatement,
+    CompoundStatement,
     ReturnStatement,
     DeleteStatement,
+
+    IfConditionalCond,
+    IfConditionalBody,
+    IfConditionalElseBody,
+
+    SwitchConditionalCond,
+    SwitchConditionalBody,
+    SwitchConditionalCaseLabel,
+
     ForLoopInit,
     ForLoopCond,
     ForLoopIter,
+    ForLoopBody,
+
     WhileLoopCond,
+    WhileLoopBody,
+
     DoWhileLoopCond,
-    IfConditionalCond,
-    SwitchConditionalCond,
-    SwitchConditionalCaseLabel,
-    LocalVarDeclarationInitValue,
+    DoWhileLoopBody, 
 
     NestedExpressionInner,
     FunctionCallExpressionFunc,
@@ -39,33 +61,55 @@ pub enum ExpressionTraversalContext {
     TernaryConditionalExpressionAlt,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DeclarationTraversalContext {
-    Global,
-    ClassDefinition,
-    StateDefinition,
-    StructDefinition
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FunctionTraversalContext {
-    GlobalFunction,
-    MemberFunction,
-    Event
+impl Default for TraversalContext {
+    fn default() -> Self {
+        Self::Global
+    }
 }
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum StatementTraversalContext {
-    GlobalFunctionDefinition,
-    MemberFunctionDefinition,
-    EventDefinition,
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TraversalContextStack {
+    stack: Vec<TraversalContext>
+}
 
-    IfConditionalBody,
-    IfConditionalElseBody,
-    SwitchConditionalBody,
-    ForLoopBody,
-    WhileLoopBody,
-    DoWhileLoopBody,
-    InCompoundStatement
+impl TraversalContextStack {
+    #[inline]
+    pub fn new() -> Self {
+        Self {
+            stack: Vec::with_capacity(8)
+        }
+    }
+
+    #[inline]
+    pub fn push(&mut self, ctx: TraversalContext) {
+        self.stack.push(ctx);
+    }
+
+    #[inline]
+    pub fn pop(&mut self) {
+        self.stack.pop();
+    }
+
+    #[inline]
+    pub fn top(&self) -> TraversalContext {
+        self.stack.last().map(|ctx| *ctx).unwrap_or_default()
+    }
+
+    #[inline]
+    pub fn contains(&self, ctx: TraversalContext) -> bool {
+        self.stack.contains(&ctx)
+    }
+
+    /// Iterate the stack top-to-bottom
+    #[inline]
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item = TraversalContext> + 'a {
+        self.stack.iter().rev().cloned()
+    }
+}
+
+impl Default for TraversalContextStack {
+    fn default() -> Self {
+        Self::new()
+    }
 }

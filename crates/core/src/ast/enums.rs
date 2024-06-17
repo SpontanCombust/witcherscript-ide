@@ -48,12 +48,12 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for EnumDeclarationNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_enum_decl(self);
         if tp.traverse_definition {
-            self.definition().accept(visitor, ());
+            ctx.push(TraversalContext::Enum);
+            self.definition().accept(visitor, ctx);
+            ctx.pop();
         }
         visitor.exit_enum_decl(self);
     }
@@ -95,10 +95,8 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumBlockNode<'script> {
 }
 
 impl SyntaxNodeTraversal for EnumBlockNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
-        self.iter().for_each(|s| s.accept(visitor, ()));
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        self.iter().for_each(|s| s.accept(visitor, ctx));
     }
 }
 
@@ -148,9 +146,7 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumVariantDeclarationNode<'script> 
 }
 
 impl SyntaxNodeTraversal for EnumVariantDeclarationNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: &mut TraversalContextStack) {
         visitor.visit_enum_variant_decl(self);
     }
 }

@@ -36,9 +36,7 @@ impl<'script> TryFrom<AnyNode<'script>> for NopNode<'script> {
 }
 
 impl SyntaxNodeTraversal for NopNode<'_> {
-    type TraversalCtx = StatementTraversalContext;
-
-    fn accept<V: super::SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: super::SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         visitor.visit_nop_stmt(self, ctx);
     }
 }
