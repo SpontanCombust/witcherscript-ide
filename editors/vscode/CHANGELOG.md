@@ -3,6 +3,16 @@
 # Changelog
 
 
+## v0.3.2
+**Hotfix**
+
+### Features
+- Added support for XOR binary operator
+- Added support for BITAND assignment operator 
+- Added support for BITOR assignment operator 
+- Removed support for modulo assignment operator as it is not recognized by the compiler
+
+
 ## v0.3.1
 **Annotation support**
 
