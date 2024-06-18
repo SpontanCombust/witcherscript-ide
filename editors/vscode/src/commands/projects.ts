@@ -5,7 +5,7 @@ import * as fs from 'fs/promises';
 
 import { getLanguageClient } from "../lsp/lang_client"
 import * as requests from '../lsp/requests';
-import * as state from '../state';
+import * as persistence from '../persistence';
 import * as utils from '../utils';
 import { Cmd } from './index'
 
@@ -150,7 +150,7 @@ async function initializeProjectInDirectory(client: lsp.LanguageClient, projectD
             Answer.YesHere, Answer.YesInNew, Answer.No);
 
         if (answer != undefined && answer != Answer.No) {
-            const memento = new state.OpenManifestOnInit.Memento(
+            const memento = new persistence.OpenManifestOnInit.Memento(
                 projectDirUri,
                 manifestUri
             );

@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import * as state from './state';
+import * as persistence from './persistence';
 import * as requests from './lsp/requests'
 
 
 export async function showForeignScriptWarning(context: vscode.ExtensionContext) {
-    const rememberedChoices = state.RememberedChoices.Memento.fetchOrDefault(context);
+    const rememberedChoices = persistence.RememberedChoices.Memento.fetchOrDefault(context);
     if (!rememberedChoices.neverShowAgainForeignScriptWarning) {
         enum Answer {
             Close = "I understand",

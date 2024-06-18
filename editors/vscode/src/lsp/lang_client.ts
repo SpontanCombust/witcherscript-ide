@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
-import * as state from '../state';
+import * as persistence from '../persistence';
 import * as config from '../config';
 import * as handlers from './handlers';
 
@@ -67,7 +67,7 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 
 	// Start the client. This will also launch the server
 	return client.start().then(_ => {
-		const memento = state.OpenManifestOnInit.Memento.fetch(ctx);
+		const memento = persistence.OpenManifestOnInit.Memento.fetch(ctx);
 		
 		if (memento != undefined) {
 			// If a new project has just been created in this directory and the user agreed to open it, show them the manifest of said project
@@ -80,7 +80,7 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 					(err) => client?.debug('Manifest could not be shown: ' + err)
 				);
 
-				state.OpenManifestOnInit.Memento.erase(ctx);
+				persistence.OpenManifestOnInit.Memento.erase(ctx);
 			}
 		}
 	});

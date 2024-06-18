@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import * as state from '../state';
+import * as persistence from '../persistence';
 import * as tdcp from '../providers/text_document_content_providers'
 import { Cmd } from './index'
 
@@ -42,7 +42,7 @@ export function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
                 editor.revealRange(new vscode.Range(targetPos, targetPos), vscode.TextEditorRevealType.AtTop);
             }
 
-            const rememberedChoices = state.RememberedChoices.Memento.fetchOrDefault(context);
+            const rememberedChoices = persistence.RememberedChoices.Memento.fetchOrDefault(context);
             if (!rememberedChoices.neverShowAgainDebugAstNotif) {
                 enum Answer {
                     Close = "I understand",
@@ -138,7 +138,7 @@ export function commandShowScriptCst(context: vscode.ExtensionContext): Cmd {
                 editor.revealRange(new vscode.Range(targetPos, targetPos), vscode.TextEditorRevealType.AtTop);
             }
 
-            const rememberedChoices = state.RememberedChoices.Memento.fetchOrDefault(context);
+            const rememberedChoices = persistence.RememberedChoices.Memento.fetchOrDefault(context);
             // using the same memento for AST warning for simplicity
             if (!rememberedChoices.neverShowAgainDebugAstNotif) { 
                 enum Answer {
