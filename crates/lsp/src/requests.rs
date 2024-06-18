@@ -1,17 +1,7 @@
 use serde::Deserialize;
 use serde::Serialize;
 use tower_lsp::lsp_types as lsp;
-
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ContentInfo {
-    pub content_uri: lsp::Url,
-    pub scripts_root_uri: lsp::Url,
-    pub content_name: String,
-    pub is_in_workspace: bool,
-    pub is_in_repository: bool
-}
+use super::model;
 
 
 pub mod projects {
@@ -52,7 +42,7 @@ pub mod projects {
         #[derive(Debug, Serialize, Deserialize)]
         #[serde(rename_all = "camelCase")]
         pub struct Response {
-            pub project_infos: Vec<ContentInfo>
+            pub project_infos: Vec<model::ContentInfo>
         }
 
         pub const METHOD: &'static str = "witcherscript-ide/projects/list";
@@ -71,7 +61,7 @@ pub mod projects {
         #[derive(Debug, Serialize, Deserialize)]
         #[serde(rename_all = "camelCase")]
         pub struct Response {
-            pub content0_info: ContentInfo
+            pub content0_info: model::ContentInfo
         }
 
         pub const METHOD: &'static str = "witcherscript-ide/projects/vanillaDependencyContent";
@@ -94,7 +84,7 @@ pub mod scripts {
         #[derive(Debug, Serialize, Deserialize)]
         #[serde(rename_all = "camelCase")]
         pub struct Response {
-            pub parent_content_info: ContentInfo
+            pub parent_content_info: model::ContentInfo
         }
     
         pub const METHOD: &'static str = "witcherscript-ide/scripts/parentContent";

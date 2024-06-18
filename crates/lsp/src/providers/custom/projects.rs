@@ -3,7 +3,7 @@ use abs_path::AbsPath;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::{self, Result};
 use witcherscript_project::{content::VANILLA_CONTENT_NAME, Manifest};
-use crate::{notifications, requests::{self, ContentInfo}, Backend};
+use crate::{notifications, requests, model, Backend};
 
 
 pub trait LangaugeServerCustomProjects {
@@ -148,7 +148,7 @@ impl LangaugeServerCustomProjects for Backend {
         let mut content0_info = None;
         for n in graph.walk_dependencies(&project_path) {
             if n.content.content_name() == VANILLA_CONTENT_NAME {
-                content0_info = Some(ContentInfo {
+                content0_info = Some(model::ContentInfo {
                     content_uri: n.content.path().to_uri(),
                     scripts_root_uri: n.content.source_tree_root().to_uri(),
                     content_name: n.content.content_name().to_owned(),
@@ -182,7 +182,7 @@ impl LangaugeServerCustomProjects for Backend {
                 continue;
             }
 
-            project_infos.push(ContentInfo { 
+            project_infos.push(model::ContentInfo { 
                 content_uri: lsp::Url::from_file_path(n.content.path()).unwrap(), 
                 scripts_root_uri: lsp::Url::from_file_path(n.content.source_tree_root()).unwrap(), 
                 content_name: n.content.content_name().into(), 

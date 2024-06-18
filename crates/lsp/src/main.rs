@@ -13,6 +13,7 @@ mod reporting;
 mod tasks;
 mod requests;
 mod notifications;
+mod model;
 
 
 #[tower_lsp::async_trait]
