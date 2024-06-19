@@ -16,3 +16,21 @@ export namespace projects {
         export const type = new NotificationType<Parameters>("witcherscript-ide/projects/didImportScripts");
     }
 }
+
+export namespace scripts {
+    export namespace scriptParsingStarted {
+        export interface Parameters {
+            contentName: string
+        }
+
+        export const type = new NotificationType<Parameters>("witcherscript-ide/scripts/scriptParsingStarted");
+    }
+
+    export namespace scriptParsingFinished {
+        export interface Parameters {
+            contentName: string
+        }
+
+        export const type = new NotificationType<Parameters>("witcherscript-ide/scripts/scriptParsingFinished");
+    }
+}

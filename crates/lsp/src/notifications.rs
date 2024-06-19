@@ -37,3 +37,45 @@ pub mod projects {
         pub const METHOD: &'static str = "witcherscript-ide/projects/didImportScripts";
     }
 }
+
+pub mod scripts {
+    use super::*;
+
+    pub mod script_parsing_started {
+        use super::*;
+
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Parameters {
+            pub content_name: String,
+        }
+
+        pub const METHOD: &'static str = "witcherscript-ide/scripts/scriptParsingStarted";
+
+        pub struct Type;
+        impl lsp::notification::Notification for Type {
+            type Params = Parameters;
+        
+            const METHOD: &'static str = METHOD;
+        }
+    }
+
+    pub mod script_parsing_finished {
+        use super::*;
+
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Parameters {
+            pub content_name: String,
+        }
+
+        pub const METHOD: &'static str = "witcherscript-ide/scripts/scriptParsingFinished";
+
+        pub struct Type;
+        impl lsp::notification::Notification for Type {
+            type Params = Parameters;
+        
+            const METHOD: &'static str = METHOD;
+        }
+    }
+}

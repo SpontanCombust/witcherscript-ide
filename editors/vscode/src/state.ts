@@ -3,38 +3,32 @@ import * as vscode from 'vscode';
 import { getLanguageClient } from './lsp/lang_client';
 import * as requests from './lsp/requests';
 import * as model from './lsp/model';
+import * as config from './config'
 
-
-export interface WorkDisabled {
-    kind: 'disabled'
-}
-
-export interface WorkIdle {
-    kind: 'idle'
-}
-
-export interface WorkParsingScripts {
-    kind: 'parsing-scripts',
-    contentName: string
-}
-
-export interface WorkScanningSymbols {
-    kind: 'symbol-scan',
-    contentName: string
-}
-
-export type WorkStatus = WorkDisabled | WorkIdle | WorkParsingScripts | WorkScanningSymbols;
 
 let contextStatusBar: vscode.StatusBarItem;
 let lastProjectName: string | undefined = undefined;
 
+
+export interface ParsingScriptsWork {
+    kind: 'parsing-scripts',
+    contentName: string
+}
+
+export type Work = ParsingScriptsWork;
+
+export interface WorkEvent {
+    kind: 'begin' | 'finish',
+    work: Work
+}
+
 let workStatusBar: vscode.StatusBarItem;
-let workStatus: WorkStatus = { kind: 'disabled' };
-let workStatusLocked: boolean = false;
-let workStatusUpdateQueue: WorkStatus[] = [];
+let currentWork: Work | undefined = undefined;
+let workEventQueue: WorkEvent[] = [];
+let workUpdaterRunning = false;
 
 // Establishing a minimal time for which a status must be visible for the user to see it
-const MIN_STATUS_TIME_MILIS: number = 500;
+const WORK_UPDATE_PERIOD_MILIS: number = 500;
 
 
 export function initializeState() {
@@ -45,21 +39,22 @@ export function initializeState() {
     contextStatusBar.show();
 
     workStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+    workStatusBar.command = 'witcherscript-ide.misc.openLogs';
     updateWorkStatusBar();
 
     vscode.window.onDidChangeActiveTextEditor(() => {
         updateLastProjectName();
-        updateContextStatusBar();
     });
 }
 
 export function disposeState() {
-    contextStatusBar.dispose()
+    contextStatusBar.dispose();
+    workStatusBar.dispose();
 }
 
 
 
-async function updateLastProjectName() {
+export async function updateLastProjectName() {
     const client = getLanguageClient();
     if (client == undefined) {
         lastProjectName = undefined;
@@ -82,12 +77,14 @@ async function updateLastProjectName() {
             lastProjectName = currentContent?.contentName;
         }
     }
+
+    updateContextStatusBar();
 }
 
 function updateContextStatusBar() {
     let text = "WitcherScript IDE";
 
-    if (workStatus.kind == 'disabled') {
+    if (!config.getConfiguration().enableLanguageServer) {
         text += " [Disabled]";
     } else {
         const projectName = (lastProjectName != undefined) ? lastProjectName : "No active project";
@@ -99,38 +96,61 @@ function updateContextStatusBar() {
 
 
 
-export function scheduleWorkStatusUpdate(status: WorkStatus) {
-    if (workStatusLocked) {
-        workStatusUpdateQueue.push(status);
+export function scheduleWorkEvent(event: WorkEvent) {
+    workEventQueue.push(event);
+
+    if (!workUpdaterRunning) {
+        workUpdaterRunning = true;
+        updateWork();
+    }
+}
+
+function updateWork() {
+    if (currentWork == undefined) {
+        beginNewWork();
     } else {
-        workStatus = status;
-
-        if (status.kind != 'disabled' && status.kind != 'idle') {
-            workStatusLocked = true;
-        }
-        
-        updateContextStatusBar();
-
-        setTimeout(() => {
-            workStatusLocked = false;
-            if (workStatusUpdateQueue.length > 0) {
-                const nextStatus = workStatusUpdateQueue.splice(0, 1)[0];
-                scheduleWorkStatusUpdate(nextStatus);
+        for (let i = 0; i < workEventQueue.length; i += 1) {
+            const event = workEventQueue[i];
+            if (event.kind == 'finish' && JSON.stringify(event.work) == JSON.stringify(currentWork)) {
+                workEventQueue.splice(i, 1);
+                currentWork = undefined;
+                break;
             }
-        }, MIN_STATUS_TIME_MILIS);
+        }
+
+        if (currentWork == undefined) {
+            beginNewWork();
+        }
+    }
+
+    updateWorkStatusBar();
+
+    if (currentWork != undefined) {
+        setTimeout(() => {
+            updateWork();
+        }, WORK_UPDATE_PERIOD_MILIS);
+    } else {
+        workUpdaterRunning = false;
+    }
+}
+
+function beginNewWork() {
+    for (let i = 0; i < workEventQueue.length; i += 1) {
+        const event = workEventQueue[i];
+        if (event.kind == 'begin') {
+            currentWork = workEventQueue.splice(i, 1)[0].work;
+            break;
+        }
     }
 }
 
 function updateWorkStatusBar() {
-    if (workStatus.kind != 'disabled' && workStatus.kind != 'idle') {
-        let text = "$(loading~spin)";
+    if (currentWork != undefined) {
+        let text = "$(sync~spin) ";
 
-        switch (workStatus.kind) {
+        switch (currentWork.kind) {
             case 'parsing-scripts':
-                text = `Parsing scripts (${workStatus.contentName})`
-                break;
-            case 'symbol-scan':
-                text = `Building symbol table (${workStatus.contentName})`
+                text += `Parsing scripts (${currentWork.contentName})`
                 break;
         }
 

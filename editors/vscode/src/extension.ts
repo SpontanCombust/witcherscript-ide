@@ -19,12 +19,9 @@ export function activate(context: vscode.ExtensionContext) {
 	state.initializeState();
 
 	if (cfg.enableLanguageServer) {
-		state.scheduleWorkStatusUpdate({ kind: 'idle' });
 		lc.createLanguageClient(context, cfg).then(() => {
 			vscode.commands.executeCommand('setContext', 'witcherscript-ide.languageServerActive', true);
 		});
-	} else {
-		state.scheduleWorkStatusUpdate({ kind: 'disabled' })
 	}
 }
 
