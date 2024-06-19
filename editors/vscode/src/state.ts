@@ -7,7 +7,12 @@ import * as config from './config'
 
 
 let contextStatusBar: vscode.StatusBarItem;
-let lastProjectName: string | undefined = undefined;
+let lastContentInfo: model.ContentInfo | undefined = undefined;
+
+/// Get info about the content to which belongs the last viewed script 
+export function getLastContentInfo(): model.ContentInfo | undefined {
+    return lastContentInfo;
+}
 
 
 export interface ParsingScriptsWork {
@@ -43,7 +48,7 @@ export function initializeState() {
     updateWorkStatusBar();
 
     vscode.window.onDidChangeActiveTextEditor(() => {
-        updateLastProjectName();
+        updateLastContentInfo();
     });
 }
 
@@ -54,10 +59,10 @@ export function disposeState() {
 
 
 
-export async function updateLastProjectName() {
+export async function updateLastContentInfo() {
     const client = getLanguageClient();
     if (client == undefined) {
-        lastProjectName = undefined;
+        lastContentInfo = undefined;
     } else {
         const activeEditor = vscode.window.activeTextEditor;
         const isWitcherScript = activeEditor?.document.languageId == 'witcherscript';
@@ -74,7 +79,7 @@ export async function updateLastProjectName() {
                 currentContent = res.parentContentInfo;
             } catch(_) {}
 
-            lastProjectName = currentContent?.contentName;
+            lastContentInfo = currentContent;
         }
     }
 
@@ -87,8 +92,8 @@ function updateContextStatusBar() {
     if (!config.getConfiguration().enableLanguageServer) {
         text += " [Disabled]";
     } else {
-        const projectName = (lastProjectName != undefined) ? lastProjectName : "No active project";
-        text += ` [${projectName}]`;
+        const contentName = (lastContentInfo != undefined) ? lastContentInfo.contentName : "No active content";
+        text += ` [${contentName}]`;
     }
     
     contextStatusBar.text = text;

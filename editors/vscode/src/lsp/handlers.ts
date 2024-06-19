@@ -41,6 +41,6 @@ function handleScriptParsingFinishedNotification() {
             }
         });
 
-        state.updateLastProjectName();
+        state.updateLastContentInfo();
     }
 }
