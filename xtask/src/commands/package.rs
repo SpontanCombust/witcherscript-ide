@@ -32,6 +32,7 @@ pub fn package(output: Option<String>, code_target: Option<String>, pre_release:
 
     cmd!(sh, "{NPM} --version").run().with_context(|| "npm is required")?;
     cmd!(sh, "{NPM} ci").run()?;
+    cmd!(sh, "{NPM} run check").run()?;
     cmd!(sh, "{NPX} vsce package -o {vsix_dst} {package_opt_args...}").run()?;
 
     println!("Packaged the extension into {}", vsix_dst.display());

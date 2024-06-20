@@ -19,6 +19,7 @@ pub fn prep_client(watch: bool, fast: bool) -> anyhow::Result<()> {
         cmd!(sh, "{NPM} ci").run()?;
     }
 
+    cmd!(sh, "{NPM} run check").run()?;
     cmd!(sh, "{NPM} run {command}").run()?;
 
     Ok(())

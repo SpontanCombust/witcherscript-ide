@@ -163,7 +163,8 @@
     "vscode:prepublish": "npm run build-base -- --minify",
     "build": "npm run build-base -- --sourcemap",
     "watch": "npm run build-base -- --sourcemap --watch=forever",
-    "build-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node"
+    "build-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+    "check": "tsc --strict --noEmit"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.0",
