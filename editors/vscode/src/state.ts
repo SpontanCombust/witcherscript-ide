@@ -36,25 +36,22 @@ let workUpdaterRunning = false;
 const WORK_UPDATE_PERIOD_MILIS: number = 500;
 
 
-export function initializeState() {
+export function initializeState(context: vscode.ExtensionContext) {
     contextStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
     contextStatusBar.tooltip = "Click to show available commands";
     contextStatusBar.command = 'witcherscript-ide.misc.showCommandsInPalette';
     updateContextStatusBar();
     contextStatusBar.show();
+    context.subscriptions.push(contextStatusBar);
 
     workStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
     workStatusBar.command = 'witcherscript-ide.misc.openLogs';
     updateWorkStatusBar();
+    context.subscriptions.push(workStatusBar);
 
     vscode.window.onDidChangeActiveTextEditor(() => {
         updateLastContentInfo();
     });
-}
-
-export function disposeState() {
-    contextStatusBar.dispose();
-    workStatusBar.dispose();
 }
 
 

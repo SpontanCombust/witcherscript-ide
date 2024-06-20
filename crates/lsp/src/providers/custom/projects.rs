@@ -11,6 +11,8 @@ pub trait LangaugeServerCustomProjects {
 
     async fn vanilla_dependency_content(&self, params: requests::projects::vanilla_dependency_content::Parameters) -> Result<requests::projects::vanilla_dependency_content::Response>;
 
+    async fn vanilla_content(&self, params: requests::projects::vanilla_content::Parameters) -> Result<requests::projects::vanilla_content::Response>;
+
     async fn project_list(&self, params: requests::projects::list::Parameters) -> Result<requests::projects::list::Response>;
 
     async fn did_import_scripts(&self, params: notifications::projects::did_import_scripts::Parameters);
@@ -169,6 +171,27 @@ impl LangaugeServerCustomProjects for Backend {
                 data: None
             })
         }
+    }
+
+    async fn vanilla_content(&self, _: requests::projects::vanilla_content::Parameters) -> Result<requests::projects::vanilla_content::Response> {
+        let graph = self.content_graph.read().await;
+
+        let mut content0_info = None;
+        for n in graph.nodes() {
+            if n.content.content_name() == VANILLA_CONTENT_NAME {
+                content0_info = Some(model::ContentInfo {
+                    content_uri: n.content.path().to_uri(),
+                    scripts_root_uri: n.content.source_tree_root().to_uri(),
+                    content_name: n.content.content_name().to_owned(),
+                    is_in_workspace: n.in_workspace,
+                    is_in_repository: n.in_repository
+                });
+            }
+        }
+
+        Ok(requests::projects::vanilla_content::Response {
+            content0_info
+        })
     }
 
     async fn project_list(&self, params: requests::projects::list::Parameters) -> Result<requests::projects::list::Response> {

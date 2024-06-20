@@ -66,6 +66,26 @@ pub mod projects {
 
         pub const METHOD: &'static str = "witcherscript-ide/projects/vanillaDependencyContent";
     }
+
+    /// Returns information about content0 content, doesn't need any source content to check as opposed to [`vanilla_dependency_content`].
+    /// Returns None if doesn't find content0
+    pub mod vanilla_content {
+        use super::*;
+
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Parameters {
+            
+        }
+
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Response {
+            pub content0_info: Option<model::ContentInfo>
+        }
+
+        pub const METHOD: &'static str = "witcherscript-ide/projects/vanillaContent";
+    }
 }
 
 pub mod scripts {

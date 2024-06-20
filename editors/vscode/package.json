@@ -104,6 +104,12 @@
         "category": "WitcherScript-IDE"
       },
       {
+        "command": "witcherscript-ide.projects.refreshVanillaFilesView",
+        "title": "Refresh vanilla files",
+        "category": "WitcherScript-IDE (hidden)",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "witcherscript-ide.scripts.importVanilla",
         "title": "Import scripts from vanilla...",
         "category": "WitcherScript-IDE",
@@ -146,6 +152,37 @@
         "enablement": "witcherscript-ide.debugFeaturesEnabled"
       }
     ],
+    "views": {
+      "explorer": [
+        {
+          "id": "witcherscript-ide.vanillaFilesView",
+          "name": "WitcherScript vanilla files",
+          "when": "witcherscript-ide.languageServerActive",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "witcherscript-ide.vanillaFilesView",
+        "contents": "No project in the workspace dependends on content0 or it's already a part of the workspace"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "witcherscript-ide.projects.refreshVanillaFilesView",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "witcherscript-ide.projects.refreshVanillaFilesView",
+          "when": "view == witcherscript-ide.vanillaFilesView",
+          "group": "navigation"
+        }
+      ]
+    },
     "grammars": [
       {
         "language": "witcherscript",

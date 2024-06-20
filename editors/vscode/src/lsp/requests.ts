@@ -43,6 +43,18 @@ export namespace projects {
 
         export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/projects/vanillaDependencyContent");
     }
+
+    export namespace vanillaContent {
+        export interface Parameters {
+            
+        }
+
+        export interface Response {
+            content0Info: model.ContentInfo | undefined
+        }
+
+        export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/projects/vanillaContent");
+    }
 }
 
 export namespace scripts {
