@@ -91,6 +91,7 @@ pub enum DiagnosticKind {
         expected_text: String
     },
     GlobalScopeVarDecl,
+    InvalidLocalVarPlacement,
 
     // symbol anaysis
     SymbolNameTaken {
@@ -143,7 +144,8 @@ impl DiagnosticKind {
             | InvalidAnnotationPlacement 
             | MissingAnnotationArgument { .. }
             | IncompatibleAnnotation { .. } 
-            | GlobalScopeVarDecl => DiagnosticDomain::ContextualSyntaxAnalysis,
+            | GlobalScopeVarDecl 
+            | InvalidLocalVarPlacement => DiagnosticDomain::ContextualSyntaxAnalysis,
             SymbolNameTaken { .. }
             | MissingTypeArg
             | UnnecessaryTypeArg 
@@ -178,6 +180,7 @@ impl DiagnosticKind {
             MissingAnnotationArgument { .. } => lsp::DiagnosticSeverity::ERROR,
             IncompatibleAnnotation { .. } => lsp::DiagnosticSeverity::ERROR,
             GlobalScopeVarDecl => lsp::DiagnosticSeverity::ERROR,
+            InvalidLocalVarPlacement => lsp::DiagnosticSeverity::ERROR,
 
             SymbolNameTaken { .. } => lsp::DiagnosticSeverity::ERROR,
             MissingTypeArg => lsp::DiagnosticSeverity::ERROR,
@@ -213,6 +216,7 @@ impl DiagnosticKind {
             MissingAnnotationArgument { missing } => format!("This annotation requires {missing} argument"),
             IncompatibleAnnotation { annotation_name, expected_text } => format!("{} may only be used for {}", annotation_name, expected_text),
             GlobalScopeVarDecl => "Syntax error: variable declarations in the global scope are not allowed unless you intend to use the @addField annotation.".into(),
+            InvalidLocalVarPlacement => "Local variables can only be declared at the start of the function before all other statements".into(),
 
             SymbolNameTaken { name, .. } => format!("The name \"{}\" is defined multiple times", name),
             MissingTypeArg => "Missing type argument".into(),
