@@ -5,6 +5,7 @@ import * as fs from 'fs/promises';
 import { getLanguageClient } from "../lsp/lang_client"
 import * as requests from '../lsp/requests';
 import * as notifications from '../lsp/notifications';
+import * as model from '../lsp/model'
 import * as utils from '../utils';
 import { Cmd } from './index'
 
@@ -17,8 +18,8 @@ export function commandImportVanillaScripts(): Cmd {
             return;
         }
         
-        let projectContentInfo: requests.ContentInfo;
-        let content0Info: requests.ContentInfo;
+        let projectContentInfo: model.ContentInfo;
+        let content0Info: model.ContentInfo;
 
         try {
             // Decide on which project in the workspace is the target of the import
@@ -157,8 +158,8 @@ export function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): 
 
         const currentScriptUri = vscode.window.activeTextEditor.document.uri;
 
-        let currentContent: requests.ContentInfo;
-        let vanillaContent: requests.ContentInfo;
+        let currentContent: model.ContentInfo;
+        let vanillaContent: model.ContentInfo;
         try {
             currentContent = (await client.sendRequest(requests.scripts.parent_content.type, {
                 scriptUri: client.code2ProtocolConverter.asUri(currentScriptUri)

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import * as persistence from './persistence';
-import * as requests from './lsp/requests'
+import * as model from './lsp/model'
 
 
 export async function showForeignScriptWarning(context: vscode.ExtensionContext) {
@@ -42,13 +42,13 @@ export async function showForeignScriptWarning(context: vscode.ExtensionContext)
  * 
  * @returns ContentInfo or undefined
  */
-export async function chooseProject(projects: requests.ContentInfo[]): Promise<requests.ContentInfo | undefined> {
+export async function chooseProject(projects: model.ContentInfo[]): Promise<model.ContentInfo | undefined> {
     if (!projects || projects.length == 0) {
         return undefined;
     } else if (projects.length == 1) {
         return projects[0];
     } else {
-        return await new Promise<requests.ContentInfo | undefined>((resolve, _) => {
+        return await new Promise<model.ContentInfo | undefined>((resolve, _) => {
             const qp = vscode.window.createQuickPick<ContentQuickPickItem>();
             qp.placeholder = "Select a project";
             qp.canSelectMany = false;
@@ -70,7 +70,7 @@ export async function chooseProject(projects: requests.ContentInfo[]): Promise<r
 }
 
 class ContentQuickPickItem implements vscode.QuickPickItem {
-    public content: requests.ContentInfo
+    public content: model.ContentInfo
 
     label: string;
     kind?: vscode.QuickPickItemKind;
@@ -81,7 +81,7 @@ class ContentQuickPickItem implements vscode.QuickPickItem {
     alwaysShow?: boolean;
     buttons?: readonly vscode.QuickInputButton[];
 
-    constructor(content: requests.ContentInfo) {
+    constructor(content: model.ContentInfo) {
         this.content = content;
 
         this.label = content.contentName;
