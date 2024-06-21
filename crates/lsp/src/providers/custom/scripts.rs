@@ -41,13 +41,7 @@ impl LangaugeServerCustomScripts for Backend {
 
         if let Some(n) = self.content_graph.read().await.get_node_by_path(&parent_content_path) {
             Ok(requests::scripts::parent_content::Response {
-                parent_content_info: model::ContentInfo { 
-                    content_uri: parent_content_path.into(), 
-                    scripts_root_uri: n.content.source_tree_root().to_uri(), 
-                    content_name: n.content.content_name().into(),
-                    is_in_workspace: n.in_workspace,
-                    is_in_repository: n.in_repository
-                }
+                parent_content_info: model::ContentInfo::from(n)
             })
         } else {
             Err(jsonrpc::Error {
