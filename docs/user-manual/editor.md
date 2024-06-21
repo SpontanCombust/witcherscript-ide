@@ -55,7 +55,7 @@ Invokes a file chooser to pick vanilla scripts you want to import into your proj
 Command requires that the `content0` content is known and is a dependency to a given project.
 
 ### `witcherscript-ide.scripts.diffVanilla`
-*"Compare this script with vanilla counterpart"*  
+*"Compare script with vanilla counterpart"*  
 Shows a difference view between the original vanilla script and the imported, modified script in the project.
 
 ### `witcherscript-ide.debug.showScriptAst`

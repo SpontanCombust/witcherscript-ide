@@ -118,9 +118,9 @@
       },
       {
         "command": "witcherscript-ide.scripts.diffVanilla",
-        "title": "Compare this script with vanilla counterpart",
+        "title": "Compare script with vanilla counterpart",
         "category": "WitcherScript-IDE",
-        "enablement": "witcherscript-ide.languageServerActive && editorLangId == 'witcherscript'"
+        "enablement": "witcherscript-ide.languageServerActive"
       },
       {
         "command": "witcherscript-ide.debug.showScriptAst",
@@ -166,7 +166,7 @@
     "viewsWelcome": [
       {
         "view": "witcherscript-ide.vanillaFilesView",
-        "contents": "No project in the workspace dependends on content0 or it's already a part of the workspace"
+        "contents": "No project in the workspace dependends on content0 or it couldn't be found"
       }
     ],
     "menus": {
@@ -188,6 +188,13 @@
           "command": "witcherscript-ide.scripts.importVanilla",
           "when": "view == witcherscript-ide.vanillaFilesView && viewItem == script",
           "group": "inline"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "witcherscript-ide.scripts.diffVanilla",
+          "when": "resourceLangId == witcherscript",
+          "group": "3_compare"
         }
       ]
     },

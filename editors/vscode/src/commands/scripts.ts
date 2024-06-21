@@ -159,29 +159,35 @@ export function commandImportVanillaScripts(): Cmd {
 }
 
 export function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): Cmd {
-    return async () => {
+    return async (param?: vscode.Uri) => {
         const client = getLanguageClient();
         if (client == undefined) {
             vscode.window.showErrorMessage("Language Server is not active!");
             return;
         }
         
-        if (!vscode.window.activeTextEditor) {
-            vscode.window.showErrorMessage("No active editor available!");
-            return;
+        let targetScriptUri;
+        if (param != undefined) {
+            targetScriptUri = param;
+        } else {
+            if (!vscode.window.activeTextEditor) {
+                vscode.window.showErrorMessage("No active editor available!");
+                return;
+            }
+
+            targetScriptUri = vscode.window.activeTextEditor.document.uri;
         }
 
-        const currentScriptUri = vscode.window.activeTextEditor.document.uri;
 
-        let currentContent: model.ContentInfo;
+        let targetContent: model.ContentInfo;
         let vanillaContent: model.ContentInfo;
         try {
-            currentContent = (await client.sendRequest(requests.scripts.parent_content.type, {
-                scriptUri: client.code2ProtocolConverter.asUri(currentScriptUri)
+            targetContent = (await client.sendRequest(requests.scripts.parent_content.type, {
+                scriptUri: client.code2ProtocolConverter.asUri(targetScriptUri)
             })).parentContentInfo;
 
             vanillaContent = (await client.sendRequest(requests.projects.vanillaDependencyContent.type, {
-                projectUri: currentContent.contentUri
+                projectUri: targetContent.contentUri
             })).content0Info;
         } catch(error: any) {
             vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
@@ -193,11 +199,11 @@ export function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): 
             return;
         }
 
-        const currentScriptPath = currentScriptUri.fsPath;
-        const currentScriptRootPath = client.protocol2CodeConverter.asUri(currentContent.scriptsRootUri).fsPath;
+        const targetScriptPath = targetScriptUri.fsPath;
+        const targetScriptRootPath = client.protocol2CodeConverter.asUri(targetContent.scriptsRootUri).fsPath;
         const vanillaScriptRootPath = client.protocol2CodeConverter.asUri(vanillaContent.scriptsRootUri).fsPath;
 
-        const relativePath = path.relative(currentScriptRootPath, currentScriptPath);
+        const relativePath = path.relative(targetScriptRootPath, targetScriptPath);
         const vanillaScriptPath = path.join(vanillaScriptRootPath, relativePath);
 
         let counterpartExists = true;
@@ -214,6 +220,6 @@ export function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): 
         const vanillaScriptUri = vscode.Uri.file(vanillaScriptPath);
         const scriptName = path.basename(vanillaScriptPath);
         const title = `${scriptName} (vanilla) ↔ ${scriptName} (modded)`;
-        return await vscode.commands.executeCommand("vscode.diff", vanillaScriptUri, currentScriptUri, title);
+        return await vscode.commands.executeCommand("vscode.diff", vanillaScriptUri, targetScriptUri, title);
     }
 }
