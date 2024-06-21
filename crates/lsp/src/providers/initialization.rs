@@ -9,26 +9,14 @@ use witcherscript_project::Manifest;
 use crate::{notifications, Backend};
 
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct InitializationOptions {
     rayon_threads: i32,
-    native_content_uri: lsp::Url, //TODO change to absolute path
+    native_content_path: PathBuf,
     game_directory: PathBuf,
     content_repositories: Vec<PathBuf>,
     enable_syntax_analysis: bool
-}
-
-impl std::fmt::Debug for InitializationOptions {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("InitializationOptions")
-            .field("rayon_threads", &self.rayon_threads)
-            .field("native_content_uri", &self.native_content_uri.to_string())
-            .field("game_directory", &self.game_directory)
-            .field("content_repositories", &self.content_repositories)
-            .field("enable_syntax_analysis", &self.enable_syntax_analysis)
-            .finish()
-    }
 }
 
 impl Backend {
@@ -58,13 +46,13 @@ impl Backend {
                     self.reporter.log_info(format!("Configured rayon threads: {}", rayon_threads)).await;
 
     
-                    match AbsPath::try_from(val.native_content_uri) {
+                    match AbsPath::try_from(val.native_content_path) {
                         Ok(native_content_path) => {
                             let mut graph = self.content_graph.write().await;
                             graph.set_native_content_path(&native_content_path);
                         },
                         Err(_) => {
-                            self.reporter.log_error("Invalid native_content_path URI").await;
+                            self.reporter.log_error("Invalid native_content_path").await;
                         }
                     }
     

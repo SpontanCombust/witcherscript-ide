@@ -14,9 +14,9 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 	const serverPath = ctx.asAbsolutePath(
 		path.join('server', 'bin', `witcherscript-lsp${ext}`)
 	);
-	const nativeContentUri = vscode.Uri.joinPath(
+	const nativeContentPath = vscode.Uri.joinPath(
 		ctx.extensionUri, 'server', 'assets', 'content0_native'
-	).toString();
+	).fsPath;
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
@@ -33,7 +33,7 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 
 	const initializationOptions: InitializationOptions = {
 		rayonThreads: cfg.rayonThreads,
-		nativeContentUri: nativeContentUri,
+		nativeContentPath: nativeContentPath,
 		gameDirectory: cfg.gameDirectory,
 		contentRepositories: cfg.contentRepositories,
 		enableSyntaxAnalysis: cfg.enableSyntaxAnalysis
@@ -90,7 +90,7 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 // Configuration needed by the server. The format in both client and server must match!
 interface InitializationOptions {
 	rayonThreads: number,
-	nativeContentUri: string,
+	nativeContentPath: string,
 	gameDirectory: string,
     contentRepositories: string[]
 	enableSyntaxAnalysis: boolean
