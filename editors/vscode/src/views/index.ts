@@ -1,12 +1,8 @@
 import * as vscode from 'vscode'
 
-import { getVanillaFilesProvider } from '../providers/vanilla_files_provider'
+import { initVanillaFilesView } from './vanilla_files_view'
 
 
 export function createViews(context: vscode.ExtensionContext) {
-    const vanillaFilesView = vscode.window.createTreeView('witcherscript-ide.vanillaFilesView', {
-        treeDataProvider: getVanillaFilesProvider()
-    })
-
-    context.subscriptions.push(vanillaFilesView);
+    initVanillaFilesView(context);
 }

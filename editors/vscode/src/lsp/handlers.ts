@@ -41,6 +41,8 @@ function handleScriptParsingFinishedNotification() {
             }
         });
 
-        state.updateLastContentInfo();
+        state.updateLastActiveContentInfo();
     }
 }
+
+//TODO contentGraphChangesFinishedNotification

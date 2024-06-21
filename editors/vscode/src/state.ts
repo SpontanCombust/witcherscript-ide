@@ -7,12 +7,16 @@ import * as config from './config'
 
 
 let contextStatusBar: vscode.StatusBarItem;
-let lastContentInfo: model.ContentInfo | undefined = undefined;
+let lastActiveContentInfo: model.ContentInfo | undefined = undefined;
 
 /// Get info about the content to which belongs the last viewed script 
-export function getLastContentInfo(): model.ContentInfo | undefined {
-    return lastContentInfo;
+export function getLastActiveContentInfo(): model.ContentInfo | undefined {
+    return lastActiveContentInfo;
 }
+
+const lastActiveContentChanged = new vscode.EventEmitter<model.ContentInfo | undefined>();
+
+export const onLastActiveContentChanged = lastActiveContentChanged.event;
 
 
 export interface ParsingScriptsWork {
@@ -50,16 +54,18 @@ export function initializeState(context: vscode.ExtensionContext) {
     context.subscriptions.push(workStatusBar);
 
     vscode.window.onDidChangeActiveTextEditor(() => {
-        updateLastContentInfo();
+        updateLastActiveContentInfo();
     });
 }
 
 
 
-export async function updateLastContentInfo() {
+export async function updateLastActiveContentInfo() {
+    const prevContentJson = JSON.stringify(lastActiveContentInfo);
+
     const client = getLanguageClient();
     if (client == undefined) {
-        lastContentInfo = undefined;
+        lastActiveContentInfo = undefined;
     } else {
         const activeEditor = vscode.window.activeTextEditor;
         const isWitcherScript = activeEditor?.document.languageId == 'witcherscript';
@@ -76,11 +82,14 @@ export async function updateLastContentInfo() {
                 currentContent = res.parentContentInfo;
             } catch(_) {}
 
-            lastContentInfo = currentContent;
+            lastActiveContentInfo = currentContent;
         }
     }
 
-    updateContextStatusBar();
+    if (prevContentJson != JSON.stringify(lastActiveContentInfo)) {
+        updateContextStatusBar();
+        lastActiveContentChanged.fire(lastActiveContentInfo);
+    }
 }
 
 function updateContextStatusBar() {
@@ -89,7 +98,7 @@ function updateContextStatusBar() {
     if (!config.getConfiguration().enableLanguageServer) {
         text += " [Disabled]";
     } else {
-        const contentName = (lastContentInfo != undefined) ? lastContentInfo.contentName : "No active content";
+        const contentName = (lastActiveContentInfo != undefined) ? lastActiveContentInfo.contentName : "No active content";
         text += ` [${contentName}]`;
     }
     
