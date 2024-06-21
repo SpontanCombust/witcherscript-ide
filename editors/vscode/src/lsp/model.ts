@@ -2,8 +2,15 @@
 
 export interface ContentInfo {
     contentUri: string,
-    scriptsRootUri: string,
+    contentKind: ContentKind,
     contentName: string,
+    scriptsRootUri: string,
     isInWorkspace: boolean,
     isInRepository: boolean
+}
+
+export enum ContentKind {
+    Raw = 0,
+    WideProject = 1,
+    RedkitProject = 2
 }

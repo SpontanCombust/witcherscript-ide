@@ -14,6 +14,7 @@ abs-path = { path = "../abs-path" }
 dashmap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde_repr.workspace = true
 thiserror.workspace = true
 rayon.workspace = true
 bitmask-enum.workspace = true
