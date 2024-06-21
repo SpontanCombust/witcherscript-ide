@@ -10,6 +10,7 @@ export function registerHandlers(client: LanguageClient, context: vscode.Extensi
     client.onNotification(notifications.client.showForeignScriptWarning.type, handleShowForeignScriptWarningNotification(context))
     client.onNotification(notifications.scripts.didStartScriptParsing.type, handleScriptParsingStartedNotification())
     client.onNotification(notifications.scripts.didFinishScriptParsing.type, handleScriptParsingFinishedNotification())
+    client.onNotification(notifications.scripts.didFinishInitialIndexing.type, handleScriptsDidFinishInitialIndexingNotification())
 }
 
 
@@ -40,9 +41,11 @@ function handleScriptParsingFinishedNotification() {
                 contentName: params.contentName
             }
         });
-
-        state.updateLastActiveContentInfo();
     }
 }
 
-//TODO contentGraphChangesFinishedNotification
+function handleScriptsDidFinishInitialIndexingNotification() {
+    return () => {
+        state.updateLastActiveContentInfo();
+    }
+}

@@ -6,7 +6,7 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use witcherscript_project::redkit::RedkitManifest;
 use witcherscript_project::Manifest;
-use crate::Backend;
+use crate::{notifications, Backend};
 
 
 #[derive(Deserialize)]
@@ -155,7 +155,9 @@ impl Backend {
         self.setup_workspace_content_scanners().await;
         self.setup_repository_content_scanners().await;
         self.build_content_graph(true).await;
-    
+
+        self.client.send_notification::<notifications::scripts::did_finish_initial_indexing::Type>(()).await;
+
         self.reporter.commit_all_diagnostics().await;
     }
 }

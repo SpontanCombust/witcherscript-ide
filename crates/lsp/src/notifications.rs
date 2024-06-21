@@ -41,6 +41,19 @@ pub mod projects {
 pub mod scripts {
     use super::*;
 
+    pub mod did_finish_initial_indexing {
+        use super::*;
+
+        pub const METHOD: &'static str = "witcherscript-ide/scripts/didFinishInitialIndexing";
+
+        pub struct Type;
+        impl lsp::notification::Notification for Type {
+            type Params = ();
+        
+            const METHOD: &'static str = METHOD;
+        }
+    }
+    
     pub mod did_start_script_parsing {
         use super::*;
 

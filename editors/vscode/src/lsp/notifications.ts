@@ -18,6 +18,10 @@ export namespace projects {
 }
 
 export namespace scripts {
+    export namespace didFinishInitialIndexing {
+        export const type = new NotificationType<void>("witcherscript-ide/scripts/didFinishInitialIndexing");
+    }
+    
     export namespace didStartScriptParsing {
         export interface Parameters {
             contentName: string
