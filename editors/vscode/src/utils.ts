@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
+import * as fspath from 'path';
 
 import * as persistence from './persistence';
 import * as model from './lsp/model'
@@ -95,11 +95,15 @@ class ContentQuickPickItem implements vscode.QuickPickItem {
 }
 
 
-export function isSubpathOf(dir: string, parent: string): boolean {
-    if (dir === parent) return false;
+export function pathComponents(path: string) : string[] {
+    return path.split(fspath.sep).filter(i => i.length);
+}
 
-    let parentComps = parent.split(path.sep).filter(i => i.length);
-    let dirComps = dir.split(path.sep).filter(i => i.length);
+export function isSubpathOf(child: string, parent: string): boolean {
+    if (child === parent) return false;
+
+    let parentComps = pathComponents(parent);
+    let dirComps = pathComponents(child);
 
     return parentComps.every((comp, i) => dirComps[i] === comp);
 }

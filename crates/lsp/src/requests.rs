@@ -86,6 +86,27 @@ pub mod projects {
 
         pub const METHOD: &'static str = "witcherscript-ide/projects/vanillaContent";
     }
+
+    /// Returns a list of source file paths associated with a given content sorted in alphabetical order
+    pub mod source_tree {
+        use std::path::PathBuf;
+        use super::*;
+
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Parameters {
+            pub content_uri: lsp::Url
+        }
+        
+        #[derive(Debug, Serialize, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct Response {
+            pub scripts_root_path: PathBuf,
+            pub local_script_paths: Vec<PathBuf>
+        }
+
+        pub const METHOD: &'static str = "witcherscript-ide/projects/sourceTree";
+    }
 }
 
 pub mod scripts {

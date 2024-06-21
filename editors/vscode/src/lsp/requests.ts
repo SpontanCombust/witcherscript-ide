@@ -55,6 +55,19 @@ export namespace projects {
 
         export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/projects/vanillaContent");
     }
+
+    export namespace sourceTree {
+        export interface Parameters {
+            contentUri: string
+        }
+
+        export interface Response {
+            scriptsRootPath: string,
+            localScriptPaths: string[]
+        }
+
+        export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/projects/sourceTree");
+    }
 }
 
 export namespace scripts {

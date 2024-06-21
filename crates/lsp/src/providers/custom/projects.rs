@@ -15,6 +15,8 @@ pub trait LangaugeServerCustomProjects {
     async fn project_list(&self, params: requests::projects::list::Parameters) -> Result<requests::projects::list::Response>;
 
     async fn did_import_scripts(&self, params: notifications::projects::did_import_scripts::Parameters);
+
+    async fn source_tree(&self, params: requests::projects::source_tree::Parameters) -> Result<requests::projects::source_tree::Response>;
 }
 
 
@@ -216,6 +218,39 @@ impl LangaugeServerCustomProjects for Backend {
         } else {
             self.reporter.log_error("Imported files do no belong to a known content!").await;
         }
+    }
+    
+    async fn source_tree(&self, params: requests::projects::source_tree::Parameters) -> Result<requests::projects::source_tree::Response> {
+        let content_path: AbsPath;
+        if let Ok(abs_path) = AbsPath::try_from(params.content_uri) {
+            content_path = abs_path;
+        } else {
+            return Err(jsonrpc::Error::invalid_params("content_uri parameter is not a valid file URI"));
+        }
+
+        let source_tree = self.source_trees.get(&content_path);
+
+        if source_tree.is_none() {
+            return Err(jsonrpc::Error { 
+                code: jsonrpc::ErrorCode::ServerError(-1070), 
+                message: "The content is absent from the content graph".into(), 
+                data: None
+            })
+        }
+
+        let source_tree = source_tree.unwrap();
+        let scripts_root_path = source_tree.script_root().as_path().to_path_buf();
+        let mut local_script_paths: Vec<_> = source_tree.iter().map(|f| f.path.local().to_path_buf()).collect();
+        local_script_paths.sort();
+
+        let res = requests::projects::source_tree::Response {
+            scripts_root_path,
+            local_script_paths
+        };
+
+        drop(source_tree);
+
+        Ok(res)
     }
 }
 

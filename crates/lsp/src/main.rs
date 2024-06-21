@@ -108,6 +108,7 @@ async fn main() {
         .custom_method(requests::projects::list::METHOD, Backend::project_list)
         .custom_method(requests::projects::vanilla_dependency_content::METHOD, Backend::vanilla_dependency_content)
         .custom_method(requests::projects::vanilla_content::METHOD, Backend::vanilla_content)
+        .custom_method(requests::projects::source_tree::METHOD, Backend::source_tree)
         .custom_method(requests::scripts::parent_content::METHOD, Backend::parent_content)
         .custom_method(requests::debug::script_ast::METHOD, Backend::script_ast)
         .custom_method(requests::debug::script_cst::METHOD, Backend::script_cst)
