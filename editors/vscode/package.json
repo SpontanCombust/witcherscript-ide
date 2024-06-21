@@ -202,6 +202,13 @@
           "when": "resourceLangId == witcherscript",
           "group": "3_compare"
         }
+      ],
+      "editor/context": [
+        {
+          "command": "witcherscript-ide.scripts.diffVanilla",
+          "when": "editorLangId == witcherscript",
+          "group": "3_compare"
+        }
       ]
     },
     "grammars": [
