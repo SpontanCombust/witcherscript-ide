@@ -158,3 +158,17 @@ Raw content is recognized by WIDE purely for user convenience to not force anyon
 ## Content repositories
 
 "Content repositories" are directories that directly inside them contain raw or project content directories. Commonly used repositories are *"Witcher 3/content"* and *"Witcher 3/Mods"*. Repositories can be configured via [`witcherscript-ide.gameDirectory`](./editor.md#witcherscript-idegamedirectory) and [`witcherscript-ide.contentRepositories`](./editor.md#witcherscript-idecontentrepositories) settings in editor.
+
+
+## Vanilla content dependency
+
+When setting vanilla scripts as a dependency for your project make sure that the name of the content they are found in is called exactly "content0". WIDE distinguishes this way the vanilla content from any other modded content. If you configure it to be found in your game directory with `witcherscript-ide.gameDirectory` setting and don't modify it in any way, it should be valid without a need for any further actions.  
+If you however store your vanilla scripts in a seperate folder make sure that either that folder is called "content0" or create a manifest for it with the following content inside it:
+```toml
+[content]
+name = "content0"
+# version etc...
+
+[dependencies]
+# this table should be empty
+```
