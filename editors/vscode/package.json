@@ -84,10 +84,16 @@
           "order": 3,
           "markdownDescription": "Enables syntax analysis in the language server."
         },
+        "witcherscript-ide.languageServer.rayonThreads": {
+          "type": "integer",
+          "default": 0,
+          "order": 4,
+          "markdownDescription": "Number of threads allocated to parallel data computation. Leave at 0 for automatic configuration. (change requires extension reload)"
+        },
         "witcherscript-ide.debug.enableDebugFeatures": {
           "type": "boolean",
           "default": false,
-          "order": 4,
+          "order": 5,
           "markdownDescription": "Enable debug features (change requires extension reload)."
         }
       }

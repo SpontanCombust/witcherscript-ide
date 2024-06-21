@@ -21,7 +21,8 @@
 - importing and comparing scripts with their vanilla counterparts
 
 <video controls muted>
-  <source src="../../assets/user-manual/editor/vanilla-import-diff.mp4" type="video/mp4">
+  <!-- TODO update the video with the process being done entirely through GUI -->
+  <source src="../../assets/user-manual/editor/vanilla-import-diff.mp4" type="video/mp4"> 
 </video>
 
 - hover tooltips
@@ -99,6 +100,9 @@ Enable the language server. True by default.  You can disable this if you only w
 
 ### `witcherscript-ide.languageServer.syntaxAnalysis`
 Enable syntax analysis in the language server. True by default. This may require window reload if there are unresolved syntax analysis related diagnostics present.
+
+### `witcherscript-ide.languageServer.rayonThreads`
+Number of threads allocated to parallel data computation. Leave at 0 for automatic configuration. Change requires extension reload.
 
 ### `witcherscript-ide.debug.enableDebugFeatures`
 Enables debug features used for development. False by default. Change requires extension reload.

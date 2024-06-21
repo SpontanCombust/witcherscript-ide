@@ -12,7 +12,8 @@ use crate::{notifications, Backend};
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct InitializationOptions {
-    native_content_uri: lsp::Url,
+    rayon_threads: i32,
+    native_content_uri: lsp::Url, //TODO change to absolute path
     game_directory: PathBuf,
     content_repositories: Vec<PathBuf>,
     enable_syntax_analysis: bool
@@ -21,6 +22,7 @@ struct InitializationOptions {
 impl std::fmt::Debug for InitializationOptions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("InitializationOptions")
+            .field("rayon_threads", &self.rayon_threads)
             .field("native_content_uri", &self.native_content_uri.to_string())
             .field("game_directory", &self.game_directory)
             .field("content_repositories", &self.content_repositories)
@@ -31,17 +33,30 @@ impl std::fmt::Debug for InitializationOptions {
 
 impl Backend {
     pub async fn initialize_impl(&self, params: lsp::InitializeParams) -> Result<lsp::InitializeResult> {
-        if let Some(workspace_folders) = params.workspace_folders {
-            let mut workspace_roots = self.workspace_roots.write().await;
-            *workspace_roots = workspace_folders.into_iter()
-                .map(|f| AbsPath::try_from(f.uri).unwrap())
-                .collect();
-        }
-    
         if let Some(init_opts) = params.initialization_options {
             match serde_json::from_value::<InitializationOptions>(init_opts) {
                 Ok(val) => {
                     self.reporter.log_info(format!("Initializing server with: {:#?}", val)).await;
+
+
+                    let rayon_threads = if val.rayon_threads > 0 {
+                        val.rayon_threads as usize
+                    } else {
+                        std::thread::available_parallelism()
+                            .expect("Cannot access the number of available threads")
+                            .get()
+                            .checked_sub(2) // make sure rayon doesn't take up all resources
+                            .unwrap_or(1)
+                    };
+
+                    rayon::ThreadPoolBuilder::new()
+                        .num_threads(rayon_threads) 
+                        .build_global()
+                        .expect("rayon::ThreadPoolBuilder panik");
+
+                    self.reporter.log_info(format!("Configured tokio worker threads: {}", tokio::runtime::Handle::current().metrics().num_workers())).await;
+                    self.reporter.log_info(format!("Configured rayon threads: {}", rayon_threads)).await;
+
     
                     match AbsPath::try_from(val.native_content_uri) {
                         Ok(native_content_path) => {
@@ -64,6 +79,13 @@ impl Backend {
             }
         } else {
             self.reporter.log_error("Initialization options missing!").await;
+        }
+
+        if let Some(workspace_folders) = params.workspace_folders {
+            let mut workspace_roots = self.workspace_roots.write().await;
+            *workspace_roots = workspace_folders.into_iter()
+                .map(|f| AbsPath::try_from(f.uri).unwrap())
+                .collect();
         }
     
     

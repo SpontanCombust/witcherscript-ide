@@ -32,6 +32,7 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 	};
 
 	const initializationOptions: InitializationOptions = {
+		rayonThreads: cfg.rayonThreads,
 		nativeContentUri: nativeContentUri,
 		gameDirectory: cfg.gameDirectory,
 		contentRepositories: cfg.contentRepositories,
@@ -88,6 +89,7 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 
 // Configuration needed by the server. The format in both client and server must match!
 interface InitializationOptions {
+	rayonThreads: number,
 	nativeContentUri: string,
 	gameDirectory: string,
     contentRepositories: string[]
