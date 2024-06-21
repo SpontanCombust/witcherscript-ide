@@ -17,6 +17,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", scripts.commandDiffScriptWithVanilla(context)),
         vscode.commands.registerCommand("witcherscript-ide.misc.showCommandsInPalette", misc.commandShowCommandsInPalette()),
         vscode.commands.registerCommand("witcherscript-ide.misc.openLogs", misc.commandOpenLogs()),
+        vscode.commands.registerCommand("witcherscript-ide.misc.openFileReadOnly", misc.commandOpenFileReadOnly()),
     );
 
     const cfg = getConfiguration();

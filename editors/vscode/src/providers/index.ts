@@ -9,5 +9,6 @@ export function registerProviders(context: vscode.ExtensionContext) {
         vscode.workspace.registerTextDocumentContentProvider(tdcp.ScriptCstProvider.scheme, tdcp.ScriptCstProvider.getInstance()),
         vscode.workspace.registerTextDocumentContentProvider(tdcp.ContentGraphDotProvider.scheme, tdcp.ContentGraphDotProvider.getInstance()),
         vscode.workspace.registerTextDocumentContentProvider(tdcp.ScriptSymbolsProvider.scheme, tdcp.ScriptSymbolsProvider.getInstance()),
+        vscode.workspace.registerTextDocumentContentProvider(tdcp.ReadOnlyContentProvider.scheme, tdcp.ReadOnlyContentProvider.getInstance()),
     );
 }

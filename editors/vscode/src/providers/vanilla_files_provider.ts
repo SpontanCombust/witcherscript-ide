@@ -168,7 +168,7 @@ export class VanillaFile extends vscode.TreeItem {
 
         if (!isDir) {
             this.command = {
-                command: 'vscode.open',
+                command: 'witcherscript-ide.misc.openFileReadOnly',
                 title: 'Open file',
                 arguments: [resourceUri]
             }
