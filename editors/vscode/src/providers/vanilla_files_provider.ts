@@ -72,7 +72,7 @@ export class VanillaFilesProvider implements vscode.TreeDataProvider<VanillaFile
                 const fullPath = fspath.join(fullPathRoot, localPath);
                 const isDir = fs.lstatSync(fullPath).isDirectory();
 
-                return new VanillaFile(fullPath, localPath, isDir, undefined);
+                return new VanillaFile(this.vanillaScriptsRootPath, fullPath, localPath, isDir, undefined);
             })
             .sort((f1, f2) => f1.cmp(f2));
 
@@ -87,7 +87,7 @@ export class VanillaFilesProvider implements vscode.TreeDataProvider<VanillaFile
                 const fullPath = fspath.join(fullPathRoot, localPath);
                 const isDir = fs.lstatSync(fullPath).isDirectory();
 
-                return new VanillaFile(fullPath, localPath, isDir, undefined);
+                return new VanillaFile(this.vanillaScriptsRootPath, fullPath, localPath, isDir, undefined);
             })
             .sort((f1, f2) => f1.cmp(f2));
 
@@ -143,6 +143,7 @@ export class VanillaFilesProvider implements vscode.TreeDataProvider<VanillaFile
 }
 
 export class VanillaFile extends vscode.TreeItem {
+    readonly scriptsRootPath: string;
     readonly fullPath: string;
     // relative to the scripts root
     readonly localPath: string;
@@ -150,6 +151,7 @@ export class VanillaFile extends vscode.TreeItem {
     readonly parent?: VanillaFile;
 
     constructor(
+        scriptsRootPath: string,
         fullPath: string, 
         localPath: string,
         isDir: boolean,
@@ -159,12 +161,14 @@ export class VanillaFile extends vscode.TreeItem {
         const collapsibleState = isDir ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
         super(resourceUri, collapsibleState);
 
+        this.scriptsRootPath = scriptsRootPath;
         this.fullPath = fullPath;
         this.localPath = localPath;
         this.isDir = isDir;
         this.parent = parent;
         this.id = fullPath.toLowerCase();
         this.label = fspath.basename(fullPath);
+        this.contextValue = isDir ? undefined : 'script';
 
         if (!isDir) {
             this.command = {

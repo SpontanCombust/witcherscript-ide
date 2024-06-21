@@ -50,7 +50,7 @@ Will establish a basic file structure of a WitcherScript project in a given exis
 Will create a new directory and establish a basic file structure of a WitcherScript project inside it.
 
 ### `witcherscript-ide.scripts.importVanilla`
-*"Import scripts from vanilla..."*  
+*"Import scripts from vanilla into project..."*  
 Invokes a file chooser to pick vanilla scripts you want to import into your project. If more than one WitcherScript project exists in the workspace, prompts the user to choose the project.  
 Command requires that the `content0` content is known and is a dependency to a given project.
 

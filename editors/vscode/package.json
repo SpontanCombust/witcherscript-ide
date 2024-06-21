@@ -111,9 +111,10 @@
       },
       {
         "command": "witcherscript-ide.scripts.importVanilla",
-        "title": "Import scripts from vanilla...",
+        "title": "Import scripts from vanilla into project...",
         "category": "WitcherScript-IDE",
-        "enablement": "witcherscript-ide.languageServerActive"
+        "enablement": "witcherscript-ide.languageServerActive",
+        "icon": "$(plus)"
       },
       {
         "command": "witcherscript-ide.scripts.diffVanilla",
@@ -180,6 +181,13 @@
           "command": "witcherscript-ide.projects.refreshVanillaFilesView",
           "when": "view == witcherscript-ide.vanillaFilesView",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "witcherscript-ide.scripts.importVanilla",
+          "when": "view == witcherscript-ide.vanillaFilesView && viewItem == script",
+          "group": "inline"
         }
       ]
     },

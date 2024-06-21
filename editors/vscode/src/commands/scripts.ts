@@ -8,10 +8,11 @@ import * as notifications from '../lsp/notifications';
 import * as model from '../lsp/model'
 import * as utils from '../utils';
 import { Cmd } from './index'
+import { VanillaFile } from '../providers/vanilla_files_provider';
 
 
 export function commandImportVanillaScripts(): Cmd {
-    return async () => {
+    return async (params?: VanillaFile) => {
         const client = getLanguageClient();
         if (client == undefined) {
             vscode.window.showErrorMessage("Language Server is not active!");
@@ -56,33 +57,44 @@ export function commandImportVanillaScripts(): Cmd {
                 }
             }
 
-            // Get information about content0 (if it doesn't exist it will throw)
-            content0Info = (await client.sendRequest(requests.projects.vanillaDependencyContent.type, {
-                projectUri: projectContentInfo.contentUri
-            })).content0Info;
         } catch (error: any) {
             return vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
         }
-
-        // Prompt the user to choose scripts for import
-
-        const content0ScriptsRootUri = client.protocol2CodeConverter.asUri(content0Info.scriptsRootUri);
-        let scriptsToImport = await vscode.window.showOpenDialog({
-            title: "Select script files",
-            openLabel: "Import",
-            canSelectFiles: true,
-            canSelectFolders: false,
-            canSelectMany: true,
-            defaultUri: content0ScriptsRootUri,
-            filters: {
-                'WitcherScript': ['ws']
-            },
-        });
         
-        if (scriptsToImport && scriptsToImport.length > 0) {
+
+        let content0ScriptsRootPath: string;
+        let scriptsToImport: vscode.Uri[];
+
+        if (params != undefined) {
+            content0ScriptsRootPath = params.scriptsRootPath;
+            scriptsToImport = params.resourceUri ? [params.resourceUri] : [];
+        } else {
+            try {
+                content0Info = (await client.sendRequest(requests.projects.vanillaDependencyContent.type, {
+                    projectUri: projectContentInfo.contentUri
+                })).content0Info;
+
+                const content0ScriptsRootUri = client.protocol2CodeConverter.asUri(content0Info.scriptsRootUri);
+
+                content0ScriptsRootPath = content0ScriptsRootUri.fsPath;
+                scriptsToImport = await vscode.window.showOpenDialog({
+                    title: "Select script files",
+                    openLabel: "Import",
+                    canSelectFiles: true,
+                    canSelectFolders: false,
+                    canSelectMany: true,
+                    defaultUri: content0ScriptsRootUri,
+                    filters: {
+                        'WitcherScript': ['ws']
+                    },
+                }) ?? [];
+            } catch (error: any) {
+                return vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+            } 
+        }
+
+        if (scriptsToImport.length > 0) {
             let encounteredProblems = false;
-            
-            const content0ScriptsRootPath = content0ScriptsRootUri.fsPath;
             const projectScriptsRootPath = client.protocol2CodeConverter.asUri(projectContentInfo.scriptsRootUri).fsPath;
 
             scriptsToImport = scriptsToImport.filter(uri => {
