@@ -41,11 +41,14 @@ function handleScriptParsingFinishedNotification() {
                 contentName: params.contentName
             }
         });
+
+        state.updateLastActiveContentInfo();
     }
 }
 
 function handleScriptsDidFinishInitialIndexingNotification() {
     return () => {
-        state.updateLastActiveContentInfo();
+        // already done in handleScriptParsingFinishedNotification
+        // state.updateLastActiveContentInfo();
     }
 }
