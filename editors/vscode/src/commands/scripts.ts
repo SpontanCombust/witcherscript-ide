@@ -147,7 +147,10 @@ export function commandImportVanillaScripts(): Cmd {
             })
 
             if (encounteredProblems) {
-                vscode.window.showWarningMessage("Scripts imported with some problems (check extension output)");
+                const res = await vscode.window.showWarningMessage("Scripts imported with some problems", "Show Logs");
+                if (res == "Show Logs") {
+                    vscode.commands.executeCommand('witcherscript-ide.misc.openLogs');
+                }
             } else {
                 vscode.window.showInformationMessage("Successfully imported vanilla scripts into the project!")
             }
