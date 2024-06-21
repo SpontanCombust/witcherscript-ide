@@ -20,4 +20,4 @@ bitmask-enum.workspace = true
 shrinkwraprs.workspace = true
 filetime.workspace = true
 tower-lsp = "0.20.0"
-tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "io-std", "time"] }
+tokio = { version = "1.38", features = ["macros", "rt", "rt-multi-thread", "io-std", "time"] }
