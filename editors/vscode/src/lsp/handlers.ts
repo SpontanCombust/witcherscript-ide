@@ -8,8 +8,8 @@ import * as state from '../state'
 
 export function registerHandlers(client: LanguageClient, context: vscode.ExtensionContext) {
     client.onNotification(notifications.client.showForeignScriptWarning.type, handleShowForeignScriptWarningNotification(context))
-    client.onNotification(notifications.scripts.scriptParsingStarted.type, handleScriptParsingStartedNotification())
-    client.onNotification(notifications.scripts.scriptParsingFinished.type, handleScriptParsingFinishedNotification())
+    client.onNotification(notifications.scripts.didStartScriptParsing.type, handleScriptParsingStartedNotification())
+    client.onNotification(notifications.scripts.didFinishScriptParsing.type, handleScriptParsingFinishedNotification())
 }
 
 
@@ -20,7 +20,7 @@ function handleShowForeignScriptWarningNotification(context: vscode.ExtensionCon
 }
 
 function handleScriptParsingStartedNotification() {
-    return (params: notifications.scripts.scriptParsingStarted.Parameters) => {
+    return (params: notifications.scripts.didStartScriptParsing.Parameters) => {
         state.scheduleWorkEvent({ 
             kind: 'begin', 
             work: {
@@ -32,7 +32,7 @@ function handleScriptParsingStartedNotification() {
 }
 
 function handleScriptParsingFinishedNotification() {
-    return (params: notifications.scripts.scriptParsingFinished.Parameters) => {
+    return (params: notifications.scripts.didFinishScriptParsing.Parameters) => {
         state.scheduleWorkEvent({ 
             kind: 'finish', 
             work: {

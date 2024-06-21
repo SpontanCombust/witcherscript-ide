@@ -59,7 +59,7 @@ impl Backend {
             .map(|n| n.content.content_name().to_string())
             .unwrap_or_default();
 
-        self.client.send_notification::<notifications::scripts::script_parsing_started::Type>(notifications::scripts::script_parsing_started::Parameters {
+        self.client.send_notification::<notifications::scripts::did_start_script_parsing::Type>(notifications::scripts::did_start_script_parsing::Parameters {
             content_name: content_name.clone()
         }).await;
 
@@ -76,7 +76,7 @@ impl Backend {
             self.on_source_tree_files_added_or_modified(diff_added_or_modified, content_path).await;
         }
 
-        self.client.send_notification::<notifications::scripts::script_parsing_finished::Type>(notifications::scripts::script_parsing_finished::Parameters {
+        self.client.send_notification::<notifications::scripts::did_finish_script_parsing::Type>(notifications::scripts::did_finish_script_parsing::Parameters {
             content_name
         }).await;
 

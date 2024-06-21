@@ -18,19 +18,19 @@ export namespace projects {
 }
 
 export namespace scripts {
-    export namespace scriptParsingStarted {
+    export namespace didStartScriptParsing {
         export interface Parameters {
             contentName: string
         }
 
-        export const type = new NotificationType<Parameters>("witcherscript-ide/scripts/scriptParsingStarted");
+        export const type = new NotificationType<Parameters>("witcherscript-ide/scripts/didStartScriptParsing");
     }
 
-    export namespace scriptParsingFinished {
+    export namespace didFinishScriptParsing {
         export interface Parameters {
             contentName: string
         }
 
-        export const type = new NotificationType<Parameters>("witcherscript-ide/scripts/scriptParsingFinished");
+        export const type = new NotificationType<Parameters>("witcherscript-ide/scripts/didFinishScriptParsing");
     }
 }

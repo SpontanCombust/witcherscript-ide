@@ -41,7 +41,7 @@ pub mod projects {
 pub mod scripts {
     use super::*;
 
-    pub mod script_parsing_started {
+    pub mod did_start_script_parsing {
         use super::*;
 
         #[derive(Debug, Serialize, Deserialize)]
@@ -50,7 +50,7 @@ pub mod scripts {
             pub content_name: String,
         }
 
-        pub const METHOD: &'static str = "witcherscript-ide/scripts/scriptParsingStarted";
+        pub const METHOD: &'static str = "witcherscript-ide/scripts/didStartScriptParsing";
 
         pub struct Type;
         impl lsp::notification::Notification for Type {
@@ -60,7 +60,7 @@ pub mod scripts {
         }
     }
 
-    pub mod script_parsing_finished {
+    pub mod did_finish_script_parsing {
         use super::*;
 
         #[derive(Debug, Serialize, Deserialize)]
@@ -69,7 +69,7 @@ pub mod scripts {
             pub content_name: String,
         }
 
-        pub const METHOD: &'static str = "witcherscript-ide/scripts/scriptParsingFinished";
+        pub const METHOD: &'static str = "witcherscript-ide/scripts/didFinishScriptParsing";
 
         pub struct Type;
         impl lsp::notification::Notification for Type {
