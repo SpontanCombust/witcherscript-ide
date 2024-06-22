@@ -5,6 +5,7 @@
 # v0.4.0-dev.1
 
 ### Features
+- Added a view container that will house all views added by the extension. For now it has a dummy logo [#45](https://github.com/SpontanCombust/witcherscript-ide/issues/45)
 - Added context status bar item displaying name of the currently worked on script project. Clicking the item shows the command palette of all available WIDE commands [#12](https://github.com/SpontanCombust/witcherscript-ide/issues/12)
 - Added work status bar item displaying the current background work being done on the language server. The item is hidden when there is no work being done currenly. For now it only displays "Parsing scripts" message [#12](https://github.com/SpontanCombust/witcherscript-ide/issues/12)
 - Added "WitcherScript Vanilla Scripts" view. It displays the source tree of vanilla scripts (content0) and allows for peeking and importing vanilla scripts from the level of the view. [#42](https://github.com/SpontanCombust/witcherscript-ide/issues/42)
