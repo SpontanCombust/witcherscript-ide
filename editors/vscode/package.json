@@ -116,6 +116,12 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "witcherscript-ide.projects.refreshScriptContentView",
+        "title": "Refresh script contents",
+        "category": "WitcherScript-IDE (hidden)",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "witcherscript-ide.scripts.importVanilla",
         "title": "Import scripts from vanilla into project...",
         "category": "WitcherScript-IDE",
@@ -163,7 +169,17 @@
       "explorer": [
         {
           "id": "witcherscript-ide.vanillaFilesView",
-          "name": "WitcherScript vanilla files",
+          "name": "WitcherScript vanilla scripts",
+          "contextualTitle": "WitcherScript vanilla scripts",
+          "icon": "$(code)",
+          "when": "witcherscript-ide.languageServerActive",
+          "visibility": "visible"
+        },
+        {
+          "id": "witcherscript-ide.scriptContentView",
+          "name": "WitcherScript contents",
+          "contextualTitle": "WitcherScript contents",
+          "icon": "$(package)",
           "when": "witcherscript-ide.languageServerActive",
           "visibility": "visible"
         }
@@ -180,12 +196,21 @@
         {
           "command": "witcherscript-ide.projects.refreshVanillaFilesView",
           "when": "false"
+        },
+        {
+          "command": "witcherscript-ide.projects.refreshScriptContentView",
+          "when": "false"
         }
       ],
       "view/title": [
         {
           "command": "witcherscript-ide.projects.refreshVanillaFilesView",
           "when": "view == witcherscript-ide.vanillaFilesView",
+          "group": "navigation"
+        },
+        {
+          "command": "witcherscript-ide.projects.refreshScriptContentView",
+          "when": "view == witcherscript-ide.scriptContentView",
           "group": "navigation"
         }
       ],

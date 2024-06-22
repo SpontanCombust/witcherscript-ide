@@ -5,6 +5,7 @@ import * as fs from 'fs/promises';
 
 import { getLanguageClient } from "../lsp/lang_client"
 import { getVanillaFilesProvider } from '../providers/vanilla_files_provider';
+import { getScriptContentProvider } from '../providers/script_content_provider';
 import * as requests from '../lsp/requests';
 import * as persistence from '../persistence';
 import * as utils from '../utils';
@@ -169,5 +170,11 @@ async function initializeProjectInDirectory(client: lsp.LanguageClient, projectD
 export function commandRefreshVanillaFilesView(): Cmd {
     return () => {
         getVanillaFilesProvider().refreshAll();
+    }
+}
+
+export function commandRefreshScriptContentView(): Cmd {
+    return () => {
+        getScriptContentProvider().refreshAll();
     }
 }

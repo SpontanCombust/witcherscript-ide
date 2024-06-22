@@ -13,6 +13,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.projects.init", projects.commandInitProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.projects.create", projects.commandCreateProject(context)),
         vscode.commands.registerCommand("witcherscript-ide.projects.refreshVanillaFilesView", projects.commandRefreshVanillaFilesView()),
+        vscode.commands.registerCommand("witcherscript-ide.projects.refreshScriptContentView", projects.commandRefreshScriptContentView()),
         vscode.commands.registerCommand("witcherscript-ide.scripts.importVanilla", scripts.commandImportVanillaScripts()),
         vscode.commands.registerCommand("witcherscript-ide.scripts.diffVanilla", scripts.commandDiffScriptWithVanilla(context)),
         vscode.commands.registerCommand("witcherscript-ide.misc.showCommandsInPalette", misc.commandShowCommandsInPalette()),
