@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import * as commands from './commands';
 import * as config from './config';
 import * as providers from './providers';
-import * as views from './views'
 import * as lc from './lsp/lang_client';
 import * as state from './state';
 
@@ -16,7 +15,6 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	commands.registerCommands(context);
 	providers.registerProviders(context);
-	views.createViews(context);
 
 	state.initializeState(context);
 

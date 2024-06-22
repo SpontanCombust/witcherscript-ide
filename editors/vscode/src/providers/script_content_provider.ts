@@ -8,18 +8,28 @@ import { getLanguageClient } from '../lsp/lang_client';
 
 
 let instance: ScriptContentProvider;
-export function getScriptContentProvider(): ScriptContentProvider {
-    if (instance == undefined) {
-        instance = new ScriptContentProvider();
-    }
-
-    return instance;
-}
 
 export class ScriptContentProvider implements vscode.TreeDataProvider<Item> {
+    public static readonly viewId = "witcherscript-ide.scriptContentView";
+
     private didChangeTreeData: vscode.EventEmitter<
         void | Item | Item[] | null | undefined
     > = new vscode.EventEmitter();
+
+
+    private constructor() {}
+    
+    public static getInstance() : ScriptContentProvider {
+        if (instance == undefined) {
+            instance = new ScriptContentProvider();
+        }
+    
+        return instance;
+    }
+
+    refreshAll() {
+        this.didChangeTreeData.fire(undefined)
+    }
 
 
     onDidChangeTreeData: vscode.Event<
@@ -42,10 +52,6 @@ export class ScriptContentProvider implements vscode.TreeDataProvider<Item> {
 
     getParent(element: Item): vscode.ProviderResult<Item> {
         return element.parent;
-    }
-
-    refreshAll() {
-        this.didChangeTreeData.fire(undefined)
     }
 
 

@@ -8,15 +8,10 @@ import * as utils from '../utils'
 
 
 let instance: VanillaFilesProvider;
-export function getVanillaFilesProvider(): VanillaFilesProvider {
-    if (instance == undefined) {
-        instance = new VanillaFilesProvider();
-    }
-
-    return instance;
-}
 
 export class VanillaFilesProvider implements vscode.TreeDataProvider<VanillaFile> {
+    public static readonly viewId = "witcherscript-ide.vanillaFilesView";
+
     private vanillaContentUri: string;
     private vanillaScriptsRootPath: string;
     private vanillaLocalFilePaths: string[];
@@ -25,12 +20,19 @@ export class VanillaFilesProvider implements vscode.TreeDataProvider<VanillaFile
         void | VanillaFile | VanillaFile[] | null | undefined
     > = new vscode.EventEmitter();
 
-    constructor() {
+    private constructor() {
         this.vanillaContentUri = "";
         this.vanillaScriptsRootPath = "";
         this.vanillaLocalFilePaths = [];
     }
 
+    public static getInstance() : VanillaFilesProvider {
+        if (instance == undefined) {
+            instance = new VanillaFilesProvider();
+        }
+    
+        return instance;
+    }
 
     public refreshAll() {
         this.didChangeTreeData.fire(undefined);

@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 
 import * as tdcp from './text_document_content_providers';
+import { VanillaFilesProvider } from './vanilla_files_provider';
+import { ScriptContentProvider } from './script_content_provider';
 import * as fdp from './file_decorations_providers'
 
 
@@ -11,6 +13,8 @@ export function registerProviders(context: vscode.ExtensionContext) {
         vscode.workspace.registerTextDocumentContentProvider(tdcp.ContentGraphDotProvider.scheme, tdcp.ContentGraphDotProvider.getInstance()),
         vscode.workspace.registerTextDocumentContentProvider(tdcp.ScriptSymbolsProvider.scheme, tdcp.ScriptSymbolsProvider.getInstance()),
         vscode.workspace.registerTextDocumentContentProvider(tdcp.ReadOnlyContentProvider.scheme, tdcp.ReadOnlyContentProvider.getInstance()),
+        vscode.window.registerTreeDataProvider(VanillaFilesProvider.viewId, VanillaFilesProvider.getInstance()),
+        vscode.window.registerTreeDataProvider(ScriptContentProvider.viewId, ScriptContentProvider.getInstance()),
         vscode.window.registerFileDecorationProvider(new fdp.ReadOnlyFileDecorationsProvider())
     );
 }
