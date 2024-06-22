@@ -13,6 +13,9 @@
 - Added context menu items for comparing modded script with vanilla to file explorer and editor views
 - Added analysis for local var declaration placement
 
+### Fixes
+- Fixed contextual syntax analysis not working for events
+
 ### Commands
 - Added "Open extension logs" command
 
