@@ -15,6 +15,10 @@ export namespace projects {
 
         export const type = new NotificationType<Parameters>("witcherscript-ide/projects/didImportScripts");
     }
+
+    export namespace didChangeContentGraph {
+        export const type = new NotificationType<void>("witcherscript-ide/projects/didChangeContentGraph");
+    }
 }
 
 export namespace scripts {

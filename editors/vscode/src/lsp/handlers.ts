@@ -13,6 +13,7 @@ export function registerHandlers(client: LanguageClient, context: vscode.Extensi
     client.onNotification(notifications.scripts.didStartScriptParsing.type, handleScriptParsingStartedNotification())
     client.onNotification(notifications.scripts.didFinishScriptParsing.type, handleScriptParsingFinishedNotification())
     client.onNotification(notifications.scripts.didFinishInitialIndexing.type, handleScriptsDidFinishInitialIndexingNotification())
+    client.onNotification(notifications.projects.didChangeContentGraph.type, handleProjectsDidChangeContentGraphNotification())
 }
 
 
@@ -50,7 +51,14 @@ function handleScriptParsingFinishedNotification() {
 
 function handleScriptsDidFinishInitialIndexingNotification() {
     return () => {
+        
+    }
+}
+
+function handleProjectsDidChangeContentGraphNotification() {
+    return () => {
         VanillaFilesProvider.getInstance().refreshAll();
         ScriptContentProvider.getInstance().refreshAll();
+        state.updateLastActiveContentInfo();
     }
 }

@@ -36,6 +36,20 @@ pub mod projects {
 
         pub const METHOD: &'static str = "witcherscript-ide/projects/didImportScripts";
     }
+
+    // Sent after making changes to the content graph and performing tasks associated with that
+    pub mod did_change_content_graph {
+        use super::*;
+
+        pub const METHOD: &'static str = "witcherscript-ide/projects/didChangeContentGraph";
+
+        pub struct Type;
+        impl lsp::notification::Notification for Type {
+            type Params = ();
+        
+            const METHOD: &'static str = METHOD;
+        }
+    }
 }
 
 pub mod scripts {
