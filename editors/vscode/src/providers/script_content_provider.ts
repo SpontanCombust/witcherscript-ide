@@ -87,7 +87,10 @@ class ScriptContentItem extends vscode.TreeItem {
     ) {
         super(contentInfo.contentName, vscode.TreeItemCollapsibleState.Collapsed);
 
+        const contentPath = vscode.Uri.parse(contentInfo.contentUri).fsPath;
         this.iconPath = new vscode.ThemeIcon("package");
+        this.description = contentPath;
+        this.tooltip = contentPath;
     }
 
     getChildren(): Item[] {
@@ -164,7 +167,7 @@ class ScriptContentFileHeaderItem extends vscode.TreeItem {
 
     getChildren(): Item[] {
         const fullPath = this.resourceUri!.fsPath;
-        return readFilesInDir(fullPath, this);
+        return readFilesInDir(this, fullPath, this.parent.contentInfo.isInWorkspace);
     }
 }
 
@@ -175,6 +178,7 @@ class ScriptContentFileItem extends vscode.TreeItem {
         readonly parent: ScriptContentFileItem | ScriptContentFileHeaderItem,
         readonly fullPath: string,
         readonly isDir: boolean,
+        readonly inWorkspace: boolean,
     ) {
         const resourceUri = vscode.Uri.file(fullPath);
         const collapsibleState = isDir ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
@@ -184,8 +188,11 @@ class ScriptContentFileItem extends vscode.TreeItem {
         this.label = fspath.basename(fullPath);
 
         if (!isDir) {
+            // disallow editing the file if it's from outside the workspace
+            const cmd = inWorkspace ? 'vscode.open' :  'witcherscript-ide.misc.openFileReadOnly';
+
             this.command = {
-                command: 'witcherscript-ide.misc.openFileReadOnly',
+                command: cmd,
                 title: 'Open file',
                 arguments: [resourceUri]
             }
@@ -193,7 +200,7 @@ class ScriptContentFileItem extends vscode.TreeItem {
     }
 
     getChildren(): Item[] {
-        return this.isDir ? readFilesInDir(this.fullPath, this) : [];
+        return this.isDir ? readFilesInDir(this, this.fullPath, this.inWorkspace) : [];
     }
 
     cmp(other: ScriptContentFileItem) : number {
@@ -210,13 +217,13 @@ class ScriptContentFileItem extends vscode.TreeItem {
 }
 
 
-function readFilesInDir(fullDirPath: string, parent: ScriptContentFileItem | ScriptContentFileHeaderItem): ScriptContentFileItem[] {
+function readFilesInDir(parent: ScriptContentFileItem | ScriptContentFileHeaderItem, fullDirPath: string, inWorkspace: boolean): ScriptContentFileItem[] {
     return fs.readdirSync(fullDirPath)
         .map((fileName) => {
             const fullPath = fspath.join(fullDirPath, fileName);
             const isDir = fs.lstatSync(fullPath).isDirectory();
 
-            return new ScriptContentFileItem(parent, fullPath, isDir)
+            return new ScriptContentFileItem(parent, fullPath, isDir, inWorkspace)
         })
         .sort((f1, f2) => f1.cmp(f2));
 }
