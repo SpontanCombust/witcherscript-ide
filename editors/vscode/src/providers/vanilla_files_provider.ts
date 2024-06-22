@@ -99,14 +99,20 @@ export class VanillaFilesProvider implements vscode.TreeDataProvider<VanillaFile
     private async fetchVanillaSourcePaths() {
         const client = getLanguageClient();
         if (!client) {
-            return [];
+            this.vanillaContentUri = "";
+            this.vanillaScriptsRootPath = "";
+            this.vanillaLocalFilePaths = [];
+            return;
         }
 
         try {
             var vanillaContentRes = await client.sendRequest(requests.projects.vanillaContent.type, {});
             if (!vanillaContentRes.content0Info) {
                 client.info("[Vanilla Files View] No content0 to create a view for");
-                return [];
+                this.vanillaContentUri = "";
+                this.vanillaScriptsRootPath = "";
+                this.vanillaLocalFilePaths = [];
+                return;
             }
 
             this.vanillaContentUri = vanillaContentRes.content0Info.contentUri;
@@ -119,7 +125,6 @@ export class VanillaFilesProvider implements vscode.TreeDataProvider<VanillaFile
             this.vanillaLocalFilePaths = this.fillIntermediaryPaths(sourceTreeRes.localScriptPaths);
         } catch(err: any) {
             vscode.window.showErrorMessage("Failed to get info about content0: " + err.message)
-            return [];
         }
     }
 
