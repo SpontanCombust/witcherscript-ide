@@ -5,6 +5,7 @@ import * as lsp from 'vscode-languageclient/node';
 import * as persistence from '../persistence';
 import * as config from '../config';
 import * as handlers from './handlers';
+import * as tdcp from '../providers/text_document_content_providers'
 
 
 let client: lsp.LanguageClient | undefined;
@@ -44,7 +45,10 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 		documentSelector: [
 			{ scheme: 'file', language: 'witcherscript' },
 			{ scheme: 'file', pattern: '**/*.w3edit' },
-			{ scheme: 'file', pattern: '**/witcherscript.toml' }
+			{ scheme: 'file', pattern: '**/witcherscript.toml' },
+			{ scheme: tdcp.ReadOnlyContentProvider.scheme, language: 'witcherscript' },
+			{ scheme: tdcp.ReadOnlyContentProvider.scheme, pattern: '**/*.w3edit' },
+			{ scheme: tdcp.ReadOnlyContentProvider.scheme, pattern: '**/witcherscript.toml' }
 		],
 		synchronize: {
 			// Notify the server about file changes to files we care about

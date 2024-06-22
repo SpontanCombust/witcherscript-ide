@@ -200,6 +200,12 @@ export class ReadOnlyContentProvider implements vscode.TextDocumentContentProvid
     public static getInstance(): ReadOnlyContentProvider {
         if (!ReadOnlyContentProvider.instance) {
             ReadOnlyContentProvider.instance = new ReadOnlyContentProvider();
+
+            vscode.window.onDidChangeActiveTextEditor(te => {
+                if (te != undefined && te.document.uri.scheme == ReadOnlyContentProvider.scheme) {
+                    ReadOnlyContentProvider.instance.eventEmitter.fire(te.document.uri)
+                }
+            });
         }
 
         return ReadOnlyContentProvider.instance;

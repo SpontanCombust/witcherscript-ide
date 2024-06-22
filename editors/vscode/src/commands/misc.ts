@@ -23,6 +23,8 @@ export function commandOpenLogs(): Cmd {
 
 export function commandOpenFileReadOnly(): Cmd {
     return (uri: vscode.Uri) => {
-        vscode.window.showTextDocument(uri.with({ scheme: tdcp.ReadOnlyContentProvider.scheme }));
+        uri = uri.with({ scheme: tdcp.ReadOnlyContentProvider.scheme });
+        tdcp.ReadOnlyContentProvider.getInstance().eventEmitter.fire(uri);
+        vscode.window.showTextDocument(uri);
     }
 }
