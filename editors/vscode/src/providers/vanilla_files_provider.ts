@@ -7,9 +7,9 @@ import { getLanguageClient } from '../lsp/lang_client'
 import * as utils from '../utils'
 
 
-let instance: VanillaFilesProvider | undefined = undefined;
+let instance: VanillaFilesProvider;
 export function getVanillaFilesProvider(): VanillaFilesProvider {
-    if (!instance) {
+    if (instance == undefined) {
         instance = new VanillaFilesProvider();
     }
 
@@ -149,6 +149,7 @@ export class VanillaFile extends vscode.TreeItem {
     readonly localPath: string;
     readonly isDir: boolean;
     readonly parent?: VanillaFile;
+    override readonly label: string;
 
     constructor(
         scriptsRootPath: string,
@@ -181,7 +182,7 @@ export class VanillaFile extends vscode.TreeItem {
 
     cmp(other: VanillaFile) : number {
         if (this.isDir == other.isDir) {
-            return this.label!.toString().localeCompare(other.label!.toString());
+            return this.label.localeCompare(other.label);
         } else {
             if (this.isDir && !other.isDir) {
                 return -1;
