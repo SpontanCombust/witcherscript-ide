@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 import * as tdcp from './text_document_content_providers';
+import * as fdp from './file_decorations_providers'
 
 
 export function registerProviders(context: vscode.ExtensionContext) {
@@ -10,5 +11,6 @@ export function registerProviders(context: vscode.ExtensionContext) {
         vscode.workspace.registerTextDocumentContentProvider(tdcp.ContentGraphDotProvider.scheme, tdcp.ContentGraphDotProvider.getInstance()),
         vscode.workspace.registerTextDocumentContentProvider(tdcp.ScriptSymbolsProvider.scheme, tdcp.ScriptSymbolsProvider.getInstance()),
         vscode.workspace.registerTextDocumentContentProvider(tdcp.ReadOnlyContentProvider.scheme, tdcp.ReadOnlyContentProvider.getInstance()),
+        vscode.window.registerFileDecorationProvider(new fdp.ReadOnlyFileDecorationsProvider())
     );
 }
