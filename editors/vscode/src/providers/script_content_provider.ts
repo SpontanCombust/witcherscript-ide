@@ -66,6 +66,11 @@ export class ScriptContentProvider implements vscode.TreeDataProvider<Item> {
                 onlyFromWorkspace: false
             });
 
+            // if there are no projects in the workspace leave the view empty so the welcome message can appear
+            if (!res.projectInfos.some(ci => ci.isInWorkspace)) {
+                return [];
+            }
+
             return res.projectInfos
                 .sort((ci1, ci2) => ci1.contentName.localeCompare(ci2.contentName))
                 .map(ci => new ScriptContentItem(ci));
@@ -138,6 +143,7 @@ class ScriptContentMetadataHeaderItem extends vscode.TreeItem {
             new ScriptContentMetadataItem(this, "Scripts root", vscode.Uri.parse(ci.scriptsRootUri).fsPath),
             new ScriptContentMetadataItem(this, "In workspace", ci.isInWorkspace.toString()),
             new ScriptContentMetadataItem(this, "In repository", ci.isInRepository.toString()),
+            new ScriptContentMetadataItem(this, "Is native", ci.isNative.toString()),
         ];
     }
 }

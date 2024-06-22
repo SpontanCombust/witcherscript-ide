@@ -6,7 +6,8 @@ export interface ContentInfo {
     contentName: string,
     scriptsRootUri: string,
     isInWorkspace: boolean,
-    isInRepository: boolean
+    isInRepository: boolean,
+    isNative: boolean
 }
 
 export enum ContentKind {

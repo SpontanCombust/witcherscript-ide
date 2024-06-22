@@ -14,7 +14,8 @@ pub struct ContentInfo {
     pub content_name: String,
     pub scripts_root_uri: lsp::Url,
     pub is_in_workspace: bool,
-    pub is_in_repository: bool
+    pub is_in_repository: bool,
+    pub is_native: bool
 }
 
 impl From<&GraphNode> for ContentInfo {
@@ -25,7 +26,8 @@ impl From<&GraphNode> for ContentInfo {
             content_name: n.content.content_name().to_string(),
             scripts_root_uri: n.content.source_tree_root().to_uri(),
             is_in_workspace: n.in_workspace,
-            is_in_repository: n.in_repository
+            is_in_repository: n.in_repository,
+            is_native: n.is_native
         }
     }
 }
