@@ -17,6 +17,8 @@ export function commandOpenLogs(): Cmd {
         const client = getLanguageClient();
         if (client != undefined) {
             client.outputChannel.show();
+        } else {
+            vscode.window.showWarningMessage("Language server is not active!")
         }
     }
 }

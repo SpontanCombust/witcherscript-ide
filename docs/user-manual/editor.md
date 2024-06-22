@@ -40,7 +40,7 @@
 **More coming soon!**
 
 
-## Commands
+## Command palette
 
 ### `witcherscript-ide.projects.init`
 *"Initialize a WitcherScript project in existing directory..."*  
@@ -58,6 +58,10 @@ Command requires that the `content0` content is known and is a dependency to a g
 ### `witcherscript-ide.scripts.diffVanilla`
 *"Compare script with vanilla counterpart"*  
 Shows a difference view between the original vanilla script and the imported, modified script in the project.
+
+### `witcherscript-ide.misc.openLogs`
+*"Open extension logs"*
+Open WIDE's language client output view.
 
 ### `witcherscript-ide.debug.showScriptAst`
 *"Show script AST"*  

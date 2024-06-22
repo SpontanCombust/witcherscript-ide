@@ -135,6 +135,12 @@
         "enablement": "witcherscript-ide.languageServerActive"
       },
       {
+        "command": "witcherscript-ide.misc.openLogs",
+        "title": "Open extension logs",
+        "category": "WitcherScript-IDE",
+        "enablement": "witcherscript-ide.languageServerActive"
+      },
+      {
         "command": "witcherscript-ide.debug.showScriptAst",
         "title": "Show script AST",
         "category": "WitcherScript-IDE (debug)",
