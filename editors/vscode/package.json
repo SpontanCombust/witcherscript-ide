@@ -176,7 +176,6 @@
         {
           "id": "witcherscript-ide.vanillaFilesView",
           "name": "WitcherScript vanilla scripts",
-          "contextualTitle": "WitcherScript vanilla scripts",
           "icon": "$(code)",
           "when": "witcherscript-ide.languageServerActive",
           "visibility": "visible"
@@ -184,7 +183,6 @@
         {
           "id": "witcherscript-ide.scriptContentView",
           "name": "WitcherScript contents",
-          "contextualTitle": "WitcherScript contents",
           "icon": "$(package)",
           "when": "witcherscript-ide.languageServerActive",
           "visibility": "visible"
@@ -195,6 +193,10 @@
       {
         "view": "witcherscript-ide.vanillaFilesView",
         "contents": "No project in the workspace dependends on content0 or it couldn't be found"
+      },
+      {
+        "view": "witcherscript-ide.scriptContentView",
+        "contents": "No script projects detected in the workspace.\n[Initialize project](command:witcherscript-ide.projects.init)\n[Create new project](command:witcherscript-ide.projects.create)"
       }
     ],
     "menus": {
