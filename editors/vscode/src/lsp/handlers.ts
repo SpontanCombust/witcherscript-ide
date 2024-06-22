@@ -4,6 +4,8 @@ import * as vscode from 'vscode';
 import * as notifications from './notifications';
 import * as utils from '../utils';
 import * as state from '../state'
+import { VanillaFilesProvider } from '../providers/vanilla_files_provider';
+import { ScriptContentProvider } from '../providers/script_content_provider';
 
 
 export function registerHandlers(client: LanguageClient, context: vscode.ExtensionContext) {
@@ -48,7 +50,7 @@ function handleScriptParsingFinishedNotification() {
 
 function handleScriptsDidFinishInitialIndexingNotification() {
     return () => {
-        // already done in handleScriptParsingFinishedNotification
-        // state.updateLastActiveContentInfo();
+        VanillaFilesProvider.getInstance().refreshAll();
+        ScriptContentProvider.getInstance().refreshAll();
     }
 }
