@@ -2,6 +2,29 @@
 
 # Changelog
 
+# v0.4.0-dev.1
+
+### Features
+- Added a view container that will house all views added by the extension. For now it has a dummy logo [#45](https://github.com/SpontanCombust/witcherscript-ide/issues/45)
+- Added context status bar item displaying name of the currently worked on script project. Clicking the item shows the command palette of all available WIDE commands [#12](https://github.com/SpontanCombust/witcherscript-ide/issues/12)
+- Added work status bar item displaying the current background work being done on the language server. The item is hidden when there is no work being done currenly. For now it only displays "Parsing scripts" message [#12](https://github.com/SpontanCombust/witcherscript-ide/issues/12)
+- Added "WitcherScript Vanilla Scripts" view. It displays the source tree of vanilla scripts (content0) and allows for peeking and importing vanilla scripts from the level of the view. [#42](https://github.com/SpontanCombust/witcherscript-ide/issues/42)
+- Added "WitcherScript contents" view. It displays script contents known to the content graph - its metadata and files it is associated with. When extension is active, but there are no script projects in the workspace it displays a welcome message with buttons for creating and initializing a project [#22](https://github.com/SpontanCombust/witcherscript-ide/issues/22)
+- Added context menu items for comparing modded script with vanilla to file explorer and editor views
+- Added analysis for local var declaration placement
+
+### Commands
+- Added "Open extension logs" command
+
+### Configuration
+- Added a setting for setting the number of threads allocated to Rayon's parallel data processing
+
+### Other changes
+- Error message after failing to import vanilla scripts now points to extension logs
+
+### Documentation
+- Added a disclaimer for using "content0" as the dependency for projects on the "Project System" page
+
 
 ## v0.3.2
 **Hotfix**
