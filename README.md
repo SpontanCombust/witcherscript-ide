@@ -3,7 +3,8 @@
 </p>
 
 ![GitHub Release](https://img.shields.io/github/v/release/SpontanCombust/witcherscript-ide)
-![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/SpontanCombust.witcherscript-ide)
+![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/SpontanCombust.witcherscript-ide?label=Visual%20Studio%20Marketplace%20Downloads)
+![Open VSX Registry Downloads](https://img.shields.io/open-vsx/dt/SpontanCombust/witcherscript-ide?label=Open%20VSX%20Registry%20Downloads)
 
 ***WIDE*** (**W**itcherScript **I**ntegrated **D**evelopment **E**nvironment) is unofficial Witcher 3 modding tooling aimed at improving developer experience by supplying them with powerful code analysis tools in the form of an editor extension making use of a Language Server.
 
