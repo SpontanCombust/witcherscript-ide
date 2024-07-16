@@ -27,12 +27,18 @@ Currently available xtask commands:
 - `prep-client` - build VSCode client
     - `--watch` - whether client should be continuously watched for changes made to it and rebuilt 
     - `--fast` - whether client should be built instantly by skipping `npm ci` step
+- `prep-rw3d` - download the [Rusty Witcher 3 Debugger CLI](https://github.com/SpontanCombust/rusty_witcher_debugger) needed by the client
 - `package` - build and package VSCode extension into a .vsix file
     - `--out` - output path for the .vsix file; default is "./witcherscript-ide.vsix"
     - `--target` - VSCode extension target, e.g. win32-x64
     - `--pre-release` - mark the package as pre-release
 - `install` - build, package and install the VSCode extension locally
 
+The usual procedure is as follows:
+1. Run `prep-server` whenever making changing to the LSP server. The executable cannot be updated during an active extension host session.
+2. Run `prep-client` whenever making changes to the VSCode client code. This can be done during extension host session, but changes can be observed only after extension reload.
+3. Run `prep-rw3d` when building the project for the first time or when the desired version of the tool changes.
+4. Run all the above when building the project for the first time.
 
 ## Debugging
 Use VSCode to debug the client and server. The project provides launch configurations for both of them:
