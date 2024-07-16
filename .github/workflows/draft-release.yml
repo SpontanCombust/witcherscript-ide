@@ -37,8 +37,10 @@ jobs:
     - name: Build xtask
       run: cargo build --package xtask --release
 
-    - name: Prepare the server executable
+    - name: Prepare the LSP server executable
       run: cargo xtask prep-server --target ${{ matrix.target }} --release
+    - name: Download rw3d_cli
+      run: cargo xtask prep-rw3d
     
     - name: Package the extension (pre-release)
       if: ${{ env.IS_PRE_RELEASE == 'true' }}
