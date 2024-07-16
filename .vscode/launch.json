@@ -21,10 +21,10 @@
             "type": "lldb",
             "request": "attach",
             "windows": {
-                "program": "${workspaceFolder}/server/bin/witcherscript-lsp.exe",
+                "program": "${workspaceFolder}/deps/lsp_server/bin/witcherscript-lsp.exe",
             },
             "linux": {
-                "program": "${workspaceFolder}/server/bin/witcherscript-lsp"
+                "program": "${workspaceFolder}/deps/lsp_server/bin/witcherscript-lsp"
             }
         }
     ]

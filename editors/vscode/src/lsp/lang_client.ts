@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
@@ -13,11 +12,11 @@ let client: lsp.LanguageClient | undefined;
 export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: config.Config) {
     const ext = process.platform === "win32" ? ".exe" : "";
 	const serverPath = ctx.asAbsolutePath(
-		path.join('server', 'bin', `witcherscript-lsp${ext}`)
+		`deps/lsp_server/bin/witcherscript-lsp${ext}`
 	);
-	const nativeContentPath = vscode.Uri.joinPath(
-		ctx.extensionUri, 'server', 'assets', 'content0_native'
-	).fsPath;
+	const nativeContentPath = ctx.asAbsolutePath(
+		`deps/lsp_server/assets/content0_native`
+	);
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
