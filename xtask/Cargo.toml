@@ -9,3 +9,5 @@ clap.workspace = true
 anyhow.workspace = true
 xshell = "0.2"
 project-root = "0.2"
+reqwest = { version = "0.12.5", features = ["blocking"] }
+zip = "2.1.3"

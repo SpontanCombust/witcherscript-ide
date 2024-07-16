@@ -20,6 +20,7 @@ pub enum Commands {
         #[arg(long)]
         target: Option<String>
     },
+    PrepRw3d,
     /// Build VSCode client
     PrepClient {
         /// Whether client should be continuously watched for changes made to it and rebuilt 
