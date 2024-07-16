@@ -187,7 +187,6 @@
           "name": "Vanilla scripts",
           "contextualTitle": "WitcherScript IDE",
           "icon": "$(code)",
-          "when": "witcherscript-ide.languageServerActive",
           "visibility": "visible"
         },
         {
@@ -195,7 +194,6 @@
           "name": "Contents",
           "contextualTitle": "WitcherScript IDE",
           "icon": "$(package)",
-          "when": "witcherscript-ide.languageServerActive",
           "visibility": "visible"
         }
       ]
