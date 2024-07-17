@@ -75,6 +75,14 @@ Launches the DirectX11 version of the game.
 *"Launch the game for debugging (DX11)"*
 Launches the DirectX11 version of the game with arguments to enable debugging it.
 
+### `witcherscript-ide.game.recompileScripts`
+*"Recompile game scripts"*
+Remotely connects to the game to trigger script recompilation.
+
+### `witcherscript-ide.game.execConsoleCommand`
+*"Execute console command"*
+Remotely connects to the game to execute a command that would normally be entered in the debug console.
+
 ### `witcherscript-ide.misc.openLogs`
 *"Open extension logs"*
 Open WIDE's language client output view.
@@ -114,6 +122,9 @@ Path to Witcher 3's root game directory (containing bin, content, Mods folders e
 
 ### `witcherscript-ide.contentRepositories`
 Paths to custom directories containing WitcherScript contents. Useful when not having Witcher 3 installed on your local machine or when simply storing scripts outside of game directory.
+
+### `witcherscript-ide.gameHostIpAddress`
+IPv4 address of the game host. It is used when running remote game commands such as script recompilation. Change this if you're running the game on a different computer from the one you're currently working in VSCode. Defaults to the localhost address.
 
 ### `witcherscript-ide.languageServer.enable`
 Enable the language server. True by default.  You can disable this if you only want syntax highlighting. Change requires extension reload.
