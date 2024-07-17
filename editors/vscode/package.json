@@ -135,6 +135,30 @@
         "enablement": "witcherscript-ide.languageServerActive"
       },
       {
+        "command": "witcherscript-ide.game.launchDx12",
+        "title": "Launch the game (DX12)",
+        "category": "WitcherScript-IDE",
+        "icon": "$(run)"
+      },
+      {
+        "command": "witcherscript-ide.game.launchDx12Debug",
+        "title": "Launch the game for debugging (DX12)",
+        "category": "WitcherScript-IDE",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "witcherscript-ide.game.launchDx11",
+        "title": "Launch the game (DX11)",
+        "category": "WitcherScript-IDE",
+        "icon": "$(run)"
+      },
+      {
+        "command": "witcherscript-ide.game.launchDx11Debug",
+        "title": "Launch the game for debugging (DX11)",
+        "category": "WitcherScript-IDE",
+        "icon": "$(debug-alt)"
+      },
+      {
         "command": "witcherscript-ide.misc.openLogs",
         "title": "Open extension logs",
         "category": "WitcherScript-IDE",

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs/promises';
 import * as fspath from 'path';
 
 import * as persistence from './persistence';
@@ -106,4 +107,13 @@ export function isSubpathOf(child: string, parent: string): boolean {
     let dirComps = pathComponents(child);
 
     return parentComps.every((comp, i) => dirComps[i] === comp);
+}
+
+export async function fileExists(path: string): Promise<boolean> {
+    try {
+        await fs.stat(path);
+        return true;
+    } catch(_) {
+        return false;
+    }
 }
