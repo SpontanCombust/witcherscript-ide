@@ -72,28 +72,34 @@
           "order": 1,
           "markdownDescription": "Paths to custom directories containing WitcherScript contents."
         },
+        "witcherscript-ide.gameHostIpAddress": {
+          "type": "string",
+          "default": "127.0.0.1",
+          "order": 2,
+          "markdownDescription": "IPv4 address of the game host. It is used when running remote game commands such as script recompilation. Change this if you're running the game on a different computer from the one you're currently working in VSCode. Defaults to the localhost address."
+        },
         "witcherscript-ide.languageServer.enable": {
           "type": "boolean",
           "default": true,
-          "order": 2,
+          "order": 3,
           "markdownDescription": "Enable the language server. You can disable this if you only want syntax highlighting (change requires extension reload)."
         },
         "witcherscript-ide.languageServer.syntaxAnalysis": {
           "type": "boolean",
           "default": true,
-          "order": 3,
+          "order": 4,
           "markdownDescription": "Enables syntax analysis in the language server."
         },
         "witcherscript-ide.languageServer.rayonThreads": {
           "type": "integer",
           "default": 0,
-          "order": 4,
+          "order": 5,
           "markdownDescription": "Number of threads allocated to parallel data computation. Leave at 0 for automatic configuration. (change requires extension reload)"
         },
         "witcherscript-ide.debug.enableDebugFeatures": {
           "type": "boolean",
           "default": false,
-          "order": 5,
+          "order": 6,
           "markdownDescription": "Enable debug features (change requires extension reload)."
         }
       }

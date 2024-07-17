@@ -105,12 +105,13 @@ function runRw3d(ctx: vscode.ExtensionContext, cmd: string, additionalArgs: stri
         `deps/rw3d/bin/rw3d_cli${ext}`
     );
 
-    state.gameOutputChannel.show();
+    const ip = getConfiguration().gameHostIpAddress;
     const args = [
-        //TODO game host IP config
-        "--no-delay", "--log-level=output-only", 
+        "--no-delay", "--log-level=output-only", `--ip=${ip}`,
         cmd, ...additionalArgs
     ];
+
+    state.gameOutputChannel.show();
     const rw3d = cp.spawn(rw3dPath, args);
 
     rw3d.stdout.on('data', (data) => {
