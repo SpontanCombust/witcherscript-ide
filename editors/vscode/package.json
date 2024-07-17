@@ -102,12 +102,14 @@
       {
         "command": "witcherscript-ide.projects.init",
         "title": "Initialize a WitcherScript project in existing directory...",
-        "category": "WitcherScript-IDE"
+        "category": "WitcherScript-IDE",
+        "icon": "$(plus)"
       },
       {
         "command": "witcherscript-ide.projects.create",
         "title": "Create a new WitcherScript project...",
-        "category": "WitcherScript-IDE"
+        "category": "WitcherScript-IDE",
+        "icon": "$(plus)"
       },
       {
         "command": "witcherscript-ide.projects.refreshVanillaFilesView",
@@ -207,6 +209,13 @@
     "views": {
       "witcherscript-ide-mainViewContainer": [
         {
+          "id": "witcherscript-ide.dashboardView",
+          "name": "Dashboard",
+          "contextualTitle": "WitcherScript IDE",
+          "icon": "$(device-desktop)",
+          "visibility": "visible"
+        },
+        {
           "id": "witcherscript-ide.vanillaFilesView",
           "name": "Vanilla scripts",
           "contextualTitle": "WitcherScript IDE",
@@ -259,6 +268,36 @@
         {
           "command": "witcherscript-ide.scripts.importVanilla",
           "when": "view == witcherscript-ide.vanillaFilesView && viewItem == script",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.game.launchDx12",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == launchGameDx12",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.game.launchDx12Debug",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == launchGameDx12Debug",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.game.launchDx11",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == launchGameDx11",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.game.launchDx11Debug",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == launchGameDx11Debug",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.projects.init",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == initWideProject",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.projects.create",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == createWideProject",
           "group": "inline"
         }
       ],

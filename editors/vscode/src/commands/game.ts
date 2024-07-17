@@ -43,7 +43,7 @@ async function launchGame(version: 'dx12' | 'dx11', debugMode: boolean) {
 
     const cfg = getConfiguration();
     if (cfg.gameDirectory == "") {
-        vscode.window.showErrorMessage("Path to the game directory has not been specified!");
+        vscode.window.showErrorMessage("Path to the game directory has not been specified in the configuration!");
         return;
     }
 
