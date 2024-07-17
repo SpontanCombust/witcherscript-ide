@@ -59,6 +59,22 @@ Command requires that the `content0` content is known and is a dependency to a g
 *"Compare script with vanilla counterpart"*  
 Shows a difference view between the original vanilla script and the imported, modified script in the project.
 
+### `witcherscript-ide.game.launchDx12`
+*"Launch the game (DX12)"*
+Launches the DirectX12 version of the game.
+
+### `witcherscript-ide.game.launchDx12Debug`
+*"Launch the game for debugging (DX12)"*
+Launches the DirectX12 version of the game with arguments to enable debugging it.
+
+### `witcherscript-ide.game.launchDx11`
+*"Launch the game (DX11)"*
+Launches the DirectX11 version of the game.
+
+### `witcherscript-ide.game.launchDx11Debug`
+*"Launch the game for debugging (DX11)"*
+Launches the DirectX11 version of the game with arguments to enable debugging it.
+
 ### `witcherscript-ide.misc.openLogs`
 *"Open extension logs"*
 Open WIDE's language client output view.
