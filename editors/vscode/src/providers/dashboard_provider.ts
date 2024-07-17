@@ -47,19 +47,24 @@ export class DashboardProvider implements vscode.TreeDataProvider<Item> {
 
     private async getRootItems() : Promise<Item[]> {
         return [
-            new GameLaunchOptionsHeader(),
-            new ProjectSystemOptionsHeader()
+            new GameLaunchOptionsHeaderItem(),
+            new ProjectSystemOptionsHeaderItem(),
+            new RemoteCommandsHeaderItem()
         ];
     }
 }
 
 
 export type Item = 
-    GameLaunchOptionsHeader |
-    GameLaunchOption;
+    GameLaunchOptionsHeaderItem |
+    GameLaunchOptionItem |
+    ProjectSystemOptionsHeaderItem |
+    ProjectSystemOptionItem |
+    RemoteCommandsHeaderItem |
+    RemoteCommandItem;
 
 
-class GameLaunchOptionsHeader extends vscode.TreeItem {
+class GameLaunchOptionsHeaderItem extends vscode.TreeItem {
     readonly parent = undefined;
 
     constructor() {
@@ -68,17 +73,17 @@ class GameLaunchOptionsHeader extends vscode.TreeItem {
 
     getChildren(): Item[] {
         return [
-            new GameLaunchOption(this, "Launch the game (DX12)", "launchGameDx12"),
-            new GameLaunchOption(this, "Launch the game for debugging (DX12)", "launchGameDx12Debug"),
-            new GameLaunchOption(this, "Launch the game (DX11)", "launchGameDx11"),
-            new GameLaunchOption(this, "Launch the game for debugging (DX11)", "launchGameDx11Debug"),
+            new GameLaunchOptionItem(this, "Launch the game (DX12)", "launchGameDx12"),
+            new GameLaunchOptionItem(this, "Launch the game for debugging (DX12)", "launchGameDx12Debug"),
+            new GameLaunchOptionItem(this, "Launch the game (DX11)", "launchGameDx11"),
+            new GameLaunchOptionItem(this, "Launch the game for debugging (DX11)", "launchGameDx11Debug"),
         ];
     }
 }
 
-class GameLaunchOption extends vscode.TreeItem {
+class GameLaunchOptionItem extends vscode.TreeItem {
     constructor(
-        readonly parent: GameLaunchOptionsHeader,
+        readonly parent: GameLaunchOptionsHeaderItem,
         override readonly label: string,
         override readonly contextValue: string
     ) {
@@ -92,7 +97,7 @@ class GameLaunchOption extends vscode.TreeItem {
 }
 
 
-class ProjectSystemOptionsHeader extends vscode.TreeItem {
+class ProjectSystemOptionsHeaderItem extends vscode.TreeItem {
     readonly parent = undefined;
 
     constructor() {
@@ -101,20 +106,51 @@ class ProjectSystemOptionsHeader extends vscode.TreeItem {
 
     getChildren(): Item[] {
         return [
-            new ProjectSystemOption(this, "Initialize a WitcherScript project in existing directory", "initWideProject"),
-            new ProjectSystemOption(this, "Create a new WitcherScript project", "createWideProject"),
+            new ProjectSystemOptionItem(this, "Initialize a WitcherScript project in existing directory", "initWideProject"),
+            new ProjectSystemOptionItem(this, "Create a new WitcherScript project", "createWideProject"),
         ];
     }
 }
 
-class ProjectSystemOption extends vscode.TreeItem {
+class ProjectSystemOptionItem extends vscode.TreeItem {
     constructor(
-        readonly parent: ProjectSystemOptionsHeader,
+        readonly parent: ProjectSystemOptionsHeaderItem,
         override readonly label: string,
         override readonly contextValue: string
     ) {
         super(label, vscode.TreeItemCollapsibleState.None);
         this.iconPath = new vscode.ThemeIcon("package");
+    }
+
+    getChildren(): Item[] {
+        return [];
+    }
+}
+
+
+class RemoteCommandsHeaderItem extends vscode.TreeItem {
+    readonly parent = undefined;
+
+    constructor() {
+        super("Remote commands", vscode.TreeItemCollapsibleState.Expanded);
+    }
+
+    getChildren(): Item[] {
+        return [
+            new RemoteCommandItem(this, "Recompile scripts", "recompileScripts"),
+            new RemoteCommandItem(this, "Execute console command", "execConsoleCommand"),
+        ];
+    }
+}
+
+class RemoteCommandItem extends vscode.TreeItem {
+    constructor(
+        readonly parent: RemoteCommandsHeaderItem,
+        override readonly label: string,
+        override readonly contextValue: string
+    ) {
+        super(label, vscode.TreeItemCollapsibleState.None);
+        this.iconPath = new vscode.ThemeIcon("remote");
     }
 
     getChildren(): Item[] {

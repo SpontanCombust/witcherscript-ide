@@ -8,6 +8,8 @@ import * as config from './config'
 
 let contextStatusBar: vscode.StatusBarItem;
 let lastActiveContentInfo: model.ContentInfo | undefined = undefined;
+export let gameOutputChannel: vscode.LogOutputChannel;
+
 
 /// Get info about the content to which belongs the last viewed script 
 export function getLastActiveContentInfo(): model.ContentInfo | undefined {
@@ -56,6 +58,8 @@ export function initializeState(context: vscode.ExtensionContext) {
     vscode.window.onDidChangeActiveTextEditor(() => {
         updateLastActiveContentInfo();
     });
+
+    gameOutputChannel = vscode.window.createOutputChannel("Witcher 3 Output", { log: true });
 }
 
 
@@ -161,7 +165,7 @@ function updateWorkStatusBar() {
 
         switch (currentWork.kind) {
             case 'parsing-scripts':
-                text += `Parsing scripts (${currentWork.contentName})`
+                text += `Processing (${currentWork.contentName})`
                 break;
         }
 

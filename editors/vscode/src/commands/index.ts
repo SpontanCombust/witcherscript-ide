@@ -21,6 +21,8 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.game.launchDx12Debug", game.commandLaunchGameDx12Debug()),
         vscode.commands.registerCommand("witcherscript-ide.game.launchDx11", game.commandLaunchGameDx11()),
         vscode.commands.registerCommand("witcherscript-ide.game.launchDx11Debug", game.commandLaunchGameDx11Debug()),
+        vscode.commands.registerCommand("witcherscript-ide.game.recompileScripts", game.commandRecompileScripts(context)),
+        vscode.commands.registerCommand("witcherscript-ide.game.execConsoleCommand", game.commandExecConsoleCommand(context)),
         vscode.commands.registerCommand("witcherscript-ide.misc.showCommandsInPalette", misc.commandShowCommandsInPalette()),
         vscode.commands.registerCommand("witcherscript-ide.misc.openLogs", misc.commandOpenLogs()),
         vscode.commands.registerCommand("witcherscript-ide.misc.openFileReadOnly", misc.commandOpenFileReadOnly()),

@@ -161,6 +161,18 @@
         "icon": "$(debug-alt)"
       },
       {
+        "command": "witcherscript-ide.game.recompileScripts",
+        "title": "Recompile game scripts",
+        "category": "WitcherScript-IDE",
+        "icon": "$(run)"
+      },
+      {
+        "command": "witcherscript-ide.game.execConsoleCommand",
+        "title": "Execute console command",
+        "category": "WitcherScript-IDE",
+        "icon": "$(run)"
+      },
+      {
         "command": "witcherscript-ide.misc.openLogs",
         "title": "Open extension logs",
         "category": "WitcherScript-IDE",
@@ -298,6 +310,16 @@
         {
           "command": "witcherscript-ide.projects.create",
           "when": "view == witcherscript-ide.dashboardView && viewItem == createWideProject",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.game.recompileScripts",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == recompileScripts",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.game.execConsoleCommand",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == execConsoleCommand",
           "group": "inline"
         }
       ],
