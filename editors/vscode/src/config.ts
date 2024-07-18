@@ -1,25 +1,43 @@
 import * as vscode from 'vscode';
 
 
-export interface Config {
-    gameDirectory: string,
-    contentRepositories: string[],
-    gameHostIpAddress: string,
-    enableLanguageServer: boolean,
-    rayonThreads: number,
-    enableSyntaxAnalysis: boolean,
-    enableDebugFeatures: boolean
+export function getConfiguration(): Config {
+    return new Config();
 }
 
-export function getConfiguration(): Config {
-    const config = vscode.workspace.getConfiguration('witcherscript-ide');
-    return {
-        gameDirectory: config.get<string>('gameDirectory') ?? '',
-        contentRepositories: config.get<string[]>('contentRepositories') ?? [],
-        gameHostIpAddress: config.get<string>('gameHostIpAddress') ?? '',
-        enableLanguageServer: config.get<boolean>('languageServer.enable') ?? true,
-        rayonThreads: config.get<number>('languageServer.rayonThreads') ?? 0,
-        enableSyntaxAnalysis: config.get<boolean>('languageServer.syntaxAnalysis') ?? true,
-        enableDebugFeatures: config.get<boolean>('debug.enableDebugFeatures') ?? false
+export class Config {
+    readonly config: vscode.WorkspaceConfiguration;
+
+    constructor() {
+        this.config = vscode.workspace.getConfiguration('witcherscript-ide');
+    }
+
+
+    get gameDirectory(): string {
+        return this.config.get<string>('gameDirectory') ?? '';
+    }
+
+    get contentRepositories(): string[] {
+        return this.config.get<string[]>('contentRepositories') ?? [];
+    }
+
+    get gameHostIpAddress(): string {
+        return this.config.get<string>('gameHostIpAddress') ?? '';
+    }
+
+    get enableLanguageServer(): boolean {
+        return this.config.get<boolean>('languageServer.enable') ?? true;
+    }
+
+    get rayonThreads(): number {
+        return this.config.get<number>('languageServer.rayonThreads') ?? 0;
+    }
+
+    get enableSyntaxAnalysis(): boolean {
+        return this.config.get<boolean>('languageServer.syntaxAnalysis') ?? true;
+    }
+
+    get enableDebugFeatures(): boolean {
+        return this.config.get<boolean>('debug.enableDebugFeatures') ?? false;
     }
 }
