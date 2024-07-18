@@ -1,90 +1,66 @@
 import * as vscode from 'vscode';
 
 
-// Used for opening the manifest file of the newly created project
-export namespace OpenManifestOnInit {
-    export const KEY = "OpenManifestOnInit";
+export function getPersistence(ctx: vscode.ExtensionContext): Persistence {
+    return new Persistence(ctx)
+}
 
-    export class Memento {
-        public workspaceUri: vscode.Uri;
-        public manifestUri: vscode.Uri;
+export class Persistence {
+    constructor(
+        readonly ctx: vscode.ExtensionContext
+    ) {}
 
-        constructor(workspaceUri: vscode.Uri, manifestUri: vscode.Uri) {
-            this.workspaceUri = workspaceUri;
-            this.manifestUri = manifestUri;
-        }
 
-        public async store(context: vscode.ExtensionContext) {
-            const dto: MementoDto = {
-                workspaceUriStr: this.workspaceUri.toString(),
-                manifestUriStr: this.manifestUri.toString(),
-            };
-
-            await context.globalState.update(KEY, dto);
-        }
-
-        public static fetch(context: vscode.ExtensionContext): Memento | undefined {
-            const dto = context.globalState.get<MementoDto>(KEY);
-            if (dto) {
-                const memento = new Memento(
-                    vscode.Uri.parse(dto.workspaceUriStr),
-                    vscode.Uri.parse(dto.manifestUriStr),
-                );
-
-                return memento;
-            } else {
-                return undefined;
+    // Used for opening the manifest file of the newly created project
+    get openManifestOnInit(): OpenManifestOnInit | undefined {
+        const dto = this.ctx.globalState.get<OpenManifestOnInitDto>("OpenManifestOnInit");
+        if (dto) {
+            return {
+                workspaceUri: vscode.Uri.parse(dto.workspaceUriStr),
+                manifestUri: vscode.Uri.parse(dto.manifestUriStr),
             }
-        }
-
-        public static erase(context: vscode.ExtensionContext) {
-            context.globalState.update(KEY, undefined);
+        } else {
+            return undefined;
         }
     }
 
-    interface MementoDto {
-        workspaceUriStr: string,
-        manifestUriStr: string
+    set openManifestOnInit(value: OpenManifestOnInit | undefined) {
+        let dto: OpenManifestOnInitDto | undefined = undefined;
+        if (value) {
+            dto = {
+                workspaceUriStr: value.workspaceUri.toString(),
+                manifestUriStr: value.manifestUri.toString(),
+            }
+        }
+
+        this.ctx.globalState.update("OpenManifestOnInit", dto);
+    }
+
+
+    get neverShowAgainDebugAstNotif(): boolean {
+        return this.ctx.globalState.get<boolean>("NeverShowAgainDebugAstNotif") ?? false;
+    }
+
+    set neverShowAgainDebugAstNotif(value: boolean) {
+        this.ctx.globalState.update("NeverShowAgainDebugAstNotif", value)
+    }
+
+
+    get neverShowAgainForeignScriptWarning(): boolean {
+        return this.ctx.globalState.get<boolean>("NeverShowAgainForeignScriptWarning") ?? false;
+    }
+
+    set neverShowAgainForeignScriptWarning(value: boolean) {
+        this.ctx.globalState.update("NeverShowAgainForeignScriptWarning", value)
     }
 }
 
-export namespace RememberedChoices {
-    export const KEY = "RememberedChoices";
+export interface OpenManifestOnInit {
+    workspaceUri: vscode.Uri,
+    manifestUri: vscode.Uri
+}
 
-    export class Memento {
-        public neverShowAgainDebugAstNotif: boolean;
-        public neverShowAgainForeignScriptWarning: boolean;
-
-        constructor(dto: MementoDto) {
-            this.neverShowAgainDebugAstNotif = dto.neverShowAgainDebugAstNotif;
-            this.neverShowAgainForeignScriptWarning = dto.neverShowAgainForeignScriptWarning;
-        }
-
-        public async store(context: vscode.ExtensionContext) {
-            const dto: MementoDto = {
-                neverShowAgainDebugAstNotif: this.neverShowAgainDebugAstNotif,
-                neverShowAgainForeignScriptWarning: this.neverShowAgainForeignScriptWarning
-            };
-
-            context.globalState.update(KEY, dto);
-        }
-
-        public static fetchOrDefault(context: vscode.ExtensionContext): Memento {
-            const dto = context.globalState.get<MementoDto>(KEY);
-
-            if (dto) {
-                return new Memento(dto);
-            } else {
-                return new Memento({
-                    neverShowAgainDebugAstNotif: false,
-                    neverShowAgainForeignScriptWarning: false
-                })
-            }
-        }
-    }
-
-    interface MementoDto {
-        neverShowAgainDebugAstNotif: boolean;
-        neverShowAgainForeignScriptWarning: boolean;
-    }
+interface OpenManifestOnInitDto {
+    workspaceUriStr: string,
+    manifestUriStr: string
 }

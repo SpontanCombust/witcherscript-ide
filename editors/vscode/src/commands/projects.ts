@@ -7,7 +7,7 @@ import { getLanguageClient } from "../lsp/lang_client"
 import { VanillaFilesProvider } from '../providers/vanilla_files_provider';
 import { ScriptContentProvider } from '../providers/script_content_provider';
 import * as requests from '../lsp/requests';
-import * as persistence from '../persistence';
+import { getPersistence } from '../persistence';
 import * as utils from '../utils';
 import { Cmd } from './index'
 
@@ -152,12 +152,11 @@ async function initializeProjectInDirectory(client: lsp.LanguageClient, projectD
             Answer.YesHere, Answer.YesInNew, Answer.No);
 
         if (answer != undefined && answer != Answer.No) {
-            const memento = new persistence.OpenManifestOnInit.Memento(
-                projectDirUri,
-                manifestUri
-            );
-
-            await memento.store(context);
+            const db = getPersistence(context);
+            db.openManifestOnInit = {
+                workspaceUri: projectDirUri,
+                manifestUri,
+            };
 
             const openNewWindow = answer == Answer.YesInNew;
             await vscode.commands.executeCommand("vscode.openFolder", projectDirUri, {

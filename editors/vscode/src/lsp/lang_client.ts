@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
-import * as persistence from '../persistence';
+import { getPersistence } from '../persistence';
 import * as config from '../config';
 import * as handlers from './handlers';
 import * as tdcp from '../providers/text_document_content_providers'
@@ -71,8 +71,8 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 
 	// Start the client. This will also launch the server
 	return client.start().then(_ => {
-		const memento = persistence.OpenManifestOnInit.Memento.fetch(ctx);
-		
+		const db = getPersistence(ctx);
+		const memento = db.openManifestOnInit;
 		if (memento != undefined) {
 			// If a new project has just been created in this directory and the user agreed to open it, show them the manifest of said project
 			if (vscode.workspace.workspaceFolders?.some(f => f.uri.fsPath == memento.workspaceUri.fsPath)) {
@@ -84,7 +84,7 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 					(err) => client?.debug('Manifest could not be shown: ' + err)
 				);
 
-				persistence.OpenManifestOnInit.Memento.erase(ctx);
+				db.openManifestOnInit = undefined;
 			}
 		}
 	});

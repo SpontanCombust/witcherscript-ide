@@ -2,13 +2,13 @@ import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as fspath from 'path';
 
-import * as persistence from './persistence';
+import { getPersistence } from './persistence';
 import * as model from './lsp/model'
 
 
 export async function showForeignScriptWarning(context: vscode.ExtensionContext) {
-    const rememberedChoices = persistence.RememberedChoices.Memento.fetchOrDefault(context);
-    if (!rememberedChoices.neverShowAgainForeignScriptWarning) {
+    const db = getPersistence(context);
+    if (!db.neverShowAgainForeignScriptWarning) {
         enum Answer {
             Close = "I understand",
             NeverShowAgain = "Don't show this message again",
@@ -25,8 +25,7 @@ export async function showForeignScriptWarning(context: vscode.ExtensionContext)
         );
 
         if (answer == Answer.NeverShowAgain) {
-            rememberedChoices.neverShowAgainForeignScriptWarning = true;
-            rememberedChoices.store(context);
+            db.neverShowAgainForeignScriptWarning = true;
         }
         else if (answer == Answer.SeeManual) {
             await vscode.env.openExternal(manualUri);

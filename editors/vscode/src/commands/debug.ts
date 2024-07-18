@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import * as persistence from '../persistence';
+import { getPersistence } from '../persistence';
 import * as tdcp from '../providers/text_document_content_providers'
 import { Cmd } from './index'
 
@@ -42,8 +42,8 @@ export function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
                 editor.revealRange(new vscode.Range(targetPos, targetPos), vscode.TextEditorRevealType.AtTop);
             }
 
-            const rememberedChoices = persistence.RememberedChoices.Memento.fetchOrDefault(context);
-            if (!rememberedChoices.neverShowAgainDebugAstNotif) {
+            const db = getPersistence(context);
+            if (!db.neverShowAgainDebugAstNotif) {
                 enum Answer {
                     Close = "I understand",
                     NeverShowAgain = "Never show this message again"
@@ -55,8 +55,7 @@ export function commandShowScriptAst(context: vscode.ExtensionContext): Cmd {
                 );
 
                 if (answer == Answer.NeverShowAgain) {
-                    rememberedChoices.neverShowAgainDebugAstNotif = true;
-                    rememberedChoices.store(context);
+                    db.neverShowAgainDebugAstNotif = true;
                 }
             }
         });
@@ -138,9 +137,9 @@ export function commandShowScriptCst(context: vscode.ExtensionContext): Cmd {
                 editor.revealRange(new vscode.Range(targetPos, targetPos), vscode.TextEditorRevealType.AtTop);
             }
 
-            const rememberedChoices = persistence.RememberedChoices.Memento.fetchOrDefault(context);
+            const db = getPersistence(context);
             // using the same memento for AST warning for simplicity
-            if (!rememberedChoices.neverShowAgainDebugAstNotif) { 
+            if (!db.neverShowAgainDebugAstNotif) { 
                 enum Answer {
                     Close = "I understand",
                     NeverShowAgain = "Never show this message again"
@@ -152,8 +151,7 @@ export function commandShowScriptCst(context: vscode.ExtensionContext): Cmd {
                 );
 
                 if (answer == Answer.NeverShowAgain) {
-                    rememberedChoices.neverShowAgainDebugAstNotif = true;
-                    rememberedChoices.store(context);
+                    db.neverShowAgainDebugAstNotif = true;
                 }
             }
         });
