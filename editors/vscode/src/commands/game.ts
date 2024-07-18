@@ -8,9 +8,10 @@ import { fileExists } from '../utils';
 import * as state from '../state'
 
 
-const EXE_PATH_DX12 = "bin/x64_dx12/witcher3.exe";
-const EXE_PATH_DX11 = "bin/x64/witcher3.exe";
-const DEBUG_ARGS = ['-net', '-debugscripts'];
+const GAME_EXE_DIR_DX12 = "bin/x64_dx12";
+const GAME_EXE_DIR_DX11 = "bin/x64";
+const GAME_EXE_NAME = "witcher3.exe";
+const GAME_DEBUG_ARGS = ['-net', '-debugscripts'];
 
 export function commandLaunchGameDx12(): Cmd {
     return () => {
@@ -48,7 +49,8 @@ async function launchGame(version: 'dx12' | 'dx11', debugMode: boolean) {
         return;
     }
 
-    const exePath = fspath.join(cfg.gameDirectory, version == 'dx12' ? EXE_PATH_DX12 : EXE_PATH_DX11);
+    const exeDir = fspath.join(cfg.gameDirectory, version == 'dx12' ? GAME_EXE_DIR_DX12 : GAME_EXE_DIR_DX11);
+    const exePath = fspath.join(exeDir, GAME_EXE_NAME);
 
     if (!(await fileExists(exePath))) {
         vscode.window.showErrorMessage("The game executable could not be found!");
@@ -63,8 +65,8 @@ async function launchGame(version: 'dx12' | 'dx11', debugMode: boolean) {
     // spawn the game as a detached process
     let child = cp.spawn(
         exePath, 
-        debugMode ? DEBUG_ARGS : [], 
-        { detached: true, stdio: ['ignore']}
+        debugMode ? GAME_DEBUG_ARGS : [], 
+        { detached: true, stdio: ['ignore'], cwd: exeDir }
     );
 
     // don't wait for the child to exit
