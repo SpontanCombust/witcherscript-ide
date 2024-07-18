@@ -5,13 +5,15 @@ import * as config from './config';
 import * as providers from './providers';
 import * as lc from './lsp/lang_client';
 import * as state from './state';
+import { getContextKeys } from './context_keys';
 
 
 export function activate(context: vscode.ExtensionContext) {
 	const cfg = config.getConfiguration();
+	const ctxKeys = getContextKeys();
 
-	vscode.commands.executeCommand('setContext', 'witcherscript-ide.debugFeaturesEnabled', cfg.enableDebugFeatures);
-	vscode.commands.executeCommand('setContext', 'witcherscript-ide.languageServerActive', false);
+	ctxKeys.debugFeaturesEnabled = cfg.enableDebugFeatures;
+	ctxKeys.languageServerActive = false;
 	
 	commands.registerCommands(context);
 	providers.registerProviders(context);
@@ -20,7 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	if (cfg.enableLanguageServer) {
 		lc.createLanguageClient(context, cfg).then(() => {
-			vscode.commands.executeCommand('setContext', 'witcherscript-ide.languageServerActive', true);
+			ctxKeys.languageServerActive = true;
 		});
 	}
 }
