@@ -112,16 +112,21 @@ function runRw3d(ctx: vscode.ExtensionContext, cmd: string, additionalArgs: stri
     ];
 
     state.gameOutputChannel.show();
+
+    state.gameOutputChannel.append("\n");
+    state.gameOutputChannel.debug(`Executing: rw3d_cli ${args.join(" ")}`)
     const rw3d = cp.spawn(rw3dPath, args);
 
     rw3d.stdout.on('data', (data) => {
-        for(const line of data.toString().split("\n")) {
+        const s = (data.toString() as string).trimEnd();
+        for(const line of s.split("\n")) {
             state.gameOutputChannel.append(line);
         }
     });
 
     rw3d.stderr.on('data', (data) => {
-        for(const line of data.toString().split("\n")) {
+        const s = (data.toString() as string).trimEnd();
+        for(const line of s.split("\n")) {
             state.gameOutputChannel.error(line);
         }
     });
