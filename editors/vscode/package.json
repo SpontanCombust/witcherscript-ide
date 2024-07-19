@@ -216,7 +216,7 @@
       },
       {
         "command": "witcherscript-ide.debug.clearGlobalState",
-        "title": "Clear global cache of the extension",
+        "title": "Clear global persistent data",
         "category": "WitcherScript-IDE (debug)",
         "enablement": "witcherscript-ide.debugFeaturesEnabled"
       }
