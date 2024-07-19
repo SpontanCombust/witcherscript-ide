@@ -53,6 +53,15 @@ export class Persistence {
     set neverShowAgainForeignScriptWarning(value: boolean) {
         this.ctx.globalState.update("NeverShowAgainForeignScriptWarning", value)
     }
+
+
+    get shouldSeeWelcomeMessage(): boolean {
+        return this.ctx.globalState.get<boolean>("ShouldSeeWelcomeMessage") ?? true;
+    }
+
+    set shouldSeeWelcomeMessage(value: boolean) {
+        this.ctx.globalState.update("ShouldSeeWelcomeMessage", value)
+    }
 }
 
 export interface OpenManifestOnInit {
