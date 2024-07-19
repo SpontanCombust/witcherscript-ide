@@ -23,6 +23,12 @@ export function commandOpenLogs(): Cmd {
     }
 }
 
+export function commandOpenSettings(): Cmd {
+    return () => {
+        vscode.commands.executeCommand('workbench.action.openSettings', 'witcherscript-ide')
+    }
+}
+
 export function commandOpenFileReadOnly(): Cmd {
     return (uri: vscode.Uri) => {
         uri = uri.with({ scheme: tdcp.ReadOnlyContentProvider.scheme });

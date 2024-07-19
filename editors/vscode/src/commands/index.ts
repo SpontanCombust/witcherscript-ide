@@ -25,6 +25,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.game.execConsoleCommand", game.commandExecConsoleCommand(context)),
         vscode.commands.registerCommand("witcherscript-ide.misc.showCommandsInPalette", misc.commandShowCommandsInPalette()),
         vscode.commands.registerCommand("witcherscript-ide.misc.openLogs", misc.commandOpenLogs()),
+        vscode.commands.registerCommand("witcherscript-ide.misc.openSettings", misc.commandOpenSettings()),
         vscode.commands.registerCommand("witcherscript-ide.misc.openFileReadOnly", misc.commandOpenFileReadOnly()),
     );
 
