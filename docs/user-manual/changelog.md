@@ -2,6 +2,25 @@
 
 # Changelog
 
+# v0.4.0-dev.2
+
+### Features
+- Added a "Dashboard" view that shows a list some of the main commands you can execute, so you don't have to look through the command palette
+- Added commands to launch the game
+- Integrated the [Rusty Witcher 3 Debugger CLI](https://github.com/SpontanCombust/rusty_witcher_debugger/) tool into the extension client
+- Added a command to recompile game scripts on runtime thanks to RW3D_CLI
+- Added a command to run an exec command thanks to RW3D_CLI
+- Added a command to quickly see extension settings
+- Added a welcome message that is shown when using the extension for the first time
+- Added a short in-editor walkthrough for the extension
+
+### Fixes
+- View container tab should now be visible regardless of whether the extension has been activated
+  
+### Other changes
+- Changed view container logo as suggested by @ElementaryLewis
+
+
 # v0.4.0-dev.1
 
 ### Features

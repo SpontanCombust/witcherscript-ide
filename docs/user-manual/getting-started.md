@@ -4,6 +4,7 @@
 2. Configure paths to existing vanilla and mod scripts by going to settings (File > Preferences > Settings). Start typeing "witcherscript" and look for "Game Directory" and "Content Repositories" settings.
 3. Open the command prompt using Ctrl + Shift + P and start typeing "witcherscript". Choose a command to create or initialize a WitcherScript project.
 
+<!-- TODO update the video with the process being done through the walkthrough -->
 <video controls muted>
   <source src="../../assets/user-manual/getting-started/getting-started.mp4" type="video/mp4">
 </video>
