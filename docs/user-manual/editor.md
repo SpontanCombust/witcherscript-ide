@@ -87,6 +87,10 @@ Remotely connects to the game to execute a command that would normally be entere
 *"Open extension logs"*
 Open WIDE's language client output view.
 
+### `witcherscript-ide.misc.openSettings`
+*"Open extension settings"*
+Open the settings page on WIDE's section.
+
 ### `witcherscript-ide.debug.showScriptAst`
 *"Show script AST"*  
 Shows the Abstract Syntax Tree  of the currently focused on script as it is uderstood by the language server.
@@ -110,8 +114,8 @@ Shows code symbols that have been extracted from the currently focused on script
 Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
 
 ### `witcherscript-ide.debug.clearGlobalState`
-*"Clear global cache of the extension"*  
-Clears VSCode extension database entries created by the client. Useful mostly for testing.
+*"Clear global persistent data"*  
+Clears global VSCode extension database entries created by the client. Useful mostly for testing.
 Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
 
 
