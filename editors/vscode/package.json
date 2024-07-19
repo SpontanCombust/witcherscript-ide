@@ -185,6 +185,12 @@
         "enablement": "witcherscript-ide.languageServerActive"
       },
       {
+        "command": "witcherscript-ide.misc.openSettings",
+        "title": "Open extension settings",
+        "category": "WitcherScript-IDE",
+        "icon": "$(gear)"
+      },
+      {
         "command": "witcherscript-ide.debug.showScriptAst",
         "title": "Show script AST",
         "category": "WitcherScript-IDE (debug)",
@@ -257,6 +263,61 @@
       {
         "view": "witcherscript-ide.scriptContentView",
         "contents": "No script projects detected in the workspace.\n[Initialize project](command:witcherscript-ide.projects.init)\n[Create new project](command:witcherscript-ide.projects.create)"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "witcherscript-ide.walkthrough",
+        "title": "Get Started with WitcherScript IDE",
+        "description": "Thank you for installing WIDE! This is a short introduction to the extension that will quickly teach how to use it.",
+        "steps": [
+          {
+            "id": "witcherscript-ide.walkthrough.settingsSetup",
+            "title": "Required settings",
+            "description": "Set up paths to the game directory or any other directories containing scripts. This is mandatory for the extension to be able to find vanilla scripts.\n[Open Settings](command:witcherscript-ide.misc.openSettings)",
+            "completionEvents": [
+              "onSettingChanged:witcherscript-ide.gameDirectory",
+              "onSettingChanged:witcherscript-ide.contentRepositories"
+            ],
+            "media": {
+              "image": "media/walkthrough/settings.png",
+              "altText": "Basic WIDE settings"
+            }
+          },
+          {
+            "id": "witcherscript-ide.walkthrough.views",
+            "title": "Views",
+            "description": "WIDE contributes a view container, which houses a few views that provide specialized functionalities and help you visualize the workspace better.\n[Open view container](command:witcherscript-ide.dashboardView.focus)",
+            "completionEvents": [],
+            "media": {
+              "markdown": "media/walkthrough/views.md"
+            }
+          },
+          {
+            "id": "witcherscript-ide.walkthrough.documentation",
+            "title": "Documentation",
+            "description": "WitcherScript IDE has its own documentation website you can check out for more details [here](https://spontancombust.github.io/witcherscript-ide/user-manual/).\nTo find out about all the things added, changed or removed throughout WIDE's versions check out the [changelog](https://spontancombust.github.io/witcherscript-ide/user-manual/changelog/).",
+            "completionEvents": [],
+            "media": {
+              "image": "media/walkthrough/docs-website.png",
+              "altText": "Documentation website"
+            }
+          },
+          {
+            "id": "witcherscript-ide.walkthrough.firstProject",
+            "title": "First script project",
+            "description": "Now you can finally move onto the fun part: coding! In order to use all the advanced features you need a script project. You can go about this in a few ways:\n[Initialize a script project](command:witcherscript-ide.projects.init)\nif you're already in the process of developing a mod using scripts\n[Create a new project](command:witcherscript-ide.projects.create)\nto create a completely new folder with the basic file structure you can later customize to your liking.\n[Open a REDkit project](command:vscode.openFolder)\nif your developing a mod using the REDkit. WIDE natively recognizes and can work with REDkit project solutions. If you work with a multi-mod set up you should still consider upgrading it with WIDE's project solution to use dependency discovery.",
+            "completionEvents": [
+              "onCommand:witcherscript-ide.projects.init",
+              "onCommand:witcherscript-ide.projects.create",
+              "onCommand:vscode.openFolder"
+            ],
+            "media": {
+              "image": "icon.png",
+              "altText": "WIDE"
+            }
+          }
+        ]
       }
     ],
     "menus": {
