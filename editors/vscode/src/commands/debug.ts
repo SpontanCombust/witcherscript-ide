@@ -160,16 +160,25 @@ export function commandShowScriptCst(context: vscode.ExtensionContext): Cmd {
 
 export function commandClearGlobalState(context: vscode.ExtensionContext): Cmd {
     return async () => {
-        const keys = context.globalState.keys();
+        const items: vscode.QuickPickItem[] = 
+            context.globalState.keys()
+            .map(k => { return {
+                label: k,
+                description: context.globalState.get<any>(k).toString()
+            }});
 
-        const selected = await vscode.window.showQuickPick([...keys, 'ALL']);
+        items.push({
+            label: 'ALL'
+        });
+
+        const selected = await vscode.window.showQuickPick(items);
         if (selected) {
-            if (selected == 'ALL') {
-                for (const key of keys) {
+            if (selected.label == 'ALL') {
+                for (const key of context.globalState.keys()) {
                     await context.globalState.update(key, undefined);
                 }
             } else {
-                await context.globalState.update(selected, undefined);
+                await context.globalState.update(selected.label, undefined);
             }
         }
     }
