@@ -28,6 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	}
 
+
 	if (db.shouldSeeWelcomeMessage) {
 		enum Answer {
 			ShowTuto = "Show tutorial",
@@ -50,6 +51,30 @@ export function activate(context: vscode.ExtensionContext) {
 				db.shouldSeeWelcomeMessage = false;
 			}
 		});
+	}
+
+	const version = context.extension.packageJSON.version as string;
+	if (db.version != version) {
+		const changelogUri = vscode.Uri.parse("https://spontancombust.github.io/witcherscript-ide/user-manual/changelog/");
+
+		enum Answer {
+			ShowChangelog = "Show changelog",
+		}
+
+		vscode.window.showInformationMessage(
+			`WitcherScript IDE has been updated to version ${version}`,
+			Answer.ShowChangelog
+		).then((answer) => {
+			if (answer) {
+				switch (answer) {
+					case Answer.ShowChangelog:
+						vscode.env.openExternal(changelogUri);
+						break;
+				}
+			}
+		})
+
+		db.version = version;
 	}
 }
 

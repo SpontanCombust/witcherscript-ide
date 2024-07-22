@@ -62,6 +62,15 @@ export class Persistence {
     set shouldSeeWelcomeMessage(value: boolean) {
         this.ctx.globalState.update("ShouldSeeWelcomeMessage", value)
     }
+
+
+    get version(): string {
+        return this.ctx.globalState.get<string>("Version") ?? "";
+    }
+
+    set version(value: string) {
+        this.ctx.globalState.update("Version", value)
+    }
 }
 
 export interface OpenManifestOnInit {
