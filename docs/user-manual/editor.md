@@ -1,37 +1,68 @@
 # Editor
 
+
+## UI Elements
+
+### Dashboard View
+
+The primary view is the dashboard, which lets among other things create a script project and recompile game's scripts.
+
+![Dashboard View](../assets/user-manual/editor/dashboard-view.png)
+
+### Vanilla Scripts View
+
+This view lets you see all available vanilla script files that you can import/checkout into your project.
+
+![Vanilla Scripts View](../assets/user-manual/editor/vanilla-scripts-view.png)
+
+### Contents View
+
+Script "contents" or "packages" are seperate units of code that WIDE can recognize. These include custom WIDE projects, REDkit projects and raw Mod directories. You can learn more about the project system that WIDE uses [here](https://spontancombust.github.io/witcherscript-ide/user-manual/project-system/).
+
+![Contents View](../assets/user-manual/editor/contents-view.png)
+
+### Status Bar
+
+Status bar displays context information about the last worked on project and any processes that might be going on currently in the background.
+
+![Status Bar](../assets/user-manual/editor/status-bar.png)
+
+
+
+<br>
+
+---
+
 ## Features
 
-- creating and initializing [script projects](./project-system.md)
+### Creating and initializing [script projects](./project-system.md)
 
-<video controls muted>
-  <source src="../../assets/user-manual/editor/project-creation.mp4" type="video/mp4">
-</video>
+![Project Manifest](../assets/user-manual/editor/project-manifest.png)
 
 :material-information-outline: Loading REDkit projects is also natively supported with some prior requirements outlined [here](./project-system.md#redkit-project).
 
-- syntax highlighting
+### Syntax highlighting
 
 ![Syntax Highlighting](../assets/user-manual/editor/syntax-highlighting.jpg)
 
-- basic syntax analysis
+### Basic syntax analysis
 
 ![Syntax Analysis](../assets/user-manual/editor/syntax-analysis.jpg)
 
-- importing and comparing scripts with their vanilla counterparts
+### Importing and comparing scripts with their vanilla counterparts
 
 <video controls muted>
   <!-- TODO update the video with the process being done entirely through GUI -->
   <source src="../../assets/user-manual/editor/vanilla-import-diff.mp4" type="video/mp4"> 
 </video>
 
-- hover tooltips
+### Hover tooltips
 
 <video controls muted>
   <source src="../../assets/user-manual/editor/hover.mp4" type="video/mp4">
 </video>
 
-- go to definition/declaration
+### Go to definition/declaration
 
 <video controls muted>
   <source src="../../assets/user-manual/editor/goto-definition.mp4" type="video/mp4">
@@ -39,6 +70,11 @@
 
 **More coming soon!**
 
+
+
+<br>
+
+---
 
 ## Command palette
 
@@ -118,6 +154,12 @@ Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enab
 Clears global VSCode extension database entries created by the client. Useful mostly for testing.
 Requires [debug features](#witcherscript-idedebugenabledebugfeatures) to be enabled.
 
+
+
+
+<br>
+
+---
 
 ## Configuration
 
