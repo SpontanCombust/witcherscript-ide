@@ -35,6 +35,7 @@ Currently available xtask commands:
 - `install` - build, package and install the VSCode extension locally
 
 The usual procedure is as follows:
+
 1. Run `prep-server` whenever making changing to the LSP server. The executable cannot be updated during an active extension host session.
 2. Run `prep-client` whenever making changes to the VSCode client code. This can be done during extension host session, but changes can be observed only after extension reload.
 3. Run `prep-rw3d` when building the project for the first time or when the desired version of the tool changes.
