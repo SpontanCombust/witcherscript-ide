@@ -72,7 +72,7 @@
           "order": 1,
           "markdownDescription": "Paths to custom directories containing WitcherScript contents."
         },
-        "witcherscript-ide.gameHostIpAddress": {
+        "witcherscript-ide.gameHost.ipAddress": {
           "type": "string",
           "default": "127.0.0.1",
           "order": 2,

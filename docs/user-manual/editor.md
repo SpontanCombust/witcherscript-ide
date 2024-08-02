@@ -169,7 +169,7 @@ Path to Witcher 3's root game directory (containing bin, content, Mods folders e
 ### `witcherscript-ide.contentRepositories`
 Paths to custom directories containing WitcherScript contents. Useful when not having Witcher 3 installed on your local machine or when simply storing scripts outside of game directory.
 
-### `witcherscript-ide.gameHostIpAddress`
+### `witcherscript-ide.gameHost.ipAddress`
 IPv4 address of the game host. It is used when running remote game commands such as script recompilation. Change this if you're running the game on a different computer from the one you're currently working in VSCode. Defaults to the localhost address.
 
 ### `witcherscript-ide.languageServer.enable`

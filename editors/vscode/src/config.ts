@@ -22,7 +22,7 @@ export class Config {
     }
 
     get gameHostIpAddress(): string {
-        return this.config.get<string>('gameHostIpAddress') ?? '';
+        return this.config.get<string>('gameHost.ipAddress') ?? '';
     }
 
     get enableLanguageServer(): boolean {
