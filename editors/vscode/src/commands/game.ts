@@ -3,7 +3,7 @@ import * as fspath from 'path';
 import * as cp from 'child_process';
 
 import { Cmd } from './index'
-import { getConfiguration } from '../config';
+import { GameHostType, getConfiguration } from '../config';
 import { fileExists } from '../utils';
 import * as state from '../state'
 
@@ -106,10 +106,12 @@ function runRw3d(ctx: vscode.ExtensionContext, cmd: string, additionalArgs: stri
     const rw3dPath = ctx.asAbsolutePath(
         `deps/rw3d/bin/rw3d_cli${ext}`
     );
+    const cfg = getConfiguration();
 
-    const ip = getConfiguration().gameHostIpAddress;
+    const target = cfg.gameHostType == GameHostType.Standalone ? "game" : "editor"; 
+    const ip = cfg.gameHostIpAddress;
     const args = [
-        "--no-delay", "--log-level=output-only", `--ip=${ip}`,
+        "--no-delay", "--log-level=output-only", `--target=${target}`, `--ip=${ip}`,
         cmd, ...additionalArgs
     ];
 

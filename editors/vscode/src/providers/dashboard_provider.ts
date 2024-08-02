@@ -1,5 +1,7 @@
 import * as vscode from 'vscode'
 
+import { Config, getConfiguration } from '../config';
+
 
 let instance: DashboardProvider;
 
@@ -17,6 +19,13 @@ export class DashboardProvider implements vscode.TreeDataProvider<Item> {
         if (instance == undefined) {
             instance = new DashboardProvider();
         }
+
+        vscode.workspace.onDidChangeConfiguration((ev) => {
+            if (ev.affectsConfiguration(Config.SECTION)) {
+                // making sure that game host type is synced
+                instance.didChangeTreeData.fire(undefined);
+            }
+        });
     
         return instance;
     }
@@ -61,6 +70,7 @@ export type Item =
     ProjectSystemOptionsHeaderItem |
     ProjectSystemOptionItem |
     RemoteCommandsHeaderItem |
+    RemoteCommandsHostInfoItem |
     RemoteCommandItem;
 
 
@@ -137,9 +147,26 @@ class RemoteCommandsHeaderItem extends vscode.TreeItem {
 
     getChildren(): Item[] {
         return [
+            new RemoteCommandsHostInfoItem(this),
             new RemoteCommandItem(this, "Recompile scripts", "recompileScripts"),
             new RemoteCommandItem(this, "Execute console command", "execConsoleCommand"),
         ];
+    }
+}
+
+class RemoteCommandsHostInfoItem extends vscode.TreeItem {
+    constructor(
+        readonly parent: RemoteCommandsHeaderItem,
+    ) {
+        const cfg = getConfiguration();
+        const label = `Game host: ${cfg.gameHostType.toString()}, address: ${cfg.gameHostIpAddress}`;
+
+        super(label, vscode.TreeItemCollapsibleState.None);
+        this.contextValue = "gameHostInfo";
+    }
+
+    getChildren(): Item[] {
+        return [];
     }
 }
 

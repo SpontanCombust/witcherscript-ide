@@ -6,10 +6,12 @@ export function getConfiguration(): Config {
 }
 
 export class Config {
-    readonly config: vscode.WorkspaceConfiguration;
+    public static readonly SECTION = 'witcherscript-ide';
+
+    private readonly config: vscode.WorkspaceConfiguration;
 
     constructor() {
-        this.config = vscode.workspace.getConfiguration('witcherscript-ide');
+        this.config = vscode.workspace.getConfiguration(Config.SECTION);
     }
 
 
@@ -19,6 +21,10 @@ export class Config {
 
     get contentRepositories(): string[] {
         return this.config.get<string[]>('contentRepositories') ?? [];
+    }
+
+    get gameHostType(): GameHostType {
+        return this.config.get<string>('gameHost.type') as GameHostType ?? GameHostType.Standalone;
     }
 
     get gameHostIpAddress(): string {
@@ -40,4 +46,9 @@ export class Config {
     get enableDebugFeatures(): boolean {
         return this.config.get<boolean>('debug.enableDebugFeatures') ?? false;
     }
+}
+
+export enum GameHostType {
+    Standalone = "standalone",
+    Editor = "editor"
 }

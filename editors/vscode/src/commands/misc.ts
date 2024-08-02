@@ -29,6 +29,12 @@ export function commandOpenSettings(): Cmd {
     }
 }
 
+export function commandOpenGameHostSettings(): Cmd {
+    return () => {
+        vscode.commands.executeCommand('workbench.action.openSettings', 'witcherscript-ide.gameHost')
+    }
+}
+
 export function commandOpenFileReadOnly(): Cmd {
     return (uri: vscode.Uri) => {
         uri = uri.with({ scheme: tdcp.ReadOnlyContentProvider.scheme });
