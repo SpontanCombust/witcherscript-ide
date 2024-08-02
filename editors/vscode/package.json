@@ -72,34 +72,48 @@
           "order": 1,
           "markdownDescription": "Paths to custom directories containing WitcherScript contents."
         },
+        "witcherscript-ide.gameHost.type": {
+          "type": "string",
+          "enum": [
+            "editor",
+            "standalone"
+          ],
+          "enumDescriptions": [
+            "The game launched through the REDkit modding tool",
+            "The game launched on its own with debug arguments"
+          ],
+          "default": "editor",
+          "order": 2,
+          "markdownDescription": "Preferred way of using Witcher 3 for creating mods. Affects remote commands in the dashboard view."
+        },
         "witcherscript-ide.gameHost.ipAddress": {
           "type": "string",
           "default": "127.0.0.1",
-          "order": 2,
-          "markdownDescription": "IPv4 address of the game host. It is used when running remote game commands such as script recompilation. Change this if you're running the game on a different computer from the one you're currently working in VSCode. Defaults to the localhost address."
+          "order": 3,
+          "markdownDescription": "IPv4 address of the game host. Affects remote commands in the dashboard view. Change this if you're running the game on a different computer from the one you're currently working in VSCode. Defaults to the localhost address."
         },
         "witcherscript-ide.languageServer.enable": {
           "type": "boolean",
           "default": true,
-          "order": 3,
+          "order": 4,
           "markdownDescription": "Enable the language server. You can disable this if you only want syntax highlighting (change requires extension reload)."
         },
         "witcherscript-ide.languageServer.syntaxAnalysis": {
           "type": "boolean",
           "default": true,
-          "order": 4,
+          "order": 5,
           "markdownDescription": "Enables syntax analysis in the language server."
         },
         "witcherscript-ide.languageServer.rayonThreads": {
           "type": "integer",
           "default": 0,
-          "order": 5,
+          "order": 6,
           "markdownDescription": "Number of threads allocated to parallel data computation. Leave at 0 for automatic configuration. (change requires extension reload)"
         },
         "witcherscript-ide.debug.enableDebugFeatures": {
           "type": "boolean",
           "default": false,
-          "order": 6,
+          "order": 7,
           "markdownDescription": "Enable debug features (change requires extension reload)."
         }
       }
@@ -187,6 +201,12 @@
       {
         "command": "witcherscript-ide.misc.openSettings",
         "title": "Open extension settings",
+        "category": "WitcherScript-IDE",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "witcherscript-ide.misc.openGameHostSettings",
+        "title": "Open extension settings for the game host",
         "category": "WitcherScript-IDE",
         "icon": "$(gear)"
       },
@@ -329,6 +349,10 @@
         {
           "command": "witcherscript-ide.projects.refreshScriptContentView",
           "when": "false"
+        },
+        {
+          "command": "witcherscript-ide.misc.openGameHostSettings",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -377,6 +401,11 @@
         {
           "command": "witcherscript-ide.projects.create",
           "when": "view == witcherscript-ide.dashboardView && viewItem == createWideProject",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.misc.openGameHostSettings",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == gameHostInfo",
           "group": "inline"
         },
         {
