@@ -24,7 +24,7 @@ export class Config {
     }
 
     get gameHostType(): GameHostType {
-        return this.config.get<string>('gameHost.type') as GameHostType ?? GameHostType.Standalone;
+        return this.config.get<string>('gameHost.type') as GameHostType ?? GameHostType.Auto;
     }
 
     get gameHostIpAddress(): string {
@@ -50,5 +50,6 @@ export class Config {
 
 export enum GameHostType {
     Standalone = "standalone",
-    Editor = "editor"
+    Editor = "editor",
+    Auto = "auto"
 }

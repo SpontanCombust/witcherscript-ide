@@ -76,15 +76,17 @@
           "type": "string",
           "enum": [
             "editor",
-            "standalone"
+            "standalone",
+            "auto"
           ],
           "enumDescriptions": [
             "The game launched through the REDkit modding tool",
-            "The game launched on its own with debug arguments"
+            "The game launched on its own with debug arguments",
+            "The method gets automatically detected"
           ],
-          "default": "editor",
+          "default": "auto",
           "order": 2,
-          "markdownDescription": "Preferred way of using Witcher 3 for creating mods. Affects remote commands in the dashboard view."
+          "markdownDescription": "What is the method you use to launch and mod the game. Affects remote commands in the dashboard view."
         },
         "witcherscript-ide.gameHost.ipAddress": {
           "type": "string",

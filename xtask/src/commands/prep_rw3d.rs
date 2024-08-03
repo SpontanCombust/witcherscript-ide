@@ -3,7 +3,7 @@ use anyhow::Context;
 use xshell::{cmd, Shell};
 
 
-const RW3D_VERSION_TAG: &str = "v0.7.0";
+const RW3D_VERSION_TAG: &str = "v0.8.0";
 const RW3D_BIN_DST: &str = "editors/vscode/deps/rw3d/bin";
 
 

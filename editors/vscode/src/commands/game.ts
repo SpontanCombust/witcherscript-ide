@@ -108,7 +108,21 @@ function runRw3d(ctx: vscode.ExtensionContext, cmd: string, additionalArgs: stri
     );
     const cfg = getConfiguration();
 
-    const target = cfg.gameHostType == GameHostType.Standalone ? "game" : "editor"; 
+    let target: string;
+    switch (cfg.gameHostType) {
+        case GameHostType.Standalone:
+            target = "game";
+            break;
+        case GameHostType.Editor:
+            target = "editor";
+            break;
+        case GameHostType.Auto:
+            target = "auto";
+            break;
+        default:
+            target = "auto";
+    }
+
     const ip = cfg.gameHostIpAddress;
     const args = [
         "--no-delay", "--log-level=output-only", `--target=${target}`, `--ip=${ip}`,
