@@ -52,7 +52,6 @@ Status bar displays context information about the last worked on project and any
 ### Importing and comparing scripts with their vanilla counterparts
 
 <video controls muted>
-  <!-- TODO update the video with the process being done entirely through GUI -->
   <source src="../../assets/user-manual/editor/vanilla-import-diff.mp4" type="video/mp4"> 
 </video>
 
@@ -168,6 +167,13 @@ Path to Witcher 3's root game directory (containing bin, content, Mods folders e
 
 ### `witcherscript-ide.contentRepositories`
 Paths to custom directories containing WitcherScript contents. Useful when not having Witcher 3 installed on your local machine or when simply storing scripts outside of game directory.
+
+### `witcherscript-ide.gameHost.type`
+What is the method you use to launch and mod the game. Affects remote commands in the dashboard view. Possible values:
+
+- editor - the game launched through the REDkit modding tool,
+- standalone - the game launched on its own with debug arguments,
+- auto - the method gets automatically detected
 
 ### `witcherscript-ide.gameHost.ipAddress`
 IPv4 address of the game host. It is used when running remote game commands such as script recompilation. Change this if you're running the game on a different computer from the one you're currently working in VSCode. Defaults to the localhost address.
