@@ -25,7 +25,7 @@ export function commandOpenLogs(): Cmd {
 
 export function commandOpenSettings(): Cmd {
     return () => {
-        vscode.commands.executeCommand('workbench.action.openSettings', 'witcherscript-ide')
+        vscode.commands.executeCommand('workbench.action.openSettings', 'witcherscript-ide.')
     }
 }
 
