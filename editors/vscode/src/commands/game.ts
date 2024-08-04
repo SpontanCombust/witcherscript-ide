@@ -3,9 +3,9 @@ import * as fspath from 'path';
 import * as cp from 'child_process';
 
 import { Cmd } from './index'
-import { GameHostType, getConfiguration } from '../config';
+import { getConfiguration } from '../config';
 import { fileExists } from '../utils';
-import * as state from '../state'
+import { Rw3dCli } from '../rw3d';
 
 
 const GAME_EXE_DIR_DX12 = "bin/x64_dx12";
@@ -84,68 +84,15 @@ async function isGameRunning(): Promise<boolean> {
 
 
 export function commandRecompileScripts(ctx: vscode.ExtensionContext): Cmd {
-    return async () => {
-        runRw3d(ctx, 'reload', []);
+    return () => {
+        const rw3d = new Rw3dCli(ctx);
+        rw3d.recompileScripts();
     }
 }
 
 export function commandExecConsoleCommand(ctx: vscode.ExtensionContext): Cmd {
-    return async () => {
-        const cmd = await vscode.window.showInputBox({
-            title: "Enter a console command to be executed"
-        });
-
-        if (cmd) {
-            runRw3d(ctx, `exec`, [`"${cmd}"`]);
-        }
+    return () => {
+        const rw3d = new Rw3dCli(ctx);
+        rw3d.execConsoleCommmand();
     }
-}
-
-function runRw3d(ctx: vscode.ExtensionContext, cmd: string, additionalArgs: string[]) {
-    const ext = process.platform === "win32" ? ".exe" : "";
-    const rw3dPath = ctx.asAbsolutePath(
-        `deps/rw3d/bin/rw3d_cli${ext}`
-    );
-    const cfg = getConfiguration();
-
-    let target: string;
-    switch (cfg.gameHostType) {
-        case GameHostType.Standalone:
-            target = "game";
-            break;
-        case GameHostType.Editor:
-            target = "editor";
-            break;
-        case GameHostType.Auto:
-            target = "auto";
-            break;
-        default:
-            target = "auto";
-    }
-
-    const ip = cfg.gameHostIpAddress;
-    const args = [
-        "--no-delay", "--log-level=output-only", `--target=${target}`, `--ip=${ip}`,
-        cmd, ...additionalArgs
-    ];
-
-    state.gameOutputChannel.show();
-
-    state.gameOutputChannel.append("\n");
-    state.gameOutputChannel.debug(`Executing: rw3d_cli ${args.join(" ")}`)
-    const rw3d = cp.spawn(rw3dPath, args);
-
-    rw3d.stdout.on('data', (data) => {
-        const s = (data.toString() as string).trimEnd();
-        for(const line of s.split("\n")) {
-            state.gameOutputChannel.append(line);
-        }
-    });
-
-    rw3d.stderr.on('data', (data) => {
-        const s = (data.toString() as string).trimEnd();
-        for(const line of s.split("\n")) {
-            state.gameOutputChannel.error(line);
-        }
-    });
 }
