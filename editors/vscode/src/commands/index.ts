@@ -28,6 +28,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("witcherscript-ide.misc.openSettings", misc.commandOpenSettings()),
         vscode.commands.registerCommand("witcherscript-ide.misc.openGameHostSettings", misc.commandOpenGameHostSettings()),
         vscode.commands.registerCommand("witcherscript-ide.misc.openFileReadOnly", misc.commandOpenFileReadOnly()),
+        vscode.commands.registerCommand("witcherscript-ide.misc.runDashboardOption", misc.commandRunDashboardOption()),
     );
 
     const cfg = getConfiguration();

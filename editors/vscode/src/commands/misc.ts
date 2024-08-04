@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { Cmd } from './index'
 import { getLanguageClient } from '../lsp/lang_client';
 import * as tdcp from '../providers/text_document_content_providers'
+import { DashboardCommandOptionItem } from '../providers/dashboard_provider';
 
 
 export function commandShowCommandsInPalette(): Cmd {
@@ -40,5 +41,11 @@ export function commandOpenFileReadOnly(): Cmd {
         uri = uri.with({ scheme: tdcp.ReadOnlyContentProvider.scheme });
         tdcp.ReadOnlyContentProvider.getInstance().eventEmitter.fire(uri);
         vscode.window.showTextDocument(uri);
+    }
+}
+
+export function commandRunDashboardOption(): Cmd {
+    return (item: DashboardCommandOptionItem) => {
+        vscode.commands.executeCommand(item.btnCommand)
     }
 }

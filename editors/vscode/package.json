@@ -161,57 +161,55 @@
       {
         "command": "witcherscript-ide.game.launchDx12",
         "title": "Launch the game (DX12)",
-        "category": "WitcherScript-IDE",
-        "icon": "$(run)"
+        "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.game.launchDx12Debug",
         "title": "Launch the game for debugging (DX12)",
-        "category": "WitcherScript-IDE",
-        "icon": "$(debug-alt)"
+        "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.game.launchDx11",
         "title": "Launch the game (DX11)",
-        "category": "WitcherScript-IDE",
-        "icon": "$(run)"
+        "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.game.launchDx11Debug",
         "title": "Launch the game for debugging (DX11)",
-        "category": "WitcherScript-IDE",
-        "icon": "$(debug-alt)"
+        "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.game.recompileScripts",
         "title": "Recompile game scripts",
-        "category": "WitcherScript-IDE",
-        "icon": "$(run)"
+        "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.game.execConsoleCommand",
         "title": "Execute console command",
-        "category": "WitcherScript-IDE",
-        "icon": "$(run)"
+        "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.misc.openLogs",
         "title": "Open extension logs",
         "category": "WitcherScript-IDE",
-        "enablement": "witcherscript-ide.languageServerActive",
-        "icon": "$(run)"
+        "enablement": "witcherscript-ide.languageServerActive"
       },
       {
         "command": "witcherscript-ide.misc.openSettings",
         "title": "Open extension settings",
-        "category": "WitcherScript-IDE",
-        "icon": "$(run)"
+        "category": "WitcherScript-IDE"
       },
       {
         "command": "witcherscript-ide.misc.openGameHostSettings",
         "title": "Open extension settings for the game host",
         "category": "WitcherScript-IDE",
         "icon": "$(gear)"
+      },
+      {
+        "command": "witcherscript-ide.misc.runDashboardOption",
+        "title": "Run the option",
+        "category": "WitcherScript-IDE",
+        "icon": "$(run)"
       },
       {
         "command": "witcherscript-ide.debug.showScriptAst",
@@ -377,58 +375,13 @@
           "group": "inline"
         },
         {
-          "command": "witcherscript-ide.game.launchDx12",
-          "when": "view == witcherscript-ide.dashboardView && viewItem == launchGameDx12",
-          "group": "inline"
-        },
-        {
-          "command": "witcherscript-ide.game.launchDx12Debug",
-          "when": "view == witcherscript-ide.dashboardView && viewItem == launchGameDx12Debug",
-          "group": "inline"
-        },
-        {
-          "command": "witcherscript-ide.game.launchDx11",
-          "when": "view == witcherscript-ide.dashboardView && viewItem == launchGameDx11",
-          "group": "inline"
-        },
-        {
-          "command": "witcherscript-ide.game.launchDx11Debug",
-          "when": "view == witcherscript-ide.dashboardView && viewItem == launchGameDx11Debug",
-          "group": "inline"
-        },
-        {
-          "command": "witcherscript-ide.projects.init",
-          "when": "view == witcherscript-ide.dashboardView && viewItem == initWideProject",
-          "group": "inline"
-        },
-        {
-          "command": "witcherscript-ide.projects.create",
-          "when": "view == witcherscript-ide.dashboardView && viewItem == createWideProject",
-          "group": "inline"
-        },
-        {
           "command": "witcherscript-ide.misc.openGameHostSettings",
           "when": "view == witcherscript-ide.dashboardView && viewItem == gameHostInfo",
           "group": "inline"
         },
         {
-          "command": "witcherscript-ide.game.recompileScripts",
-          "when": "view == witcherscript-ide.dashboardView && viewItem == recompileScripts",
-          "group": "inline"
-        },
-        {
-          "command": "witcherscript-ide.game.execConsoleCommand",
-          "when": "view == witcherscript-ide.dashboardView && viewItem == execConsoleCommand",
-          "group": "inline"
-        },
-        {
-          "command": "witcherscript-ide.misc.openSettings",
-          "when": "view == witcherscript-ide.dashboardView && viewItem == openSettings",
-          "group": "inline"
-        },
-        {
-          "command": "witcherscript-ide.misc.openLogs",
-          "when": "view == witcherscript-ide.dashboardView && viewItem == openLspLogs",
+          "command": "witcherscript-ide.misc.runDashboardOption",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == dashboardCommandOption",
           "group": "inline"
         }
       ],
