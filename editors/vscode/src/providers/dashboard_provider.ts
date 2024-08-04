@@ -58,7 +58,8 @@ export class DashboardProvider implements vscode.TreeDataProvider<Item> {
         return [
             new GameLaunchOptionsHeaderItem(),
             new ProjectSystemOptionsHeaderItem(),
-            new RemoteCommandsHeaderItem()
+            new RemoteCommandsHeaderItem(),
+            new MiscOptionsHeaderItem()
         ];
     }
 }
@@ -178,6 +179,38 @@ class RemoteCommandItem extends vscode.TreeItem {
     ) {
         super(label, vscode.TreeItemCollapsibleState.None);
         this.iconPath = new vscode.ThemeIcon("remote");
+    }
+
+    getChildren(): Item[] {
+        return [];
+    }
+}
+
+
+
+class MiscOptionsHeaderItem extends vscode.TreeItem {
+    readonly parent = undefined;
+
+    constructor() {
+        super("Miscellaneous", vscode.TreeItemCollapsibleState.Expanded);
+    }
+
+    getChildren(): Item[] {
+        return [
+            new MiscOptionItem(this, "Open settings", "openSettings"),
+            new MiscOptionItem(this, "Open language server logs", "openLspLogs")
+        ];
+    }
+}
+
+class MiscOptionItem extends vscode.TreeItem {
+    constructor(
+        readonly parent: MiscOptionsHeaderItem,
+        override readonly label: string,
+        override readonly contextValue: string
+    ) {
+        super(label, vscode.TreeItemCollapsibleState.None);
+        this.iconPath = new vscode.ThemeIcon("circle-filled");
     }
 
     getChildren(): Item[] {

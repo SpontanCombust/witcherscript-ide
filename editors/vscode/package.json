@@ -198,13 +198,14 @@
         "command": "witcherscript-ide.misc.openLogs",
         "title": "Open extension logs",
         "category": "WitcherScript-IDE",
-        "enablement": "witcherscript-ide.languageServerActive"
+        "enablement": "witcherscript-ide.languageServerActive",
+        "icon": "$(run)"
       },
       {
         "command": "witcherscript-ide.misc.openSettings",
         "title": "Open extension settings",
         "category": "WitcherScript-IDE",
-        "icon": "$(gear)"
+        "icon": "$(run)"
       },
       {
         "command": "witcherscript-ide.misc.openGameHostSettings",
@@ -418,6 +419,16 @@
         {
           "command": "witcherscript-ide.game.execConsoleCommand",
           "when": "view == witcherscript-ide.dashboardView && viewItem == execConsoleCommand",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.misc.openSettings",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == openSettings",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.misc.openLogs",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == openLspLogs",
           "group": "inline"
         }
       ],
