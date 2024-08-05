@@ -1,0 +1,1704 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="WIDE - Witcher 3 scripting tooling">
+      
+      
+        <meta name="author" content="Przemysław Cedro (SpontanCombust)">
+      
+      
+        <link rel="canonical" href="https://spontancombust.github.io/witcherscript-ide/user-manual/diagnostic-index/">
+      
+      
+        <link rel="prev" href="../project-system/">
+      
+      
+        <link rel="next" href="../faq/">
+      
+      
+      <link rel="icon" href="../../assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.31">
+    
+    
+      
+        <title>Diagnostic Index - WIDE - WitcherScript IDE</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.3cba04c6.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+  
+  
+  
+  
+  <style>:root{--md-annotation-icon:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22 12a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10m-12 6 6-6-6-6-1.4 1.4 4.6 4.6-4.6 4.6L10 18Z"/></svg>');}</style>
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="wolven-red" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#diagnostic-index" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="WIDE - WitcherScript IDE" class="md-header__button md-logo" aria-label="WIDE - WitcherScript IDE" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            WIDE - WitcherScript IDE
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Diagnostic Index
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="wolven-red" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm5.657-8.157a.75.75 0 0 1 0 1.061l-1.061 1.06a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.06-1.06a.75.75 0 0 1 1.06 0Zm-9.193 9.193a.75.75 0 0 1 0 1.06l-1.06 1.061a.75.75 0 1 1-1.061-1.06l1.06-1.061a.75.75 0 0 1 1.061 0ZM8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0ZM3 8a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 3 8Zm13 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 16 8Zm-8 5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13Zm3.536-1.464a.75.75 0 0 1 1.06 0l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.061-1.06a.75.75 0 0 1 0-1.061ZM2.343 2.343a.75.75 0 0 1 1.061 0l1.06 1.061a.751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018l-1.06-1.06a.75.75 0 0 1 0-1.06Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="wolven-red" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3 3.19.09m3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95 2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/SpontanCombust/witcherscript-ide" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="WIDE - WitcherScript IDE" class="md-nav__button md-logo" aria-label="WIDE - WitcherScript IDE" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    WIDE - WitcherScript IDE
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/SpontanCombust/witcherscript-ide" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    User Manual
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            User Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../editor/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Editor Features
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-system/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Project System
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Diagnostic Index
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Diagnostic Index
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#project-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      Project System
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#invalid-project-manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-project-manifest
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-project-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-project-name
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-redkit-project-manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-redkit-project-manifest
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-dependency-path-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      project-dependency-path-not-found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-dependency-name-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      project-dependency-name-not-found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-dependency-name-not-found-at-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      project-dependency-name-not-found-at-path
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-self-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      project-self-dependency
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-matching-project-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      multiple-matching-project-dependencies
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syntax-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Syntax Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#missing-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      missing-syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-syntax
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contextual-syntax-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contextual Syntax Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contextual Syntax Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#incompatible-specifier" class="md-nav__link">
+    <span class="md-ellipsis">
+      incompatible-specifier
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#incompatible-function-flavour" class="md-nav__link">
+    <span class="md-ellipsis">
+      incompatible-function-flavour
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#repeated-specifier" class="md-nav__link">
+    <span class="md-ellipsis">
+      repeated-specifier
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-access-modifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      multiple-access-modifiers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-annotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-annotation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-annotation-placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-annotation-placement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#missing-annotation-argument" class="md-nav__link">
+    <span class="md-ellipsis">
+      missing-annotation-argument
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#incompatible-annotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      incompatible-annotation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#global-scope-var-decl" class="md-nav__link">
+    <span class="md-ellipsis">
+      global-scope-var-decl
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-local-var-placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-local-var-placement
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#symbol-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Symbol Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Symbol Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#symbol-name-taken" class="md-nav__link">
+    <span class="md-ellipsis">
+      symbol-name-taken
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#missing-type-arg" class="md-nav__link">
+    <span class="md-ellipsis">
+      missing-type-arg
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unnecessary-type-arg" class="md-nav__link">
+    <span class="md-ellipsis">
+      unnecessary-type-arg
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#same-content-annotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      same-content-annotation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workspace-symbol-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workspace Symbol Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Workspace Symbol Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#symbol-name-taken-in-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      symbol-name-taken-in-dependency
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    FAQ
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev-manual/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Developer Manual
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../about/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    About
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            About
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#project-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      Project System
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#invalid-project-manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-project-manifest
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-project-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-project-name
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-redkit-project-manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-redkit-project-manifest
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-dependency-path-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      project-dependency-path-not-found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-dependency-name-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      project-dependency-name-not-found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-dependency-name-not-found-at-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      project-dependency-name-not-found-at-path
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#project-self-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      project-self-dependency
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-matching-project-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      multiple-matching-project-dependencies
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syntax-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Syntax Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#missing-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      missing-syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-syntax
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contextual-syntax-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contextual Syntax Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contextual Syntax Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#incompatible-specifier" class="md-nav__link">
+    <span class="md-ellipsis">
+      incompatible-specifier
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#incompatible-function-flavour" class="md-nav__link">
+    <span class="md-ellipsis">
+      incompatible-function-flavour
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#repeated-specifier" class="md-nav__link">
+    <span class="md-ellipsis">
+      repeated-specifier
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-access-modifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      multiple-access-modifiers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-annotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-annotation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-annotation-placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-annotation-placement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#missing-annotation-argument" class="md-nav__link">
+    <span class="md-ellipsis">
+      missing-annotation-argument
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#incompatible-annotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      incompatible-annotation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#global-scope-var-decl" class="md-nav__link">
+    <span class="md-ellipsis">
+      global-scope-var-decl
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-local-var-placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      invalid-local-var-placement
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#symbol-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Symbol Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Symbol Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#symbol-name-taken" class="md-nav__link">
+    <span class="md-ellipsis">
+      symbol-name-taken
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#missing-type-arg" class="md-nav__link">
+    <span class="md-ellipsis">
+      missing-type-arg
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unnecessary-type-arg" class="md-nav__link">
+    <span class="md-ellipsis">
+      unnecessary-type-arg
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#same-content-annotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      same-content-annotation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workspace-symbol-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workspace Symbol Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Workspace Symbol Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#symbol-name-taken-in-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      symbol-name-taken-in-dependency
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<!-- Beware!!! WIDE's diagnostic code descriptions link to this page. -->
+<!-- Make sure that chapters for each diagnostic have correct name. -->
+
+<h1 id="diagnostic-index">Diagnostic index<a class="headerlink" href="#diagnostic-index" title="Permanent link">&para;</a></h1>
+<h2 id="project-system"><strong>Project System</strong><a class="headerlink" href="#project-system" title="Permanent link">&para;</a></h2>
+<hr />
+<h3 id="invalid-project-manifest"><code>invalid-project-manifest</code><a class="headerlink" href="#invalid-project-manifest" title="Permanent link">&para;</a></h3>
+<p>Project manifest (<code>witcherscript.toml</code>) could not be parsed due to syntax error or missing properties.</p>
+<div class="language-toml highlight"><span class="filename">witcherscript.toml</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">[content]</span><span class="w"> </span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">authors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">game_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;4.04&quot;</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="hll"><span class="c1"># (1)</span>
+</span></span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="k">[dependencies]</span>
+</span></code></pre></div>
+<ol>
+<li>Missing field "name" in table [content].</li>
+</ol>
+<hr />
+<h3 id="invalid-project-name"><code>invalid-project-name</code><a class="headerlink" href="#invalid-project-name" title="Permanent link">&para;</a></h3>
+<p>The "name" field in <code>witcherscript.toml</code> manifest file is incorrect. The name must follow a <a href="../project-system/#the-name-field">specific format</a>.</p>
+<div class="language-toml highlight"><span class="filename">witcherscript.toml</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">[content]</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="hll"><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modCośWięcej&quot;</span><span class="w"> </span><span class="c1"># (1)</span>
+</span></span></code></pre></div>
+<ol>
+<li>Should not contain non-English characters. Use "modCosWiecej" instead.</li>
+</ol>
+<hr />
+<h3 id="invalid-redkit-project-manifest"><code>invalid-redkit-project-manifest</code><a class="headerlink" href="#invalid-redkit-project-manifest" title="Permanent link">&para;</a></h3>
+<p>REDkit project's <code>.w3edit</code> file could not be parsed.
+This could happen if you manually edited the <code>.w3edit</code> file that is created for a REDkit project. This file is edited automatically by the REDkit when needed and you shouldn't edit it yourself.</p>
+<div class="language-json highlight"><span class="filename">exampleMod.w3edit</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="w"> </span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="hll"><span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="nt">&quot;exampleMod&quot;</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">&quot;gameVersion&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;4.04&quot;</span><span class="p">,</span>
+</span></code></pre></div>
+<ol>
+<li>Syntax error, missing ",".</li>
+</ol>
+<hr />
+<h3 id="project-dependency-path-not-found"><code>project-dependency-path-not-found</code><a class="headerlink" href="#project-dependency-path-not-found" title="Permanent link">&para;</a></h3>
+<p>Dependency in the <code>witcherscript.toml</code> manifest file could not be found at a specified path. This can happen if either a) the path does not exist or b) the path exists, but there is not script content there.</p>
+<div class="language-toml highlight"><span class="filename">C:\Modding\modExample\witcherscript.toml</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">[dependencies]</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="hll"><span class="n">modSharedUtils</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;../modSharedUtils&quot;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="c1"># (1)</span>
+</span></span></code></pre></div>
+<ol>
+<li>Path "C:\Modding\modSharedUtils" does not exist or does not contain any script content.</li>
+</ol>
+<hr />
+<h3 id="project-dependency-name-not-found"><code>project-dependency-name-not-found</code><a class="headerlink" href="#project-dependency-name-not-found" title="Permanent link">&para;</a></h3>
+<p>Dependency in the <code>witcherscript.toml</code> manifest file could not be found in any of the <a href="../project-system/#content-repositories">repositories</a>. Make sure that the name of the dependency is correct. It should correspond to the name of the project or name of the directory if it's raw content.</p>
+<div class="language-toml highlight"><span class="filename">witcherscript.toml</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">[dependencies]</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="hll"><span class="n">modSharedUtils</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c1"># (1)</span>
+</span></span></code></pre></div>
+<ol>
+<li>No content with name "modSharedUtils" could be found in any of the repositories.</li>
+</ol>
+<hr />
+<h3 id="project-dependency-name-not-found-at-path"><code>project-dependency-name-not-found-at-path</code><a class="headerlink" href="#project-dependency-name-not-found-at-path" title="Permanent link">&para;</a></h3>
+<p>Dependency in the <code>witcherscript.toml</code> manifest file was found at a given path, but the name key does not match with the "name" field in dependency's manifest.</p>
+<div class="language-toml highlight"><span class="filename">witcherscript.toml</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">[dependencies]</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="hll"><span class="n">mod_shared_utils</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;../modSharedUtils&quot;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="c1"># (1)</span>
+</span></span></code></pre></div>
+<ol>
+<li>Expected for example <code class="language-toml highlight"><span class="n">modSharedUtils</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;../modSharedUtils&quot;</span><span class="w"> </span><span class="p">}</span></code></li>
+</ol>
+<hr />
+<h3 id="project-self-dependency"><code>project-self-dependency</code><a class="headerlink" href="#project-self-dependency" title="Permanent link">&para;</a></h3>
+<p>You've made content point to itself as its own dependency. Make sure to specify a correct path if it's a path dependency or remove the entry entirely if it's a repository dependency.</p>
+<div class="language-toml highlight"><span class="filename">witcherscript.toml</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">[content]</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;helloWorld&quot;</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">[dependencies]</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="hll"><span class="n">helloWorld</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;.&quot;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="c1"># (1)</span>
+</span></span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="hll"><span class="n">helloWorld</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c1"># (2)</span>
+</span></span></code></pre></div>
+<ol>
+<li>A path self-dependency</li>
+<li>This is an error if content itself is inside a repository</li>
+</ol>
+<hr />
+<h3 id="multiple-matching-project-dependencies"><code>multiple-matching-project-dependencies</code><a class="headerlink" href="#multiple-matching-project-dependencies" title="Permanent link">&para;</a></h3>
+<p>A repository dependency was found, but in multiple places. WIDE has no idea which one to choose. This can happen if you have added multiple repository paths in the configuration that share script content with the same name.<br />
+A good example would be having two <code>content0</code> repository paths configured: one from game installation and other is from the 1.21 version of the game with commented code.</p>
+<div class="language-toml highlight"><span class="filename">witcherscript.toml</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">[dependencies]</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="hll"><span class="n">content0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c1"># (1)</span>
+</span></span></code></pre></div>
+<ol>
+<li>"content0" was found in game installation and some other, manually configured repository.</li>
+</ol>
+<hr />
+<p></br></p>
+<h2 id="syntax-analysis"><strong>Syntax Analysis</strong><a class="headerlink" href="#syntax-analysis" title="Permanent link">&para;</a></h2>
+<hr />
+<h3 id="missing-syntax"><code>missing-syntax</code><a class="headerlink" href="#missing-syntax" title="Permanent link">&para;</a></h3>
+<p>Some element of the WitcherScript syntax was missing.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-8-1">1</a></span>
+<span class="normal"><a href="#__codelineno-8-2">2</a></span>
+<span class="normal"><a href="#__codelineno-8-3">3</a></span>
+<span class="normal"><a href="#__codelineno-8-4">4</a></span>
+<span class="normal"><a href="#__codelineno-8-5">5</a></span>
+<span class="normal"><a href="#__codelineno-8-6">6</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1"></a><span class="nx">latent</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">testLatent</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2"></a><span class="hll"><span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3"></a><span class="w">        </span><span class="nx">Sleep</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4"></a><span class="w">        </span><span class="k">break</span><span class="p">;</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Missing expression for <code>while</code>'s condition</li>
+</ol>
+<hr />
+<h3 id="invalid-syntax"><code>invalid-syntax</code><a class="headerlink" href="#invalid-syntax" title="Permanent link">&para;</a></h3>
+<p>Diagnostic used for all other syntax error cases. Syntactical analysis is very basic at the moment and can't communicate more complex cases. </p>
+<hr />
+<p></br></p>
+<h2 id="contextual-syntax-analysis"><strong>Contextual Syntax Analysis</strong><a class="headerlink" href="#contextual-syntax-analysis" title="Permanent link">&para;</a></h2>
+<hr />
+<h3 id="incompatible-specifier"><code>incompatible-specifier</code><a class="headerlink" href="#incompatible-specifier" title="Permanent link">&para;</a></h3>
+<p>Specifiers are keywords that tell the WitcherScript compiler to give a code symbol some additional properties.
+Different kinds of symbols can only take a predefined set of specifiers. A state for example cannot be at the same time a statemachine and thus it won't accept a <code>statemachine</code> specifier.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-9-1">1</a></span>
+<span class="normal"><a href="#__codelineno-9-2">2</a></span>
+<span class="normal"><a href="#__codelineno-9-3">3</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1"></a><span class="hll"><span class="nx">statemachine</span><span class="w"> </span><span class="nx">state</span><span class="w"> </span><span class="nx">Idle</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nx">Monster</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2"></a><span class="w">    </span><span class="c1">//...</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li>A state cannot be marked with <code>statemachine</code></li>
+</ol>
+<hr />
+<h3 id="incompatible-function-flavour"><code>incompatible-function-flavour</code><a class="headerlink" href="#incompatible-function-flavour" title="Permanent link">&para;</a></h3>
+<p>Functions can additionally be marked with specifiers that you could call "flavours". They give them special attributes, like exposing them to the debug console if you add the <code>exec</code> keyword to the function. At most only one flavour can be specified. Some flavours can only be used in certain contexts, for example the aformentioned <code>exec</code> can only be used for global functions.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-10-1">1</a></span>
+<span class="normal"><a href="#__codelineno-10-2">2</a></span>
+<span class="normal"><a href="#__codelineno-10-3">3</a></span>
+<span class="normal"><a href="#__codelineno-10-4">4</a></span>
+<span class="normal"><a href="#__codelineno-10-5">5</a></span>
+<span class="normal"><a href="#__codelineno-10-6">6</a></span>
+<span class="normal"><a href="#__codelineno-10-7">7</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1"></a><span class="kd">class</span><span class="w"> </span><span class="nx">CR4Player</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2"></a><span class="w">    </span><span class="c1">//...</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3"></a>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4"></a><span class="hll"><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="nx">exec</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">LogHealth</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5"></a><span class="w">        </span><span class="nx">LogChannel</span><span class="p">(</span><span class="s1">&#39;Health&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">IntToString</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">GetHealth</span><span class="p">()));</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li><code>exec</code> cannot be used with a class method. Move the function to the global scope.</li>
+</ol>
+<hr />
+<h3 id="repeated-specifier"><code>repeated-specifier</code><a class="headerlink" href="#repeated-specifier" title="Permanent link">&para;</a></h3>
+<p>Repeating the same specifier for one code symbol is not allowed.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-11-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1"></a><span class="hll"><span class="k">public</span><span class="w"> </span><span class="nx">saved</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">var</span><span class="w"> </span><span class="nx">piesEaten</span><span class="o">:</span><span class="w"> </span><span class="kt">int</span><span class="p">;</span><span class="w"> </span><span class="c1">// (1) </span>
+</span></span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Repeated specifier <code>public</code> for field <code>piesEaten</code>.</li>
+</ol>
+<hr />
+<h3 id="multiple-access-modifiers"><code>multiple-access-modifiers</code><a class="headerlink" href="#multiple-access-modifiers" title="Permanent link">&para;</a></h3>
+<p>Access modifiers are keywords that change the visibility of a field or method. This is a common feature in object oriented languages like WitcherScript. 
+Available access modifiers are <code>private</code>, <code>protected</code> and <code>public</code>. Only one of them can be used in the declaration.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-12-1">1</a></span>
+<span class="normal"><a href="#__codelineno-12-2">2</a></span>
+<span class="normal"><a href="#__codelineno-12-3">3</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1"></a><span class="hll"><span class="k">protected</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">MakeDinner</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// (1) </span>
+</span></span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3"></a><span class="p">}</span><span class="w"> </span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Can't use both <code>protected</code> and <code>public</code> access modifiers. Use only one of these two.</li>
+</ol>
+<p>You can read more about access modifiers in programming languages <a href="https://en.wikipedia.org/wiki/Access_modifiers">here</a>.</p>
+<hr />
+<h3 id="invalid-annotation"><code>invalid-annotation</code><a class="headerlink" href="#invalid-annotation" title="Permanent link">&para;</a></h3>
+<p>Detected a use of an unknown annotation. See the official WitcherScript guide for REDkit to know which annotations are avaialble.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-13-1">1</a></span>
+<span class="normal"><a href="#__codelineno-13-2">2</a></span>
+<span class="normal"><a href="#__codelineno-13-3">3</a></span>
+<span class="normal"><a href="#__codelineno-13-4">4</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1"></a><span class="hll"><span class="kd">@addFunction</span><span class="p">(</span><span class="nx">CR4Player</span><span class="p">)</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2"></a><span class="kd">function</span><span class="w"> </span><span class="nx">MountDragon</span><span class="p">(</span><span class="nx">force</span><span class="o">:</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Used unknown <code>@addFunction</code> annotation. Did you mean <code>@addMethod</code>?</li>
+</ol>
+<hr />
+<h3 id="invalid-annotation-placement"><code>invalid-annotation-placement</code><a class="headerlink" href="#invalid-annotation-placement" title="Permanent link">&para;</a></h3>
+<p>Annotations can only be used in the global context. Using them inside classes for example is erroneous.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-14-1">1</a></span>
+<span class="normal"><a href="#__codelineno-14-2">2</a></span>
+<span class="normal"><a href="#__codelineno-14-3">3</a></span>
+<span class="normal"><a href="#__codelineno-14-4">4</a></span>
+<span class="normal"><a href="#__codelineno-14-5">5</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1"></a><span class="kd">class</span><span class="w"> </span><span class="nx">Cannon</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2"></a><span class="hll"><span class="w">    </span><span class="kd">@addField</span><span class="p">(</span><span class="nx">Ship</span><span class="p">)</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">var</span><span class="w"> </span><span class="nx">ammunition</span><span class="o">:</span><span class="w"> </span><span class="kt">int</span><span class="p">;</span>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Using annotations inside classes is invalid. Add the field outside of the class definition.</li>
+</ol>
+<hr />
+<h3 id="missing-annotation-argument"><code>missing-annotation-argument</code><a class="headerlink" href="#missing-annotation-argument" title="Permanent link">&para;</a></h3>
+<p>Some annotations require an argument. For example the <code>@wrapMethod</code> annotation requires a type argument that will decide which class's method will be wrapped.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-15-1">1</a></span>
+<span class="normal"><a href="#__codelineno-15-2">2</a></span>
+<span class="normal"><a href="#__codelineno-15-3">3</a></span>
+<span class="normal"><a href="#__codelineno-15-4">4</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1"></a><span class="hll"><span class="kd">@wrapMethod</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2"></a><span class="kd">function</span><span class="w"> </span><span class="nx">OnSpawned</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Missing class name</li>
+</ol>
+<hr />
+<h3 id="incompatible-annotation"><code>incompatible-annotation</code><a class="headerlink" href="#incompatible-annotation" title="Permanent link">&para;</a></h3>
+<p>Annotations expect a specific code fragment below.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-16-1">1</a></span>
+<span class="normal"><a href="#__codelineno-16-2">2</a></span>
+<span class="normal"><a href="#__codelineno-16-3">3</a></span>
+<span class="normal"><a href="#__codelineno-16-4">4</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1"></a><span class="hll"><span class="kd">@addField</span><span class="p">(</span><span class="nx">CR4Player</span><span class="p">)</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2"></a><span class="kd">function</span><span class="w"> </span><span class="nx">SetE3Hairstyle</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li><code>@addField</code> annotation expects a var declaration.</li>
+</ol>
+<hr />
+<h3 id="global-scope-var-decl"><code>global-scope-var-decl</code><a class="headerlink" href="#global-scope-var-decl" title="Permanent link">&para;</a></h3>
+<p>WitcherScript does not support global variable declarations. The only context when it is valid is after the <code>@addField</code> annotation.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-17-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-17-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-17-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-17-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-17-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-17-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-17-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-17-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-17-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-17-10">10</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1"></a><span class="kd">class</span><span class="w"> </span><span class="nx">Mod1</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3"></a><span class="p">}</span>
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4"></a>
+</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5"></a><span class="kd">class</span><span class="w"> </span><span class="nx">Mod2</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7"></a><span class="p">}</span>
+</span><span id="__span-17-8"><a id="__codelineno-17-8" name="__codelineno-17-8"></a>
+</span><span id="__span-17-9"><a id="__codelineno-17-9" name="__codelineno-17-9"></a>
+</span><span id="__span-17-10"><a id="__codelineno-17-10" name="__codelineno-17-10"></a><span class="hll"><span class="kd">var</span><span class="w"> </span><span class="nx">modsInstalled</span><span class="o">:</span><span class="w"> </span><span class="kt">int</span><span class="p">;</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Variable declaration not allowed here.</li>
+</ol>
+<hr />
+<h3 id="invalid-local-var-placement"><code>invalid-local-var-placement</code><a class="headerlink" href="#invalid-local-var-placement" title="Permanent link">&para;</a></h3>
+<p>The WitcherScript compiler is not very flexible when it comes to local variable declarations. You are forced to declare all of them at the start of a function before doing anything else, even when it comes to such trivial cases like for loop iterator. This is similar to early C language standards, where declarations could only be done at the beginning of a scope.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-18-1">1</a></span>
+<span class="normal"><a href="#__codelineno-18-2">2</a></span>
+<span class="normal"><a href="#__codelineno-18-3">3</a></span>
+<span class="normal"><a href="#__codelineno-18-4">4</a></span>
+<span class="normal"><a href="#__codelineno-18-5">5</a></span>
+<span class="normal"><a href="#__codelineno-18-6">6</a></span>
+<span class="normal"><a href="#__codelineno-18-7">7</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1"></a><span class="kd">function</span><span class="w"> </span><span class="nx">LogHeldSwordInCombat</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">thePlayer</span><span class="p">.</span><span class="nx">IsInCombatState</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3"></a><span class="hll"><span class="w">        </span><span class="kd">var</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">SItemUniqueId</span><span class="p">;</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4"></a><span class="w">        </span><span class="nx">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">thePlayer</span><span class="p">.</span><span class="nx">inv</span><span class="p">.</span><span class="nx">GetCurrentlyHeldSword</span><span class="p">();</span>
+</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5"></a><span class="w">        </span><span class="nx">LogChannel</span><span class="p">(</span><span class="s1">&#39;TEST&#39;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Sword item name: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">thePlayer</span><span class="p">.</span><span class="nx">inv</span><span class="p">.</span><span class="nx">GetItemName</span><span class="p">(</span><span class="nx">id</span><span class="p">));</span>
+</span><span id="__span-18-6"><a id="__codelineno-18-6" name="__codelineno-18-6"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-18-7"><a id="__codelineno-18-7" name="__codelineno-18-7"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Variable must be done before the "if" statement.</li>
+</ol>
+<hr />
+<p></br></p>
+<h2 id="symbol-analysis"><strong>Symbol Analysis</strong><a class="headerlink" href="#symbol-analysis" title="Permanent link">&para;</a></h2>
+<hr />
+<h3 id="symbol-name-taken"><code>symbol-name-taken</code><a class="headerlink" href="#symbol-name-taken" title="Permanent link">&para;</a></h3>
+<p>A code symbol (type, function, etc.) has been defined multiple types with the same name inside a content.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-19-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-19-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-19-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-19-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-19-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-19-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-19-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-19-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-19-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-19-10">10</a></span>
+<span class="normal"><a href="#__codelineno-19-11">11</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1"></a><span class="hll"><span class="kd">function</span><span class="w"> </span><span class="nx">doFoo</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span></span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3"></a><span class="p">}</span>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4"></a>
+</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5"></a><span class="kd">function</span><span class="w"> </span><span class="nx">doBar</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-19-6"><a id="__codelineno-19-6" name="__codelineno-19-6"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-19-7"><a id="__codelineno-19-7" name="__codelineno-19-7"></a><span class="p">}</span>
+</span><span id="__span-19-8"><a id="__codelineno-19-8" name="__codelineno-19-8"></a>
+</span><span id="__span-19-9"><a id="__codelineno-19-9" name="__codelineno-19-9"></a><span class="hll"><span class="kd">function</span><span class="w"> </span><span class="nx">doFoo</span><span class="p">(</span><span class="nx">a</span><span class="o">:</span><span class="w"> </span><span class="kt">int</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-19-10"><a id="__codelineno-19-10" name="__codelineno-19-10"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-19-11"><a id="__codelineno-19-11" name="__codelineno-19-11"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Global function "doFoo" has already been defined on line 1. Function overloading is not available in WitcherScript.</li>
+</ol>
+<p>Some contexts allow the same name to be used again. An example would be a class method having the same name as a global function.
+In that case if you were to use a function of that name within class's body, WitcherScript compiler would pick the function defined within the class.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-20-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-20-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-20-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-20-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-20-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-20-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-20-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-20-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-20-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-20-10">10</a></span>
+<span class="normal"><a href="#__codelineno-20-11">11</a></span>
+<span class="normal"><a href="#__codelineno-20-12">12</a></span>
+<span class="normal"><a href="#__codelineno-20-13">13</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1"></a><span class="hll"><span class="kd">function</span><span class="w"> </span><span class="nx">doFoo</span><span class="p">(</span><span class="nx">a</span><span class="o">:</span><span class="w"> </span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span></span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3"></a><span class="p">}</span>
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4"></a>
+</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5"></a><span class="kd">class</span><span class="w"> </span><span class="nx">MyClass</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-20-6"><a id="__codelineno-20-6" name="__codelineno-20-6"></a><span class="w">    </span><span class="kd">function</span><span class="w"> </span><span class="nx">doFoo</span><span class="p">(</span><span class="nx">s</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-20-7"><a id="__codelineno-20-7" name="__codelineno-20-7"></a><span class="w">        </span><span class="c1">// ...</span>
+</span><span id="__span-20-8"><a id="__codelineno-20-8" name="__codelineno-20-8"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-20-9"><a id="__codelineno-20-9" name="__codelineno-20-9"></a>
+</span><span id="__span-20-10"><a id="__codelineno-20-10" name="__codelineno-20-10"></a><span class="w">    </span><span class="kd">function</span><span class="w"> </span><span class="nx">testFoo</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-20-11"><a id="__codelineno-20-11" name="__codelineno-20-11"></a><span class="hll"><span class="w">        </span><span class="nx">doFoo</span><span class="p">(</span><span class="s2">&quot;Hello&quot;</span><span class="p">);</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-20-12"><a id="__codelineno-20-12" name="__codelineno-20-12"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-20-13"><a id="__codelineno-20-13" name="__codelineno-20-13"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Compiler parses code without errors and picks the function defined within the class even if it has the same name as the global function from line 1.</li>
+</ol>
+<hr />
+<h3 id="missing-type-arg"><code>missing-type-arg</code><a class="headerlink" href="#missing-type-arg" title="Permanent link">&para;</a></h3>
+<p>WitcherScript does not offer a way to create your own generic types. It does however have syntax of using them akin to languages like C++ and Java. There to instantiate a variable of a generic type you would write <code class="language-java highlight"><span class="n">List</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">myList</span></code>, where <code class="language-java highlight"><span class="n">List</span></code> is the generic type and <code class="language-java highlight"><span class="kt">int</span></code> is the type argument placed between angled brackets.  </p>
+<p>The only type in WitcherScript with properties of a generic type is the <code>array</code> type, which takes one type argument. Not supplying that type argument is an error.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-21-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1"></a><span class="hll"><span class="kd">var</span><span class="w"> </span><span class="nx">intArray</span><span class="o">:</span><span class="w"> </span><span class="kt">array</span><span class="p">;</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span></code></pre></div></td></tr></table></div>
+<ol>
+<li><code>array</code> requires a type argument, like <code>&lt;int&gt;</code>. So you should write <code>array&lt;int&gt;</code>.</li>
+</ol>
+<p>CDPR probably originally intended to be able to create your own generic types, but they ran out of time. That's because it would be easier to distinguish array-like types using square brackets (e.g. <code>[int]</code> or <code>int[]</code>) or something similar instead of having to reserve the <code>array</code> identifier just for this purpose.</p>
+<hr />
+<h3 id="unnecessary-type-arg"><code>unnecessary-type-arg</code><a class="headerlink" href="#unnecessary-type-arg" title="Permanent link">&para;</a></h3>
+<p>The only type in WitcherScript with properties of a generic type is the <code>array</code> type. No other types can take any type arguments.  </p>
+<p>Also see <a href="#missing-type-arg">missing-type-arg</a>.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-22-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1"></a><span class="hll"><span class="kd">var</span><span class="w"> </span><span class="nx">player</span><span class="o">:</span><span class="w"> </span><span class="kt">CR4Player</span><span class="o">&lt;</span><span class="nx">Ciri</span><span class="o">&gt;</span><span class="p">;</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Class <code>CR4Player</code> does not take any type arguments. Remove <code>&lt;Ciri&gt;</code>.</li>
+</ol>
+<hr />
+<h3 id="same-content-annotation"><code>same-content-annotation</code><a class="headerlink" href="#same-content-annotation" title="Permanent link">&para;</a></h3>
+<p>Annotations are meant to extend types already existing in the Witcher 3 script code base or types defined in other mods. Even if it may be possible to <code>@wrapMethod</code> that is defined in the same mod WIDE discourages this behaviour in favour of simply editing those types instead of using annotations. </p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">modSkillFramework/content/scripts/skill_framework.ws</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-23-1">1</a></span>
+<span class="normal"><a href="#__codelineno-23-2">2</a></span>
+<span class="normal"><a href="#__codelineno-23-3">3</a></span>
+<span class="normal"><a href="#__codelineno-23-4">4</a></span>
+<span class="normal"><a href="#__codelineno-23-5">5</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1"></a><span class="kd">class</span><span class="w"> </span><span class="nx">SkillFramework</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2"></a><span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">DefineSkill</span><span class="p">(</span><span class="nx">skillName</span><span class="o">:</span><span class="w"> </span><span class="kt">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3"></a><span class="w">        </span><span class="c1">// ...</span>
+</span><span id="__span-23-4"><a id="__codelineno-23-4" name="__codelineno-23-4"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-23-5"><a id="__codelineno-23-5" name="__codelineno-23-5"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-24-1">1</a></span>
+<span class="normal"><a href="#__codelineno-24-2">2</a></span>
+<span class="normal"><a href="#__codelineno-24-3">3</a></span>
+<span class="normal"><a href="#__codelineno-24-4">4</a></span>
+<span class="normal"><a href="#__codelineno-24-5">5</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1"></a><span class="kd">@wrapMethod</span><span class="p">(</span><span class="nx">SkillFramework</span><span class="p">)</span>
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2"></a><span class="hll"><span class="kd">function</span><span class="w"> </span><span class="nx">DefineSkill</span><span class="p">(</span><span class="nx">skillName</span><span class="o">:</span><span class="w"> </span><span class="kt">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3"></a><span class="w">    </span><span class="nx">LogChannel</span><span class="p">(</span><span class="s1">&#39;SF&#39;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Skill defined: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">skillName</span><span class="p">);</span>
+</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4"></a><span class="w">    </span><span class="nx">wrappedMethod</span><span class="p">(</span><span class="nx">skillName</span><span class="p">);</span>
+</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Putting this in the same mod will work for the script compiler, but will yield undefined behaviour for WIDE.</li>
+</ol>
+<hr />
+<p></br></p>
+<h2 id="workspace-symbol-analysis"><strong>Workspace Symbol Analysis</strong><a class="headerlink" href="#workspace-symbol-analysis" title="Permanent link">&para;</a></h2>
+<hr />
+<h3 id="symbol-name-taken-in-dependency"><code>symbol-name-taken-in-dependency</code><a class="headerlink" href="#symbol-name-taken-in-dependency" title="Permanent link">&para;</a></h3>
+<p>A code symbol (type, function, etc.) has already been defined in a content that is a dependency to this content.</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">content0/scripts/game/player/playerCheats.ws</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-25-1">1</a></span>
+<span class="normal"><a href="#__codelineno-25-2">2</a></span>
+<span class="normal"><a href="#__codelineno-25-3">3</a></span>
+<span class="normal"><a href="#__codelineno-25-4">4</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1"></a><span class="nx">exec</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">RestoreStamina</span><span class="p">(</span><span class="w"> </span><span class="nx">optional</span><span class="w"> </span><span class="nx">val</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="p">)</span>
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2"></a><span class="p">{</span><span class="w">   </span>
+</span><span id="__span-25-3"><a id="__codelineno-25-3" name="__codelineno-25-3"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-25-4"><a id="__codelineno-25-4" name="__codelineno-25-4"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<div class="language-ts highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">modFoodStamina/scripts/local/staminaManager.ws</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-26-1">1</a></span>
+<span class="normal"><a href="#__codelineno-26-2">2</a></span>
+<span class="normal"><a href="#__codelineno-26-3">3</a></span>
+<span class="normal"><a href="#__codelineno-26-4">4</a></span>
+<span class="normal"><a href="#__codelineno-26-5">5</a></span>
+<span class="normal"><a href="#__codelineno-26-6">6</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1"></a><span class="c1">// ...</span>
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2"></a>
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3"></a><span class="hll"><span class="kd">function</span><span class="w"> </span><span class="nx">RestoreStamina</span><span class="p">()</span><span class="w"> </span><span class="c1">// (1)</span>
+</span></span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4"></a><span class="p">{</span><span class="w">   </span>
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5"></a><span class="w">    </span><span class="c1">// ...</span>
+</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6"></a><span class="p">}</span>
+</span></code></pre></div></td></tr></table></div>
+<ol>
+<li>Global function "RestoreStamina" has already been defined in content "content0"</li>
+</ol>
+<p>See also <a href="#symbol-name-taken"><code>symbol-name-taken</code></a>.</p>
+<hr />
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.expand", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.fe8b6f2b.min.js"></script>
+      
+    
+  </body>
+</html>
