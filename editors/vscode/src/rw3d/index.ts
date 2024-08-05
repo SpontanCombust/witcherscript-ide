@@ -60,8 +60,7 @@ export class Rw3dCli {
         ];
 
         state.gameOutputChannel.show();
-
-        state.gameOutputChannel.append("\n");
+        
         state.gameOutputChannel.debug(`Executing: rw3d_cli ${args.join(" ")}`)
         const rw3d = cp.spawn(this.exePath, args);
 
@@ -77,6 +76,10 @@ export class Rw3dCli {
             for(const line of s.split("\n")) {
                 state.gameOutputChannel.error(line);
             }
+        });
+
+        rw3d.stdout.on('close', () => {
+            state.gameOutputChannel.append("\n");
         });
     }
 }
