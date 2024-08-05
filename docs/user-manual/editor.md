@@ -67,6 +67,12 @@ Status bar displays context information about the last worked on project and any
   <source src="../../assets/user-manual/editor/goto-definition.mp4" type="video/mp4">
 </video>
 
+### Recompiling scripts at runtime
+
+<video controls muted>
+  <source src="../../assets/user-manual/editor/recompiling-scripts.mp4" type="video/mp4">
+</video>
+
 **More coming soon!**
 
 

@@ -15,6 +15,7 @@ This extension provides support for Witcher 3's scripting language WitcherScript
 - go to definition/declaration
 - hover tooltips
 - support for REDKit projects
+- recompiling scripts at runtime
 
 **More coming soon!**
 
