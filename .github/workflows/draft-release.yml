@@ -8,9 +8,6 @@ env:
   CARGO_TERM_COLOR: always
   IS_PRE_RELEASE: ${{ contains(github.ref_name, 'dev') }}
 
-permissions:
-  issues: write
-
 jobs:
   build:
     strategy:
