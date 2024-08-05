@@ -17,6 +17,7 @@ pub fn prep_client(watch: bool, fast: bool) -> anyhow::Result<()> {
     if !fast {
         cmd!(sh, "{NPM} --version").run().with_context(|| "npm is required")?;
         cmd!(sh, "{NPM} ci").run()?;
+        cmd!(sh, "{NPM} run check").run()?;
     }
 
     cmd!(sh, "{NPM} run {command}").run()?;

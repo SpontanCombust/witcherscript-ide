@@ -65,16 +65,18 @@ impl<'script> TryFrom<AnyNode<'script>> for EventDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for EventDeclarationNode<'_> {
-    type TraversalCtx = DeclarationTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_event_decl(self, ctx);
+
+        ctx.push(TraversalContext::Event);
         if tp.traverse_params {
-            self.params().accept(visitor, FunctionTraversalContext::Event);
+            self.params().accept(visitor, ctx);
         }
         if tp.traverse_definition {
-            self.definition().accept(visitor, FunctionTraversalContext::Event);
+            self.definition().accept(visitor, ctx);
         }
+        ctx.pop();
+        
         visitor.exit_event_decl(self, ctx);
     }
 }
@@ -144,29 +146,31 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionDeclarationNode<'script> {
 }
 
 impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
-    type TraversalCtx = DeclarationTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        if ctx == DeclarationTraversalContext::Global {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        if ctx.top() == TraversalContext::Global {
             let tp = visitor.visit_global_func_decl(self);
     
+            ctx.push(TraversalContext::GlobalFunction);
             if tp.traverse_params {
-                self.params().accept(visitor, FunctionTraversalContext::GlobalFunction);
+                self.params().accept(visitor, ctx);
             }
             if tp.traverse_definition {
-                self.definition().accept(visitor, FunctionTraversalContext::GlobalFunction);
+                self.definition().accept(visitor, ctx);
             }
+            ctx.pop();
 
             visitor.exit_global_func_decl(self);
         } else {
             let tp = visitor.visit_member_func_decl(self, ctx);
     
+            ctx.push(TraversalContext::MemberFunction);
             if tp.traverse_params {
-                self.params().accept(visitor, FunctionTraversalContext::MemberFunction);
+                self.params().accept(visitor, ctx);
             }
             if tp.traverse_definition {
-                self.definition().accept(visitor, FunctionTraversalContext::MemberFunction);
+                self.definition().accept(visitor, ctx);
             }
+            ctx.pop();
 
             visitor.exit_member_func_decl(self, ctx);
         }
@@ -225,9 +229,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionDefinitionNode<'script> {
 }
 
 impl SyntaxNodeTraversal for FunctionDefinitionNode<'_> {
-    type TraversalCtx = FunctionTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         if let FunctionDefinition::Some(block) = self.clone().value() {
             block.accept(visitor, ctx);
         }
@@ -270,16 +272,8 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionBlockNode<'script> {
 }
 
 impl SyntaxNodeTraversal for FunctionBlockNode<'_> {
-    type TraversalCtx = FunctionTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
-        let iter_ctx = match ctx {
-            FunctionTraversalContext::GlobalFunction => StatementTraversalContext::GlobalFunctionDefinition,
-            FunctionTraversalContext::MemberFunction => StatementTraversalContext::MemberFunctionDefinition,
-            FunctionTraversalContext::Event => StatementTraversalContext::EventDefinition,
-        };
-
-        self.iter().for_each(|s| s.accept(visitor, iter_ctx));
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        self.iter().for_each(|s| s.accept(visitor, ctx));
     }
 }
 
@@ -319,9 +313,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionParametersNode<'script> {
 }
 
 impl SyntaxNodeTraversal for FunctionParametersNode<'_> {
-    type TraversalCtx = FunctionTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         self.iter().for_each(|s| s.accept(visitor, ctx));
     }
 }
@@ -371,9 +363,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionParameterGroupNode<'script> 
 }
 
 impl SyntaxNodeTraversal for FunctionParameterGroupNode<'_> {
-    type TraversalCtx = FunctionTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         visitor.visit_func_param_group(self, ctx);
     }
 }
@@ -474,9 +464,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionStatementNode<'script> {
 }
 
 impl SyntaxNodeTraversal for FunctionStatementNode<'_> {
-    type TraversalCtx = StatementTraversalContext;
-    
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         match self.clone().value() {
             FunctionStatement::Var(s) => s.accept(visitor, ctx),
             FunctionStatement::Expr(s) => s.accept(visitor, ctx),
@@ -524,9 +512,7 @@ impl<'script> TryFrom<AnyNode<'script>> for BreakStatementNode<'script> {
 }
 
 impl SyntaxNodeTraversal for BreakStatementNode<'_> {
-    type TraversalCtx = StatementTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         visitor.visit_break_stmt(self, ctx);
     }
 }
@@ -560,9 +546,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ContinueStatementNode<'script> {
 }
 
 impl SyntaxNodeTraversal for ContinueStatementNode<'_> {
-    type TraversalCtx = StatementTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         visitor.visit_continue_stmt(self, ctx);
     }
 }
@@ -602,12 +586,12 @@ impl<'script> TryFrom<AnyNode<'script>> for ReturnStatementNode<'script> {
 }
 
 impl SyntaxNodeTraversal for ReturnStatementNode<'_> {
-    type TraversalCtx = StatementTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_return_stmt(self, ctx);
         if tp.traverse_value {
-            self.value().map(|expr| expr.accept(visitor, ExpressionTraversalContext::ReturnStatement));
+            ctx.push(TraversalContext::ReturnStatement);
+            self.value().map(|expr| expr.accept(visitor, ctx));
+            ctx.pop();
         }
         visitor.exit_return_stmt(self, ctx);
     }
@@ -648,12 +632,12 @@ impl<'script> TryFrom<AnyNode<'script>> for DeleteStatementNode<'script> {
 }
 
 impl SyntaxNodeTraversal for DeleteStatementNode<'_> {
-    type TraversalCtx = StatementTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_delete_stmt(self, ctx);
         if tp.traverse_value {
-            self.value().accept(visitor, ExpressionTraversalContext::DeleteStatement);
+            ctx.push(TraversalContext::DeleteStatement);
+            self.value().accept(visitor, ctx);
+            ctx.pop();
         }
         visitor.exit_delete_stmt(self, ctx);
     }
@@ -695,12 +679,12 @@ impl<'script> TryFrom<AnyNode<'script>> for CompoundStatementNode<'script> {
 }
 
 impl SyntaxNodeTraversal for CompoundStatementNode<'_> {
-    type TraversalCtx = StatementTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_compound_stmt(self, ctx);
         if tp.traverse {
-            self.iter().for_each(|s| s.accept(visitor, StatementTraversalContext::InCompoundStatement));
+            ctx.push(TraversalContext::CompoundStatement);
+            self.iter().for_each(|s| s.accept(visitor, ctx));
+            ctx.pop();
         }
         visitor.exit_compound_stmt(self, ctx);
     }

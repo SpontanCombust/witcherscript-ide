@@ -1,13 +1,6 @@
 import { RequestType } from 'vscode-languageclient';
 
-
-export interface ContentInfo {
-    contentUri: string,
-    scriptsRootUri: string,
-    contentName: string,
-    isInWorkspace: boolean,
-    isInRepository: boolean
-}
+import * as model from './model'
 
 
 export namespace projects {
@@ -33,7 +26,7 @@ export namespace projects {
         }
     
         export interface Response {
-            projectInfos: ContentInfo[]
+            projectInfos: model.ContentInfo[]
         }
     
         export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/projects/list");
@@ -45,10 +38,35 @@ export namespace projects {
         }
 
         export interface Response {
-            content0Info: ContentInfo
+            content0Info: model.ContentInfo
         }
 
         export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/projects/vanillaDependencyContent");
+    }
+
+    export namespace vanillaContent {
+        export interface Parameters {
+            
+        }
+
+        export interface Response {
+            content0Info: model.ContentInfo | undefined
+        }
+
+        export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/projects/vanillaContent");
+    }
+
+    export namespace sourceTree {
+        export interface Parameters {
+            contentUri: string
+        }
+
+        export interface Response {
+            scriptsRootPath: string,
+            localScriptPaths: string[]
+        }
+
+        export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/projects/sourceTree");
     }
 }
 
@@ -59,7 +77,7 @@ export namespace scripts {
         }
 
         export interface Response {
-            parentContentInfo: ContentInfo
+            parentContentInfo: model.ContentInfo
         }
 
         export const type = new RequestType<Parameters, Response, void>("witcherscript-ide/scripts/parentContent");

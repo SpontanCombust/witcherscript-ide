@@ -10,7 +10,8 @@ use witcherscript_diagnostics::{Diagnostic, DiagnosticKind};
 pub fn contextual_syntax_analysis(script: &Script, doc: &ScriptDocument, diagnostics: &mut Vec<Diagnostic>) {
     let mut visitor = ContextualSyntaxAnalysis {
         doc,
-        diagnostics
+        diagnostics,
+        visited_non_var_stmt_before: false
     };
 
     script.visit_nodes(&mut visitor);
@@ -18,7 +19,8 @@ pub fn contextual_syntax_analysis(script: &Script, doc: &ScriptDocument, diagnos
 
 struct ContextualSyntaxAnalysis<'a> {
     doc: &'a ScriptDocument,
-    diagnostics: &'a mut Vec<Diagnostic>
+    diagnostics: &'a mut Vec<Diagnostic>,
+    visited_non_var_stmt_before: bool
 }
 
 impl ContextualSyntaxAnalysis<'_> {
@@ -256,10 +258,11 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
             self.check_function_specifiers(n, true);
         }
 
-        FunctionDeclarationTraversalPolicy { 
-            traverse_params: true,
-            traverse_definition: false
-        }   
+        TraversalPolicy::default_to(true)
+    }
+
+    fn exit_global_func_decl(&mut self, _: &FunctionDeclarationNode) {
+        self.visited_non_var_stmt_before = false;
     }
 
     fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
@@ -305,7 +308,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: DeclarationTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: &TraversalContextStack) {
         if let Some(range) = n.annotation().map(|ann| ann.range()) {
             self.diagnostics.push(Diagnostic {
                 range,
@@ -319,7 +322,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
             if let Ok(var_spec) = MemberVarSpecifier::try_from(spec) {
                 if matches!(var_spec, MemberVarSpecifier::AccessModifier(_)) {
-                    if ctx == DeclarationTraversalContext::StructDefinition {
+                    if ctx.contains(TraversalContext::Struct) {
                         let spec_name = Keyword::from(spec).to_string();
                         self.diagnostics.push(Diagnostic {
                             range,
@@ -353,7 +356,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         }
     }
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {
         if let Some(range) = n.annotation().map(|ann| ann.range()) {
             self.diagnostics.push(Diagnostic {
                 range,
@@ -363,13 +366,22 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
 
         self.check_function_specifiers(n, false);
 
-        FunctionDeclarationTraversalPolicy {
-            traverse_params: true,
-            traverse_definition: false
-        }
+        TraversalPolicy::default_to(true)
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: &TraversalContextStack) {
+        self.visited_non_var_stmt_before = false;
+    }
+
+    fn visit_event_decl(&mut self, _: &EventDeclarationNode, _: &TraversalContextStack) -> EventDeclarationTraversalPolicy {
+        TraversalPolicy::default_to(true)
+    }
+
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: &TraversalContextStack) {
+        self.visited_non_var_stmt_before = false;
+    }
+
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) {
         let mut specifiers = SmallVec::<[AutobindSpecifier; 2]>::new();
         let mut found_access_modif_before = false;
 
@@ -403,7 +415,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         }
     }
 
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: FunctionTraversalContext) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) {
         let mut specifiers = SmallVec::<[FunctionParameterSpecifier; 2]>::new();
 
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
@@ -423,6 +435,99 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
                     kind: DiagnosticKind::IncompatibleSpecifier { spec_name, sym_name: "a function parameter".into() }
                 })
             } 
+        }
+    }
+
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: &TraversalContextStack) -> VarDeclarationTraversalPolicy {
+        if self.visited_non_var_stmt_before {
+            self.diagnostics.push(Diagnostic {
+                range: n.range(),
+                kind: DiagnosticKind::InvalidLocalVarPlacement
+            });
+        }
+
+        VarDeclarationTraversalPolicy {
+            traverse_init_value: false
+        }
+    }
+
+    fn visit_expr_stmt(&mut self, _: &ExpressionStatementNode, _: &TraversalContextStack) -> ExpressionStatementTraversalPolicy {
+        self.visited_non_var_stmt_before = true;
+
+        ExpressionStatementTraversalPolicy {
+            traverse_expr: false
+        }
+    }
+
+    fn visit_if_stmt(&mut self, _: &IfConditionalNode, _: &TraversalContextStack) -> IfConditionalTraversalPolicy {
+        self.visited_non_var_stmt_before = true;
+
+        IfConditionalTraversalPolicy {
+            traverse_cond: false,
+            traverse_body: true,
+            traverse_else_body: true
+        }
+    }
+
+    fn visit_switch_stmt(&mut self, _: &SwitchConditionalNode, _: &TraversalContextStack) -> SwitchConditionalTraversalPolicy {
+        self.visited_non_var_stmt_before = true;
+
+        SwitchConditionalTraversalPolicy {
+            traverse_cond: false,
+            traverse_body: true
+        }
+    }
+
+    fn visit_for_stmt(&mut self, _: &ForLoopNode, _: &TraversalContextStack) -> ForLoopTraversalPolicy {
+        self.visited_non_var_stmt_before = true;
+
+        ForLoopTraversalPolicy {
+            traverse_init: false,
+            traverse_cond: false,
+            traverse_iter: false,
+            traverse_body: true
+        }
+    }
+
+    fn visit_while_stmt(&mut self, _: &WhileLoopNode, _: &TraversalContextStack) -> WhileLoopTraversalPolicy {
+        self.visited_non_var_stmt_before = true;
+
+        WhileLoopTraversalPolicy {
+            traverse_cond: false,
+            traverse_body: true
+        }
+    }
+
+    fn visit_do_while_stmt(&mut self, _: &DoWhileLoopNode, _: &TraversalContextStack) -> DoWhileLoopTraversalPolicy {
+        self.visited_non_var_stmt_before = true;
+
+        DoWhileLoopTraversalPolicy {
+            traverse_cond: false,
+            traverse_body: true
+        }
+    }
+
+    fn visit_delete_stmt(&mut self, _: &DeleteStatementNode, _: &TraversalContextStack) -> DeleteStatementTraversalPolicy {
+        self.visited_non_var_stmt_before = true;
+
+        DeleteStatementTraversalPolicy {
+            traverse_value: false
+        }
+    }
+
+    fn visit_compound_stmt(&mut self, _: &CompoundStatementNode, _: &TraversalContextStack) -> CompoundStatementTraversalPolicy {
+        self.visited_non_var_stmt_before = true;
+
+        CompoundStatementTraversalPolicy {
+            traverse: true
+        }
+    }
+
+    fn visit_return_stmt(&mut self, _: &ReturnStatementNode, _: &TraversalContextStack) -> ReturnStatementTraversalPolicy {
+        self.visited_non_var_stmt_before = true;
+
+        ReturnStatementTraversalPolicy {
+            traverse_value: false
         }
     }
 }

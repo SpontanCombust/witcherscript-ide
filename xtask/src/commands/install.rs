@@ -19,6 +19,7 @@ pub fn install() -> anyhow::Result<()> {
     cmd!(sh, "{CODE} --version").run().with_context(|| "Visual Studio Code is required")?;
 
     cmd!(sh, "{NPM} ci").run()?;
+    cmd!(sh, "{NPM} run check").run()?;
     cmd!(sh, "{NPX} vsce package -o {VSIX_NAME}").run()?;
 
     cmd!(sh, "{CODE} --install-extension {VSIX_NAME} --force").run()?;

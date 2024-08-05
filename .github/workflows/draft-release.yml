@@ -8,6 +8,9 @@ env:
   CARGO_TERM_COLOR: always
   IS_PRE_RELEASE: ${{ contains(github.ref_name, 'dev') }}
 
+permissions:
+  issues: write
+
 jobs:
   build:
     strategy:
@@ -37,8 +40,10 @@ jobs:
     - name: Build xtask
       run: cargo build --package xtask --release
 
-    - name: Prepare the server executable
+    - name: Prepare the LSP server executable
       run: cargo xtask prep-server --target ${{ matrix.target }} --release
+    - name: Download rw3d_cli
+      run: cargo xtask prep-rw3d
     
     - name: Package the extension (pre-release)
       if: ${{ env.IS_PRE_RELEASE == 'true' }}
@@ -74,6 +79,17 @@ jobs:
         allowUpdates: true
         generateReleaseNotes: true
         prerelease: ${{ env.IS_PRE_RELEASE }}
+
+
+    - name: Require manual approval to upload the extension to marketplaces
+      if: ${{ env.IS_PRE_RELEASE == 'false' }}
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ github.TOKEN }}
+        approvers: SpontanCombust
+        minimum-approvals: 1
+        issue-title: "Deploying ${{ github.ref_name }} to marketplaces from staging"
+        issue-body: "Please approve or deny the deployment of version ${{ github.ref_name }}."
 
     # The VS Marketplace doesn't yet support pre-release semver versions, sigh....
     # https://code.visualstudio.com/api/working-with-extensions/publishing-extension#prerelease-extensions

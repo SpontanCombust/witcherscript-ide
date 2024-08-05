@@ -1,90 +1,177 @@
 import * as vscode from 'vscode';
 
+import { getLanguageClient } from './lsp/lang_client';
+import * as requests from './lsp/requests';
+import * as model from './lsp/model';
+import * as config from './config'
 
-// Used for opening the manifest file of the newly created project
-export namespace OpenManifestOnInit {
-    export const KEY = "OpenManifestOnInit";
 
-    export class Memento {
-        public workspaceUri: vscode.Uri;
-        public manifestUri: vscode.Uri;
+let contextStatusBar: vscode.StatusBarItem;
+let lastActiveContentInfo: model.ContentInfo | undefined = undefined;
+export let gameOutputChannel: vscode.LogOutputChannel;
 
-        constructor(workspaceUri: vscode.Uri, manifestUri: vscode.Uri) {
-            this.workspaceUri = workspaceUri;
-            this.manifestUri = manifestUri;
-        }
 
-        public async store(context: vscode.ExtensionContext) {
-            const dto: MementoDto = {
-                workspaceUriStr: this.workspaceUri.toString(),
-                manifestUriStr: this.manifestUri.toString(),
-            };
+/// Get info about the content to which belongs the last viewed script 
+export function getLastActiveContentInfo(): model.ContentInfo | undefined {
+    return lastActiveContentInfo;
+}
 
-            await context.globalState.update(KEY, dto);
-        }
+const lastActiveContentChanged = new vscode.EventEmitter<model.ContentInfo | undefined>();
 
-        public static fetch(context: vscode.ExtensionContext): Memento | undefined {
-            const dto = context.globalState.get<MementoDto>(KEY);
-            if (dto) {
-                const memento = new Memento(
-                    vscode.Uri.parse(dto.workspaceUriStr),
-                    vscode.Uri.parse(dto.manifestUriStr),
-                );
+export const onLastActiveContentChanged = lastActiveContentChanged.event;
 
-                return memento;
-            } else {
-                return undefined;
-            }
-        }
 
-        public static erase(context: vscode.ExtensionContext) {
-            context.globalState.update(KEY, undefined);
+export interface ParsingScriptsWork {
+    kind: 'parsing-scripts',
+    contentName: string
+}
+
+export type Work = ParsingScriptsWork;
+
+export interface WorkEvent {
+    kind: 'begin' | 'finish',
+    work: Work
+}
+
+let workStatusBar: vscode.StatusBarItem;
+let currentWork: Work | undefined = undefined;
+let workEventQueue: WorkEvent[] = [];
+let workUpdaterRunning = false;
+
+// Establishing a minimal time for which a status must be visible for the user to see it
+const WORK_UPDATE_PERIOD_MILIS: number = 500;
+
+
+export function initializeState(context: vscode.ExtensionContext) {
+    contextStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+    contextStatusBar.tooltip = "Click to show available commands";
+    contextStatusBar.command = 'witcherscript-ide.misc.showCommandsInPalette';
+    updateContextStatusBar();
+    contextStatusBar.show();
+    context.subscriptions.push(contextStatusBar);
+
+    workStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+    workStatusBar.command = 'witcherscript-ide.misc.openLogs';
+    updateWorkStatusBar();
+    context.subscriptions.push(workStatusBar);
+
+    vscode.window.onDidChangeActiveTextEditor(() => {
+        updateLastActiveContentInfo();
+    });
+
+    gameOutputChannel = vscode.window.createOutputChannel("Witcher 3 Output", { log: true });
+}
+
+
+
+export async function updateLastActiveContentInfo() {
+    const prevContentJson = JSON.stringify(lastActiveContentInfo);
+
+    const client = getLanguageClient();
+    if (client == undefined) {
+        lastActiveContentInfo = undefined;
+    } else {
+        const activeEditor = vscode.window.activeTextEditor;
+        const isWitcherScript = activeEditor?.document.languageId == 'witcherscript';
+        const documentUri = activeEditor?.document.uri;
+
+        // if there is no active editor opened we leave the last content name as is
+        if (documentUri != undefined && isWitcherScript) {
+            let currentContent: model.ContentInfo | undefined = undefined;
+            try {
+                const res = await client.sendRequest(requests.scripts.parent_content.type, {
+                    scriptUri: client.code2ProtocolConverter.asUri(documentUri)
+                });
+
+                currentContent = res.parentContentInfo;
+            } catch(_) {}
+
+            lastActiveContentInfo = currentContent;
         }
     }
 
-    interface MementoDto {
-        workspaceUriStr: string,
-        manifestUriStr: string
+    if (prevContentJson != JSON.stringify(lastActiveContentInfo)) {
+        updateContextStatusBar();
+        lastActiveContentChanged.fire(lastActiveContentInfo);
     }
 }
 
-export namespace RememberedChoices {
-    export const KEY = "RememberedChoices";
+function updateContextStatusBar() {
+    let text = "WitcherScript IDE";
 
-    export class Memento {
-        public neverShowAgainDebugAstNotif: boolean;
-        public neverShowAgainForeignScriptWarning: boolean;
+    if (!config.getConfiguration().enableLanguageServer) {
+        text += " [Disabled]";
+    } else {
+        const contentName = (lastActiveContentInfo != undefined) ? lastActiveContentInfo.contentName : "No active content";
+        text += ` [${contentName}]`;
+    }
+    
+    contextStatusBar.text = text;
+}
 
-        constructor(dto: MementoDto) {
-            this.neverShowAgainDebugAstNotif = dto.neverShowAgainDebugAstNotif;
-            this.neverShowAgainForeignScriptWarning = dto.neverShowAgainForeignScriptWarning;
-        }
 
-        public async store(context: vscode.ExtensionContext) {
-            const dto: MementoDto = {
-                neverShowAgainDebugAstNotif: this.neverShowAgainDebugAstNotif,
-                neverShowAgainForeignScriptWarning: this.neverShowAgainForeignScriptWarning
-            };
 
-            context.globalState.update(KEY, dto);
-        }
+export function scheduleWorkEvent(event: WorkEvent) {
+    workEventQueue.push(event);
 
-        public static fetchOrDefault(context: vscode.ExtensionContext): Memento {
-            const dto = context.globalState.get<MementoDto>(KEY);
+    if (!workUpdaterRunning) {
+        workUpdaterRunning = true;
+        updateWork();
+    }
+}
 
-            if (dto) {
-                return new Memento(dto);
-            } else {
-                return new Memento({
-                    neverShowAgainDebugAstNotif: false,
-                    neverShowAgainForeignScriptWarning: false
-                })
+function updateWork() {
+    if (currentWork == undefined) {
+        beginNewWork();
+    } else {
+        for (let i = 0; i < workEventQueue.length; i += 1) {
+            const event = workEventQueue[i];
+            if (event.kind == 'finish' && JSON.stringify(event.work) == JSON.stringify(currentWork)) {
+                workEventQueue.splice(i, 1);
+                currentWork = undefined;
+                break;
             }
+        }
+
+        if (currentWork == undefined) {
+            beginNewWork();
         }
     }
 
-    interface MementoDto {
-        neverShowAgainDebugAstNotif: boolean;
-        neverShowAgainForeignScriptWarning: boolean;
+    updateWorkStatusBar();
+
+    if (currentWork != undefined) {
+        setTimeout(() => {
+            updateWork();
+        }, WORK_UPDATE_PERIOD_MILIS);
+    } else {
+        workUpdaterRunning = false;
+    }
+}
+
+function beginNewWork() {
+    for (let i = 0; i < workEventQueue.length; i += 1) {
+        const event = workEventQueue[i];
+        if (event.kind == 'begin') {
+            currentWork = workEventQueue.splice(i, 1)[0].work;
+            break;
+        }
+    }
+}
+
+function updateWorkStatusBar() {
+    if (currentWork != undefined) {
+        let text = "$(sync~spin) ";
+
+        switch (currentWork.kind) {
+            case 'parsing-scripts':
+                text += `Processing (${currentWork.contentName})`
+                break;
+        }
+
+        workStatusBar.text = text;
+        workStatusBar.show();
+    } else {
+        workStatusBar.hide();
     }
 }

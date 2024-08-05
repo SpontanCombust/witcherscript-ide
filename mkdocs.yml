@@ -1,4 +1,4 @@
-site_name: W I D E - WitcherScript IDE
+site_name: WIDE - WitcherScript IDE
 site_description: WIDE - Witcher 3 scripting tooling
 site_author: Przemysław Cedro (SpontanCombust)
 site_url: https://spontancombust.github.io/witcherscript-ide/
@@ -10,7 +10,7 @@ nav:
   - 'User Manual':
     - 'user-manual/index.md'
     - 'Getting Started': 'user-manual/getting-started.md'
-    - 'Editor': 'user-manual/editor.md'
+    - 'Editor Features': 'user-manual/editor.md'
     - 'Project System': 'user-manual/project-system.md' 
     - 'Diagnostic Index': 'user-manual/diagnostic-index.md'
     - 'FAQ': 'user-manual/faq.md'

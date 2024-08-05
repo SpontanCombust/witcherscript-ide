@@ -3,7 +3,7 @@ use rayon::prelude::*;
 use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_project::source_tree::{SourceTreeDifference, SourceTreeFile};
-use crate::{Backend, ScriptState, ScriptStateContentInfo};
+use crate::{Backend, ScriptState, ScriptStateContentInfo, notifications};
 
 
 impl Backend {
@@ -53,6 +53,16 @@ impl Backend {
             .map(|f| f.to_owned())
             .collect::<Vec<_>>();
 
+        let content_name = self.content_graph
+            .read().await
+            .get_node_by_path(content_path)
+            .map(|n| n.content.content_name().to_string())
+            .unwrap_or_default();
+
+        self.client.send_notification::<notifications::scripts::did_start_script_parsing::Type>(notifications::scripts::did_start_script_parsing::Parameters {
+            content_name: content_name.clone()
+        }).await;
+
         if !diff_removed.is_empty() {
             self.on_source_tree_files_removed(diff_removed, content_path).await;
         }
@@ -65,6 +75,10 @@ impl Backend {
         if !diff_added_or_modified.is_empty() {
             self.on_source_tree_files_added_or_modified(diff_added_or_modified, content_path).await;
         }
+
+        self.client.send_notification::<notifications::scripts::did_finish_script_parsing::Type>(notifications::scripts::did_finish_script_parsing::Parameters {
+            content_name
+        }).await;
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Handled source tree related changes to {} in {:.3}s", content_path.display(), duration.as_secs_f32())).await;

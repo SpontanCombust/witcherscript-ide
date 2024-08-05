@@ -9,7 +9,7 @@ use witcherscript_project::content::{ContentScanError, ProjectDirectory, RedkitP
 use witcherscript_project::source_tree::SourceTreeDifference;
 use witcherscript_project::{ContentScanner, FileError};
 use witcherscript_project::content_graph::{ContentGraphDifference, ContentGraphError, GraphEdgeWithContent, GraphNode, ModifiedGraphNode};
-use crate::Backend;
+use crate::{Backend, notifications};
 
 
 impl Backend {
@@ -139,6 +139,8 @@ impl Backend {
         if !diff_edges_removed.is_empty() {
             self.on_graph_edges_removed(diff_edges_removed).await;
         }
+
+        self.client.send_notification::<notifications::projects::did_change_content_graph::Type>(()).await;
 
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Handled content graph related changes in {:.3}s", duration.as_secs_f32())).await;

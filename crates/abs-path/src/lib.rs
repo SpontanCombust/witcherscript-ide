@@ -145,7 +145,14 @@ impl TryFrom<lsp_types::Url> for AbsPath {
         let path = value.to_file_path()?;
         Ok(Self::resolve(path, None).unwrap())
     }
-    
+}
+
+impl TryFrom<PathBuf> for AbsPath {
+    type Error = self::Error;
+
+    fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
+        Self::resolve(value, None)
+    }
 }
 
 impl Into<lsp_types::Url> for AbsPath {

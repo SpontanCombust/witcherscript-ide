@@ -1,10 +1,10 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient/node';
 
-import * as state from '../state';
+import { getPersistence } from '../persistence';
 import * as config from '../config';
 import * as handlers from './handlers';
+import * as tdcp from '../providers/text_document_content_providers'
 
 
 let client: lsp.LanguageClient | undefined;
@@ -12,11 +12,11 @@ let client: lsp.LanguageClient | undefined;
 export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: config.Config) {
     const ext = process.platform === "win32" ? ".exe" : "";
 	const serverPath = ctx.asAbsolutePath(
-		path.join('server', 'bin', `witcherscript-lsp${ext}`)
+		`deps/lsp_server/bin/witcherscript-lsp${ext}`
 	);
-	const nativeContentUri = vscode.Uri.joinPath(
-		ctx.extensionUri, 'server', 'assets', 'content0_native'
-	).toString();
+	const nativeContentPath = ctx.asAbsolutePath(
+		`deps/lsp_server/assets/content0_native`
+	);
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
@@ -32,7 +32,8 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 	};
 
 	const initializationOptions: InitializationOptions = {
-		nativeContentUri: nativeContentUri,
+		rayonThreads: cfg.rayonThreads,
+		nativeContentPath: nativeContentPath,
 		gameDirectory: cfg.gameDirectory,
 		contentRepositories: cfg.contentRepositories,
 		enableSyntaxAnalysis: cfg.enableSyntaxAnalysis
@@ -43,7 +44,10 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 		documentSelector: [
 			{ scheme: 'file', language: 'witcherscript' },
 			{ scheme: 'file', pattern: '**/*.w3edit' },
-			{ scheme: 'file', pattern: '**/witcherscript.toml' }
+			{ scheme: 'file', pattern: '**/witcherscript.toml' },
+			{ scheme: tdcp.ReadOnlyContentProvider.scheme, language: 'witcherscript' },
+			{ scheme: tdcp.ReadOnlyContentProvider.scheme, pattern: '**/*.w3edit' },
+			{ scheme: tdcp.ReadOnlyContentProvider.scheme, pattern: '**/witcherscript.toml' }
 		],
 		synchronize: {
 			// Notify the server about file changes to files we care about
@@ -67,8 +71,8 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 
 	// Start the client. This will also launch the server
 	return client.start().then(_ => {
-		const memento = state.OpenManifestOnInit.Memento.fetch(ctx);
-		
+		const db = getPersistence(ctx);
+		const memento = db.openManifestOnInit;
 		if (memento != undefined) {
 			// If a new project has just been created in this directory and the user agreed to open it, show them the manifest of said project
 			if (vscode.workspace.workspaceFolders?.some(f => f.uri.fsPath == memento.workspaceUri.fsPath)) {
@@ -80,7 +84,7 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 					(err) => client?.debug('Manifest could not be shown: ' + err)
 				);
 
-				state.OpenManifestOnInit.Memento.erase(ctx);
+				db.openManifestOnInit = undefined;
 			}
 		}
 	});
@@ -88,7 +92,8 @@ export async function createLanguageClient(ctx: vscode.ExtensionContext, cfg: co
 
 // Configuration needed by the server. The format in both client and server must match!
 interface InitializationOptions {
-	nativeContentUri: string,
+	rayonThreads: number,
+	nativeContentPath: string,
 	gameDirectory: string,
     contentRepositories: string[]
 	enableSyntaxAnalysis: boolean

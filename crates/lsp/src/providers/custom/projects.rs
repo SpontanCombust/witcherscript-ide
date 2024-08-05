@@ -1,9 +1,8 @@
 use std::io::Write;
 use abs_path::AbsPath;
-use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::{self, Result};
 use witcherscript_project::{content::VANILLA_CONTENT_NAME, Manifest};
-use crate::{notifications, requests::{self, ContentInfo}, Backend};
+use crate::{notifications, requests, model, Backend};
 
 
 pub trait LangaugeServerCustomProjects {
@@ -11,9 +10,13 @@ pub trait LangaugeServerCustomProjects {
 
     async fn vanilla_dependency_content(&self, params: requests::projects::vanilla_dependency_content::Parameters) -> Result<requests::projects::vanilla_dependency_content::Response>;
 
+    async fn vanilla_content(&self, params: requests::projects::vanilla_content::Parameters) -> Result<requests::projects::vanilla_content::Response>;
+
     async fn project_list(&self, params: requests::projects::list::Parameters) -> Result<requests::projects::list::Response>;
 
     async fn did_import_scripts(&self, params: notifications::projects::did_import_scripts::Parameters);
+
+    async fn source_tree(&self, params: requests::projects::source_tree::Parameters) -> Result<requests::projects::source_tree::Response>;
 }
 
 
@@ -148,13 +151,7 @@ impl LangaugeServerCustomProjects for Backend {
         let mut content0_info = None;
         for n in graph.walk_dependencies(&project_path) {
             if n.content.content_name() == VANILLA_CONTENT_NAME {
-                content0_info = Some(ContentInfo {
-                    content_uri: n.content.path().to_uri(),
-                    scripts_root_uri: n.content.source_tree_root().to_uri(),
-                    content_name: n.content.content_name().to_owned(),
-                    is_in_workspace: n.in_workspace,
-                    is_in_repository: n.in_repository
-                });
+                content0_info = Some(model::ContentInfo::from(n));
             }
         }
 
@@ -171,6 +168,21 @@ impl LangaugeServerCustomProjects for Backend {
         }
     }
 
+    async fn vanilla_content(&self, _: requests::projects::vanilla_content::Parameters) -> Result<requests::projects::vanilla_content::Response> {
+        let graph = self.content_graph.read().await;
+
+        let mut content0_info = None;
+        for n in graph.nodes() {
+            if n.content.content_name() == VANILLA_CONTENT_NAME {
+                content0_info = Some(model::ContentInfo::from(n));
+            }
+        }
+
+        Ok(requests::projects::vanilla_content::Response {
+            content0_info
+        })
+    }
+
     async fn project_list(&self, params: requests::projects::list::Parameters) -> Result<requests::projects::list::Response> {
         let only_from_workspace = params.only_from_workspace.unwrap_or(true);
 
@@ -182,13 +194,7 @@ impl LangaugeServerCustomProjects for Backend {
                 continue;
             }
 
-            project_infos.push(ContentInfo { 
-                content_uri: lsp::Url::from_file_path(n.content.path()).unwrap(), 
-                scripts_root_uri: lsp::Url::from_file_path(n.content.source_tree_root()).unwrap(), 
-                content_name: n.content.content_name().into(), 
-                is_in_workspace: n.in_workspace, 
-                is_in_repository: n.in_repository 
-            })
+            project_infos.push(model::ContentInfo::from(n));
         }
 
         Ok(requests::projects::list::Response {
@@ -212,6 +218,39 @@ impl LangaugeServerCustomProjects for Backend {
         } else {
             self.reporter.log_error("Imported files do no belong to a known content!").await;
         }
+    }
+    
+    async fn source_tree(&self, params: requests::projects::source_tree::Parameters) -> Result<requests::projects::source_tree::Response> {
+        let content_path: AbsPath;
+        if let Ok(abs_path) = AbsPath::try_from(params.content_uri) {
+            content_path = abs_path;
+        } else {
+            return Err(jsonrpc::Error::invalid_params("content_uri parameter is not a valid file URI"));
+        }
+
+        let source_tree = self.source_trees.get(&content_path);
+
+        if source_tree.is_none() {
+            return Err(jsonrpc::Error { 
+                code: jsonrpc::ErrorCode::ServerError(-1070), 
+                message: "The content is absent from the content graph".into(), 
+                data: None
+            })
+        }
+
+        let source_tree = source_tree.unwrap();
+        let scripts_root_path = source_tree.script_root().as_path().to_path_buf();
+        let mut local_script_paths: Vec<_> = source_tree.iter().map(|f| f.path.local().to_path_buf()).collect();
+        local_script_paths.sort();
+
+        let res = requests::projects::source_tree::Response {
+            scripts_root_path,
+            local_script_paths
+        };
+
+        drop(source_tree);
+
+        Ok(res)
     }
 }
 

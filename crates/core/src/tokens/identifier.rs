@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::fmt::Debug;
 use shrinkwraprs::Shrinkwrap;
 use crate::{script_document::ScriptDocument, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use crate::ast::{SyntaxNodeTraversal, ExpressionTraversalContext, SyntaxNodeVisitor};
+use crate::ast::{SyntaxNodeTraversal, TraversalContextStack, SyntaxNodeVisitor};
 
 
 #[derive(Shrinkwrap, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -43,9 +43,7 @@ impl Debug for IdentifierNode<'_> {
 }
 
 impl SyntaxNodeTraversal for IdentifierNode<'_> {
-    type TraversalCtx = ExpressionTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         visitor.visit_identifier_expr(self, ctx);
     }
 }

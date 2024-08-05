@@ -3,8 +3,8 @@ use xshell::{Shell, cmd};
 
 
 const LSP_ASSETS: &str = "crates/lsp/assets/include";
-const LSP_BIN_DST: &str = "editors/vscode/server/bin";
-const LSP_ASSETS_DST: &str = "editors/vscode/server/assets";
+const LSP_BIN_DST: &str = "editors/vscode/deps/lsp_server/bin";
+const LSP_ASSETS_DST: &str = "editors/vscode/deps/lsp_server/assets";
 
 pub fn prep_server(release: bool, target: Option<String>) -> anyhow::Result<()> {
     let sh = Shell::new()?;

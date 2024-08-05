@@ -328,6 +328,25 @@ var modsInstalled: int; // (1)
 
 ---
 
+### `invalid-local-var-placement`
+
+The WitcherScript compiler is not very flexible when it comes to local variable declarations. You are forced to declare all of them at the start of a function before doing anything else, even when it comes to such trivial cases like for loop iterator. This is similar to early C language standards, where declarations could only be done at the beginning of a scope.
+
+```ts linenums="1" hl_lines="3"
+function LogHeldSwordInCombat() {
+    if (thePlayer.IsInCombatState()) {
+        var id: SItemUniqueId; // (1)
+        id = thePlayer.inv.GetCurrentlyHeldSword();
+        LogChannel('TEST', "Sword item name: " + thePlayer.inv.GetItemName(id));
+    }
+}
+```
+
+1. Variable must be done before the "if" statement.
+
+
+---
+
 
 
 </br>

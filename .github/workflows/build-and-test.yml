@@ -19,11 +19,20 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Use Rust stable
+    - name: Setup Rust
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-    - name: Build with Cargo
+    - name: Setup npm
+      uses: actions/setup-node@v4
+
+    - name: Build Rust code
       run: cargo build --release --workspace
-    - name: Run tests
+    - name: Run Rust tests
       run: cargo test --verbose
+
+    - name: Check VSCode client
+      working-directory: 'editors/vscode'
+      run: |
+        npm ci
+        npm run check

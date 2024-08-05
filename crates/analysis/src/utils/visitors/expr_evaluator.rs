@@ -8,14 +8,19 @@ use super::SymbolPathBuilderPayload;
 /// Requires valid for the given context `SymbolPathBuilderPayload` and `UnqualifiedNameLookup` to work.
 pub fn evaluate_expression<'a>(
     n: ExpressionNode,
-    ctx: Option<ExpressionTraversalContext>,
+    ctx: TraversalContext,
     doc: &'a ScriptDocument, 
     symtab_marcher: SymbolTableMarcher<'a>, 
     sympath_payload: Rc<RefCell<SymbolPathBuilderPayload>>,
     unl_payload: Rc<RefCell<UnqualifiedNameLookup>>
 ) -> SymbolPathBuf {
     let mut evaluator = ExpressionEvaluator::new(doc, symtab_marcher, sympath_payload, unl_payload);
-    n.accept(&mut evaluator, ctx.unwrap_or(ExpressionTraversalContext::ExpressionStatement)); // by default it should think it is operating on an izolated statement
+
+    // we don't need information about the exact whereabouts of the expression
+    let mut ctx_stack = TraversalContextStack::new();
+    ctx_stack.push(ctx);
+
+    n.accept(&mut evaluator, &mut ctx_stack); 
     evaluator.finish()
 }
 
@@ -35,7 +40,7 @@ pub struct ExpressionEvaluator<'a> {
 #[derive(Clone)]
 struct TypeStackElement {
     path: SymbolPathBuf,
-    ctx: ExpressionTraversalContext
+    ctx: TraversalContext
 }
 
 impl<'a> ExpressionEvaluator<'a> {
@@ -64,7 +69,7 @@ impl<'a> ExpressionEvaluator<'a> {
 
 
     #[inline]
-    fn push(&mut self, path: SymbolPathBuf, ctx: ExpressionTraversalContext) {
+    fn push(&mut self, path: SymbolPathBuf, ctx: TraversalContext) {
         self.type_stack.push(TypeStackElement { path, ctx })
     }
 
@@ -140,61 +145,61 @@ impl<'a> ExpressionEvaluator<'a> {
 }
 
 impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
-    fn exit_nested_expr(&mut self, _: &NestedExpressionNode, ctx: ExpressionTraversalContext) {
-        self.top_mut().map(|e| e.ctx = ctx );
+    fn exit_nested_expr(&mut self, _: &NestedExpressionNode, ctx: &TraversalContextStack) {
+        self.top_mut().map(|e| e.ctx = ctx.top() );
     }
 
-    fn visit_literal_expr(&mut self, n: &LiteralNode, ctx: ExpressionTraversalContext) {
+    fn visit_literal_expr(&mut self, n: &LiteralNode, ctx: &TraversalContextStack) {
         match n.clone().value() {
-            Literal::Int(_) => self.push(BasicTypeSymbolPath::new("int").into(), ctx),
-            Literal::Hex(_) => self.push(BasicTypeSymbolPath::new("int").into(), ctx),
-            Literal::Float(_) => self.push(BasicTypeSymbolPath::new("float").into(), ctx),
-            Literal::Bool(_) => self.push(BasicTypeSymbolPath::new("bool").into(), ctx),
-            Literal::String(_) => self.push(BasicTypeSymbolPath::new("string").into(), ctx),
-            Literal::Name(_) => self.push(BasicTypeSymbolPath::new("name").into(), ctx),
-            Literal::Null(_) => self.push(BasicTypeSymbolPath::new("NULL").into(), ctx),
+            Literal::Int(_) => self.push(BasicTypeSymbolPath::new("int").into(), ctx.top()),
+            Literal::Hex(_) => self.push(BasicTypeSymbolPath::new("int").into(), ctx.top()),
+            Literal::Float(_) => self.push(BasicTypeSymbolPath::new("float").into(), ctx.top()),
+            Literal::Bool(_) => self.push(BasicTypeSymbolPath::new("bool").into(), ctx.top()),
+            Literal::String(_) => self.push(BasicTypeSymbolPath::new("string").into(), ctx.top()),
+            Literal::Name(_) => self.push(BasicTypeSymbolPath::new("name").into(), ctx.top()),
+            Literal::Null(_) => self.push(BasicTypeSymbolPath::new("NULL").into(), ctx.top()),
         }
     }
 
-    fn visit_this_expr(&mut self, _: &ThisExpressionNode, ctx: ExpressionTraversalContext) {
+    fn visit_this_expr(&mut self, _: &ThisExpressionNode, ctx: &TraversalContextStack) {
         let sympath_payload = self.sympath_payload.borrow();
         let type_path = sympath_payload.current_sympath.root().unwrap_or_default();
         let this_path = ThisVarSymbolPath::new(type_path);
         drop(sympath_payload);
 
-        self.push(this_path.into(), ctx);
+        self.push(this_path.into(), ctx.top());
     }
 
-    fn visit_super_expr(&mut self, _: &SuperExpressionNode, ctx: ExpressionTraversalContext) {
+    fn visit_super_expr(&mut self, _: &SuperExpressionNode, ctx: &TraversalContextStack) {
         let sympath_payload = self.sympath_payload.borrow();
         let type_path = sympath_payload.current_sympath.root().unwrap_or_default();
         let super_path = SuperVarSymbolPath::new(type_path);
         drop(sympath_payload);
         
-        self.push(super_path.into(), ctx);
+        self.push(super_path.into(), ctx.top());
     }
 
-    fn visit_parent_expr(&mut self, _: &ParentExpressionNode, ctx: ExpressionTraversalContext) {
+    fn visit_parent_expr(&mut self, _: &ParentExpressionNode, ctx: &TraversalContextStack) {
         let sympath_payload = self.sympath_payload.borrow();
         let type_path = sympath_payload.current_sympath.root().unwrap_or_default();
         let parent_path = ParentVarSymbolPath::new(type_path);
         drop(sympath_payload);
         
-        self.push(parent_path.into(), ctx);
+        self.push(parent_path.into(), ctx.top());
     }
 
-    fn visit_virtual_parent_expr(&mut self, _: &VirtualParentExpressionNode, ctx: ExpressionTraversalContext) {
+    fn visit_virtual_parent_expr(&mut self, _: &VirtualParentExpressionNode, ctx: &TraversalContextStack) {
         let sympath_payload = self.sympath_payload.borrow();
         let type_path = sympath_payload.current_sympath.root().unwrap_or_default();
         let virtual_parent_path = VirtualParentVarSymbolPath::new(type_path);
         drop(sympath_payload);
         
-        self.push(virtual_parent_path.into(), ctx);
+        self.push(virtual_parent_path.into(), ctx.top());
     }
 
-    fn visit_identifier_expr(&mut self, n: &IdentifierNode, ctx: ExpressionTraversalContext) {
+    fn visit_identifier_expr(&mut self, n: &IdentifierNode, ctx: &TraversalContextStack) {
         let name = n.value(self.doc);
-        let ident_category = if ctx == ExpressionTraversalContext::FunctionCallExpressionFunc {
+        let ident_category = if ctx.top() == TraversalContext::FunctionCallExpressionFunc {
             SymbolCategory::Callable
         } else {
             SymbolCategory::Data
@@ -205,46 +210,46 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
             .map(|p| p.to_owned())
             .unwrap_or(SymbolPathBuf::new(&name, ident_category));
 
-        self.push(ident_path, ctx);
+        self.push(ident_path, ctx.top());
     }
 
-    fn exit_func_call_expr(&mut self, _: &FunctionCallExpressionNode, ctx: ExpressionTraversalContext) {
+    fn exit_func_call_expr(&mut self, _: &FunctionCallExpressionNode, ctx: &TraversalContextStack) {
         // this is a completely explicit language in terms of typeing and there is no function overloading
         // so we don't need argument types to get the return type of a function 
-        while self.top().map(|e| e.ctx == ExpressionTraversalContext::FunctionCallArg).unwrap_or(false) {
+        while self.top().map(|e| e.ctx == TraversalContext::FunctionCallArg).unwrap_or(false) {
             self.pop();
         }
 
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::FunctionCallExpressionFunc).unwrap_or(false) {
+        if self.top().map(|e| e.ctx == TraversalContext::FunctionCallExpressionFunc).unwrap_or(false) {
             let func_path = self.pop().unwrap().path;
-            self.push(self.produce_type(&func_path), ctx);
+            self.push(self.produce_type(&func_path), ctx.top());
         } else {
-            self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx);
+            self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx.top());
         }
     }
 
-    fn exit_array_expr(&mut self, _: &ArrayExpressionNode, ctx: ExpressionTraversalContext) {
+    fn exit_array_expr(&mut self, _: &ArrayExpressionNode, ctx: &TraversalContextStack) {
         // type of the index doesn't matter in this case
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::ArrayExpressionIndex).unwrap_or(false) {
+        if self.top().map(|e| e.ctx == TraversalContext::ArrayExpressionIndex).unwrap_or(false) {
             self.pop();
         }
 
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::ArrayExpressionAccessor).unwrap_or(false) {
+        if self.top().map(|e| e.ctx == TraversalContext::ArrayExpressionAccessor).unwrap_or(false) {
             let accessor_path = self.pop().unwrap().path;
             let accessor_type = self.produce_type(&accessor_path);
             let op_path = MemberCallableSymbolPath::new(&accessor_type, ArrayTypeSymbol::INDEX_OPERATOR_NAME);
-            self.push(self.produce_type(&op_path), ctx);
+            self.push(self.produce_type(&op_path), ctx.top());
         } else {
-            self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx);
+            self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx.top());
         }
     }
 
-    fn exit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: ExpressionTraversalContext) {
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::MemberAccessExpressionAccessor).unwrap_or(false) {
+    fn exit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: &TraversalContextStack) {
+        if self.top().map(|e| e.ctx == TraversalContext::MemberAccessExpressionAccessor).unwrap_or(false) {
             let accessor_path = self.pop().unwrap().path;
   
             let member = n.member().value(self.doc);
-            let member_category = if ctx == ExpressionTraversalContext::FunctionCallExpressionFunc {
+            let member_category = if ctx.top() == TraversalContext::FunctionCallExpressionFunc {
                 SymbolCategory::Callable
             } else {
                 SymbolCategory::Data
@@ -299,48 +304,48 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
                     _ => SymbolPathBuf::unknown(SymbolCategory::Type)
                 };
 
-                self.push(member_path, ctx);
+                self.push(member_path, ctx.top());
             } else {
-                self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx);    
+                self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx.top());    
             }
         } else {
-            self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx);
+            self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx.top());
         }
     }
 
-    fn exit_new_expr(&mut self, n: &NewExpressionNode, ctx: ExpressionTraversalContext) {
+    fn exit_new_expr(&mut self, n: &NewExpressionNode, ctx: &TraversalContextStack) {
         // lifetime object has no bearing on the type of the expression
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::NewExpressionLifetimeObj).unwrap_or(false) {
+        if self.top().map(|e| e.ctx == TraversalContext::NewExpressionLifetimeObj).unwrap_or(false) {
             self.pop();
         }
 
-        self.push(BasicTypeSymbolPath::new(&n.class().value(self.doc)).into(), ctx);
+        self.push(BasicTypeSymbolPath::new(&n.class().value(self.doc)).into(), ctx.top());
     }
 
-    fn exit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, ctx: ExpressionTraversalContext) {
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::TypeCastExpressionValue).unwrap_or(false) {
+    fn exit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, ctx: &TraversalContextStack) {
+        if self.top().map(|e| e.ctx == TraversalContext::TypeCastExpressionValue).unwrap_or(false) {
             self.pop();
         }
 
         let target_type = n.target_type().value(self.doc);
-        self.push(BasicTypeSymbolPath::new(&target_type).into(), ctx);
+        self.push(BasicTypeSymbolPath::new(&target_type).into(), ctx.top());
     }
 
-    fn exit_unary_op_expr(&mut self, _: &UnaryOperationExpressionNode, ctx: ExpressionTraversalContext) {
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::UnaryOperationExpressionRight).unwrap_or(false) {
+    fn exit_unary_op_expr(&mut self, _: &UnaryOperationExpressionNode, ctx: &TraversalContextStack) {
+        if self.top().map(|e| e.ctx == TraversalContext::UnaryOperationExpressionRight).unwrap_or(false) {
             // there is no operator overloading as far as I'm aware, so this propagation is probably ok
-            self.top_mut().map(|e| e.ctx = ctx );
+            self.top_mut().map(|e| e.ctx = ctx.top());
         } else {
-            self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx);
+            self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx.top());
         }
     }
 
-    fn exit_binary_op_expr(&mut self, n: &BinaryOperationExpressionNode, ctx: ExpressionTraversalContext) {
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::BinaryOperationExpressionRight).unwrap_or(false) {
+    fn exit_binary_op_expr(&mut self, n: &BinaryOperationExpressionNode, ctx: &TraversalContextStack) {
+        if self.top().map(|e| e.ctx == TraversalContext::BinaryOperationExpressionRight).unwrap_or(false) {
             self.pop();
         }
 
-        let left_path = if self.top().map(|e| e.ctx == ExpressionTraversalContext::BinaryOperationExpressionLeft).unwrap_or(false) {
+        let left_path = if self.top().map(|e| e.ctx == TraversalContext::BinaryOperationExpressionLeft).unwrap_or(false) {
             self.pop().unwrap().path
         } else {
             SymbolPathBuf::unknown(SymbolCategory::Type)
@@ -366,36 +371,36 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
             | BinaryOperator::GreaterOrEqual => BasicTypeSymbolPath::new("bool").into(),
         };
 
-        self.push(op_path, ctx);
+        self.push(op_path, ctx.top());
     }
 
-    fn exit_assign_op_expr(&mut self, _: &AssignmentOperationExpressionNode, ctx: ExpressionTraversalContext) {
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::AssignmentOperationExpressionRight).unwrap_or(false) {
+    fn exit_assign_op_expr(&mut self, _: &AssignmentOperationExpressionNode, ctx: &TraversalContextStack) {
+        if self.top().map(|e| e.ctx == TraversalContext::AssignmentOperationExpressionRight).unwrap_or(false) {
             self.pop();
         }
 
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::AssignmentOperationExpressionLeft).unwrap_or(false) {
-            self.top_mut().map(|e| e.ctx = ctx );
+        if self.top().map(|e| e.ctx == TraversalContext::AssignmentOperationExpressionLeft).unwrap_or(false) {
+            self.top_mut().map(|e| e.ctx = ctx.top() );
         } else {
-            self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx);
+            self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx.top());
         }
     }
 
-    fn exit_ternary_cond_expr(&mut self, _: &TernaryConditionalExpressionNode, ctx: ExpressionTraversalContext) {
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::TernaryConditionalExpressionAlt).unwrap_or(false) {
+    fn exit_ternary_cond_expr(&mut self, _: &TernaryConditionalExpressionNode, ctx: &TraversalContextStack) {
+        if self.top().map(|e| e.ctx == TraversalContext::TernaryConditionalExpressionAlt).unwrap_or(false) {
             self.pop();
         }
 
-        let conseq_path = if self.top().map(|e| e.ctx == ExpressionTraversalContext::TernaryConditionalExpressionConseq).unwrap_or(false) {
+        let conseq_path = if self.top().map(|e| e.ctx == TraversalContext::TernaryConditionalExpressionConseq).unwrap_or(false) {
             self.pop().unwrap().path
         } else {
             SymbolPathBuf::unknown(SymbolCategory::Type)
         };
 
-        if self.top().map(|e| e.ctx == ExpressionTraversalContext::TernaryConditionalExpressionCond).unwrap_or(false) {
+        if self.top().map(|e| e.ctx == TraversalContext::TernaryConditionalExpressionCond).unwrap_or(false) {
             self.pop();
         }
 
-        self.push(conseq_path, ctx);
+        self.push(conseq_path, ctx.top());
     }
 }

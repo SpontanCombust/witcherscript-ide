@@ -5,7 +5,7 @@ use shrinkwraprs::Shrinkwrap;
 use thiserror::Error;
 use crate::MISSING_TEXT;
 use crate::{AnyNode, NamedSyntaxNode, SyntaxNode, DebugMaybeAlternate, DebugRange, script_document::ScriptDocument};
-use crate::ast::{SyntaxNodeTraversal, SyntaxNodeVisitor, ExpressionTraversalContext};
+use crate::ast::{SyntaxNodeTraversal, SyntaxNodeVisitor, TraversalContextStack};
 
 
 #[derive(Debug, Clone, Error)]
@@ -377,9 +377,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralNode<'script> {
 }
 
 impl SyntaxNodeTraversal for LiteralNode<'_> {
-    type TraversalCtx = ExpressionTraversalContext;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         visitor.visit_literal_expr(self, ctx);
     }
 }

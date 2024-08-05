@@ -11,7 +11,5 @@ pub use visitor_chain::*;
 
 /// Traverse an syntax node using left-recursion.
 pub trait SyntaxNodeTraversal {
-    type TraversalCtx;
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: Self::TraversalCtx);
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack);
 }

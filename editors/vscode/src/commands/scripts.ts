@@ -5,20 +5,22 @@ import * as fs from 'fs/promises';
 import { getLanguageClient } from "../lsp/lang_client"
 import * as requests from '../lsp/requests';
 import * as notifications from '../lsp/notifications';
+import * as model from '../lsp/model'
 import * as utils from '../utils';
 import { Cmd } from './index'
+import { VanillaFile } from '../providers/vanilla_files_provider';
 
 
 export function commandImportVanillaScripts(): Cmd {
-    return async () => {
+    return async (params?: VanillaFile) => {
         const client = getLanguageClient();
         if (client == undefined) {
             vscode.window.showErrorMessage("Language Server is not active!");
             return;
         }
         
-        let projectContentInfo: requests.ContentInfo;
-        let content0Info: requests.ContentInfo;
+        let projectContentInfo: model.ContentInfo;
+        let content0Info: model.ContentInfo;
 
         try {
             // Decide on which project in the workspace is the target of the import
@@ -55,33 +57,44 @@ export function commandImportVanillaScripts(): Cmd {
                 }
             }
 
-            // Get information about content0 (if it doesn't exist it will throw)
-            content0Info = (await client.sendRequest(requests.projects.vanillaDependencyContent.type, {
-                projectUri: projectContentInfo.contentUri
-            })).content0Info;
         } catch (error: any) {
             return vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
         }
-
-        // Prompt the user to choose scripts for import
-
-        const content0ScriptsRootUri = client.protocol2CodeConverter.asUri(content0Info.scriptsRootUri);
-        let scriptsToImport = await vscode.window.showOpenDialog({
-            title: "Select script files",
-            openLabel: "Import",
-            canSelectFiles: true,
-            canSelectFolders: false,
-            canSelectMany: true,
-            defaultUri: content0ScriptsRootUri,
-            filters: {
-                'WitcherScript': ['ws']
-            },
-        });
         
-        if (scriptsToImport && scriptsToImport.length > 0) {
+
+        let content0ScriptsRootPath: string;
+        let scriptsToImport: vscode.Uri[];
+
+        if (params != undefined) {
+            content0ScriptsRootPath = params.scriptsRootPath;
+            scriptsToImport = params.resourceUri ? [params.resourceUri] : [];
+        } else {
+            try {
+                content0Info = (await client.sendRequest(requests.projects.vanillaDependencyContent.type, {
+                    projectUri: projectContentInfo.contentUri
+                })).content0Info;
+
+                const content0ScriptsRootUri = client.protocol2CodeConverter.asUri(content0Info.scriptsRootUri);
+
+                content0ScriptsRootPath = content0ScriptsRootUri.fsPath;
+                scriptsToImport = await vscode.window.showOpenDialog({
+                    title: "Select script files",
+                    openLabel: "Import",
+                    canSelectFiles: true,
+                    canSelectFolders: false,
+                    canSelectMany: true,
+                    defaultUri: content0ScriptsRootUri,
+                    filters: {
+                        'WitcherScript': ['ws']
+                    },
+                }) ?? [];
+            } catch (error: any) {
+                return vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
+            } 
+        }
+
+        if (scriptsToImport.length > 0) {
             let encounteredProblems = false;
-            
-            const content0ScriptsRootPath = content0ScriptsRootUri.fsPath;
             const projectScriptsRootPath = client.protocol2CodeConverter.asUri(projectContentInfo.scriptsRootUri).fsPath;
 
             scriptsToImport = scriptsToImport.filter(uri => {
@@ -134,7 +147,10 @@ export function commandImportVanillaScripts(): Cmd {
             })
 
             if (encounteredProblems) {
-                vscode.window.showWarningMessage("Scripts imported with some problems (check extension output)");
+                const res = await vscode.window.showWarningMessage("Scripts imported with some problems", "Show Logs");
+                if (res == "Show Logs") {
+                    vscode.commands.executeCommand('witcherscript-ide.misc.openLogs');
+                }
             } else {
                 vscode.window.showInformationMessage("Successfully imported vanilla scripts into the project!")
             }
@@ -143,29 +159,35 @@ export function commandImportVanillaScripts(): Cmd {
 }
 
 export function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): Cmd {
-    return async () => {
+    return async (param?: vscode.Uri) => {
         const client = getLanguageClient();
         if (client == undefined) {
             vscode.window.showErrorMessage("Language Server is not active!");
             return;
         }
         
-        if (!vscode.window.activeTextEditor) {
-            vscode.window.showErrorMessage("No active editor available!");
-            return;
+        let targetScriptUri;
+        if (param != undefined) {
+            targetScriptUri = param;
+        } else {
+            if (!vscode.window.activeTextEditor) {
+                vscode.window.showErrorMessage("No active editor available!");
+                return;
+            }
+
+            targetScriptUri = vscode.window.activeTextEditor.document.uri;
         }
 
-        const currentScriptUri = vscode.window.activeTextEditor.document.uri;
 
-        let currentContent: requests.ContentInfo;
-        let vanillaContent: requests.ContentInfo;
+        let targetContent: model.ContentInfo;
+        let vanillaContent: model.ContentInfo;
         try {
-            currentContent = (await client.sendRequest(requests.scripts.parent_content.type, {
-                scriptUri: client.code2ProtocolConverter.asUri(currentScriptUri)
+            targetContent = (await client.sendRequest(requests.scripts.parent_content.type, {
+                scriptUri: client.code2ProtocolConverter.asUri(targetScriptUri)
             })).parentContentInfo;
 
             vanillaContent = (await client.sendRequest(requests.projects.vanillaDependencyContent.type, {
-                projectUri: currentContent.contentUri
+                projectUri: targetContent.contentUri
             })).content0Info;
         } catch(error: any) {
             vscode.window.showErrorMessage(`${error.message} [code ${error.code}]`);
@@ -177,11 +199,11 @@ export function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): 
             return;
         }
 
-        const currentScriptPath = currentScriptUri.fsPath;
-        const currentScriptRootPath = client.protocol2CodeConverter.asUri(currentContent.scriptsRootUri).fsPath;
+        const targetScriptPath = targetScriptUri.fsPath;
+        const targetScriptRootPath = client.protocol2CodeConverter.asUri(targetContent.scriptsRootUri).fsPath;
         const vanillaScriptRootPath = client.protocol2CodeConverter.asUri(vanillaContent.scriptsRootUri).fsPath;
 
-        const relativePath = path.relative(currentScriptRootPath, currentScriptPath);
+        const relativePath = path.relative(targetScriptRootPath, targetScriptPath);
         const vanillaScriptPath = path.join(vanillaScriptRootPath, relativePath);
 
         let counterpartExists = true;
@@ -198,6 +220,6 @@ export function commandDiffScriptWithVanilla(context: vscode.ExtensionContext): 
         const vanillaScriptUri = vscode.Uri.file(vanillaScriptPath);
         const scriptName = path.basename(vanillaScriptPath);
         const title = `${scriptName} (vanilla) ↔ ${scriptName} (modded)`;
-        return await vscode.commands.executeCommand("vscode.diff", vanillaScriptUri, currentScriptUri, title);
+        return await vscode.commands.executeCommand("vscode.diff", vanillaScriptUri, targetScriptUri, title);
     }
 }

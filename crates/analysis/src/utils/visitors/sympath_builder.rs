@@ -113,23 +113,23 @@ impl SyntaxNodeVisitor for SymbolPathBuilder<'_> {
         self.payload.borrow_mut().current_sympath.pop();
     }
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {
         let name = n.name().value(self.doc);
         self.payload.borrow_mut().current_sympath.push(&name, SymbolCategory::Callable);
         TraversalPolicy::default_to(true)
     }
 
-    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: DeclarationTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: &TraversalContextStack) {
         self.payload.borrow_mut().current_sympath.pop();
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: &TraversalContextStack) -> EventDeclarationTraversalPolicy {
         let name = n.name().value(self.doc);
         self.payload.borrow_mut().current_sympath.push(&name, SymbolCategory::Callable);
         TraversalPolicy::default_to(true)
     }
 
-    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: DeclarationTraversalContext) {
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: &TraversalContextStack) {
         self.payload.borrow_mut().current_sympath.pop();
     }
 }

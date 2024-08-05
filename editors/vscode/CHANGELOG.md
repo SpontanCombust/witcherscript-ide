@@ -2,6 +2,50 @@
 
 # Changelog
 
+# v0.4.0
+**UI/UX Improvements and more**
+
+### Features
+
+- Added a welcome message that is shown when using the extension for the first time [#47](https://github.com/SpontanCombust/witcherscript-ide/issues/47)
+- Added a message pointing to the changelog when the extension gets updated
+- Added a short in-editor walkthrough for the extension [#47](https://github.com/SpontanCombust/witcherscript-ide/issues/47)
+- Added a view container that houses all views added by the extension [#45](https://github.com/SpontanCombust/witcherscript-ide/issues/45)
+- Added a "Dashboard" view that shows a list some of the main commands you can execute, so you don't have to look through the command palette [#46](https://github.com/SpontanCombust/witcherscript-ide/issues/46)
+- Integrated the [Rusty Witcher 3 Debugger CLI](https://github.com/SpontanCombust/rusty_witcher_debugger/) tool into the extension client [#4](https://github.com/SpontanCombust/witcherscript-ide/issues/4)
+- Added "Vanilla Scripts" view. It displays the source tree of vanilla scripts (content0) and allows for peeking and importing vanilla scripts from the level of the view. [#42](https://github.com/SpontanCombust/witcherscript-ide/issues/42)
+- Added "Contents" view. It displays script packages known to the content graph - its metadata and files it is associated with. When extension is active, but there are no script projects in the workspace it displays a welcome message with buttons for creating and initializing a project [#22](https://github.com/SpontanCombust/witcherscript-ide/issues/22)
+- Added context menu items for comparing modded script with vanilla to file explorer and editor views
+- Added context status bar item displaying name of the currently worked on script project. Clicking the item shows the command palette of all available WIDE commands [#12](https://github.com/SpontanCombust/witcherscript-ide/issues/12)
+- Added work status bar item displaying the current background work being done on the language server. The item is hidden when there is no work being done currenly [#12](https://github.com/SpontanCombust/witcherscript-ide/issues/12)
+- Added analysis for local var declaration placement
+
+### Fixes
+- Fixed contextual syntax analysis not working for events
+
+### Commands
+- Added "Open extension logs" command
+- Added "Open extension settings" command
+- Added commands to launch the game
+- Added "Recompile game scripts" command
+- Added "Execute console command" command
+
+### Configuration
+- Added a setting to describe a prefered way of launching the game host for testing (standalone with debug args, REDkit, auto)
+- Added a setting for the IP address of the game host
+- Added a setting for the number of threads allocated to Rayon's parallel data processing
+
+### Other changes
+- Error message after failing to import vanilla scripts now points to extension logs
+
+### Documentation
+- Added "UI Elements" section to the "Editor" page
+- Updated some videos on the "Editor" to better reflect modern way of doing things in WIDE
+- Renamed "Editor" page to "Editor Features"
+- Added a disclaimer for using "content0" as the dependency for projects on the "Project System" page
+- Moved the REDkit section closer to the beginning on the "Project System" page
+- Rewrote "Getting started" page to point to and present the new built-in tutorial
+
 
 ## v0.3.2
 **Hotfix**

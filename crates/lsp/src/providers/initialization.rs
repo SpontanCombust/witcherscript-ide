@@ -6,50 +6,53 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use witcherscript_project::redkit::RedkitManifest;
 use witcherscript_project::Manifest;
-use crate::Backend;
+use crate::{notifications, Backend};
 
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct InitializationOptions {
-    native_content_uri: lsp::Url,
+    rayon_threads: i32,
+    native_content_path: PathBuf,
     game_directory: PathBuf,
     content_repositories: Vec<PathBuf>,
     enable_syntax_analysis: bool
 }
 
-impl std::fmt::Debug for InitializationOptions {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("InitializationOptions")
-            .field("native_content_uri", &self.native_content_uri.to_string())
-            .field("game_directory", &self.game_directory)
-            .field("content_repositories", &self.content_repositories)
-            .field("enable_syntax_analysis", &self.enable_syntax_analysis)
-            .finish()
-    }
-}
-
 impl Backend {
     pub async fn initialize_impl(&self, params: lsp::InitializeParams) -> Result<lsp::InitializeResult> {
-        if let Some(workspace_folders) = params.workspace_folders {
-            let mut workspace_roots = self.workspace_roots.write().await;
-            *workspace_roots = workspace_folders.into_iter()
-                .map(|f| AbsPath::try_from(f.uri).unwrap())
-                .collect();
-        }
-    
         if let Some(init_opts) = params.initialization_options {
             match serde_json::from_value::<InitializationOptions>(init_opts) {
                 Ok(val) => {
                     self.reporter.log_info(format!("Initializing server with: {:#?}", val)).await;
+
+
+                    let rayon_threads = if val.rayon_threads > 0 {
+                        val.rayon_threads as usize
+                    } else {
+                        std::thread::available_parallelism()
+                            .expect("Cannot access the number of available threads")
+                            .get()
+                            .checked_sub(2) // make sure rayon doesn't take up all resources
+                            .unwrap_or(1)
+                    };
+
+                    rayon::ThreadPoolBuilder::new()
+                        .num_threads(rayon_threads) 
+                        .build_global()
+                        .expect("rayon::ThreadPoolBuilder panik");
+
+                    self.reporter.log_info(format!("Configured tokio worker threads: {}", tokio::runtime::Handle::current().metrics().num_workers())).await;
+                    self.reporter.log_info(format!("Configured rayon threads: {}", rayon_threads)).await;
+
     
-                    match AbsPath::try_from(val.native_content_uri) {
+                    match AbsPath::try_from(val.native_content_path) {
                         Ok(native_content_path) => {
                             let mut graph = self.content_graph.write().await;
                             graph.set_native_content_path(&native_content_path);
                         },
                         Err(_) => {
-                            self.reporter.log_error("Invalid native_content_path URI").await;
+                            self.reporter.log_error("Invalid native_content_path").await;
                         }
                     }
     
@@ -64,6 +67,13 @@ impl Backend {
             }
         } else {
             self.reporter.log_error("Initialization options missing!").await;
+        }
+
+        if let Some(workspace_folders) = params.workspace_folders {
+            let mut workspace_roots = self.workspace_roots.write().await;
+            *workspace_roots = workspace_folders.into_iter()
+                .map(|f| AbsPath::try_from(f.uri).unwrap())
+                .collect();
         }
     
     
@@ -155,7 +165,9 @@ impl Backend {
         self.setup_workspace_content_scanners().await;
         self.setup_repository_content_scanners().await;
         self.build_content_graph(true).await;
-    
+
+        self.client.send_notification::<notifications::scripts::did_finish_initial_indexing::Type>(()).await;
+
         self.reporter.commit_all_diagnostics().await;
     }
 }

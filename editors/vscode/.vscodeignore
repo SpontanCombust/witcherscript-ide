@@ -1,7 +1,7 @@
 **
 !media
 !out/main.js
-!server
+!deps
 !syntaxes
 !CHANGELOG.md
 !icon.png

@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
+import * as fs from 'fs/promises';
+import * as fspath from 'path';
 
-import * as state from './state';
-import * as requests from './lsp/requests'
+import { getPersistence } from './persistence';
+import * as model from './lsp/model'
 
 
 export async function showForeignScriptWarning(context: vscode.ExtensionContext) {
-    const rememberedChoices = state.RememberedChoices.Memento.fetchOrDefault(context);
-    if (!rememberedChoices.neverShowAgainForeignScriptWarning) {
+    const db = getPersistence(context);
+    if (!db.neverShowAgainForeignScriptWarning) {
         enum Answer {
             Close = "I understand",
             NeverShowAgain = "Don't show this message again",
@@ -24,8 +25,7 @@ export async function showForeignScriptWarning(context: vscode.ExtensionContext)
         );
 
         if (answer == Answer.NeverShowAgain) {
-            rememberedChoices.neverShowAgainForeignScriptWarning = true;
-            rememberedChoices.store(context);
+            db.neverShowAgainForeignScriptWarning = true;
         }
         else if (answer == Answer.SeeManual) {
             await vscode.env.openExternal(manualUri);
@@ -42,13 +42,13 @@ export async function showForeignScriptWarning(context: vscode.ExtensionContext)
  * 
  * @returns ContentInfo or undefined
  */
-export async function chooseProject(projects: requests.ContentInfo[]): Promise<requests.ContentInfo | undefined> {
+export async function chooseProject(projects: model.ContentInfo[]): Promise<model.ContentInfo | undefined> {
     if (!projects || projects.length == 0) {
         return undefined;
     } else if (projects.length == 1) {
         return projects[0];
     } else {
-        return await new Promise<requests.ContentInfo | undefined>((resolve, _) => {
+        return await new Promise<model.ContentInfo | undefined>((resolve, _) => {
             const qp = vscode.window.createQuickPick<ContentQuickPickItem>();
             qp.placeholder = "Select a project";
             qp.canSelectMany = false;
@@ -70,7 +70,7 @@ export async function chooseProject(projects: requests.ContentInfo[]): Promise<r
 }
 
 class ContentQuickPickItem implements vscode.QuickPickItem {
-    public content: requests.ContentInfo
+    public content: model.ContentInfo
 
     label: string;
     kind?: vscode.QuickPickItemKind;
@@ -81,7 +81,7 @@ class ContentQuickPickItem implements vscode.QuickPickItem {
     alwaysShow?: boolean;
     buttons?: readonly vscode.QuickInputButton[];
 
-    constructor(content: requests.ContentInfo) {
+    constructor(content: model.ContentInfo) {
         this.content = content;
 
         this.label = content.contentName;
@@ -95,11 +95,24 @@ class ContentQuickPickItem implements vscode.QuickPickItem {
 }
 
 
-export function isSubpathOf(dir: string, parent: string): boolean {
-    if (dir === parent) return false;
+export function pathComponents(path: string) : string[] {
+    return path.split(fspath.sep).filter(i => i.length);
+}
 
-    let parentComps = parent.split(path.sep).filter(i => i.length);
-    let dirComps = dir.split(path.sep).filter(i => i.length);
+export function isSubpathOf(child: string, parent: string): boolean {
+    if (child === parent) return false;
+
+    let parentComps = pathComponents(parent);
+    let dirComps = pathComponents(child);
 
     return parentComps.every((comp, i) => dirComps[i] === comp);
+}
+
+export async function fileExists(path: string): Promise<boolean> {
+    try {
+        await fs.stat(path);
+        return true;
+    } catch(_) {
+        return false;
+    }
 }

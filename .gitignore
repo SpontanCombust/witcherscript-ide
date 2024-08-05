@@ -4,7 +4,7 @@
 
 /editors/vscode/node_modules
 /editors/vscode/out
-/editors/vscode/server
+/editors/vscode/deps/**
 *.vsix
 
 /site

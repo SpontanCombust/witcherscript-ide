@@ -4,8 +4,10 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 
 import { getLanguageClient } from "../lsp/lang_client"
+import { VanillaFilesProvider } from '../providers/vanilla_files_provider';
+import { ScriptContentProvider } from '../providers/script_content_provider';
 import * as requests from '../lsp/requests';
-import * as state from '../state';
+import { getPersistence } from '../persistence';
 import * as utils from '../utils';
 import { Cmd } from './index'
 
@@ -150,17 +152,28 @@ async function initializeProjectInDirectory(client: lsp.LanguageClient, projectD
             Answer.YesHere, Answer.YesInNew, Answer.No);
 
         if (answer != undefined && answer != Answer.No) {
-            const memento = new state.OpenManifestOnInit.Memento(
-                projectDirUri,
-                manifestUri
-            );
-
-            await memento.store(context);
+            const db = getPersistence(context);
+            db.openManifestOnInit = {
+                workspaceUri: projectDirUri,
+                manifestUri,
+            };
 
             const openNewWindow = answer == Answer.YesInNew;
             await vscode.commands.executeCommand("vscode.openFolder", projectDirUri, {
                 forceNewWindow: openNewWindow
             });
         }
+    }
+}
+
+export function commandRefreshVanillaFilesView(): Cmd {
+    return () => {
+        VanillaFilesProvider.getInstance().refreshAll();
+    }
+}
+
+export function commandRefreshScriptContentView(): Cmd {
+    return () => {
+        ScriptContentProvider.getInstance().refreshAll();
     }
 }

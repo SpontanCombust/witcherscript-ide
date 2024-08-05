@@ -1,13 +1,25 @@
 # Project System
 
-The game during script compilation needs to think only about assembling one big blob of code that will be then compiled. Places where it looks for said code are predefined and limited. Aside from the testing stage, developing a script mod often means working in a completely unrelated workspace directory, which can additionally be stored remotely using a version control system like Git. WIDE bridges the gap between those workspaces and scripts in the game directory by introducing a project system.
+The game during script compilation needs to think only about assembling one big blob of code that will be then compiled. Places where it looks for said code are predefined and limited. Aside from the testing stage, developing a script mod often means working in a completely unrelated workspace directory, which can additionally be stored remotely using a version control system like Git. WIDE bridges the gap between those workspaces and scripts in the game directory by introducing a project system. 
+
+The project system does not affect the process of packaging and installing mods to the game. For now that is left to the developer to figure out for themselves, this includes any dependencies that the mod may need. You can either write your own batch scripts or use REDkit built-in packaging functionality.
 
 Projects organize WitcherScript code into seperable packages which can link with each other.
 Recognized content structures are:
 
- - [WIDE projects](#wide-project)
  - [Redkit projects](#redkit-project)
+ - [WIDE projects](#wide-project)
  - [Raw content directories](#raw-content-directory)
+
+
+## REDKit project
+
+WitcherScript IDE is able to detect projects created using the REDKit modding tool. These projects contain a `.w3edit`, which acts as a solution file for the whole project.
+Working with REDKit projects requires you to set the path to the game in extension's settings.
+
+REDKit project naturally can't use any scripts that are not part of it or the vanilla game (*content0*) unless you manually edit the depot. Until REDkit will be able to support script dependencies more easily if you want to get code suggestions from other mods consider initializing [WIDE project](#wide-project) in the workspace directory and filling the `[dependencies]` table.
+
+:material-information-outline: If both `*.w3edit` and `witcherscript.toml` are present in the directory, it will be treated as a WIDE project.
 
 
 ## WIDE Project
@@ -18,11 +30,8 @@ The scripts directory is a subfolder literally called *"scripts"*, which contain
 
 Creating a manifest for your script mod is mandatory if you want to use more advanced code features like go to definition. Without a manifest you are limited to syntax highlighting and basic syntax analysis.
 
-:material-information-outline: To quickly create a new project or initialize one in an existing project directory use *`"Initialize/Create WitcherScript project..."`* commands in the editor.
+:material-information-outline: To quickly create a new project or initialize one in an existing project directory use *`"Initialize/Create WitcherScript project..."`* commands from the dashboard view.
 
-<video controls muted>
-  <source src="../../assets/user-manual/editor/project-creation.mp4" type="video/mp4">
-</video>
 
 Example of a simple WIDE project setup:
 
@@ -117,14 +126,6 @@ pathDependency = { path = "../dependencies/pathDependency" }
 ``` 
 
 
-## REDKit project
-
-WitcherScript IDE is able to detect projects created using the REDKit modding tool. These projects contain a `.w3edit`, which acts as a solution file for the whole project.
-Working with REDKit projects still requires you to set the path to the game in extension's settings.
-
-REDKit project naturally can't use any scripts that are not part of it or the vanilla game (*content0*). If you want to use other mods as dependencies for the project consider creating a `witcherscript.toml` manifest and filling the `[dependencies]` table instead.
-
-
 ## Raw content directory
 
 "Raw content" is the term by which WIDE refers to directories containing game files, among which are scripts residing in *"scripts"* directory.
@@ -158,3 +159,17 @@ Raw content is recognized by WIDE purely for user convenience to not force anyon
 ## Content repositories
 
 "Content repositories" are directories that directly inside them contain raw or project content directories. Commonly used repositories are *"Witcher 3/content"* and *"Witcher 3/Mods"*. Repositories can be configured via [`witcherscript-ide.gameDirectory`](./editor.md#witcherscript-idegamedirectory) and [`witcherscript-ide.contentRepositories`](./editor.md#witcherscript-idecontentrepositories) settings in editor.
+
+
+## Vanilla content dependency
+
+When setting vanilla scripts as a dependency for your project make sure that the name of the content they are found in is called exactly "content0". WIDE distinguishes this way the vanilla content from any other modded content. If you configure it to be found in your game directory with `witcherscript-ide.gameDirectory` setting and don't modify it in any way, it should be valid without a need for any further actions.  
+If you however store your vanilla scripts in a seperate folder make sure that either that folder is called "content0" or create a manifest for it with the following content inside it:
+```toml
+[content]
+name = "content0"
+# version etc...
+
+[dependencies]
+# this table should be empty
+```

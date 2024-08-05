@@ -191,3 +191,37 @@ export class ScriptSymbolsProvider implements vscode.TextDocumentContentProvider
         return this.eventEmitter.event;
     }
 }
+
+
+export class ReadOnlyContentProvider implements vscode.TextDocumentContentProvider {
+    private static instance: ReadOnlyContentProvider;
+
+    private constructor() {}
+    public static getInstance(): ReadOnlyContentProvider {
+        if (!ReadOnlyContentProvider.instance) {
+            ReadOnlyContentProvider.instance = new ReadOnlyContentProvider();
+
+            vscode.window.onDidChangeActiveTextEditor(te => {
+                if (te != undefined && te.document.uri.scheme == ReadOnlyContentProvider.scheme) {
+                    ReadOnlyContentProvider.instance.eventEmitter.fire(te.document.uri)
+                }
+            });
+        }
+
+        return ReadOnlyContentProvider.instance;
+    }
+
+
+    public static readonly scheme = "witcherscript-ide-file-readonly";
+
+    public eventEmitter = new vscode.EventEmitter<vscode.Uri>();
+
+    provideTextDocumentContent(uri: vscode.Uri): vscode.ProviderResult<string> {
+        return vscode.workspace.openTextDocument(uri.with({ scheme: 'file' }))
+            .then(td => td.getText())
+    }
+
+    get onDidChange(): vscode.Event<vscode.Uri> {
+        return this.eventEmitter.event;
+    }
+}

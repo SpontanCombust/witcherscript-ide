@@ -79,16 +79,14 @@ impl<'script> TryFrom<AnyNode<'script>> for RootStatementNode<'script> {
 }
 
 impl SyntaxNodeTraversal for RootStatementNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         match self.clone().value() {
-            RootStatement::Function(s) => s.accept(visitor, DeclarationTraversalContext::Global),
-            RootStatement::Class(s) => s.accept(visitor, ()),
-            RootStatement::State(s) => s.accept(visitor, ()),
-            RootStatement::Struct(s) => s.accept(visitor, ()),
-            RootStatement::Enum(s) => s.accept(visitor, ()),
-            RootStatement::Var(s) => s.accept(visitor, DeclarationTraversalContext::Global),
+            RootStatement::Function(s) => s.accept(visitor, ctx),
+            RootStatement::Class(s) => s.accept(visitor, ctx),
+            RootStatement::State(s) => s.accept(visitor, ctx),
+            RootStatement::Struct(s) => s.accept(visitor, ctx),
+            RootStatement::Enum(s) => s.accept(visitor, ctx),
+            RootStatement::Var(s) => s.accept(visitor, ctx),
             RootStatement::Nop(_) => {},
         }
     }
@@ -130,12 +128,12 @@ impl<'script> TryFrom<AnyNode<'script>> for RootNode<'script> {
 }
 
 impl SyntaxNodeTraversal for RootNode<'_> {
-    type TraversalCtx = ();
-
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: Self::TraversalCtx) {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_root(self);
         if tp.traverse {
-            self.iter().for_each(|s| s.accept(visitor, ()));
+            ctx.push(TraversalContext::Global);
+            self.iter().for_each(|s| s.accept(visitor, ctx));
+            ctx.pop();
         }
     }
 }

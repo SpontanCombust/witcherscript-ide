@@ -177,7 +177,7 @@ impl<'a> TextDocumentPositionResolver<'a> {
         });
     }
 
-    fn found_expression_ident(&mut self, n: &IdentifierNode, expr: ExpressionNode, ctx: Option<ExpressionTraversalContext>) {
+    fn found_expression_ident(&mut self, n: &IdentifierNode, expr: ExpressionNode, ctx: TraversalContext) {
         let expr_typ = evaluate_expression(
             expr, ctx,
             self.doc, 
@@ -345,7 +345,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) {
         let var_type = n.var_type();
         
         // not checking the annotation, because it'll be erroneous anyways
@@ -357,7 +357,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) {
         let name = n.name();
         let autobind_type = n.autobind_type();
 
@@ -369,35 +369,35 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         }
     }
 
-    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: DeclarationTraversalContext) -> MemberDefaultValueTraversalPolicy {
+    fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let member = n.member();
 
             if member.spans_position(self.pos) {
-                self.found_expression_ident(&member, member.clone().into(), None);
+                self.found_expression_ident(&member, member.clone().into(), ctx.top());
             }
         }
 
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode) -> MemberDefaultValueTraversalPolicy {
+    fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode, ctx: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let member = n.member();
 
             if member.spans_position(self.pos) {
-                self.found_expression_ident(&member, member.clone().into(), None);
+                self.found_expression_ident(&member, member.clone().into(), ctx.top());
             }
         }
 
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, _: DeclarationTraversalContext) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: &TraversalContextStack) {
         let member = n.member();
 
         if member.spans_position(self.pos) {
-            self.found_expression_ident(&member, member.clone().into(), None);
+            self.found_expression_ident(&member, member.clone().into(), ctx.top());
         }
     }
 
@@ -420,7 +420,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
@@ -436,7 +436,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: &TraversalContextStack) -> EventDeclarationTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
@@ -451,7 +451,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: FunctionTraversalContext) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) {
         let param_type = n.param_type();
 
         if param_type.spans_position(self.pos) {
@@ -463,7 +463,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
 
-    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: &TraversalContextStack) -> VarDeclarationTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let var_type = n.var_type();
 
@@ -479,39 +479,39 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     
-    fn visit_this_expr(&mut self, n: &ThisExpressionNode, _: ExpressionTraversalContext) {
+    fn visit_this_expr(&mut self, n: &ThisExpressionNode, _: &TraversalContextStack) {
         self.found_this_kw(n);
     }
 
-    fn visit_super_expr(&mut self, n: &SuperExpressionNode, _: ExpressionTraversalContext) {
+    fn visit_super_expr(&mut self, n: &SuperExpressionNode, _: &TraversalContextStack) {
         self.found_super_kw(n);
     }
 
-    fn visit_parent_expr(&mut self, n: &ParentExpressionNode, _: ExpressionTraversalContext) {
+    fn visit_parent_expr(&mut self, n: &ParentExpressionNode, _: &TraversalContextStack) {
         self.found_parent_kw(n);
     }
 
-    fn visit_virtual_parent_expr(&mut self, n: &VirtualParentExpressionNode, _: ExpressionTraversalContext) {
+    fn visit_virtual_parent_expr(&mut self, n: &VirtualParentExpressionNode, _: &TraversalContextStack) {
         self.found_virtual_parent_kw(n);
     }
 
-    fn visit_identifier_expr(&mut self, n: &IdentifierNode, cx: ExpressionTraversalContext) {
-        self.found_expression_ident(n, n.clone().into(), Some(cx));
+    fn visit_identifier_expr(&mut self, n: &IdentifierNode, ctx: &TraversalContextStack) {
+        self.found_expression_ident(n, n.clone().into(), ctx.top());
     }
 
-    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, cx: ExpressionTraversalContext) -> MemberFieldExpressionTraversalPolicy {
+    fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: &TraversalContextStack) -> MemberFieldExpressionTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let member = n.member();
 
             if member.spans_position(self.pos) {
-                self.found_expression_ident(&member, n.clone().into(), Some(cx));
+                self.found_expression_ident(&member, n.clone().into(), ctx.top());
             }
         }
 
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_new_expr(&mut self, n: &NewExpressionNode, _: ExpressionTraversalContext) -> NewExpressionTraversalPolicy {
+    fn visit_new_expr(&mut self, n: &NewExpressionNode, _: &TraversalContextStack) -> NewExpressionTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let class = n.class();
 
@@ -523,7 +523,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, _: ExpressionTraversalContext) -> TypeCastExpressionTraversalPolicy {
+    fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, _: &TraversalContextStack) -> TypeCastExpressionTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let target_type = n.target_type();
 

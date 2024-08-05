@@ -9,7 +9,7 @@
   },
   "homepage": "https://spontancombust.github.io/witcherscript-ide",
   "license": "MIT OR Apache-2.0",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -72,22 +72,50 @@
           "order": 1,
           "markdownDescription": "Paths to custom directories containing WitcherScript contents."
         },
+        "witcherscript-ide.gameHost.type": {
+          "type": "string",
+          "enum": [
+            "editor",
+            "standalone",
+            "auto"
+          ],
+          "enumDescriptions": [
+            "The game launched through the REDkit modding tool",
+            "The game launched on its own with debug arguments",
+            "The method gets automatically detected"
+          ],
+          "default": "auto",
+          "order": 2,
+          "markdownDescription": "What is the method you use to launch and mod the game. Affects remote commands in the dashboard view."
+        },
+        "witcherscript-ide.gameHost.ipAddress": {
+          "type": "string",
+          "default": "127.0.0.1",
+          "order": 3,
+          "markdownDescription": "IPv4 address of the game host. Affects remote commands in the dashboard view. Change this if you're running the game on a different computer from the one you're currently working in VSCode. Defaults to the localhost address."
+        },
         "witcherscript-ide.languageServer.enable": {
           "type": "boolean",
           "default": true,
-          "order": 2,
+          "order": 4,
           "markdownDescription": "Enable the language server. You can disable this if you only want syntax highlighting (change requires extension reload)."
         },
         "witcherscript-ide.languageServer.syntaxAnalysis": {
           "type": "boolean",
           "default": true,
-          "order": 3,
+          "order": 5,
           "markdownDescription": "Enables syntax analysis in the language server."
+        },
+        "witcherscript-ide.languageServer.rayonThreads": {
+          "type": "integer",
+          "default": 0,
+          "order": 6,
+          "markdownDescription": "Number of threads allocated to parallel data computation. Leave at 0 for automatic configuration. (change requires extension reload)"
         },
         "witcherscript-ide.debug.enableDebugFeatures": {
           "type": "boolean",
           "default": false,
-          "order": 4,
+          "order": 7,
           "markdownDescription": "Enable debug features (change requires extension reload)."
         }
       }
@@ -96,24 +124,92 @@
       {
         "command": "witcherscript-ide.projects.init",
         "title": "Initialize a WitcherScript project in existing directory...",
-        "category": "WitcherScript-IDE"
+        "category": "WitcherScript-IDE",
+        "icon": "$(plus)"
       },
       {
         "command": "witcherscript-ide.projects.create",
         "title": "Create a new WitcherScript project...",
-        "category": "WitcherScript-IDE"
+        "category": "WitcherScript-IDE",
+        "icon": "$(plus)"
+      },
+      {
+        "command": "witcherscript-ide.projects.refreshVanillaFilesView",
+        "title": "Refresh vanilla files",
+        "category": "WitcherScript-IDE (hidden)",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "witcherscript-ide.projects.refreshScriptContentView",
+        "title": "Refresh script contents",
+        "category": "WitcherScript-IDE (hidden)",
+        "icon": "$(refresh)"
       },
       {
         "command": "witcherscript-ide.scripts.importVanilla",
-        "title": "Import scripts from vanilla...",
+        "title": "Import scripts from vanilla into project...",
+        "category": "WitcherScript-IDE",
+        "enablement": "witcherscript-ide.languageServerActive",
+        "icon": "$(plus)"
+      },
+      {
+        "command": "witcherscript-ide.scripts.diffVanilla",
+        "title": "Compare script with vanilla counterpart",
         "category": "WitcherScript-IDE",
         "enablement": "witcherscript-ide.languageServerActive"
       },
       {
-        "command": "witcherscript-ide.scripts.diffVanilla",
-        "title": "Compare this script with vanilla counterpart",
+        "command": "witcherscript-ide.game.launchDx12",
+        "title": "Launch the game (DX12)",
+        "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.game.launchDx12Debug",
+        "title": "Launch the game for debugging (DX12)",
+        "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.game.launchDx11",
+        "title": "Launch the game (DX11)",
+        "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.game.launchDx11Debug",
+        "title": "Launch the game for debugging (DX11)",
+        "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.game.recompileScripts",
+        "title": "Recompile game scripts",
+        "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.game.execConsoleCommand",
+        "title": "Execute console command",
+        "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.misc.openLogs",
+        "title": "Open extension logs",
         "category": "WitcherScript-IDE",
-        "enablement": "witcherscript-ide.languageServerActive && editorLangId == 'witcherscript'"
+        "enablement": "witcherscript-ide.languageServerActive"
+      },
+      {
+        "command": "witcherscript-ide.misc.openSettings",
+        "title": "Open extension settings",
+        "category": "WitcherScript-IDE"
+      },
+      {
+        "command": "witcherscript-ide.misc.openGameHostSettings",
+        "title": "Open extension settings for the game host",
+        "category": "WitcherScript-IDE",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "witcherscript-ide.misc.runDashboardOption",
+        "title": "Run the option",
+        "category": "WitcherScript-IDE",
+        "icon": "$(run)"
       },
       {
         "command": "witcherscript-ide.debug.showScriptAst",
@@ -141,11 +237,169 @@
       },
       {
         "command": "witcherscript-ide.debug.clearGlobalState",
-        "title": "Clear global cache of the extension",
+        "title": "Clear global persistent data",
         "category": "WitcherScript-IDE (debug)",
         "enablement": "witcherscript-ide.debugFeaturesEnabled"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "witcherscript-ide-mainViewContainer",
+          "title": "WitcherScript IDE",
+          "icon": "./media/view-container-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "witcherscript-ide-mainViewContainer": [
+        {
+          "id": "witcherscript-ide.dashboardView",
+          "name": "Dashboard",
+          "contextualTitle": "WitcherScript IDE",
+          "icon": "$(device-desktop)",
+          "visibility": "visible"
+        },
+        {
+          "id": "witcherscript-ide.vanillaFilesView",
+          "name": "Vanilla scripts",
+          "contextualTitle": "WitcherScript IDE",
+          "icon": "$(code)",
+          "visibility": "visible"
+        },
+        {
+          "id": "witcherscript-ide.scriptContentView",
+          "name": "Contents",
+          "contextualTitle": "WitcherScript IDE",
+          "icon": "$(package)",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "witcherscript-ide.vanillaFilesView",
+        "contents": "No project in the workspace dependends on content0 or it couldn't be found"
+      },
+      {
+        "view": "witcherscript-ide.scriptContentView",
+        "contents": "No script projects detected in the workspace.\n[Initialize project](command:witcherscript-ide.projects.init)\n[Create new project](command:witcherscript-ide.projects.create)"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "witcherscript-ide.walkthrough",
+        "title": "Get Started with WitcherScript IDE",
+        "description": "Thank you for installing WIDE! This is a short introduction to the extension that will quickly teach how to use it.",
+        "steps": [
+          {
+            "id": "witcherscript-ide.walkthrough.settingsSetup",
+            "title": "Required settings",
+            "description": "Set up paths to the game directory or any other directories containing scripts. This is mandatory for the extension to be able to find vanilla scripts.\n[Open Settings](command:witcherscript-ide.misc.openSettings)",
+            "completionEvents": [
+              "onSettingChanged:witcherscript-ide.gameDirectory",
+              "onSettingChanged:witcherscript-ide.contentRepositories"
+            ],
+            "media": {
+              "image": "media/walkthrough/settings.png",
+              "altText": "Basic WIDE settings"
+            }
+          },
+          {
+            "id": "witcherscript-ide.walkthrough.views",
+            "title": "Views",
+            "description": "WIDE contributes a view container, which houses a few views that provide specialized functionalities and help you visualize the workspace better.\n[Open view container](command:witcherscript-ide.dashboardView.focus)",
+            "completionEvents": [],
+            "media": {
+              "markdown": "media/walkthrough/views.md"
+            }
+          },
+          {
+            "id": "witcherscript-ide.walkthrough.documentation",
+            "title": "Documentation",
+            "description": "WitcherScript IDE has its own documentation website you can check out for more details [here](https://spontancombust.github.io/witcherscript-ide/user-manual/).\nTo find out about all the things added, changed or removed throughout WIDE's versions check out the [changelog](https://spontancombust.github.io/witcherscript-ide/user-manual/changelog/).",
+            "completionEvents": [],
+            "media": {
+              "image": "media/walkthrough/docs-website.png",
+              "altText": "Documentation website"
+            }
+          },
+          {
+            "id": "witcherscript-ide.walkthrough.firstProject",
+            "title": "First script project",
+            "description": "Now you can finally move onto the fun part: coding! In order to use all the advanced features you need a script project. You can go about this in a few ways:\n[Initialize a script project](command:witcherscript-ide.projects.init)\nif you're already in the process of developing a mod using scripts\n[Create a new project](command:witcherscript-ide.projects.create)\nto create a completely new folder with the basic file structure you can later customize to your liking.\n[Open a REDkit project](command:vscode.openFolder)\nif your developing a mod using the REDkit. WIDE natively recognizes and can work with REDkit project solutions. If you work with a multi-mod set up you should still consider upgrading it with WIDE's project solution to use dependency discovery.",
+            "completionEvents": [
+              "onCommand:witcherscript-ide.projects.init",
+              "onCommand:witcherscript-ide.projects.create",
+              "onCommand:vscode.openFolder"
+            ],
+            "media": {
+              "image": "icon.png",
+              "altText": "WIDE"
+            }
+          }
+        ]
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "witcherscript-ide.projects.refreshVanillaFilesView",
+          "when": "false"
+        },
+        {
+          "command": "witcherscript-ide.projects.refreshScriptContentView",
+          "when": "false"
+        },
+        {
+          "command": "witcherscript-ide.misc.openGameHostSettings",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "witcherscript-ide.projects.refreshVanillaFilesView",
+          "when": "view == witcherscript-ide.vanillaFilesView",
+          "group": "navigation"
+        },
+        {
+          "command": "witcherscript-ide.projects.refreshScriptContentView",
+          "when": "view == witcherscript-ide.scriptContentView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "witcherscript-ide.scripts.importVanilla",
+          "when": "view == witcherscript-ide.vanillaFilesView && viewItem == script",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.misc.openGameHostSettings",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == gameHostInfo",
+          "group": "inline"
+        },
+        {
+          "command": "witcherscript-ide.misc.runDashboardOption",
+          "when": "view == witcherscript-ide.dashboardView && viewItem == dashboardCommandOption",
+          "group": "inline"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "witcherscript-ide.scripts.diffVanilla",
+          "when": "resourceLangId == witcherscript",
+          "group": "3_compare"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "witcherscript-ide.scripts.diffVanilla",
+          "when": "editorLangId == witcherscript",
+          "group": "3_compare"
+        }
+      ]
+    },
     "grammars": [
       {
         "language": "witcherscript",
@@ -163,7 +417,8 @@
     "vscode:prepublish": "npm run build-base -- --minify",
     "build": "npm run build-base -- --sourcemap",
     "watch": "npm run build-base -- --sourcemap --watch=forever",
-    "build-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node"
+    "build-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+    "check": "tsc --strict --noEmit"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.0",

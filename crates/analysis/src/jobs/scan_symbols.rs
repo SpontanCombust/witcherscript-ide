@@ -594,7 +594,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: DeclarationTraversalContext) -> FunctionDeclarationTraversalPolicy {
+    fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {
         let mut traverse = false;
 
         let name_node = n.name();
@@ -615,7 +615,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: DeclarationTraversalContext) {
+    fn exit_member_func_decl(&mut self, _: &FunctionDeclarationNode, _: &TraversalContextStack) {
         // pop only if visit managed to create the symbol
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             self.current_path.pop();
@@ -623,7 +623,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: DeclarationTraversalContext) -> EventDeclarationTraversalPolicy {
+    fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: &TraversalContextStack) -> EventDeclarationTraversalPolicy {
         let mut traverse = false;
 
         let name_node = n.name();
@@ -649,14 +649,14 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: DeclarationTraversalContext) {
+    fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: &TraversalContextStack) {
         if self.current_path.components().last().map(|comp| comp.category == SymbolCategory::Callable).unwrap_or(false)  {
             self.current_path.pop();
             self.current_param_ordinal = 0;
         }
     }
 
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: FunctionTraversalContext) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) {
         let specifiers: SymbolSpecifiers<_> = n.specifiers()
             .map(|sn| sn.value())
             .filter_map(|s| FunctionParameterSpecifier::try_from(s).ok())
@@ -686,7 +686,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: DeclarationTraversalContext) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) {
         let specifiers: SymbolSpecifiers<_> = n.specifiers()
             .map(|sn| sn.value())
             .filter_map(|s| MemberVarSpecifier::try_from(s).ok())
@@ -730,7 +730,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: DeclarationTraversalContext) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) {
         let name_node = n.name();
         let autobind_name = name_node.value(&self.doc);
         let path = MemberDataSymbolPath::new(&self.current_path, &autobind_name);
@@ -755,7 +755,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
 
 
-    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: StatementTraversalContext) -> VarDeclarationTraversalPolicy {
+    fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: &TraversalContextStack) -> VarDeclarationTraversalPolicy {
         let type_path = self.check_type_from_type_annot(n.var_type());
     
         for name_node in n.names() {
@@ -779,27 +779,27 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_compound_stmt(&mut self, _: &CompoundStatementNode, _: StatementTraversalContext) -> CompoundStatementTraversalPolicy {
+    fn visit_compound_stmt(&mut self, _: &CompoundStatementNode, _: &TraversalContextStack) -> CompoundStatementTraversalPolicy {
         CompoundStatementTraversalPolicy { traverse: true }
     }
     
-    fn visit_while_stmt(&mut self, _: &WhileLoopNode, _: StatementTraversalContext) -> WhileLoopTraversalPolicy {
+    fn visit_while_stmt(&mut self, _: &WhileLoopNode, _: &TraversalContextStack) -> WhileLoopTraversalPolicy {
         WhileLoopTraversalPolicy { traverse_cond: false, traverse_body: true }
     }
 
-    fn visit_do_while_stmt(&mut self, _: &DoWhileLoopNode, _: StatementTraversalContext) -> DoWhileLoopTraversalPolicy {
+    fn visit_do_while_stmt(&mut self, _: &DoWhileLoopNode, _: &TraversalContextStack) -> DoWhileLoopTraversalPolicy {
         DoWhileLoopTraversalPolicy { traverse_cond: false, traverse_body: true }
     }
 
-    fn visit_for_stmt(&mut self, _: &ForLoopNode, _: StatementTraversalContext) -> ForLoopTraversalPolicy {
+    fn visit_for_stmt(&mut self, _: &ForLoopNode, _: &TraversalContextStack) -> ForLoopTraversalPolicy {
         ForLoopTraversalPolicy { traverse_init: false, traverse_cond: false, traverse_iter: false, traverse_body: true }
     }
 
-    fn visit_if_stmt(&mut self, _: &IfConditionalNode, _: StatementTraversalContext) -> IfConditionalTraversalPolicy {
+    fn visit_if_stmt(&mut self, _: &IfConditionalNode, _: &TraversalContextStack) -> IfConditionalTraversalPolicy {
         IfConditionalTraversalPolicy { traverse_cond: false, traverse_body: true, traverse_else_body: true }
     }
 
-    fn visit_switch_stmt(&mut self, _: &SwitchConditionalNode, _: StatementTraversalContext) -> SwitchConditionalTraversalPolicy {
+    fn visit_switch_stmt(&mut self, _: &SwitchConditionalNode, _: &TraversalContextStack) -> SwitchConditionalTraversalPolicy {
         SwitchConditionalTraversalPolicy { traverse_cond: false, traverse_body: true }
     }
 }
