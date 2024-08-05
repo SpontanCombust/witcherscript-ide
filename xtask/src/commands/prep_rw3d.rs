@@ -43,6 +43,12 @@ pub fn prep_rw3d() -> anyhow::Result<()> {
     let mut arch = zip::ZipArchive::new(&rw3d_zip_file).context("Failed to read the zip archive")?;
     arch.extract(&rw3d_bin_dst).context("Failed to extract archive contents")?;
 
+    if cfg!(target_os = "linux") {
+        let rw3d_bin_path_str = rw3d_bin_dst.join("rw3d_cli").display().to_string();
+        println!("Setting executable privileges...");
+        cmd!(sh, "chmod a+x {rw3d_bin_path_str}").run()?;
+    }
+
     println!("Removing downloaded zip file...");
     sh.remove_path(&rw3d_zip_path)?;
 
