@@ -10,7 +10,7 @@ nav:
   - 'User Manual':
     - 'user-manual/index.md'
     - 'Getting Started': 'user-manual/getting-started.md'
-    - 'Editor': 'user-manual/editor.md'
+    - 'Editor Features': 'user-manual/editor.md'
     - 'Project System': 'user-manual/project-system.md' 
     - 'Diagnostic Index': 'user-manual/diagnostic-index.md'
     - 'FAQ': 'user-manual/faq.md'
