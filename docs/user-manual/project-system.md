@@ -1,6 +1,8 @@
 # Project System
 
-The game during script compilation needs to think only about assembling one big blob of code that will be then compiled. Places where it looks for said code are predefined and limited. Aside from the testing stage, developing a script mod often means working in a completely unrelated workspace directory, which can additionally be stored remotely using a version control system like Git. WIDE bridges the gap between those workspaces and scripts in the game directory by introducing a project system.
+The game during script compilation needs to think only about assembling one big blob of code that will be then compiled. Places where it looks for said code are predefined and limited. Aside from the testing stage, developing a script mod often means working in a completely unrelated workspace directory, which can additionally be stored remotely using a version control system like Git. WIDE bridges the gap between those workspaces and scripts in the game directory by introducing a project system. 
+
+The project system does not affect the process of packaging and installing mods to the game. For now that is left to the developer to figure out for themselves, this includes any dependencies that the mod may need. You can either write your own batch scripts or use REDkit built-in packaging functionality.
 
 Projects organize WitcherScript code into seperable packages which can link with each other.
 Recognized content structures are:
@@ -15,7 +17,7 @@ Recognized content structures are:
 WitcherScript IDE is able to detect projects created using the REDKit modding tool. These projects contain a `.w3edit`, which acts as a solution file for the whole project.
 Working with REDKit projects requires you to set the path to the game in extension's settings.
 
-REDKit project naturally can't use any scripts that are not part of it or the vanilla game (*content0*) unless you manually edit the depot. Until REDkit will be able to support script dependencies more easily if you want to get code suggestions from other mods consider initializing [WIDE project](#wide-project) in the workspace directory and filling the `[dependencies]` table instead.
+REDKit project naturally can't use any scripts that are not part of it or the vanilla game (*content0*) unless you manually edit the depot. Until REDkit will be able to support script dependencies more easily if you want to get code suggestions from other mods consider initializing [WIDE project](#wide-project) in the workspace directory and filling the `[dependencies]` table.
 
 :material-information-outline: If both `*.w3edit` and `witcherscript.toml` are present in the directory, it will be treated as a WIDE project.
 
