@@ -1,7 +1,7 @@
-use std::{borrow::Cow, cell::Cell, fmt::Debug, marker::PhantomData};
+use std::{borrow::Cow, cell::Cell, marker::PhantomData};
 use lsp_types as lsp;
 use tree_sitter as ts;
-use crate::{SyntaxError, script_document::ScriptDocument};
+use crate::{SyntaxError, AnyNode, script_document::ScriptDocument};
 
 
 /// Represents a WitcherScript syntax tree node
@@ -20,6 +20,7 @@ pub struct SyntaxNode<'script, T> {
 
 impl<'script, T> SyntaxNode<'script, T> {
     /// Constructs a completely new node from a tree-sitter node
+    #[inline]
     pub(crate) fn new(tree_node: ts::Node<'script>) -> Self {
         Self {
             cursor: Cell::new(None),
@@ -30,25 +31,30 @@ impl<'script, T> SyntaxNode<'script, T> {
 
     /// Interpret this node into a node with a different underlying type.
     /// Gives no guarantees as to whether that target type is actually valid, so it's not exposed by the crate
+    #[inline]
     pub(crate) fn into<U>(self) -> SyntaxNode<'script, U> {
         SyntaxNode::new(self.tree_node)
     }
 
+    #[inline]
     pub fn into_any(self) -> AnyNode<'script> {
         AnyNode::new(self.tree_node)
     }
 
     /// Returns an iterator over non-error children of this node as AnyNodes
+    #[inline]
     pub fn children(&self) -> SyntaxNodeChildren<'script> {
         SyntaxNodeChildren::new(&self.tree_node, None, false)
     }
 
     /// Returns an iterator over non-error named children of this node as AnyNodes
+    #[inline]
     pub(crate) fn named_children(&self) -> SyntaxNodeChildren<'script> {
         SyntaxNodeChildren::new(&self.tree_node, None, true)
     }
 
     /// Returns the first non-error child of this node as an AnyNodes
+    #[inline]
     pub(crate) fn first_child(&self, must_be_named: bool) -> Option<AnyNode<'script>> {
         self.use_cursor(move |cursor| {
             let mut it = SyntaxNodeChildren::new(&self.tree_node, Some(cursor), must_be_named);
@@ -58,6 +64,7 @@ impl<'script, T> SyntaxNode<'script, T> {
     }
 
     /// Returns the first non-error child of this node with a given field name as an AnyNodes
+    #[inline]
     pub(crate) fn field_child(&self, field: &'static str) -> Option<AnyNode<'script>> {
         self.use_cursor(move |cursor| {
             let mut it = SyntaxNodeFieldChildren::new(&self.tree_node, Some(cursor), field);
@@ -67,6 +74,7 @@ impl<'script, T> SyntaxNode<'script, T> {
     }
 
     /// Returns an iterator over named, non-error children of this node with a given field name
+    #[inline]
     pub(crate) fn field_children(&self, field: &'static str) -> SyntaxNodeFieldChildren<'script> {
         SyntaxNodeFieldChildren::new(&self.tree_node, None, field)
     }
@@ -245,20 +253,6 @@ impl<T> PartialEq for SyntaxNode<'_, T> {
 }
 
 impl<T> Eq for SyntaxNode<'_, T> {}
-
-
-
-/// Default opaque node type not possessing any additional capabilities.
-pub type AnyNode<'script> = SyntaxNode<'script, ()>;
-
-
-impl Debug for AnyNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SyntaxNode")
-            .field("tree_node", &self.tree_node)
-            .finish()
-    }
-}
 
 
 
