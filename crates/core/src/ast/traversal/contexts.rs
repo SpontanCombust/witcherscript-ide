@@ -59,6 +59,8 @@ pub enum TraversalContext {
     TernaryConditionalExpressionCond,
     TernaryConditionalExpressionConseq,
     TernaryConditionalExpressionAlt,
+
+    Error
 }
 
 impl Default for TraversalContext {

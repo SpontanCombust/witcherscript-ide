@@ -1,5 +1,5 @@
 use std::{cell::{RefCell, RefMut}, rc::Rc};
-use crate::ast::*;
+use crate::{ast::*, ErrorNode};
 use crate::tokens::*;
 
 
@@ -420,5 +420,15 @@ impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
 
     fn visit_virtual_parent_expr(&mut self, n: &VirtualParentExpressionNode, ctx: &TraversalContextStack) {
         self.chain_visit(move |link| link.visit_virtual_parent_expr(n, ctx))
+    }
+
+
+
+    fn visit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) -> ErrorTraversalPolicy {
+        self.chain_visit_traversable(move |link| link.visit_error(n, ctx))
+    }
+
+    fn exit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) {
+        self.chain_exit(move |link| link.exit_error(n, ctx))
     }
 }

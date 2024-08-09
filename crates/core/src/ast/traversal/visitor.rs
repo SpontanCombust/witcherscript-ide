@@ -1,5 +1,6 @@
 use crate::tokens::*;
 use crate::ast::*;
+use crate::ErrorNode;
 use super::policies::*;
 use super::contexts::*;
 
@@ -11,6 +12,7 @@ use super::contexts::*;
 #[allow(unused_variables)]
 pub trait SyntaxNodeVisitor {
     fn traversal_policy_default(&self) -> bool {
+        //TODO remove this default impl
         true
     }
 
@@ -236,4 +238,11 @@ pub trait SyntaxNodeVisitor {
     /// 1. A trailing "orphan" semicolon somewhere in code
     /// 2. Indicating absence of action, e.g. `while(!AreWeThereYet());`
     fn visit_nop_stmt(&mut self, n: &NopNode, ctx: &TraversalContextStack) {}
+
+
+
+    /// Called when visiting a node representing a syntax error.
+    fn visit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) -> ErrorTraversalPolicy { ErrorTraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting a node representing a syntax error and possibly also children nodes specified in traversal policy.
+    fn exit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) {}
 }

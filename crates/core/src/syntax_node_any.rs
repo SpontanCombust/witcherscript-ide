@@ -1,4 +1,4 @@
-use crate::{ast::*, tokens::*, NamedSyntaxNode, SyntaxNode};
+use crate::{ast::*, tokens::*, ErrorNode, NamedSyntaxNode, SyntaxNode};
 
 
 /// Default opaque node type not possessing any additional capabilities.
@@ -81,6 +81,9 @@ impl<'script> SyntaxNodeTraversal for AnyNode<'script> {
                 DeleteStatementNode::NODE_KIND => { let n: DeleteStatementNode = n.into(); n.accept(visitor, ctx); },
                 CompoundStatementNode::NODE_KIND => { let n: CompoundStatementNode = n.into(); n.accept(visitor, ctx); },
                 NopNode::NODE_KIND => { let n: NopNode = n.into(); n.accept(visitor, ctx); },
+
+
+                ErrorNode::NODE_KIND => { let n: ErrorNode = n.into(); n.accept(visitor, ctx); },
     
                 _ => {}
             } 

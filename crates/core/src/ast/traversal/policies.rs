@@ -831,3 +831,30 @@ impl BitAnd for DeleteStatementTraversalPolicy {
         }
     }
 }
+
+
+
+
+#[derive(Debug, Clone)]
+pub struct ErrorTraversalPolicy {
+    pub traverse: bool
+}
+
+impl TraversalPolicy for ErrorTraversalPolicy {
+    #[inline(always)]
+    fn default_to(value: bool) -> Self {
+        Self {
+            traverse: value,
+        }
+    }
+}
+
+impl BitAnd for ErrorTraversalPolicy {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self {
+            traverse: self.traverse && rhs.traverse
+        }
+    }
+}

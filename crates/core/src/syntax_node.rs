@@ -1,7 +1,7 @@
 use std::{borrow::Cow, cell::Cell, marker::PhantomData};
 use lsp_types as lsp;
 use tree_sitter as ts;
-use crate::{SyntaxError, AnyNode, script_document::ScriptDocument};
+use crate::{script_document::ScriptDocument, AnyNode, ErrorNode, SyntaxError};
 
 
 /// Represents a WitcherScript syntax tree node
@@ -41,23 +41,32 @@ impl<'script, T> SyntaxNode<'script, T> {
         AnyNode::new(self.tree_node)
     }
 
+    #[inline]
+    pub fn into_result<U>(self) -> Result<SyntaxNode<'script, U>, ErrorNode<'script>> {
+        if self.is_error() {
+            Err(self.into())
+        } else {
+            Ok(self.into())
+        }
+    }
+
     /// Returns an iterator over non-error children of this node as AnyNodes
     #[inline]
     pub fn children(&self) -> SyntaxNodeChildren<'script> {
-        SyntaxNodeChildren::new(&self.tree_node, None, false)
+        SyntaxNodeChildren::new(&self.tree_node, None).must_be_named(false)
     }
 
     /// Returns an iterator over non-error named children of this node as AnyNodes
     #[inline]
     pub(crate) fn named_children(&self) -> SyntaxNodeChildren<'script> {
-        SyntaxNodeChildren::new(&self.tree_node, None, true)
+        SyntaxNodeChildren::new(&self.tree_node, None).must_be_named(true)
     }
 
     /// Returns the first non-error child of this node as an AnyNodes
     #[inline]
     pub(crate) fn first_child(&self, must_be_named: bool) -> Option<AnyNode<'script>> {
         self.use_cursor(move |cursor| {
-            let mut it = SyntaxNodeChildren::new(&self.tree_node, Some(cursor), must_be_named);
+            let mut it = SyntaxNodeChildren::new(&self.tree_node, Some(cursor)).must_be_named(must_be_named);
             let child = it.next();
             (it.cursor, child)
         })
@@ -116,7 +125,7 @@ impl<'script, T> SyntaxNode<'script, T> {
             let mut errors = Vec::new();
             for n in self.tree_node.children(&mut cursor) {
                 if n.is_error() {
-                    errors.push(SyntaxError::Invalid(AnyNode::new(n)));
+                    errors.push(SyntaxError::Invalid(ErrorNode::new(n)));
                 } else if n.is_missing() {
                     errors.push(SyntaxError::Missing(AnyNode::new(n)));
                 }
@@ -126,7 +135,6 @@ impl<'script, T> SyntaxNode<'script, T> {
         })
     }
 
-    //TODO unnamed children
 
 
     /// Returns the range at which this node is located in the text document
@@ -147,6 +155,22 @@ impl<'script, T> SyntaxNode<'script, T> {
         && position.line <= r.end.line
         && if position.line == r.start.line { position.character >= r.start.character } else { true } 
         && if position.line == r.end.line { position.character <= r.end.character } else { true }
+    }
+
+    #[inline]
+    pub fn is_comment(&self) -> bool {
+        // comments are the only syntax that creates nodes but is also treated as whitespace
+        self.tree_node.is_extra()
+    }
+
+    #[inline]
+    pub fn is_named(&self) -> bool {
+        self.tree_node.is_named()
+    }
+
+    #[inline]
+    pub fn is_error(&self) -> bool {
+        self.tree_node.is_error()
     }
 
     #[inline]
@@ -264,19 +288,36 @@ pub const MISSING_TEXT: &'static str = "{missing}";
 pub struct SyntaxNodeChildren<'script> {
     cursor: ts::TreeCursor<'script>,
     any_children_left: bool,
-    must_be_named: bool
+    
+    must_be_named: bool,
+    allow_errors: bool,
+
+    pub prev_field_name: Option<&'static str>,
 }
 
 impl<'script> SyntaxNodeChildren<'script> {
-    fn new(tree_node: &ts::Node<'script>, cursor: Option<ts::TreeCursor<'script>>, must_be_named: bool) -> Self {
+    fn new(tree_node: &ts::Node<'script>, cursor: Option<ts::TreeCursor<'script>>) -> Self {
         let mut cursor = cursor.unwrap_or(tree_node.walk());
         let any_children_left = cursor.goto_first_child(); 
 
         Self {
             cursor,
             any_children_left,
-            must_be_named
-        }       
+            prev_field_name: None,
+
+            must_be_named: false,
+            allow_errors: false
+        }
+    }
+
+    pub fn must_be_named(mut self, b: bool) -> Self {
+        self.must_be_named = b;
+        self
+    }
+
+    pub fn allow_errors(mut self, b: bool) -> Self {
+        self.allow_errors = b;
+        self
     }
 }
 
@@ -286,7 +327,9 @@ impl<'script> Iterator for SyntaxNodeChildren<'script> {
     fn next(&mut self) -> Option<Self::Item> {
         if self.any_children_left {
             let mut n = self.cursor.node();
-            while n.is_error() || n.is_extra() || (self.must_be_named && !n.is_named()) {
+            while n.is_extra()
+            || (!self.allow_errors && n.is_error()) 
+            || (self.must_be_named && !n.is_named()) {
                 if self.cursor.goto_next_sibling() {
                     n = self.cursor.node();
                 } else {
@@ -294,6 +337,7 @@ impl<'script> Iterator for SyntaxNodeChildren<'script> {
                 }
             }
 
+            self.prev_field_name = self.cursor.field_name();
             self.any_children_left = self.cursor.goto_next_sibling();
             Some(AnyNode::new(n))
         } else {
