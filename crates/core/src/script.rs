@@ -8,7 +8,7 @@ use crate::{ast::{RootNode, SyntaxNodeTraversal, SyntaxNodeVisitor, TraversalCon
 #[derive(Debug, Clone)]
 pub struct Script {
     current_tree: Tree,
-    prev_tree: Option<Tree>
+    // prev_tree: Option<Tree> // uncomment when (if) this becomes useful
 }
 
 #[derive(Debug, Error)]
@@ -25,7 +25,7 @@ impl Script {
 
         Ok(Self {
             current_tree: parse_tree,
-            prev_tree: None
+            // prev_tree: None
         })
     }
 
@@ -37,8 +37,8 @@ impl Script {
         }
 
         let current_tree = Self::parse_rope(&doc.rope, Some(&self.current_tree))?;
-        let prev_tree = std::mem::replace(&mut self.current_tree, current_tree);
-        self.prev_tree = Some(prev_tree);
+        let _prev_tree = std::mem::replace(&mut self.current_tree, current_tree);
+        // self.prev_tree = Some(prev_tree);
 
         doc.edits.clear();
 
@@ -49,8 +49,8 @@ impl Script {
     /// The range of the entire script will be different after the operation.
     pub fn refresh(&mut self, doc: &ScriptDocument) -> Result<(), ScriptError> {
         let current_tree = Self::parse_rope(&doc.rope, None)?;
-        let prev_tree = std::mem::replace(&mut self.current_tree, current_tree);
-        self.prev_tree = Some(prev_tree);
+        let _prev_tree = std::mem::replace(&mut self.current_tree, current_tree);
+        // self.prev_tree = Some(prev_tree);
 
         Ok(())
     }
