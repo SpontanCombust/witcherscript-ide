@@ -1,4 +1,5 @@
 use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
+use witcherscript::ErrorNode;
 use witcherscript::{ast::*, attribs::*, script_document::ScriptDocument};
 use crate::utils::SymbolPathBuilderPayload;
 use super::symbol_path::{SymbolPath, SymbolPathBuf};
@@ -486,6 +487,11 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
         }
 
         TraversalPolicy::default_to(true)
+    }
+
+
+    fn visit_error(&mut self, _n: &ErrorNode, _ctx: &TraversalContextStack) -> ErrorTraversalPolicy {
+        TraversalPolicy::default_to(false)
     }
 }
 

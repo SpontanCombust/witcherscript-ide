@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
-use witcherscript::{ast::*, tokens::*};
+use witcherscript::{ast::*, tokens::*, ErrorNode};
 use witcherscript_analysis::utils::{PositionFilter, PositionFilterPayload};
 use crate::Backend;
 
@@ -631,6 +631,11 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
 
     fn visit_virtual_parent_expr(&mut self, n: &VirtualParentExpressionNode, _: &TraversalContextStack) {
         self.range_stack.push(n.range());
+    }
+
+
+    fn visit_error(&mut self, _n: &ErrorNode, _ctx: &TraversalContextStack) -> ErrorTraversalPolicy {
+        TraversalPolicy::default_to(false)
     }
 }
 

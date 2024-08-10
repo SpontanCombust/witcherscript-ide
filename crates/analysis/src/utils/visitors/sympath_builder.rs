@@ -1,5 +1,5 @@
 use std::{cell::RefCell, rc::Rc};
-use witcherscript::{ast::*, script_document::ScriptDocument};
+use witcherscript::{ast::*, script_document::ScriptDocument, ErrorNode};
 use crate::symbol_analysis::{symbol_path::SymbolPathBuf, symbols::*};
 
 
@@ -131,6 +131,11 @@ impl SyntaxNodeVisitor for SymbolPathBuilder<'_> {
 
     fn exit_event_decl(&mut self, _: &EventDeclarationNode, _: &TraversalContextStack) {
         self.payload.borrow_mut().current_sympath.pop();
+    }
+
+
+    fn visit_error(&mut self, _n: &ErrorNode, _ctx: &TraversalContextStack) -> ErrorTraversalPolicy {
+        TraversalPolicy::default_to(false)
     }
 }
 

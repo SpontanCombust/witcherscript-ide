@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 use tower_lsp::lsp_types as lsp;
+use witcherscript::ErrorNode;
 use witcherscript::{ast::*, script_document::ScriptDocument, tokens::*};
 use witcherscript_analysis::symbol_analysis::symbol_table::marcher::SymbolTableMarcher;
 use witcherscript_analysis::symbol_analysis::symbols::*;
@@ -533,6 +534,11 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         }
 
         TraversalPolicy::default_to(true)
+    }
+
+
+    fn visit_error(&mut self, _n: &ErrorNode, _ctx: &TraversalContextStack) -> ErrorTraversalPolicy {
+        TraversalPolicy::default_to(false)
     }
 }
 

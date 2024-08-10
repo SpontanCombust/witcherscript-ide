@@ -1,5 +1,5 @@
 use lsp_types::Range;
-use witcherscript::{Script, SyntaxError, SyntaxNode};
+use witcherscript::{ErrorNode, Script, SyntaxError, SyntaxNode};
 use witcherscript::tokens::*;
 use witcherscript::ast::*;
 use witcherscript_diagnostics::*;
@@ -771,4 +771,9 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
     }
     
     // No point in checking single token expressions
+
+
+    fn visit_error(&mut self, _n: &ErrorNode, _ctx: &TraversalContextStack) -> ErrorTraversalPolicy {
+        TraversalPolicy::default_to(false)
+    }
 }
