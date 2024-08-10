@@ -71,7 +71,8 @@ impl SyntaxNodeVisitor for PositionFilter {
         self.currently_in_range = n.spans_position(self.pos);
 
         RootTraversalPolicy { 
-            traverse: self.currently_in_range
+            traverse: self.currently_in_range,
+            traverse_errors: false
         }
     }
 

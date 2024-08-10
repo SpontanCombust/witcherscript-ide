@@ -233,7 +233,10 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
 
     fn visit_root(&mut self, _: &RootNode) -> RootTraversalPolicy {
-        RootTraversalPolicy { traverse: true }
+        RootTraversalPolicy { 
+            traverse: true,
+            traverse_errors: false
+        }
     }
 
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
@@ -276,7 +279,8 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
 
         ClassDeclarationTraversalPolicy { 
-            traverse_definition 
+            traverse_definition,
+            traverse_errors: false
         }
     }
 
@@ -334,7 +338,8 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
 
         StateDeclarationTraversalPolicy { 
-            traverse_definition 
+            traverse_definition,
+            traverse_errors: false
         }       
     }
 
@@ -383,7 +388,8 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
 
         StructDeclarationTraversalPolicy { 
-            traverse_definition 
+            traverse_definition,
+            traverse_errors: false
         }
     }
 
@@ -416,7 +422,8 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
 
         EnumDeclarationTraversalPolicy { 
-            traverse_definition 
+            traverse_definition,
+            traverse_errors: false
         }
     }
 
@@ -535,7 +542,8 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
         FunctionDeclarationTraversalPolicy { 
             traverse_params: traverse,
-            traverse_definition: traverse
+            traverse_definition: traverse,
+            traverse_errors: false
         }
     }
 
@@ -611,7 +619,8 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
         FunctionDeclarationTraversalPolicy {
             traverse_params: traverse,
-            traverse_definition: traverse
+            traverse_definition: traverse,
+            traverse_errors: false
         }
     }
 
@@ -645,7 +654,8 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
         EventDeclarationTraversalPolicy { 
             traverse_params: traverse,
-            traverse_definition: traverse
+            traverse_definition: traverse,
+            traverse_errors: false
         }
     }
 
@@ -775,31 +785,58 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
 
         VarDeclarationTraversalPolicy {
-            traverse_init_value: false
+            traverse_init_value: false,
+            traverse_errors: false
         }
     }
 
     fn visit_compound_stmt(&mut self, _: &CompoundStatementNode, _: &TraversalContextStack) -> CompoundStatementTraversalPolicy {
-        CompoundStatementTraversalPolicy { traverse: true }
+        CompoundStatementTraversalPolicy { 
+            traverse: true,
+            traverse_errors: false
+        }
     }
     
     fn visit_while_stmt(&mut self, _: &WhileLoopNode, _: &TraversalContextStack) -> WhileLoopTraversalPolicy {
-        WhileLoopTraversalPolicy { traverse_cond: false, traverse_body: true }
+        WhileLoopTraversalPolicy { 
+            traverse_cond: false, 
+            traverse_body: true,
+            traverse_errors: false 
+        }
     }
 
     fn visit_do_while_stmt(&mut self, _: &DoWhileLoopNode, _: &TraversalContextStack) -> DoWhileLoopTraversalPolicy {
-        DoWhileLoopTraversalPolicy { traverse_cond: false, traverse_body: true }
+        DoWhileLoopTraversalPolicy { 
+            traverse_cond: false, 
+            traverse_body: true,
+            traverse_errors: false 
+        }
     }
 
     fn visit_for_stmt(&mut self, _: &ForLoopNode, _: &TraversalContextStack) -> ForLoopTraversalPolicy {
-        ForLoopTraversalPolicy { traverse_init: false, traverse_cond: false, traverse_iter: false, traverse_body: true }
+        ForLoopTraversalPolicy { 
+            traverse_init: false, 
+            traverse_cond: false, 
+            traverse_iter: false, 
+            traverse_body: true,
+            traverse_errors: false 
+        }
     }
 
     fn visit_if_stmt(&mut self, _: &IfConditionalNode, _: &TraversalContextStack) -> IfConditionalTraversalPolicy {
-        IfConditionalTraversalPolicy { traverse_cond: false, traverse_body: true, traverse_else_body: true }
+        IfConditionalTraversalPolicy { 
+            traverse_cond: false, 
+            traverse_body: true, 
+            traverse_else_body: true,
+            traverse_errors: false 
+        }
     }
 
     fn visit_switch_stmt(&mut self, _: &SwitchConditionalNode, _: &TraversalContextStack) -> SwitchConditionalTraversalPolicy {
-        SwitchConditionalTraversalPolicy { traverse_cond: false, traverse_body: true }
+        SwitchConditionalTraversalPolicy { 
+            traverse_cond: false, 
+            traverse_body: true,
+            traverse_errors: false 
+        }
     }
 }

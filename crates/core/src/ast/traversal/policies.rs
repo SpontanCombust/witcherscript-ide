@@ -8,14 +8,16 @@ pub trait TraversalPolicy: Sized + std::ops::BitAnd<Output = Self> {
 
 #[derive(Debug, Clone)]
 pub struct NestedExpressionTraversalPolicy {
-    pub traverse_inner: bool
+    pub traverse_inner: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for NestedExpressionTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
-            traverse_inner: value
+            traverse_inner: value,
+            traverse_errors: value
         }
     }
 }
@@ -25,7 +27,8 @@ impl BitAnd for NestedExpressionTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_inner: self.traverse_inner && rhs.traverse_inner
+            traverse_inner: self.traverse_inner && rhs.traverse_inner,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -35,6 +38,7 @@ impl BitAnd for NestedExpressionTraversalPolicy {
 pub struct FunctionCallExpressionTraversalPolicy {
     pub traverse_func: bool,
     pub traverse_args: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for FunctionCallExpressionTraversalPolicy {
@@ -42,7 +46,8 @@ impl TraversalPolicy for FunctionCallExpressionTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_func: value,
-            traverse_args: value
+            traverse_args: value,
+            traverse_errors: value
         }
     }
 }
@@ -53,7 +58,8 @@ impl BitAnd for FunctionCallExpressionTraversalPolicy {
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
             traverse_args: self.traverse_args && rhs.traverse_args,
-            traverse_func: self.traverse_func && rhs.traverse_func
+            traverse_func: self.traverse_func && rhs.traverse_func,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -87,7 +93,8 @@ impl BitAnd for FunctionCallArgumentTraversalPolicy {
 #[derive(Debug, Clone)]
 pub struct ArrayExpressionTraversalPolicy {
     pub traverse_accessor: bool,
-    pub traverse_index: bool
+    pub traverse_index: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for ArrayExpressionTraversalPolicy {
@@ -96,6 +103,7 @@ impl TraversalPolicy for ArrayExpressionTraversalPolicy {
         Self {
             traverse_accessor: value,
             traverse_index: value,
+            traverse_errors: value
         }
     }
 }
@@ -106,7 +114,8 @@ impl BitAnd for ArrayExpressionTraversalPolicy {
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
             traverse_accessor: self.traverse_accessor && rhs.traverse_accessor,
-            traverse_index: self.traverse_index && rhs.traverse_index
+            traverse_index: self.traverse_index && rhs.traverse_index,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -114,7 +123,8 @@ impl BitAnd for ArrayExpressionTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct MemberFieldExpressionTraversalPolicy {
-    pub traverse_accessor: bool
+    pub traverse_accessor: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for MemberFieldExpressionTraversalPolicy {
@@ -122,6 +132,7 @@ impl TraversalPolicy for MemberFieldExpressionTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_accessor: value,
+            traverse_errors: value
         }
     }
 }
@@ -131,7 +142,8 @@ impl BitAnd for MemberFieldExpressionTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_accessor: self.traverse_accessor && rhs.traverse_accessor
+            traverse_accessor: self.traverse_accessor && rhs.traverse_accessor,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -139,7 +151,8 @@ impl BitAnd for MemberFieldExpressionTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct NewExpressionTraversalPolicy {
-    pub traverse_lifetime_obj: bool
+    pub traverse_lifetime_obj: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for NewExpressionTraversalPolicy {
@@ -147,6 +160,7 @@ impl TraversalPolicy for NewExpressionTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_lifetime_obj: value,
+            traverse_errors: value
         }
     }
 }
@@ -156,7 +170,8 @@ impl BitAnd for NewExpressionTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_lifetime_obj: self.traverse_lifetime_obj && rhs.traverse_lifetime_obj
+            traverse_lifetime_obj: self.traverse_lifetime_obj && rhs.traverse_lifetime_obj,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -164,7 +179,8 @@ impl BitAnd for NewExpressionTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct TypeCastExpressionTraversalPolicy {
-    pub traverse_value: bool
+    pub traverse_value: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for TypeCastExpressionTraversalPolicy {
@@ -172,6 +188,7 @@ impl TraversalPolicy for TypeCastExpressionTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_value: value,
+            traverse_errors: value
         }
     }
 }
@@ -181,7 +198,8 @@ impl BitAnd for TypeCastExpressionTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_value: self.traverse_value && rhs.traverse_value
+            traverse_value: self.traverse_value && rhs.traverse_value,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -189,7 +207,8 @@ impl BitAnd for TypeCastExpressionTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct UnaryOperationExpressionTraversalPolicy {
-    pub traverse_right: bool
+    pub traverse_right: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for UnaryOperationExpressionTraversalPolicy {
@@ -197,6 +216,7 @@ impl TraversalPolicy for UnaryOperationExpressionTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_right: value,
+            traverse_errors: value
         }
     }
 }
@@ -206,7 +226,8 @@ impl BitAnd for UnaryOperationExpressionTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_right: self.traverse_right && rhs.traverse_right
+            traverse_right: self.traverse_right && rhs.traverse_right,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -215,7 +236,8 @@ impl BitAnd for UnaryOperationExpressionTraversalPolicy {
 #[derive(Debug, Clone)]
 pub struct BinaryOperationExpressionTraversalPolicy {
     pub traverse_left: bool,
-    pub traverse_right: bool
+    pub traverse_right: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for BinaryOperationExpressionTraversalPolicy {
@@ -223,7 +245,8 @@ impl TraversalPolicy for BinaryOperationExpressionTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_right: value,
-            traverse_left: value
+            traverse_left: value,
+            traverse_errors: value
         }
     }
 }
@@ -234,7 +257,8 @@ impl BitAnd for BinaryOperationExpressionTraversalPolicy {
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
             traverse_left: self.traverse_left && rhs.traverse_left,
-            traverse_right: self.traverse_right && rhs.traverse_right
+            traverse_right: self.traverse_right && rhs.traverse_right,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -243,7 +267,8 @@ impl BitAnd for BinaryOperationExpressionTraversalPolicy {
 #[derive(Debug, Clone)]
 pub struct AssignmentOperationExpressionTraversalPolicy {
     pub traverse_left: bool,
-    pub traverse_right: bool
+    pub traverse_right: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for AssignmentOperationExpressionTraversalPolicy {
@@ -251,7 +276,8 @@ impl TraversalPolicy for AssignmentOperationExpressionTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_right: value,
-            traverse_left: value
+            traverse_left: value,
+            traverse_errors: value
         }
     }
 }
@@ -262,7 +288,8 @@ impl BitAnd for AssignmentOperationExpressionTraversalPolicy {
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
             traverse_left: self.traverse_left && rhs.traverse_left,
-            traverse_right: self.traverse_right && rhs.traverse_right
+            traverse_right: self.traverse_right && rhs.traverse_right,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -272,7 +299,8 @@ impl BitAnd for AssignmentOperationExpressionTraversalPolicy {
 pub struct TernaryConditionalExpressionTraversalPolicy {
     pub traverse_cond: bool,
     pub traverse_conseq: bool,
-    pub traverse_alt: bool
+    pub traverse_alt: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for TernaryConditionalExpressionTraversalPolicy {
@@ -281,7 +309,8 @@ impl TraversalPolicy for TernaryConditionalExpressionTraversalPolicy {
         Self {
             traverse_cond: value,
             traverse_conseq: value,
-            traverse_alt: value
+            traverse_alt: value,
+            traverse_errors: value
         }
     }
 }
@@ -293,7 +322,8 @@ impl BitAnd for TernaryConditionalExpressionTraversalPolicy {
         Self {
             traverse_cond: self.traverse_cond && rhs.traverse_cond,
             traverse_conseq: self.traverse_conseq && rhs.traverse_conseq,
-            traverse_alt: self.traverse_alt && rhs.traverse_alt
+            traverse_alt: self.traverse_alt && rhs.traverse_alt,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -303,7 +333,8 @@ impl BitAnd for TernaryConditionalExpressionTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct RootTraversalPolicy {
-    pub traverse: bool
+    pub traverse: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for RootTraversalPolicy {
@@ -311,6 +342,7 @@ impl TraversalPolicy for RootTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse: value,
+            traverse_errors: value
         }
     }
 }
@@ -320,7 +352,8 @@ impl BitAnd for RootTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse: self.traverse && rhs.traverse
+            traverse: self.traverse && rhs.traverse,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -328,7 +361,8 @@ impl BitAnd for RootTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct ClassDeclarationTraversalPolicy {
-    pub traverse_definition: bool
+    pub traverse_definition: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for ClassDeclarationTraversalPolicy {
@@ -336,6 +370,7 @@ impl TraversalPolicy for ClassDeclarationTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_definition: value,
+            traverse_errors: value
         }
     }
 }
@@ -345,7 +380,8 @@ impl BitAnd for ClassDeclarationTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_definition: self.traverse_definition && rhs.traverse_definition
+            traverse_definition: self.traverse_definition && rhs.traverse_definition,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -353,7 +389,8 @@ impl BitAnd for ClassDeclarationTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct StateDeclarationTraversalPolicy {
-    pub traverse_definition: bool
+    pub traverse_definition: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for StateDeclarationTraversalPolicy {
@@ -361,6 +398,7 @@ impl TraversalPolicy for StateDeclarationTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_definition: value,
+            traverse_errors: value
         }
     }
 }
@@ -370,7 +408,8 @@ impl BitAnd for StateDeclarationTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_definition: self.traverse_definition && rhs.traverse_definition
+            traverse_definition: self.traverse_definition && rhs.traverse_definition,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -378,7 +417,8 @@ impl BitAnd for StateDeclarationTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct StructDeclarationTraversalPolicy {
-    pub traverse_definition: bool
+    pub traverse_definition: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for StructDeclarationTraversalPolicy {
@@ -386,6 +426,7 @@ impl TraversalPolicy for StructDeclarationTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_definition: value,
+            traverse_errors: value
         }
     }
 }
@@ -395,7 +436,8 @@ impl BitAnd for StructDeclarationTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_definition: self.traverse_definition && rhs.traverse_definition
+            traverse_definition: self.traverse_definition && rhs.traverse_definition,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -403,7 +445,8 @@ impl BitAnd for StructDeclarationTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct EnumDeclarationTraversalPolicy {
-    pub traverse_definition: bool
+    pub traverse_definition: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for EnumDeclarationTraversalPolicy {
@@ -411,6 +454,7 @@ impl TraversalPolicy for EnumDeclarationTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_definition: value,
+            traverse_errors: value
         }
     }
 }
@@ -420,7 +464,8 @@ impl BitAnd for EnumDeclarationTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_definition: self.traverse_definition && rhs.traverse_definition
+            traverse_definition: self.traverse_definition && rhs.traverse_definition,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -428,7 +473,8 @@ impl BitAnd for EnumDeclarationTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct MemberDefaultValueTraversalPolicy {
-    pub traverse_value: bool
+    pub traverse_value: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for MemberDefaultValueTraversalPolicy {
@@ -436,6 +482,7 @@ impl TraversalPolicy for MemberDefaultValueTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_value: value,
+            traverse_errors: value
         }
     }
 }
@@ -445,7 +492,8 @@ impl BitAnd for MemberDefaultValueTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_value: self.traverse_value && rhs.traverse_value
+            traverse_value: self.traverse_value && rhs.traverse_value,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -453,7 +501,8 @@ impl BitAnd for MemberDefaultValueTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct MemberDefaultsBlockTraversalPolicy {
-    pub traverse: bool
+    pub traverse: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for MemberDefaultsBlockTraversalPolicy {
@@ -461,6 +510,7 @@ impl TraversalPolicy for MemberDefaultsBlockTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse: value,
+            traverse_errors: value
         }
     }
 }
@@ -470,7 +520,8 @@ impl BitAnd for MemberDefaultsBlockTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse: self.traverse && rhs.traverse
+            traverse: self.traverse && rhs.traverse,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -479,7 +530,8 @@ impl BitAnd for MemberDefaultsBlockTraversalPolicy {
 #[derive(Debug, Clone)]
 pub struct FunctionDeclarationTraversalPolicy {
     pub traverse_params: bool,
-    pub traverse_definition: bool
+    pub traverse_definition: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for FunctionDeclarationTraversalPolicy {
@@ -487,7 +539,8 @@ impl TraversalPolicy for FunctionDeclarationTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_params: value,
-            traverse_definition: value
+            traverse_definition: value,
+            traverse_errors: value
         }
     }
 }
@@ -498,7 +551,8 @@ impl BitAnd for FunctionDeclarationTraversalPolicy {
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
             traverse_params: self.traverse_params && rhs.traverse_params,
-            traverse_definition: self.traverse_definition && rhs.traverse_definition
+            traverse_definition: self.traverse_definition && rhs.traverse_definition,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -507,7 +561,8 @@ impl BitAnd for FunctionDeclarationTraversalPolicy {
 #[derive(Debug, Clone)]
 pub struct EventDeclarationTraversalPolicy {
     pub traverse_params: bool,
-    pub traverse_definition: bool
+    pub traverse_definition: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for EventDeclarationTraversalPolicy {
@@ -515,7 +570,8 @@ impl TraversalPolicy for EventDeclarationTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_params: value,
-            traverse_definition: value
+            traverse_definition: value,
+            traverse_errors: value
         }
     }
 }
@@ -526,7 +582,8 @@ impl BitAnd for EventDeclarationTraversalPolicy {
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
             traverse_params: self.traverse_params && rhs.traverse_params,
-            traverse_definition: self.traverse_definition && rhs.traverse_definition
+            traverse_definition: self.traverse_definition && rhs.traverse_definition,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -539,7 +596,8 @@ pub struct ForLoopTraversalPolicy {
     pub traverse_init: bool,
     pub traverse_cond: bool,
     pub traverse_iter: bool,
-    pub traverse_body: bool
+    pub traverse_body: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for ForLoopTraversalPolicy {
@@ -550,6 +608,7 @@ impl TraversalPolicy for ForLoopTraversalPolicy {
             traverse_cond: value,
             traverse_iter: value,
             traverse_body: value,
+            traverse_errors: value
         }
     }
 }
@@ -562,7 +621,8 @@ impl BitAnd for ForLoopTraversalPolicy {
             traverse_init: self.traverse_init && rhs.traverse_init,
             traverse_cond: self.traverse_cond && rhs.traverse_cond,
             traverse_iter: self.traverse_iter && rhs.traverse_iter,
-            traverse_body: self.traverse_body && rhs.traverse_body
+            traverse_body: self.traverse_body && rhs.traverse_body,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -571,7 +631,8 @@ impl BitAnd for ForLoopTraversalPolicy {
 #[derive(Debug, Clone)]
 pub struct WhileLoopTraversalPolicy {
     pub traverse_cond: bool,
-    pub traverse_body: bool
+    pub traverse_body: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for WhileLoopTraversalPolicy {
@@ -580,6 +641,7 @@ impl TraversalPolicy for WhileLoopTraversalPolicy {
         Self {
             traverse_cond: value,
             traverse_body: value,
+            traverse_errors: value
         }
     }
 }
@@ -590,7 +652,8 @@ impl BitAnd for WhileLoopTraversalPolicy {
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
             traverse_cond: self.traverse_cond && rhs.traverse_cond,
-            traverse_body: self.traverse_body && rhs.traverse_body
+            traverse_body: self.traverse_body && rhs.traverse_body,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -599,7 +662,8 @@ impl BitAnd for WhileLoopTraversalPolicy {
 #[derive(Debug, Clone)]
 pub struct DoWhileLoopTraversalPolicy {
     pub traverse_cond: bool,
-    pub traverse_body: bool
+    pub traverse_body: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for DoWhileLoopTraversalPolicy {
@@ -608,6 +672,7 @@ impl TraversalPolicy for DoWhileLoopTraversalPolicy {
         Self {
             traverse_cond: value,
             traverse_body: value,
+            traverse_errors: value
         }
     }
 }
@@ -618,7 +683,8 @@ impl BitAnd for DoWhileLoopTraversalPolicy {
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
             traverse_cond: self.traverse_cond && rhs.traverse_cond,
-            traverse_body: self.traverse_body && rhs.traverse_body
+            traverse_body: self.traverse_body && rhs.traverse_body,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -628,7 +694,8 @@ impl BitAnd for DoWhileLoopTraversalPolicy {
 pub struct IfConditionalTraversalPolicy {
     pub traverse_cond: bool,
     pub traverse_body: bool,
-    pub traverse_else_body: bool
+    pub traverse_else_body: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for IfConditionalTraversalPolicy {
@@ -637,7 +704,8 @@ impl TraversalPolicy for IfConditionalTraversalPolicy {
         Self {
             traverse_cond: value,
             traverse_body: value,
-            traverse_else_body: value
+            traverse_else_body: value,
+            traverse_errors: value
         }
     }
 }
@@ -649,7 +717,8 @@ impl BitAnd for IfConditionalTraversalPolicy {
         Self {
             traverse_cond: self.traverse_cond && rhs.traverse_cond,
             traverse_body: self.traverse_body && rhs.traverse_body,
-            traverse_else_body: self.traverse_else_body && rhs.traverse_else_body
+            traverse_else_body: self.traverse_else_body && rhs.traverse_else_body,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -658,7 +727,8 @@ impl BitAnd for IfConditionalTraversalPolicy {
 #[derive(Debug, Clone)]
 pub struct SwitchConditionalTraversalPolicy {
     pub traverse_cond: bool,
-    pub traverse_body: bool
+    pub traverse_body: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for SwitchConditionalTraversalPolicy {
@@ -667,6 +737,7 @@ impl TraversalPolicy for SwitchConditionalTraversalPolicy {
         Self {
             traverse_cond: value,
             traverse_body: value,
+            traverse_errors: value
         }
     }
 }
@@ -677,7 +748,8 @@ impl BitAnd for SwitchConditionalTraversalPolicy {
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
             traverse_cond: self.traverse_cond && rhs.traverse_cond,
-            traverse_body: self.traverse_body && rhs.traverse_body
+            traverse_body: self.traverse_body && rhs.traverse_body,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -685,7 +757,8 @@ impl BitAnd for SwitchConditionalTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct SwitchConditionalCaseLabelTraversalPolicy {
-    pub traverse_value: bool
+    pub traverse_value: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for SwitchConditionalCaseLabelTraversalPolicy {
@@ -693,6 +766,7 @@ impl TraversalPolicy for SwitchConditionalCaseLabelTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_value: value,
+            traverse_errors: value
         }
     }
 }
@@ -702,7 +776,8 @@ impl BitAnd for SwitchConditionalCaseLabelTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_value: self.traverse_value && rhs.traverse_value
+            traverse_value: self.traverse_value && rhs.traverse_value,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -710,7 +785,8 @@ impl BitAnd for SwitchConditionalCaseLabelTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct CompoundStatementTraversalPolicy {
-    pub traverse: bool
+    pub traverse: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for CompoundStatementTraversalPolicy {
@@ -718,6 +794,7 @@ impl TraversalPolicy for CompoundStatementTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse: value,
+            traverse_errors: value
         }
     }
 }
@@ -727,7 +804,8 @@ impl BitAnd for CompoundStatementTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse: self.traverse && rhs.traverse
+            traverse: self.traverse && rhs.traverse,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -735,7 +813,8 @@ impl BitAnd for CompoundStatementTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct VarDeclarationTraversalPolicy {
-    pub traverse_init_value: bool
+    pub traverse_init_value: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for VarDeclarationTraversalPolicy {
@@ -743,6 +822,7 @@ impl TraversalPolicy for VarDeclarationTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_init_value: value,
+            traverse_errors: value
         }
     }
 }
@@ -752,7 +832,8 @@ impl BitAnd for VarDeclarationTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_init_value: self.traverse_init_value && rhs.traverse_init_value
+            traverse_init_value: self.traverse_init_value && rhs.traverse_init_value,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -760,7 +841,8 @@ impl BitAnd for VarDeclarationTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct ExpressionStatementTraversalPolicy {
-    pub traverse_expr: bool
+    pub traverse_expr: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for ExpressionStatementTraversalPolicy {
@@ -768,6 +850,7 @@ impl TraversalPolicy for ExpressionStatementTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_expr: value,
+            traverse_errors: value
         }
     }
 }
@@ -777,7 +860,8 @@ impl BitAnd for ExpressionStatementTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_expr: self.traverse_expr && rhs.traverse_expr
+            traverse_expr: self.traverse_expr && rhs.traverse_expr,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -785,7 +869,8 @@ impl BitAnd for ExpressionStatementTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct ReturnStatementTraversalPolicy {
-    pub traverse_value: bool
+    pub traverse_value: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for ReturnStatementTraversalPolicy {
@@ -793,6 +878,7 @@ impl TraversalPolicy for ReturnStatementTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_value: value,
+            traverse_errors: value
         }
     }
 }
@@ -802,7 +888,8 @@ impl BitAnd for ReturnStatementTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_value: self.traverse_value && rhs.traverse_value
+            traverse_value: self.traverse_value && rhs.traverse_value,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }
@@ -810,7 +897,8 @@ impl BitAnd for ReturnStatementTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct DeleteStatementTraversalPolicy {
-    pub traverse_value: bool
+    pub traverse_value: bool,
+    pub traverse_errors: bool
 }
 
 impl TraversalPolicy for DeleteStatementTraversalPolicy {
@@ -818,6 +906,7 @@ impl TraversalPolicy for DeleteStatementTraversalPolicy {
     fn default_to(value: bool) -> Self {
         Self {
             traverse_value: value,
+            traverse_errors: value
         }
     }
 }
@@ -827,7 +916,8 @@ impl BitAnd for DeleteStatementTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
-            traverse_value: self.traverse_value && rhs.traverse_value
+            traverse_value: self.traverse_value && rhs.traverse_value,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
 }

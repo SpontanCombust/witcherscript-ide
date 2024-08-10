@@ -447,7 +447,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         }
 
         VarDeclarationTraversalPolicy {
-            traverse_init_value: false
+            traverse_init_value: false,
+            traverse_errors: false
         }
     }
 
@@ -455,7 +456,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         self.visited_non_var_stmt_before = true;
 
         ExpressionStatementTraversalPolicy {
-            traverse_expr: false
+            traverse_expr: false,
+            traverse_errors: false
         }
     }
 
@@ -465,7 +467,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         IfConditionalTraversalPolicy {
             traverse_cond: false,
             traverse_body: true,
-            traverse_else_body: true
+            traverse_else_body: true,
+            traverse_errors: false
         }
     }
 
@@ -474,7 +477,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
 
         SwitchConditionalTraversalPolicy {
             traverse_cond: false,
-            traverse_body: true
+            traverse_body: true,
+            traverse_errors: false
         }
     }
 
@@ -485,7 +489,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
             traverse_init: false,
             traverse_cond: false,
             traverse_iter: false,
-            traverse_body: true
+            traverse_body: true,
+            traverse_errors: false
         }
     }
 
@@ -494,7 +499,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
 
         WhileLoopTraversalPolicy {
             traverse_cond: false,
-            traverse_body: true
+            traverse_body: true,
+            traverse_errors: false
         }
     }
 
@@ -503,7 +509,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
 
         DoWhileLoopTraversalPolicy {
             traverse_cond: false,
-            traverse_body: true
+            traverse_body: true,
+            traverse_errors: false
         }
     }
 
@@ -511,7 +518,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         self.visited_non_var_stmt_before = true;
 
         DeleteStatementTraversalPolicy {
-            traverse_value: false
+            traverse_value: false,
+            traverse_errors: false
         }
     }
 
@@ -519,7 +527,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         self.visited_non_var_stmt_before = true;
 
         CompoundStatementTraversalPolicy {
-            traverse: true
+            traverse: true,
+            traverse_errors: false
         }
     }
 
@@ -527,7 +536,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         self.visited_non_var_stmt_before = true;
 
         ReturnStatementTraversalPolicy {
-            traverse_value: false
+            traverse_value: false,
+            traverse_errors: false
         }
     }
 }

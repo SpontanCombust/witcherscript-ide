@@ -137,7 +137,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         };
 
         RootTraversalPolicy { 
-            traverse 
+            traverse,
+            traverse_errors: false
         }
     }
 
@@ -161,7 +162,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         ClassDeclarationTraversalPolicy { 
-            traverse_definition 
+            traverse_definition,
+            traverse_errors: false
         }
     }
 
@@ -186,7 +188,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         StateDeclarationTraversalPolicy { 
-            traverse_definition 
+            traverse_definition,
+            traverse_errors: false
         }
     }
 
@@ -205,7 +208,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         StructDeclarationTraversalPolicy { 
-            traverse_definition
+            traverse_definition,
+            traverse_errors: false
         }
     }
 
@@ -224,7 +228,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         EnumDeclarationTraversalPolicy { 
-            traverse_definition
+            traverse_definition,
+            traverse_errors: false
         }
     }
 
@@ -277,7 +282,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         MemberDefaultValueTraversalPolicy {
-            traverse_value
+            traverse_value,
+            traverse_errors: false
         }
     }
 
@@ -338,7 +344,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         FunctionDeclarationTraversalPolicy { 
             traverse_params,
-            traverse_definition
+            traverse_definition,
+            traverse_errors: false
         }
     }
 
@@ -375,7 +382,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         
         FunctionDeclarationTraversalPolicy { 
             traverse_params,
-            traverse_definition
+            traverse_definition,
+            traverse_errors: false
         }
     }
 
@@ -408,7 +416,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         
         EventDeclarationTraversalPolicy { 
             traverse_params,
-            traverse_definition
+            traverse_definition,
+            traverse_errors: false
         }
     }
 
@@ -421,7 +430,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         };
 
         MemberDefaultsBlockTraversalPolicy { 
-            traverse 
+            traverse ,
+            traverse_errors: false
         }
     }
 
@@ -435,7 +445,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         MemberDefaultValueTraversalPolicy {
-            traverse_value
+            traverse_value,
+            traverse_errors: false
         }
     }
 
@@ -451,7 +462,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         };
 
         CompoundStatementTraversalPolicy { 
-            traverse 
+            traverse ,
+            traverse_errors: false
         }
     }
 
@@ -466,7 +478,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         VarDeclarationTraversalPolicy {
-            traverse_init_value
+            traverse_init_value,
+            traverse_errors: false
         }
     }
 
@@ -479,7 +492,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         ExpressionStatementTraversalPolicy {
-            traverse_expr
+            traverse_expr,
+            traverse_errors: false
         }
     }
 
@@ -492,7 +506,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         ReturnStatementTraversalPolicy {
-            traverse_value
+            traverse_value,
+            traverse_errors: false
         }
     }
 
@@ -517,7 +532,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         DeleteStatementTraversalPolicy {
-            traverse_value
+            traverse_value,
+            traverse_errors: false
         }
     }
 
@@ -539,7 +555,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
             traverse_init,
             traverse_cond,
             traverse_iter,
-            traverse_body 
+            traverse_body,
+            traverse_errors: false
         }
     }
 
@@ -555,7 +572,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         WhileLoopTraversalPolicy { 
             traverse_cond,
-            traverse_body 
+            traverse_body,
+            traverse_errors: false
         }
     }
 
@@ -571,7 +589,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         DoWhileLoopTraversalPolicy { 
             traverse_cond,
-            traverse_body 
+            traverse_body,
+            traverse_errors: false
         }
     }
 
@@ -590,7 +609,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         IfConditionalTraversalPolicy { 
             traverse_cond,
             traverse_body, 
-            traverse_else_body
+            traverse_else_body,
+            traverse_errors: false
         }
     }
 
@@ -611,7 +631,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         SwitchConditionalTraversalPolicy {
             traverse_cond, 
-            traverse_body 
+            traverse_body,
+            traverse_errors: false
         }
     }
 
@@ -624,7 +645,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         SwitchConditionalCaseLabelTraversalPolicy {
-            traverse_value
+            traverse_value,
+            traverse_errors: false
         }
     }
 
@@ -645,7 +667,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         ArrayExpressionTraversalPolicy {
             traverse_accessor,
-            traverse_index
+            traverse_index,
+            traverse_errors: false
         }
     }
 
@@ -657,7 +680,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         AssignmentOperationExpressionTraversalPolicy {
             traverse_left,
-            traverse_right
+            traverse_right,
+            traverse_errors: false
         }
     }
 
@@ -669,7 +693,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         BinaryOperationExpressionTraversalPolicy { 
             traverse_left, 
-            traverse_right 
+            traverse_right,
+            traverse_errors: false
         }
     }
 
@@ -679,7 +704,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         self.check_errors(n);
 
         UnaryOperationExpressionTraversalPolicy { 
-            traverse_right 
+            traverse_right,
+            traverse_errors: false
         }
     }
 
@@ -699,7 +725,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         FunctionCallExpressionTraversalPolicy { 
             traverse_func, 
-            traverse_args
+            traverse_args,
+            traverse_errors: false
         }
     }
 
@@ -714,7 +741,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         self.check_errors(n);
 
         NewExpressionTraversalPolicy { 
-            traverse_lifetime_obj 
+            traverse_lifetime_obj,
+            traverse_errors: false
         }
     }
 
@@ -725,7 +753,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         self.check_errors(n);
 
         MemberFieldExpressionTraversalPolicy { 
-            traverse_accessor 
+            traverse_accessor,
+            traverse_errors: false
         }
     }
 
@@ -735,7 +764,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         self.check_errors(n);
 
         NestedExpressionTraversalPolicy { 
-            traverse_inner
+            traverse_inner,
+            traverse_errors: false
         }
     }
 
@@ -749,7 +779,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         TernaryConditionalExpressionTraversalPolicy { 
             traverse_cond, 
             traverse_conseq, 
-            traverse_alt 
+            traverse_alt,
+            traverse_errors: false
         }
     }
 
@@ -760,13 +791,14 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         self.check_errors(n);
 
         TypeCastExpressionTraversalPolicy { 
-            traverse_value
+            traverse_value,
+            traverse_errors: false
         }
     }
 
     fn visit_func_call_arg(&mut self, _: &FunctionCallArgument, _: &TraversalContextStack) -> FunctionCallArgumentTraversalPolicy {
         FunctionCallArgumentTraversalPolicy { 
-            traverse_expr: true 
+            traverse_expr: true
         }
     }
     
