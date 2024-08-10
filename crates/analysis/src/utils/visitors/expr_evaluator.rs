@@ -145,6 +145,11 @@ impl<'a> ExpressionEvaluator<'a> {
 }
 
 impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
+    fn traversal_policy_default(&self) -> bool {
+        true
+    }
+
+    
     fn exit_nested_expr(&mut self, _: &NestedExpressionNode, ctx: &TraversalContextStack) {
         self.top_mut().map(|e| e.ctx = ctx.top() );
     }

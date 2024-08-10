@@ -112,6 +112,11 @@ impl SelectionRangeResolver {
 }
 
 impl SyntaxNodeVisitor for SelectionRangeResolver {
+    fn traversal_policy_default(&self) -> bool {
+        true        
+    }
+
+
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy {
         self.range_stack.push(n.range());
 
