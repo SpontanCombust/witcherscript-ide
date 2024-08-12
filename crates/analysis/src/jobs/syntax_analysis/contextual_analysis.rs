@@ -265,7 +265,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         self.visited_non_var_stmt_before = false;
     }
 
-    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy {
         if let Some(annot) = n.annotation() {
             self.visit_annotation(&annot, MemberVarDeclarationNode::NODE_KIND, n.range());
         } else {
@@ -306,9 +306,11 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
                 })
             }
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: &TraversalContextStack) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy {
         if let Some(range) = n.annotation().map(|ann| ann.range()) {
             self.diagnostics.push(Diagnostic {
                 range,
@@ -354,6 +356,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
                 })
             }
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {
@@ -381,7 +385,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         self.visited_non_var_stmt_before = false;
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) -> AutobindDeclarationTraversalPolicy {
         let mut specifiers = SmallVec::<[AutobindSpecifier; 2]>::new();
         let mut found_access_modif_before = false;
 
@@ -413,9 +417,11 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
                 })
             } 
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy {
         let mut specifiers = SmallVec::<[FunctionParameterSpecifier; 2]>::new();
 
         for (spec, range) in n.specifiers().map(|specn| (specn.value(), specn.range())) {
@@ -436,6 +442,8 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
                 })
             } 
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: &TraversalContextStack) -> VarDeclarationTraversalPolicy {

@@ -233,7 +233,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
+    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) -> EnumVariantDeclarationTraversalPolicy {
         if n.has_errors() {
             self.check_identifier(&n.name());
     
@@ -242,9 +242,11 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
                 EnumVariantValue::Hex(n) => self.check_missing(&n, "variant integer value"),
             });
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy {
         if n.has_errors() {
             if let Some(annot) = n.annotation() {
                 self.check_annotation(&annot);
@@ -255,9 +257,11 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
     
             self.check_errors(n);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy {
         if n.has_errors() {
             if let Some(annot) = n.annotation() {
                 self.check_annotation(&annot);
@@ -268,6 +272,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
     
             self.check_errors(n);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
@@ -287,31 +293,37 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, _: &TraversalContextStack) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, _: &TraversalContextStack) -> MemberHintTraversalPolicy {
         if n.has_errors() {
             self.check_identifier(&n.member());
             self.check_missing(&n.value(), "hint string");
     
             self.check_errors(n);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) -> AutobindDeclarationTraversalPolicy {
         if n.has_errors() {
             self.check_identifier(&n.name());
             self.check_type_annot(&n.autobind_type());
     
             self.check_errors(n);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy {
         if n.has_errors() {
             n.names().for_each(|name| { self.check_identifier(&name); } );
             self.check_type_annot(&n.param_type());
     
             self.check_errors(n);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
@@ -511,16 +523,20 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_break_stmt(&mut self, n: &BreakStatementNode, _: &TraversalContextStack) {
+    fn visit_break_stmt(&mut self, n: &BreakStatementNode, _: &TraversalContextStack) -> BreakStatementTraversalPolicy {
         if n.has_errors() {
             self.check_errors(n);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, _: &TraversalContextStack) {
+    fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, _: &TraversalContextStack) -> ContinueStatementTraversalPolicy {
         if n.has_errors() {
             self.check_errors(n);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_delete_stmt(&mut self, n: &DeleteStatementNode, _: &TraversalContextStack) -> DeleteStatementTraversalPolicy {
@@ -650,10 +666,12 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
     }
 
-    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, _: &TraversalContextStack) {
+    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, _: &TraversalContextStack) -> SwitchConditionalDefaultLabelTraversalPolicy {
         if n.has_errors() {
             self.check_errors(n);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
 

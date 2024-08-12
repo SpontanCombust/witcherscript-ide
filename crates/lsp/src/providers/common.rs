@@ -312,7 +312,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     
-    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
+    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) -> EnumVariantDeclarationTraversalPolicy {
         if self.pos_filter_payload.borrow().done {
             let name = n.name();
 
@@ -320,9 +320,11 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
                 self.found_data_decl_ident(&name);
             }
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy {
         let var_type = n.var_type();
         
         if var_type.spans_position(self.pos) {
@@ -344,9 +346,11 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
                 sympath_ctx: class_path,
             });
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy {
         let var_type = n.var_type();
         
         // not checking the annotation, because it'll be erroneous anyways
@@ -356,9 +360,11 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
             self.found_data_decl_ident(&name);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) -> AutobindDeclarationTraversalPolicy {
         let name = n.name();
         let autobind_type = n.autobind_type();
 
@@ -368,6 +374,8 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         else if autobind_type.spans_position(self.pos) {
             self.visit_type_annotation(&autobind_type);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
@@ -394,12 +402,14 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: &TraversalContextStack) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: &TraversalContextStack) -> MemberHintTraversalPolicy {
         let member = n.member();
 
         if member.spans_position(self.pos) {
             self.found_expression_ident(&member, member.clone().into(), ctx.top());
         }
+
+        TraversalPolicy::default_to(false)
     }
 
 
@@ -452,7 +462,7 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy {
         let param_type = n.param_type();
 
         if param_type.spans_position(self.pos) {
@@ -461,6 +471,8 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
         else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
             self.found_data_decl_ident(&name);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
 

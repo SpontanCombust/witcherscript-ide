@@ -140,11 +140,13 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
+    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) -> EnumVariantDeclarationTraversalPolicy {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
@@ -171,11 +173,13 @@ impl SyntaxNodeVisitor for PositionFilter {
         self.currently_in_callable_range = false;
     }
 
-    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
+
+        TraversalPolicy::default_to(false)
     }
 
 
@@ -229,32 +233,40 @@ impl SyntaxNodeVisitor for PositionFilter {
         self.currently_in_callable_range = false;
     }
 
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) -> AutobindDeclarationTraversalPolicy {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, _: &TraversalContextStack) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, _: &TraversalContextStack) -> MemberHintTraversalPolicy {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
@@ -450,25 +462,31 @@ impl SyntaxNodeVisitor for PositionFilter {
         tp
     }
 
-    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, _: &TraversalContextStack) {
+    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, _: &TraversalContextStack) -> SwitchConditionalDefaultLabelTraversalPolicy {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_break_stmt(&mut self, n: &BreakStatementNode, _: &TraversalContextStack) {
+    fn visit_break_stmt(&mut self, n: &BreakStatementNode, _: &TraversalContextStack) -> BreakStatementTraversalPolicy {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, _: &TraversalContextStack) {
+    fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, _: &TraversalContextStack) -> ContinueStatementTraversalPolicy {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_delete_stmt(&mut self, n: &DeleteStatementNode, _: &TraversalContextStack) -> DeleteStatementTraversalPolicy {

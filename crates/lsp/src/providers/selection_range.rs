@@ -201,7 +201,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
+    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) -> EnumVariantDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if n.name().spans_position(self.pos) {
@@ -221,6 +221,8 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
                 }
             }
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
@@ -253,7 +255,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
@@ -268,6 +270,8 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
             self.range_stack.push(spec.range());
         }
+
+        TraversalPolicy::default_to(false)
     }
 
 
@@ -324,7 +328,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy {
         self.range_stack.push(n.range());
 
         if n.param_type().spans_position(self.pos) {
@@ -336,9 +340,11 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
             self.range_stack.push(spec.range());
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
@@ -353,9 +359,11 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
             self.range_stack.push(spec.range());
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) -> AutobindDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
         if n.name().spans_position(self.pos) {
@@ -381,6 +389,8 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
                 }
             }
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
@@ -413,7 +423,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_member_hint(&mut self, n: &MemberHintNode, _: &TraversalContextStack) {
+    fn visit_member_hint(&mut self, n: &MemberHintNode, _: &TraversalContextStack) -> MemberHintTraversalPolicy {
         self.range_stack.push(n.range());
 
         if n.member().spans_position(self.pos) {
@@ -422,6 +432,8 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         else if n.value().spans_position(self.pos) {
             self.range_stack.push(n.value().range());
         }
+
+        TraversalPolicy::default_to(false)
     }
 
 
@@ -464,8 +476,10 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, _: &TraversalContextStack) {
+    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, _: &TraversalContextStack) -> SwitchConditionalDefaultLabelTraversalPolicy {
         self.range_stack.push(n.range());
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_for_stmt(&mut self, n: &ForLoopNode, _: &TraversalContextStack) -> ForLoopTraversalPolicy {
@@ -510,12 +524,16 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         TraversalPolicy::default_to(true)
     }
 
-    fn visit_break_stmt(&mut self, n: &BreakStatementNode, _: &TraversalContextStack) {
+    fn visit_break_stmt(&mut self, n: &BreakStatementNode, _: &TraversalContextStack) -> BreakStatementTraversalPolicy {
         self.range_stack.push(n.range());
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, _: &TraversalContextStack) {
+    fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, _: &TraversalContextStack) -> ContinueStatementTraversalPolicy {
         self.range_stack.push(n.range());
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_nop_stmt(&mut self, n: &NopNode, _: &TraversalContextStack) {

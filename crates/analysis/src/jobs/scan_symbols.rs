@@ -434,7 +434,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
+    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) -> EnumVariantDeclarationTraversalPolicy {
         let name_node = n.name();
         let enum_variant_name = name_node.value(&self.doc);
         let path = GlobalDataSymbolPath::new(&enum_variant_name);
@@ -463,6 +463,8 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             self.symtab.insert_primary_symbol(sym);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
@@ -554,13 +556,13 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy {
         if let Some(annotation) = n.annotation() {
             // leave early if not appropriate annotation
             match AnnotationKind::from_str(&annotation.name().value(self.doc)) {
                 Ok(AnnotationKind::AddField) => {},
                 _ => {
-                    return;
+                    return TraversalPolicy::default_to(false);
                 }
             }
 
@@ -569,7 +571,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             if let Some(arg) = annotation.arg() {
                 class_path = BasicTypeSymbolPath::new(&arg.value(self.doc));
             } else {
-                return;
+                return TraversalPolicy::default_to(false);
             }
 
 
@@ -600,6 +602,8 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 }
             }
         }
+
+        TraversalPolicy::default_to(false)
     }
 
     fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {
@@ -666,7 +670,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
     }
 
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) {
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy {
         let specifiers: SymbolSpecifiers<_> = n.specifiers()
             .map(|sn| sn.value())
             .filter_map(|s| FunctionParameterSpecifier::try_from(s).ok())
@@ -694,9 +698,11 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             self.current_param_ordinal += 1;
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) {
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy {
         let specifiers: SymbolSpecifiers<_> = n.specifiers()
             .map(|sn| sn.value())
             .filter_map(|s| MemberVarSpecifier::try_from(s).ok())
@@ -738,9 +744,11 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             self.current_var_ordinal += 1;
         }
+
+        TraversalPolicy::default_to(false)
     }
 
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) {
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) -> AutobindDeclarationTraversalPolicy {
         let name_node = n.name();
         let autobind_name = name_node.value(&self.doc);
         let path = MemberDataSymbolPath::new(&self.current_path, &autobind_name);
@@ -761,6 +769,8 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
             self.symtab.insert_symbol(sym);
         }
+
+        TraversalPolicy::default_to(false)
     }
 
 

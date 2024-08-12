@@ -472,6 +472,56 @@ impl BitAnd for EnumDeclarationTraversalPolicy {
 
 
 #[derive(Debug, Clone)]
+pub struct EnumVariantDeclarationTraversalPolicy {
+    pub traverse_errors: bool
+}
+
+impl TraversalPolicy for EnumVariantDeclarationTraversalPolicy {
+    #[inline(always)]
+    fn default_to(value: bool) -> Self {
+        Self {
+            traverse_errors: value
+        }
+    }
+}
+
+impl BitAnd for EnumVariantDeclarationTraversalPolicy {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self {
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct MemberVarDeclarationTraversalPolicy {
+    pub traverse_errors: bool
+}
+
+impl TraversalPolicy for MemberVarDeclarationTraversalPolicy {
+    #[inline(always)]
+    fn default_to(value: bool) -> Self {
+        Self {
+            traverse_errors: value
+        }
+    }
+}
+
+impl BitAnd for MemberVarDeclarationTraversalPolicy {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self {
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
 pub struct MemberDefaultValueTraversalPolicy {
     pub traverse_value: bool,
     pub traverse_errors: bool
@@ -521,6 +571,81 @@ impl BitAnd for MemberDefaultsBlockTraversalPolicy {
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
             traverse: self.traverse && rhs.traverse,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct MemberHintTraversalPolicy {
+    pub traverse_errors: bool
+}
+
+impl TraversalPolicy for MemberHintTraversalPolicy {
+    #[inline(always)]
+    fn default_to(value: bool) -> Self {
+        Self {
+            traverse_errors: value
+        }
+    }
+}
+
+impl BitAnd for MemberHintTraversalPolicy {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self {
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct AutobindDeclarationTraversalPolicy {
+    pub traverse_errors: bool
+}
+
+impl TraversalPolicy for AutobindDeclarationTraversalPolicy {
+    #[inline(always)]
+    fn default_to(value: bool) -> Self {
+        Self {
+            traverse_errors: value
+        }
+    }
+}
+
+impl BitAnd for AutobindDeclarationTraversalPolicy {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self {
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct FunctionParameterGroupTraversalPolicy {
+    pub traverse_errors: bool
+}
+
+impl TraversalPolicy for FunctionParameterGroupTraversalPolicy {
+    #[inline(always)]
+    fn default_to(value: bool) -> Self {
+        Self {
+            traverse_errors: value
+        }
+    }
+}
+
+impl BitAnd for FunctionParameterGroupTraversalPolicy {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self {
             traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
@@ -777,6 +902,81 @@ impl BitAnd for SwitchConditionalCaseLabelTraversalPolicy {
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
             traverse_value: self.traverse_value && rhs.traverse_value,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct SwitchConditionalDefaultLabelTraversalPolicy {
+    pub traverse_errors: bool
+}
+
+impl TraversalPolicy for SwitchConditionalDefaultLabelTraversalPolicy {
+    #[inline(always)]
+    fn default_to(value: bool) -> Self {
+        Self {
+            traverse_errors: value
+        }
+    }
+}
+
+impl BitAnd for SwitchConditionalDefaultLabelTraversalPolicy {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self {
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct BreakStatementTraversalPolicy {
+    pub traverse_errors: bool
+}
+
+impl TraversalPolicy for BreakStatementTraversalPolicy {
+    #[inline(always)]
+    fn default_to(value: bool) -> Self {
+        Self {
+            traverse_errors: value
+        }
+    }
+}
+
+impl BitAnd for BreakStatementTraversalPolicy {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self {
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct ContinueStatementTraversalPolicy {
+    pub traverse_errors: bool
+}
+
+impl TraversalPolicy for ContinueStatementTraversalPolicy {
+    #[inline(always)]
+    fn default_to(value: bool) -> Self {
+        Self {
+            traverse_errors: value
+        }
+    }
+}
+
+impl BitAnd for ContinueStatementTraversalPolicy {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self {
             traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }

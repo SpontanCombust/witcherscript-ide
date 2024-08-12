@@ -113,16 +113,23 @@ pub trait SyntaxNodeVisitor {
     fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> EnumDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting an enum declaration and possibly also children nodes specified in traversal policy.
     fn exit_enum_decl(&mut self, n: &EnumDeclarationNode) {}
+
     /// Called when visiting enum variant's declaration.
-    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {}
+    fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) -> EnumVariantDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting enum variant's declaration and possibly also children nodes specified in traversal policy.
+    fn exit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {}
 
     /// Called when visiting a variable declaration in the global scope.
     /// THIS IS NOT LEGAL SYNTAX BY ITSELF.
     /// It it allowed here purely to be able to parse @addField variables.
-    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {}
+    fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting a variable declaration in the global scope and possibly also children nodes specified in traversal policy.
+    fn exit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {}
 
     /// Called when visiting member variable (i.e. field) declaration.
-    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: &TraversalContextStack) {}
+    fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting member variable and possibly also children nodes specified in traversal policy.
+    fn exit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: &TraversalContextStack) {}
 
     /// Called when visiting a statement assigning a default value to a field.
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
@@ -140,13 +147,19 @@ pub trait SyntaxNodeVisitor {
     fn exit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode, ctx: &TraversalContextStack) {}
 
     /// Called when visiting a statement noting some information about a perticular type field.
-    fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: &TraversalContextStack) {}
+    fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: &TraversalContextStack) -> MemberHintTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting a hint statement and possibly also children nodes specified in traversal policy.
+    fn exit_member_hint(&mut self, n: &MemberHintNode, ctx: &TraversalContextStack) {}
     
     /// Called when visiting an autobind variable declaration.
-    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, ctx: &TraversalContextStack) {}
+    fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, ctx: &TraversalContextStack) -> AutobindDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting an autobind variable declaration and possibly also children nodes specified in traversal policy.
+    fn exit_autobind_decl(&mut self, n: &AutobindDeclarationNode, ctx: &TraversalContextStack) {}
     
     /// Called when visiting a group of function parameters. This may mean a single parameter or multiple delimited names with common specifiers and a type.
-    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, ctx: &TraversalContextStack) {}
+    fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, ctx: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting a group of function parameters and possibly also children nodes specified in traversal policy.
+    fn exit_func_param_group(&mut self, n: &FunctionParameterGroupNode, ctx: &TraversalContextStack) {}
 
     /// Called when visiting a global function declaration.
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
@@ -207,13 +220,19 @@ pub trait SyntaxNodeVisitor {
     fn exit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode, ctx: &TraversalContextStack) {}
 
     /// Called when visiting a `default` label inside a `switch` statement.
-    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, ctx: &TraversalContextStack) {}
+    fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, ctx: &TraversalContextStack) -> SwitchConditionalDefaultLabelTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting a `default` label inside a `switch` statement and possibly also children nodes specified in traversal policy.
+    fn exit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, ctx: &TraversalContextStack) {}
 
     /// Called when visiting a `break` statement.
-    fn visit_break_stmt(&mut self, n: &BreakStatementNode, ctx: &TraversalContextStack) {}
+    fn visit_break_stmt(&mut self, n: &BreakStatementNode, ctx: &TraversalContextStack) -> BreakStatementTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting a `break` statement and possibly also children nodes specified in traversal policy.
+    fn exit_break_stmt(&mut self, n: &BreakStatementNode, ctx: &TraversalContextStack) {}
 
     /// Called when visiting a `continue` statement.
-    fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, ctx: &TraversalContextStack) {}
+    fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, ctx: &TraversalContextStack) -> ContinueStatementTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting a `continue` statement and possibly also children nodes specified in traversal policy.
+    fn exit_continue_stmt(&mut self, n: &ContinueStatementNode, ctx: &TraversalContextStack) {}
 
     /// Called when visiting a `return` statement.
     fn visit_return_stmt(&mut self, n: &ReturnStatementNode, ctx: &TraversalContextStack) -> ReturnStatementTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
