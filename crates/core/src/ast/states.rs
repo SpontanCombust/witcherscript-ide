@@ -64,11 +64,27 @@ impl<'script> TryFrom<AnyNode<'script>> for StateDeclarationNode<'script> {
 impl SyntaxNodeTraversal for StateDeclarationNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_state_decl(self);
-        if tp.traverse_definition {
+
+        if tp.any() {
             ctx.push(TraversalContext::State);
-            self.definition().accept(visitor, ctx);
+
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((def, Some("definition"))) if tp.traverse_definition => {
+                        let def: StateBlockNode = def.into();
+
+                        def.accept_with_policy(visitor, ctx, tp.traverse_errors);
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
+
             ctx.pop();
         }
+
         visitor.exit_state_decl(self);
     }
 }
@@ -83,6 +99,23 @@ impl NamedSyntaxNode for StateBlockNode<'_> {
 impl<'script> StateBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = ClassPropertyNode<'script>> {
         self.named_children().map(|n| n.into())
+    }
+
+
+    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, traverse_errors: bool) {
+        for ch in self.children_detailed().must_be_named(true) {
+            match ch {
+                Ok((prop, _)) => {
+                    let prop: ClassPropertyNode = prop.into();
+
+                    prop.accept(visitor, ctx);
+                },
+                Err(e) if traverse_errors => {
+                    e.accept(visitor, ctx);
+                },
+                _ => {}
+            }
+        }
     }
 }
 
@@ -109,6 +142,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StateBlockNode<'script> {
 
 impl SyntaxNodeTraversal for StateBlockNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        // UNUSED
         self.iter().for_each(|s| s.accept(visitor, ctx));
     }
 }

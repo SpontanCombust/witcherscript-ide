@@ -130,9 +130,24 @@ impl<'script> TryFrom<AnyNode<'script>> for RootNode<'script> {
 impl SyntaxNodeTraversal for RootNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_root(self);
-        if tp.traverse {
+
+        if tp.any() {
             ctx.push(TraversalContext::Global);
-            self.iter().for_each(|s| s.accept(visitor, ctx));
+            
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((stmt, _)) if tp.traverse => {
+                        let stmt: RootStatementNode = stmt.into();
+                        
+                        stmt.accept(visitor, ctx);
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
+            
             ctx.pop();
         }
     }

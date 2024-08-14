@@ -31,8 +31,11 @@ impl<'script> SyntaxNodeTraversal for ErrorNode<'script> {
         let tp = visitor.visit_error(self, ctx);
         ctx.push(TraversalContext::Error);
         if tp.traverse {
-            for ch in self.children().allow_errors(true) {
-                ch.accept(visitor, ctx);
+            for res in self.children_detailed() {
+                match res {
+                    Ok((n, _)) => n.accept(visitor, ctx),
+                    Err(e) => e.accept(visitor, ctx)
+                }
             }
         }
         ctx.pop();

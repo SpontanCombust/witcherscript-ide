@@ -61,11 +61,27 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassDeclarationNode<'script> {
 impl SyntaxNodeTraversal for ClassDeclarationNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_class_decl(self);
-        if tp.traverse_definition {
+
+        if tp.any() {
             ctx.push(TraversalContext::Class);
-            self.definition().accept(visitor, ctx);
+    
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((definition, Some("definition"))) if tp.traverse_definition => {
+                        let definition: ClassBlockNode = definition.into();
+
+                        definition.accept_with_policy(visitor, ctx, tp.clone());
+                    }
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx)
+                    },
+                    _ => {}
+                }
+            }
+    
             ctx.pop();
         }
+
         visitor.exit_class_decl(self);
     }
 }
@@ -81,6 +97,23 @@ impl NamedSyntaxNode for ClassBlockNode<'_> {
 impl<'script> ClassBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = ClassPropertyNode<'script>> {
         self.named_children().map(|n| n.into())
+    }
+
+
+    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: ClassDeclarationTraversalPolicy) {
+        for ch in self.children_detailed().must_be_named(true) {
+            match ch {
+                Ok((prop, _)) => {
+                    let prop: ClassPropertyNode = prop.into();
+
+                    prop.accept(visitor, ctx);
+                },
+                Err(e) if tp.traverse_errors => {
+                    e.accept(visitor, ctx);
+                },
+                _ => {}
+            }
+        }
     }
 }
 
@@ -107,6 +140,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassBlockNode<'script> {
 
 impl SyntaxNodeTraversal for ClassBlockNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        // UNUSED
         self.iter().for_each(|s| s.accept(visitor, ctx));
     }
 }
@@ -253,7 +287,20 @@ impl<'script> TryFrom<AnyNode<'script>> for AutobindDeclarationNode<'script> {
 
 impl SyntaxNodeTraversal for AutobindDeclarationNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
-        visitor.visit_autobind_decl(self, ctx);
+        let tp = visitor.visit_autobind_decl(self, ctx);
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Err(e) => {
+                        e.accept(visitor, ctx)
+                    },
+                    _ => {}
+                }
+            }
+        }
+
+        visitor.exit_autobind_decl(self, ctx);
     }
 }
 

@@ -50,11 +50,25 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumDeclarationNode<'script> {
 impl SyntaxNodeTraversal for EnumDeclarationNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_enum_decl(self);
-        if tp.traverse_definition {
-            ctx.push(TraversalContext::Enum);
-            self.definition().accept(visitor, ctx);
-            ctx.pop();
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((def, Some("definition"))) if tp.traverse_definition => {
+                        let def: EnumBlockNode = def.into();
+
+                        ctx.push(TraversalContext::Enum);
+                        def.accept_with_policy(visitor, ctx, tp.clone());
+                        ctx.pop();
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
         }
+
         visitor.exit_enum_decl(self);
     }
 }
@@ -70,6 +84,23 @@ impl NamedSyntaxNode for EnumBlockNode<'_> {
 impl<'script> EnumBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = EnumVariantDeclarationNode<'script>> {
         self.named_children().map(|n| n.into())
+    }
+
+
+    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: EnumDeclarationTraversalPolicy) {
+        for ch in self.children_detailed().must_be_named(true) {
+            match ch {
+                Ok((variant, _)) => {
+                    let variant: EnumVariantDeclarationNode = variant.into();
+                    
+                    variant.accept(visitor, ctx);
+                },
+                Err(e) if tp.traverse_errors => {
+                    e.accept(visitor, ctx);
+                },
+                _ => {}
+            }
+        }   
     }
 }
 
@@ -96,6 +127,7 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumBlockNode<'script> {
 
 impl SyntaxNodeTraversal for EnumBlockNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        // UNUSED
         self.iter().for_each(|s| s.accept(visitor, ctx));
     }
 }
@@ -146,8 +178,21 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumVariantDeclarationNode<'script> 
 }
 
 impl SyntaxNodeTraversal for EnumVariantDeclarationNode<'_> {
-    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, _: &mut TraversalContextStack) {
-        visitor.visit_enum_variant_decl(self);
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        let tp = visitor.visit_enum_variant_decl(self);
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
+        }
+
+        visitor.exit_enum_variant_decl(self);
     }
 }
 

@@ -58,11 +58,27 @@ impl<'script> TryFrom<AnyNode<'script>> for StructDeclarationNode<'script> {
 impl SyntaxNodeTraversal for StructDeclarationNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_struct_decl(self);
-        if tp.traverse_definition {
+
+        if tp.any() {
             ctx.push(TraversalContext::Struct);
-            self.definition().accept(visitor, ctx);
+
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((def, Some("definition"))) if tp.traverse_definition => {
+                        let def: StructBlockNode = def.into();
+
+                        def.accept_with_policy(visitor, ctx, tp.traverse_errors);
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
+
             ctx.pop();
         }
+
         visitor.exit_struct_decl(self);
     }
 }
@@ -78,6 +94,23 @@ impl NamedSyntaxNode for StructBlockNode<'_> {
 impl<'script> StructBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = StructPropertyNode> {
         self.named_children().map(|n| n.into())
+    }
+
+
+    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, traverse_errors: bool) {
+        for ch in self.children_detailed().must_be_named(true) {
+            match ch {
+                Ok((prop, _)) => {
+                    let prop: StructPropertyNode = prop.into();
+
+                    prop.accept(visitor, ctx);
+                },
+                Err(e) if traverse_errors => {
+                    e.accept(visitor, ctx);
+                },
+                _ => {}
+            }
+        }
     }
 }
 
@@ -104,6 +137,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StructBlockNode<'script> {
 
 impl SyntaxNodeTraversal for StructBlockNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        // UNUSED
         self.iter().for_each(|s| s.accept(visitor, ctx));
     }
 }
@@ -184,7 +218,7 @@ impl SyntaxNodeTraversal for StructPropertyNode<'_> {
 }
 
 
-
+//TODO move this and similar to a new misc_props.rs 
 pub type MemberDefaultsBlockNode<'script> = SyntaxNode<'script, tags::MemberDefaultsBlock>;
 
 impl NamedSyntaxNode for MemberDefaultsBlockNode<'_> {
@@ -221,9 +255,23 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockNode<'script> {
 impl SyntaxNodeTraversal for MemberDefaultsBlockNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_member_defaults_block(self, ctx);
-        if tp.traverse {
-            self.iter().for_each(|n| n.accept(visitor, ctx));
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((assign, _)) if tp.traverse => {
+                        let assign: MemberDefaultsBlockAssignmentNode = assign.into();
+
+                        assign.accept(visitor, ctx);
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
         }
+
         visitor.exit_member_defaults_block(self, ctx);
     }
 }
@@ -270,11 +318,27 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockAssignmentNode<'s
 impl SyntaxNodeTraversal for MemberDefaultsBlockAssignmentNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_member_defaults_block_assignment(self, ctx);
-        if tp.traverse_value {
+
+        if tp.any() {
             ctx.push(TraversalContext::MemberDefaultValue);
-            self.value().accept(visitor, ctx);
-            ctx.pop();
+
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((value, Some("value"))) if tp.traverse_value => {
+                        let value: ExpressionNode = value.into();
+
+                        value.accept(visitor, ctx);
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
+
+            ctx.pop();  
         }
+
         visitor.exit_member_defaults_block_assignment(self, ctx);
     }
 }
@@ -321,11 +385,27 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultValueNode<'script> {
 impl SyntaxNodeTraversal for MemberDefaultValueNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_member_default_val(self, ctx);
-        if tp.traverse_value {
+
+        if tp.any() {
             ctx.push(TraversalContext::MemberDefaultValue);
-            self.value().accept(visitor, ctx);
+
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((value, Some("value"))) if tp.traverse_value => {
+                        let value: ExpressionNode = value.into();
+
+                        value.accept(visitor, ctx);
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
+
             ctx.pop();
         }
+
         visitor.exit_member_default_val(self, ctx);
     }
 }
@@ -371,6 +451,19 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberHintNode<'script> {
 
 impl SyntaxNodeTraversal for MemberHintNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
-        visitor.visit_member_hint(self, ctx);
+        let tp = visitor.visit_member_hint(self, ctx);
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
+        }
+
+        visitor.exit_member_hint(self, ctx);
     }
 }

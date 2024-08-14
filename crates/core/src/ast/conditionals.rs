@@ -57,21 +57,39 @@ impl<'script> TryFrom<AnyNode<'script>> for IfConditionalNode<'script> {
 impl SyntaxNodeTraversal for IfConditionalNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_if_stmt(self, ctx);
-        if tp.traverse_cond {
-            ctx.push(TraversalContext::IfConditionalCond);
-            self.cond().accept(visitor, ctx);
-            ctx.pop();
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((cond, Some("cond"))) if tp.traverse_cond => {
+                        let cond: ExpressionNode = cond.into();
+                        
+                        ctx.push(TraversalContext::IfConditionalCond);
+                        cond.accept(visitor, ctx);
+                        ctx.pop();
+                    },
+                    Ok((body, Some("body"))) if tp.traverse_body => {
+                        let body: FunctionStatementNode = body.into();
+                        
+                        ctx.push(TraversalContext::IfConditionalBody);
+                        body.accept(visitor, ctx);
+                        ctx.pop();
+                    },
+                    Ok((else_body, Some("else"))) if tp.traverse_else_body => {
+                        let else_body: FunctionStatementNode = else_body.into();
+                        
+                        ctx.push(TraversalContext::IfConditionalElseBody);
+                        else_body.accept(visitor, ctx);
+                        ctx.pop();
+                    }
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx)
+                    },
+                    _ => {}
+                }
+            }
         }
-        if tp.traverse_body {
-            ctx.push(TraversalContext::IfConditionalBody);
-            self.body().accept(visitor, ctx);
-            ctx.pop();
-        }
-        if tp.traverse_else_body {
-            ctx.push(TraversalContext::IfConditionalElseBody);
-            self.else_body().map(|s| s.accept(visitor, ctx));
-            ctx.pop();
-        }
+
         visitor.exit_if_stmt(self, ctx);
     }
 }
@@ -118,16 +136,32 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalNode<'script> {
 impl SyntaxNodeTraversal for SwitchConditionalNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_switch_stmt(self, ctx);
-        if tp.traverse_cond {
-            ctx.push(TraversalContext::SwitchConditionalCond);
-            self.cond().accept(visitor, ctx);
-            ctx.pop();
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((cond, Some("cond"))) if tp.traverse_cond => {
+                        let cond: ExpressionNode = cond.into();
+                        
+                        ctx.push(TraversalContext::SwitchConditionalCond);
+                        cond.accept(visitor, ctx);
+                        ctx.pop();
+                    },
+                    Ok((body, Some("body"))) if tp.traverse_body => {
+                        let body: SwitchConditionalBlockNode = body.into();
+                        
+                        ctx.push(TraversalContext::SwitchConditionalBody);
+                        body.accept_with_policy(visitor, ctx, tp.clone());
+                        ctx.pop();
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
         }
-        if tp.traverse_body {
-            ctx.push(TraversalContext::SwitchConditionalBody);
-            self.body().accept(visitor, ctx);
-            ctx.pop();
-        }
+
         visitor.exit_switch_stmt(self, ctx);
     }
 }
@@ -143,6 +177,23 @@ impl NamedSyntaxNode for SwitchConditionalBlockNode<'_> {
 impl<'script> SwitchConditionalBlockNode<'script> {
     pub fn sections(&self) -> impl Iterator<Item = SwitchConditionalSectionNode<'script>> {
         self.named_children().map(|n| n.into())
+    }
+
+
+    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: SwitchConditionalTraversalPolicy) {
+        for ch in self.children_detailed().must_be_named(true) {
+            match ch {
+                Ok((section, _)) => {
+                    let section: SwitchConditionalSectionNode = section.into();
+
+                    section.accept(visitor, ctx)
+                }
+                Err(e) if tp.traverse_errors => {
+                    e.accept(visitor, ctx)
+                },
+                _ => {}
+            }
+        }
     }
 }
 
@@ -169,6 +220,7 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalBlockNode<'script> 
 
 impl SyntaxNodeTraversal for SwitchConditionalBlockNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        // UNUSED
         self.sections().for_each(|s| s.accept(visitor, ctx));
     }
 }
@@ -283,11 +335,25 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalCaseLabelNode<'scri
 impl SyntaxNodeTraversal for SwitchConditionalCaseLabelNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_switch_stmt_case(self, ctx);
-        if tp.traverse_value {
-            ctx.push(TraversalContext::SwitchConditionalCaseLabel);
-            self.value().accept(visitor, ctx);
-            ctx.pop();
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((value, Some("value"))) if tp.traverse_value => {
+                        let value: ExpressionNode = value.into();
+                        
+                        ctx.push(TraversalContext::SwitchConditionalCaseLabel);
+                        value.accept(visitor, ctx);
+                        ctx.pop();
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    }
+                    _ => {}
+                }
+            }
         }
+
         visitor.exit_switch_stmt_case(self, ctx);
     }
 }
@@ -320,6 +386,19 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalDefaultLabelNode<'s
 
 impl SyntaxNodeTraversal for SwitchConditionalDefaultLabelNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
-        visitor.visit_switch_stmt_default(self, ctx);
+        let tp = visitor.visit_switch_stmt_default(self, ctx);
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        visitor.exit_switch_stmt_default(self, ctx);
     }
 }

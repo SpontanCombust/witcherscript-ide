@@ -94,11 +94,25 @@ impl<'script> TryFrom<AnyNode<'script>> for LocalVarDeclarationNode<'script> {
 impl SyntaxNodeTraversal for LocalVarDeclarationNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_local_var_decl_stmt(self, ctx);
-        if tp.traverse_init_value {
-            ctx.push(TraversalContext::LocalVarDeclarationInitValue);
-            self.init_value().map(|init_value| init_value.accept(visitor, ctx));
-            ctx.pop();
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((init_value, Some("init_value"))) if tp.traverse_init_value => {
+                        let init_value: ExpressionNode = init_value.into();
+
+                        ctx.push(TraversalContext::LocalVarDeclarationInitValue);
+                        init_value.accept(visitor, ctx);
+                        ctx.pop();
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
         }
+
         visitor.exit_local_var_decl_stmt(self, ctx);
     }
 }
@@ -154,10 +168,30 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberVarDeclarationNode<'script> {
 
 impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        // closure to avoid code repetition below
+        let accept_proper = |self_: &Self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: MemberVarDeclarationTraversalPolicy| {
+            for ch in self_.children_detailed().must_be_named(true) {
+                match ch {
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
+        };
+
         if ctx.top() == TraversalContext::Global {
-            visitor.visit_global_var_decl(self);
+            let tp = visitor.visit_global_var_decl(self);
+
+            accept_proper(self, visitor, ctx, tp);
+
+            visitor.exit_global_var_decl(self);
         } else {
-            visitor.visit_member_var_decl(self, ctx);
+            let tp = visitor.visit_member_var_decl(self, ctx);
+
+            accept_proper(self, visitor, ctx, tp);
+
+            visitor.exit_member_var_decl(self, ctx);
         }
     }
 }
