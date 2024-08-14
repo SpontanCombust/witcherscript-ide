@@ -85,393 +85,488 @@ impl<'a> SyntaxNodeVisitorChain<'a> {
         }
     }
 }
-//TODO add #[inline]s
+
 impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
+    #[inline]
     fn traversal_policy_default(&self) -> bool {
         true
     }
 
 
+    #[inline]
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_root(n))
     }
 
+    #[inline]
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_class_decl(n))
     }
 
+    #[inline]
     fn exit_class_decl(&mut self, n: &ClassDeclarationNode) {
         self.chain_exit(move |link| link.exit_class_decl(n))
     }
 
+    #[inline]
     fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> StructDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_struct_decl(n))
     }
 
+    #[inline]
     fn exit_struct_decl(&mut self, n: &StructDeclarationNode) {
         self.chain_exit(move |link| link.exit_struct_decl(n))
     }
 
+    #[inline]
     fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> StateDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_state_decl(n))
     }
 
+    #[inline]
     fn exit_state_decl(&mut self, n: &StateDeclarationNode) {
         self.chain_exit(move |link| link.exit_state_decl(n))
     }
 
+    #[inline]
     fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> EnumDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_enum_decl(n))
     }
 
+    #[inline]
     fn exit_enum_decl(&mut self, n: &EnumDeclarationNode) {
         self.chain_exit(move |link| link.exit_enum_decl(n))
     }
 
+    #[inline]
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) -> EnumVariantDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_enum_variant_decl(n))
     }
 
+    #[inline]
     fn exit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) {
         self.chain_exit(move |link| link.exit_enum_variant_decl(n))
     }
 
+    #[inline]
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_global_func_decl(n))        
     }
 
+    #[inline]
     fn exit_global_func_decl(&mut self, n: &FunctionDeclarationNode) {
         self.chain_exit(move |link| link.exit_global_func_decl(n))
     }
 
+    #[inline]
     fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_global_var_decl(n))
     }
 
+    #[inline]
     fn exit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) {
         self.chain_exit(move |link| link.exit_global_var_decl(n))
     }
 
 
 
+    #[inline]
     fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_member_func_decl(n, ctx))
     }
 
+    #[inline]
     fn exit_member_func_decl(&mut self, n: &FunctionDeclarationNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_member_func_decl(n, ctx))
     }
 
+    #[inline]
     fn visit_event_decl(&mut self, n: &EventDeclarationNode, ctx: &TraversalContextStack) -> EventDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_event_decl(n, ctx))
     }
 
+    #[inline]
     fn exit_event_decl(&mut self, n: &EventDeclarationNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_event_decl(n, ctx))
     }
 
+    #[inline]
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, ctx: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_func_param_group(n, ctx))
     }
 
+    #[inline]
     fn exit_func_param_group(&mut self, n: &FunctionParameterGroupNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_func_param_group(n, ctx))
     }
 
+    #[inline]
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_member_var_decl(n, ctx))
     }
 
+    #[inline]
     fn exit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_member_var_decl(n, ctx))
     }
 
+    #[inline]
     fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, ctx: &TraversalContextStack) -> AutobindDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_autobind_decl(n, ctx))
     }
 
+    #[inline]
     fn exit_autobind_decl(&mut self, n: &AutobindDeclarationNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_autobind_decl(n, ctx))
     }
 
+    #[inline]
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_member_default_val(n, ctx))
     }
 
+    #[inline]
     fn exit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_member_default_val(n, ctx))
     }
 
+    #[inline]
     fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: &TraversalContextStack) -> MemberHintTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_member_hint(n, ctx))
     }
 
+    #[inline]
     fn exit_member_hint(&mut self, n: &MemberHintNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_member_hint(n, ctx))
     }
 
+    #[inline]
     fn visit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: &TraversalContextStack) -> MemberDefaultsBlockTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_member_defaults_block(n, ctx))
     }
 
+    #[inline]
     fn exit_member_defaults_block(&mut self, n: &MemberDefaultsBlockNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_member_defaults_block(n, ctx))
     }
 
+    #[inline]
     fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode, ctx: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_member_defaults_block_assignment(n, ctx))
     }
 
+    #[inline]
     fn exit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_member_defaults_block_assignment(n, ctx))
     }
 
 
 
+    #[inline]
     fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, ctx: &TraversalContextStack) -> VarDeclarationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_local_var_decl_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_local_var_decl_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_compound_stmt(&mut self, n: &CompoundStatementNode, ctx: &TraversalContextStack) -> CompoundStatementTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_compound_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_compound_stmt(&mut self, n: &CompoundStatementNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_compound_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_while_stmt(&mut self, n: &WhileLoopNode, ctx: &TraversalContextStack) -> WhileLoopTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_while_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_while_stmt(&mut self, n: &WhileLoopNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_while_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_do_while_stmt(&mut self, n: &DoWhileLoopNode, ctx: &TraversalContextStack) -> DoWhileLoopTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_do_while_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_do_while_stmt(&mut self, n: &DoWhileLoopNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_do_while_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_for_stmt(&mut self, n: &ForLoopNode, ctx: &TraversalContextStack) -> ForLoopTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_for_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_for_stmt(&mut self, n: &ForLoopNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_for_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_if_stmt(&mut self, n: &IfConditionalNode, ctx: &TraversalContextStack) -> IfConditionalTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_if_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_if_stmt(&mut self, n: &IfConditionalNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_if_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_switch_stmt(&mut self, n: &SwitchConditionalNode, ctx: &TraversalContextStack) -> SwitchConditionalTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_switch_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_switch_stmt(&mut self, n: &SwitchConditionalNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_switch_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode, ctx: &TraversalContextStack) -> SwitchConditionalCaseLabelTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_switch_stmt_case(n, ctx))
     }
 
+    #[inline]
     fn exit_switch_stmt_case(&mut self, n: &SwitchConditionalCaseLabelNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_switch_stmt_case(n, ctx))
     }
 
+    #[inline]
     fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, ctx: &TraversalContextStack) -> SwitchConditionalDefaultLabelTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_switch_stmt_default(n, ctx))
     }
 
+    #[inline]
     fn exit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_switch_stmt_default(n, ctx))
     }
 
+    #[inline]
     fn visit_expr_stmt(&mut self, n: &ExpressionStatementNode, ctx: &TraversalContextStack) -> ExpressionStatementTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_expr_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_expr_stmt(&mut self, n: &ExpressionStatementNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_expr_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_return_stmt(&mut self, n: &ReturnStatementNode, ctx: &TraversalContextStack) -> ReturnStatementTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_return_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_return_stmt(&mut self, n: &ReturnStatementNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_return_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_delete_stmt(&mut self, n: &DeleteStatementNode, ctx: &TraversalContextStack) -> DeleteStatementTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_delete_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_delete_stmt(&mut self, n: &DeleteStatementNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_delete_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_break_stmt(&mut self, n: &BreakStatementNode, ctx: &TraversalContextStack) -> BreakStatementTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_break_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_break_stmt(&mut self, n: &BreakStatementNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_break_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, ctx: &TraversalContextStack) -> ContinueStatementTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_continue_stmt(n, ctx))
     }
 
+    #[inline]
     fn exit_continue_stmt(&mut self, n: &ContinueStatementNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_continue_stmt(n, ctx))
     }
 
+    #[inline]
     fn visit_nop_stmt(&mut self, n: &NopNode, ctx: &TraversalContextStack) {
         self.chain_visit(move |link| link.visit_nop_stmt(n, ctx))
     }
 
 
 
+    #[inline]
     fn visit_nested_expr(&mut self, n: &NestedExpressionNode, ctx: &TraversalContextStack) -> NestedExpressionTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_nested_expr(n, ctx))
     }
 
+    #[inline]
     fn exit_nested_expr(&mut self, n: &NestedExpressionNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_nested_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_assign_op_expr(&mut self, n: &AssignmentOperationExpressionNode, ctx: &TraversalContextStack) -> AssignmentOperationExpressionTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_assign_op_expr(n, ctx))
     }
 
+    #[inline]
     fn exit_assign_op_expr(&mut self, n: &AssignmentOperationExpressionNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_assign_op_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_binary_op_expr(&mut self, n: &BinaryOperationExpressionNode, ctx: &TraversalContextStack) -> BinaryOperationExpressionTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_binary_op_expr(n, ctx))
     }
 
+    #[inline]
     fn exit_binary_op_expr(&mut self, n: &BinaryOperationExpressionNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_binary_op_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_unary_op_expr(&mut self, n: &UnaryOperationExpressionNode, ctx: &TraversalContextStack) -> UnaryOperationExpressionTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_unary_op_expr(n, ctx))
     }
 
+    #[inline]
     fn exit_unary_op_expr(&mut self, n: &UnaryOperationExpressionNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_unary_op_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: &TraversalContextStack) -> MemberFieldExpressionTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_member_access_expr(n, ctx))
     }
 
+    #[inline]
     fn exit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_member_access_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, ctx: &TraversalContextStack) -> TypeCastExpressionTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_type_cast_expr(n, ctx))
     }
 
+    #[inline]
     fn exit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_type_cast_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode, ctx: &TraversalContextStack) -> TernaryConditionalExpressionTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_ternary_cond_expr(n, ctx))
     }
 
+    #[inline]
     fn exit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_ternary_cond_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_new_expr(&mut self, n: &NewExpressionNode, ctx: &TraversalContextStack) -> NewExpressionTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_new_expr(n, ctx))
     }
 
+    #[inline]
     fn exit_new_expr(&mut self, n: &NewExpressionNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_new_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_array_expr(&mut self, n: &ArrayExpressionNode, ctx: &TraversalContextStack) -> ArrayExpressionTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_array_expr(n, ctx))
     }
 
+    #[inline]
     fn exit_array_expr(&mut self, n: &ArrayExpressionNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_array_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_func_call_expr(&mut self, n: &FunctionCallExpressionNode, ctx: &TraversalContextStack) -> FunctionCallExpressionTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_func_call_expr(n, ctx))
     }
 
+    #[inline]
     fn exit_func_call_expr(&mut self, n: &FunctionCallExpressionNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_func_call_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_func_call_arg(&mut self, n: &FunctionCallArgument, ctx: &TraversalContextStack) -> FunctionCallArgumentTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_func_call_arg(n, ctx))
     }
 
+    #[inline]
     fn exit_func_call_arg(&mut self, n: &FunctionCallArgument, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_func_call_arg(n, ctx))
     }
 
+    #[inline]
     fn visit_identifier_expr(&mut self, n: &IdentifierNode, ctx: &TraversalContextStack) {
         self.chain_visit(move |link| link.visit_identifier_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_literal_expr(&mut self, n: &LiteralNode, ctx: &TraversalContextStack) {
         self.chain_visit(move |link| link.visit_literal_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_this_expr(&mut self, n: &ThisExpressionNode, ctx: &TraversalContextStack) {
         self.chain_visit(move |link| link.visit_this_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_super_expr(&mut self, n: &SuperExpressionNode, ctx: &TraversalContextStack) {
         self.chain_visit(move |link| link.visit_super_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_parent_expr(&mut self, n: &ParentExpressionNode, ctx: &TraversalContextStack) {
         self.chain_visit(move |link| link.visit_parent_expr(n, ctx))
     }
 
+    #[inline]
     fn visit_virtual_parent_expr(&mut self, n: &VirtualParentExpressionNode, ctx: &TraversalContextStack) {
         self.chain_visit(move |link| link.visit_virtual_parent_expr(n, ctx))
     }
 
 
+    #[inline]
     fn visit_annotation(&mut self, n: &AnnotationNode, ctx: &TraversalContextStack) -> AnnotationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_annotation(n, ctx))
     }
 
+    #[inline]
     fn exit_annotation(&mut self, n: &AnnotationNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_annotation(n, ctx))
     }
 
 
+    #[inline]
     fn visit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) -> ErrorTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_error(n, ctx))
     }
 
+    #[inline]
     fn exit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) {
         self.chain_exit(move |link| link.exit_error(n, ctx))
     }
