@@ -17,15 +17,15 @@ impl NamedSyntaxNode for StructDeclarationNode<'_> {
 
 impl<'script> StructDeclarationNode<'script> {
     pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
-        self.field_children("specifiers").map(|n| n.into())
+        self.field_children("specifiers").map(|n| n.unsafe_into())
     }
 
     pub fn name(&self) -> IdentifierNode<'script> {
-        self.field_child("name").unwrap().into()
+        self.field_child("name").unwrap().unsafe_into()
     }
 
     pub fn definition(&self) -> StructBlockNode<'script> {
-        self.field_child("definition").unwrap().into()
+        self.field_child("definition").unwrap().unsafe_into()
     }
 }
 
@@ -44,7 +44,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StructDeclarationNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -61,7 +61,7 @@ impl SyntaxNodeTraversal for StructDeclarationNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
-                        let def: StructBlockNode = def.into();
+                        let def: StructBlockNode = def.unsafe_into();
 
                         def.accept_with_policy(visitor, ctx, tp.traverse_errors);
                     },
@@ -89,7 +89,7 @@ impl NamedSyntaxNode for StructBlockNode<'_> {
 
 impl<'script> StructBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = StructPropertyNode> {
-        self.named_children().map(|n| n.into())
+        self.named_children().map(|n| n.unsafe_into())
     }
 
 
@@ -97,7 +97,7 @@ impl<'script> StructBlockNode<'script> {
         for ch in self.children_detailed().must_be_named(true) {
             match ch {
                 Ok((prop, _)) => {
-                    let prop: StructPropertyNode = prop.into();
+                    let prop: StructPropertyNode = prop.unsafe_into();
 
                     prop.accept(visitor, ctx);
                 },
@@ -124,7 +124,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StructBlockNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -166,11 +166,11 @@ pub type StructPropertyNode<'script> = SyntaxNode<'script, StructProperty<'scrip
 impl<'script> StructPropertyNode<'script> {
     pub fn value(self) -> StructProperty<'script> {
         match self.tree_node.kind() {
-            MemberVarDeclarationNode::NODE_KIND => StructProperty::Var(self.into()),
-            MemberDefaultValueNode::NODE_KIND => StructProperty::Default(self.into()),
-            MemberDefaultsBlockNode::NODE_KIND => StructProperty::DefaultsBlock(self.into()),
-            MemberHintNode::NODE_KIND => StructProperty::Hint(self.into()),
-            NopNode::NODE_KIND => StructProperty::Nop(self.into()),
+            MemberVarDeclarationNode::NODE_KIND => StructProperty::Var(self.unsafe_into()),
+            MemberDefaultValueNode::NODE_KIND => StructProperty::Default(self.unsafe_into()),
+            MemberDefaultsBlockNode::NODE_KIND => StructProperty::DefaultsBlock(self.unsafe_into()),
+            MemberHintNode::NODE_KIND => StructProperty::Hint(self.unsafe_into()),
+            NopNode::NODE_KIND => StructProperty::Nop(self.unsafe_into()),
             _ => panic!("Unknown struct property type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
@@ -195,7 +195,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StructPropertyNode<'script> {
             MemberDefaultValueNode::NODE_KIND       |
             MemberDefaultsBlockNode::NODE_KIND      |
             MemberHintNode::NODE_KIND               |
-            NopNode::NODE_KIND                      => Ok(value.into()),
+            NopNode::NODE_KIND                      => Ok(value.unsafe_into()),
             _ => Err(())
         }
     }

@@ -17,23 +17,23 @@ impl NamedSyntaxNode for StateDeclarationNode<'_> {
 
 impl<'script> StateDeclarationNode<'script> {
     pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
-        self.field_children("specifiers").map(|n| n.into())
+        self.field_children("specifiers").map(|n| n.unsafe_into())
     }
 
     pub fn name(&self) -> IdentifierNode<'script> {
-        self.field_child("name").unwrap().into()
+        self.field_child("name").unwrap().unsafe_into()
     }
 
     pub fn parent(&self) -> IdentifierNode<'script> {
-        self.field_child("parent").unwrap().into()
+        self.field_child("parent").unwrap().unsafe_into()
     }
 
     pub fn base(&self) -> Option<IdentifierNode<'script>> {
-        self.field_child("base").map(|n| n.into())
+        self.field_child("base").map(|n| n.unsafe_into())
     }
 
     pub fn definition(&self) -> StateBlockNode<'script> {
-        self.field_child("definition").unwrap().into()
+        self.field_child("definition").unwrap().unsafe_into()
     }
 }
 
@@ -54,7 +54,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StateDeclarationNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -71,7 +71,7 @@ impl SyntaxNodeTraversal for StateDeclarationNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
-                        let def: StateBlockNode = def.into();
+                        let def: StateBlockNode = def.unsafe_into();
 
                         def.accept_with_policy(visitor, ctx, tp.traverse_errors);
                     },
@@ -98,7 +98,7 @@ impl NamedSyntaxNode for StateBlockNode<'_> {
 
 impl<'script> StateBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = ClassPropertyNode<'script>> {
-        self.named_children().map(|n| n.into())
+        self.named_children().map(|n| n.unsafe_into())
     }
 
 
@@ -106,7 +106,7 @@ impl<'script> StateBlockNode<'script> {
         for ch in self.children_detailed().must_be_named(true) {
             match ch {
                 Ok((prop, _)) => {
-                    let prop: ClassPropertyNode = prop.into();
+                    let prop: ClassPropertyNode = prop.unsafe_into();
 
                     prop.accept(visitor, ctx);
                 },
@@ -133,7 +133,7 @@ impl<'script> TryFrom<AnyNode<'script>> for StateBlockNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }

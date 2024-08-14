@@ -20,11 +20,11 @@ impl NamedSyntaxNode for TypeAnnotationNode<'_> {
 
 impl<'script> TypeAnnotationNode<'script> {
     pub fn type_name(&self) -> IdentifierNode<'script> {
-        self.field_child("type_name").unwrap().into()
+        self.field_child("type_name").unwrap().unsafe_into()
     }
 
     pub fn type_arg(&self) -> Option<TypeAnnotationNode<'script>> {
-        self.field_child("type_arg").map(|n| n.into())
+        self.field_child("type_arg").map(|n| n.unsafe_into())
     }
 }
 
@@ -42,7 +42,7 @@ impl<'script> TryFrom<AnyNode<'script>> for TypeAnnotationNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -59,15 +59,15 @@ impl NamedSyntaxNode for LocalVarDeclarationNode<'_> {
 
 impl<'script> LocalVarDeclarationNode<'script> {
     pub fn names(&self) -> impl Iterator<Item = IdentifierNode<'script>> {
-        self.field_children("names").map(|n| n.into())
+        self.field_children("names").map(|n| n.unsafe_into())
     }
 
     pub fn var_type(&self) -> TypeAnnotationNode<'script> {
-        self.field_child("var_type").unwrap().into()
+        self.field_child("var_type").unwrap().unsafe_into()
     }
 
     pub fn init_value(&self) -> Option<ExpressionNode<'script>> {
-        self.field_child("init_value").map(|c| c.into())
+        self.field_child("init_value").map(|c| c.unsafe_into())
     }
 }
 
@@ -86,7 +86,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LocalVarDeclarationNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -101,7 +101,7 @@ impl SyntaxNodeTraversal for LocalVarDeclarationNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((init_value, Some("init_value"))) if tp.traverse_init_value => {
-                        let init_value: ExpressionNode = init_value.into();
+                        let init_value: ExpressionNode = init_value.unsafe_into();
 
                         ctx.push(TraversalContext::LocalVarDeclarationInitValue);
                         init_value.accept(visitor, ctx);
@@ -129,19 +129,19 @@ impl NamedSyntaxNode for MemberVarDeclarationNode<'_> {
 
 impl<'script> MemberVarDeclarationNode<'script> {
     pub fn annotation(&self) -> Option<AnnotationNode<'script>> {
-        self.field_child("annotation").map(|n| n.into())
+        self.field_child("annotation").map(|n| n.unsafe_into())
     }
 
     pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
-        self.field_children("specifiers").map(|n| n.into())
+        self.field_children("specifiers").map(|n| n.unsafe_into())
     }
 
     pub fn names(&self) -> impl Iterator<Item = IdentifierNode<'script>> {
-        self.field_children("names").map(|n| n.into())
+        self.field_children("names").map(|n| n.unsafe_into())
     }
 
     pub fn var_type(&self) -> TypeAnnotationNode<'script> {
-        self.field_child("var_type").unwrap().into()
+        self.field_child("var_type").unwrap().unsafe_into()
     }
 }
 
@@ -161,7 +161,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberVarDeclarationNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -208,23 +208,23 @@ impl NamedSyntaxNode for AutobindDeclarationNode<'_> {
 
 impl<'script> AutobindDeclarationNode<'script> {
     pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
-        self.field_children("specifiers").map(|n| n.into())
+        self.field_children("specifiers").map(|n| n.unsafe_into())
     }
 
     pub fn name(&self) -> IdentifierNode<'script> {
-        self.field_child("name").unwrap().into()
+        self.field_child("name").unwrap().unsafe_into()
     }
 
     pub fn autobind_type(&self) -> TypeAnnotationNode<'script> {
-        self.field_child("autobind_type").unwrap().into()
+        self.field_child("autobind_type").unwrap().unsafe_into()
     }
 
     pub fn value(&self) -> AutobindValue<'script> {
         let n = self.field_child("value").unwrap();
         let kind = n.tree_node.kind();
         match kind {
-            AutobindValueSingleNode::NODE_KIND => AutobindValue::Single(n.into()),
-            LiteralStringNode::NODE_KIND => AutobindValue::Concrete(n.into()),
+            AutobindValueSingleNode::NODE_KIND => AutobindValue::Single(n.unsafe_into()),
+            LiteralStringNode::NODE_KIND => AutobindValue::Concrete(n.unsafe_into()),
             _ => panic!("Unknown autobind value kind: {} {}", kind, self.range().debug())
         }
     }
@@ -246,7 +246,7 @@ impl<'script> TryFrom<AnyNode<'script>> for AutobindDeclarationNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -308,7 +308,7 @@ impl<'script> TryFrom<AnyNode<'script>> for AutobindValueSingleNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }

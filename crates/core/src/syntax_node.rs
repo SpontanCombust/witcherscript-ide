@@ -28,11 +28,11 @@ impl<'script, T> SyntaxNode<'script, T> {
             phantom: PhantomData,
         }
     }
-    //TODO rename to unsafe_into
+
     /// Interpret this node into a node with a different underlying type.
     /// Gives no guarantees as to whether that target type is actually valid, so it's not exposed by the crate
     #[inline]
-    pub(crate) fn into<U>(self) -> SyntaxNode<'script, U> {
+    pub(crate) fn unsafe_into<U>(self) -> SyntaxNode<'script, U> {
         SyntaxNode::new(self.tree_node)
     }
 

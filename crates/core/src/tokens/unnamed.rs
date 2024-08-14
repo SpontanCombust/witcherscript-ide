@@ -36,7 +36,7 @@ impl<'script> TryFrom<AnyNode<'script>> for UnnamedNode<'script> {
         if !value.tree_node.is_named() 
         && !value.tree_node.is_error()
         && !value.tree_node.is_extra() {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }

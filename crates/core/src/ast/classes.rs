@@ -17,19 +17,19 @@ impl NamedSyntaxNode for ClassDeclarationNode<'_> {
 
 impl<'script> ClassDeclarationNode<'script> {
     pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
-        self.field_children("specifiers").map(|n| n.into())
+        self.field_children("specifiers").map(|n| n.unsafe_into())
     }
 
     pub fn name(&self) -> IdentifierNode<'script> {
-        self.field_child("name").unwrap().into()
+        self.field_child("name").unwrap().unsafe_into()
     }
 
     pub fn base(&self) -> Option<IdentifierNode<'script>> {
-        self.field_child("base").map(|n| n.into())
+        self.field_child("base").map(|n| n.unsafe_into())
     }
 
     pub fn definition(&self) -> ClassBlockNode<'script> {
-        self.field_child("definition").unwrap().into()
+        self.field_child("definition").unwrap().unsafe_into()
     }
 }
 
@@ -49,7 +49,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassDeclarationNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -66,7 +66,7 @@ impl SyntaxNodeTraversal for ClassDeclarationNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((definition, Some("definition"))) if tp.traverse_definition => {
-                        let definition: ClassBlockNode = definition.into();
+                        let definition: ClassBlockNode = definition.unsafe_into();
 
                         definition.accept_with_policy(visitor, ctx, tp.clone());
                     }
@@ -94,7 +94,7 @@ impl NamedSyntaxNode for ClassBlockNode<'_> {
 
 impl<'script> ClassBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = ClassPropertyNode<'script>> {
-        self.named_children().map(|n| n.into())
+        self.named_children().map(|n| n.unsafe_into())
     }
 
 
@@ -102,7 +102,7 @@ impl<'script> ClassBlockNode<'script> {
         for ch in self.children_detailed().must_be_named(true) {
             match ch {
                 Ok((prop, _)) => {
-                    let prop: ClassPropertyNode = prop.into();
+                    let prop: ClassPropertyNode = prop.unsafe_into();
 
                     prop.accept(visitor, ctx);
                 },
@@ -129,7 +129,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassBlockNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -176,14 +176,14 @@ pub type ClassPropertyNode<'script> = SyntaxNode<'script, ClassProperty<'script>
 impl<'script> ClassPropertyNode<'script> {
     pub fn value(self) -> ClassProperty<'script> {
         match self.tree_node.kind() {
-            MemberVarDeclarationNode::NODE_KIND => ClassProperty::Var(self.into()),
-            MemberDefaultValueNode::NODE_KIND => ClassProperty::Default(self.into()),
-            MemberDefaultsBlockNode::NODE_KIND => ClassProperty::DefaultsBlock(self.into()),
-            MemberHintNode::NODE_KIND => ClassProperty::Hint(self.into()),
-            AutobindDeclarationNode::NODE_KIND => ClassProperty::Autobind(self.into()),
-            FunctionDeclarationNode::NODE_KIND => ClassProperty::Method(self.into()),
-            EventDeclarationNode::NODE_KIND => ClassProperty::Event(self.into()),
-            NopNode::NODE_KIND => ClassProperty::Nop(self.into()),
+            MemberVarDeclarationNode::NODE_KIND => ClassProperty::Var(self.unsafe_into()),
+            MemberDefaultValueNode::NODE_KIND => ClassProperty::Default(self.unsafe_into()),
+            MemberDefaultsBlockNode::NODE_KIND => ClassProperty::DefaultsBlock(self.unsafe_into()),
+            MemberHintNode::NODE_KIND => ClassProperty::Hint(self.unsafe_into()),
+            AutobindDeclarationNode::NODE_KIND => ClassProperty::Autobind(self.unsafe_into()),
+            FunctionDeclarationNode::NODE_KIND => ClassProperty::Method(self.unsafe_into()),
+            EventDeclarationNode::NODE_KIND => ClassProperty::Event(self.unsafe_into()),
+            NopNode::NODE_KIND => ClassProperty::Nop(self.unsafe_into()),
             _ => panic!("Unknown class property type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
@@ -207,7 +207,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ClassPropertyNode<'script> {
             AutobindDeclarationNode::NODE_KIND          |
             FunctionDeclarationNode::NODE_KIND          |
             EventDeclarationNode::NODE_KIND             |
-            NopNode::NODE_KIND                          => Ok(value.into()),
+            NopNode::NODE_KIND                          => Ok(value.unsafe_into()),
             _ => Err(())
         }
     }

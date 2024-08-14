@@ -18,11 +18,11 @@ impl NamedSyntaxNode for EnumDeclarationNode<'_> {
 
 impl<'script> EnumDeclarationNode<'script> {
     pub fn name(&self) -> IdentifierNode<'script> {
-        self.field_child("name").unwrap().into()
+        self.field_child("name").unwrap().unsafe_into()
     }
 
     pub fn definition(&self) -> EnumBlockNode<'script> {
-        self.field_child("definition").unwrap().into()
+        self.field_child("definition").unwrap().unsafe_into()
     }
 }
 
@@ -40,7 +40,7 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumDeclarationNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -55,7 +55,7 @@ impl SyntaxNodeTraversal for EnumDeclarationNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
-                        let def: EnumBlockNode = def.into();
+                        let def: EnumBlockNode = def.unsafe_into();
 
                         ctx.push(TraversalContext::Enum);
                         def.accept_with_policy(visitor, ctx, tp.clone());
@@ -83,7 +83,7 @@ impl NamedSyntaxNode for EnumBlockNode<'_> {
 
 impl<'script> EnumBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = EnumVariantDeclarationNode<'script>> {
-        self.named_children().map(|n| n.into())
+        self.named_children().map(|n| n.unsafe_into())
     }
 
 
@@ -91,7 +91,7 @@ impl<'script> EnumBlockNode<'script> {
         for ch in self.children_detailed().must_be_named(true) {
             match ch {
                 Ok((variant, _)) => {
-                    let variant: EnumVariantDeclarationNode = variant.into();
+                    let variant: EnumVariantDeclarationNode = variant.unsafe_into();
                     
                     variant.accept(visitor, ctx);
                 },
@@ -118,7 +118,7 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumBlockNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -141,15 +141,15 @@ impl NamedSyntaxNode for EnumVariantDeclarationNode<'_> {
 
 impl<'script> EnumVariantDeclarationNode<'script> {
     pub fn name(&self) -> IdentifierNode<'script> {
-        self.field_child("name").unwrap().into()
+        self.field_child("name").unwrap().unsafe_into()
     }
 
     pub fn value(&self) -> Option<EnumVariantValue<'script>> {
         self.field_child("value").map(|n| {
             let kind = n.tree_node.kind();
             match kind {
-                LiteralIntNode::NODE_KIND => EnumVariantValue::Int(n.into()),
-                LiteralHexNode::NODE_KIND => EnumVariantValue::Hex(n.into()),
+                LiteralIntNode::NODE_KIND => EnumVariantValue::Int(n.unsafe_into()),
+                LiteralHexNode::NODE_KIND => EnumVariantValue::Hex(n.unsafe_into()),
                 _ => panic!("Unknown enum variant value kind: {} {}", kind, self.range().debug())
             }
         })
@@ -170,7 +170,7 @@ impl<'script> TryFrom<AnyNode<'script>> for EnumVariantDeclarationNode<'script> 
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }

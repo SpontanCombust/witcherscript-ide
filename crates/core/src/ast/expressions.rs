@@ -32,7 +32,7 @@ impl NamedSyntaxNode for NestedExpressionNode<'_> {
 
 impl<'script> NestedExpressionNode<'script> {
     pub fn inner(&self) -> ExpressionNode<'script> {
-        self.first_child(true).unwrap().into()
+        self.first_child(true).unwrap().unsafe_into()
     }
 }
 
@@ -49,7 +49,7 @@ impl<'script> TryFrom<AnyNode<'script>> for NestedExpressionNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -66,7 +66,7 @@ impl SyntaxNodeTraversal for NestedExpressionNode<'_> {
                     Ok((inner, _)) if tp.traverse_inner => {
                         ctx.push(TraversalContext::NestedExpressionInner);
 
-                        let inner: ExpressionNode = inner.into();
+                        let inner: ExpressionNode = inner.unsafe_into();
                         inner.accept(visitor, ctx);
 
                         ctx.pop();
@@ -104,7 +104,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ThisExpressionNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -138,7 +138,7 @@ impl<'script> TryFrom<AnyNode<'script>> for SuperExpressionNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -172,7 +172,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ParentExpressionNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -206,7 +206,7 @@ impl<'script> TryFrom<AnyNode<'script>> for VirtualParentExpressionNode<'script>
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -229,11 +229,11 @@ impl NamedSyntaxNode for FunctionCallExpressionNode<'_> {
 
 impl<'script> FunctionCallExpressionNode<'script> {
     pub fn func(&self) -> ExpressionNode<'script> {
-        self.field_child("func").unwrap().into()
+        self.field_child("func").unwrap().unsafe_into()
     }
 
     pub fn args(&self) -> Option<FunctionCallArgumentsNode<'script>> {
-        self.field_child("args").map(|n| n.into())
+        self.field_child("args").map(|n| n.unsafe_into())
     }
 }
 
@@ -251,7 +251,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionCallExpressionNode<'script> 
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -268,13 +268,13 @@ impl SyntaxNodeTraversal for FunctionCallExpressionNode<'_> {
                     Ok((func, Some("func"))) if tp.traverse_func => {
                         ctx.push(TraversalContext::FunctionCallExpressionFunc);
 
-                        let func: ExpressionNode = func.into();
+                        let func: ExpressionNode = func.unsafe_into();
                         func.accept(visitor, ctx);
 
                         ctx.pop();
                     },
                     Ok((args, Some("args"))) if tp.traverse_args => {
-                        let args: FunctionCallArgumentsNode = args.into();
+                        let args: FunctionCallArgumentsNode = args.unsafe_into();
 
                         args.accept_with_policy(visitor, ctx, tp.clone());
                     },
@@ -312,7 +312,7 @@ impl<'script> FunctionCallArgumentsNode<'script> {
                 match ch {
                     Ok((n, _)) => {
                         if n.is_named() {
-                            let arg = FunctionCallArgument::Some(n.into());
+                            let arg = FunctionCallArgument::Some(n.unsafe_into());
                             previous_was_comma = false;
 
                             Some(Ok(arg))
@@ -367,7 +367,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionCallArgumentsNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -444,11 +444,11 @@ impl NamedSyntaxNode for ArrayExpressionNode<'_> {
 
 impl<'script> ArrayExpressionNode<'script> {
     pub fn accessor(&self) -> ExpressionNode<'script> {
-        self.field_child("accessor").unwrap().into()
+        self.field_child("accessor").unwrap().unsafe_into()
     }
 
     pub fn index(&self) -> ExpressionNode<'script> {
-        self.field_child("index").unwrap().into()
+        self.field_child("index").unwrap().unsafe_into()
     }
 }
 
@@ -466,7 +466,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ArrayExpressionNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -481,14 +481,14 @@ impl SyntaxNodeTraversal for ArrayExpressionNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((accessor, Some("accessor"))) if tp.traverse_accessor => {
-                        let accessor: ExpressionNode = accessor.into();
+                        let accessor: ExpressionNode = accessor.unsafe_into();
                         
                         ctx.push(TraversalContext::ArrayExpressionAccessor);
                         accessor.accept(visitor, ctx);
                         ctx.pop();
                     },
                     Ok((index, Some("index"))) if tp.traverse_index => {
-                        let index: ExpressionNode = index.into();
+                        let index: ExpressionNode = index.unsafe_into();
 
                         ctx.push(TraversalContext::ArrayExpressionIndex);
                         index.accept(visitor, ctx);
@@ -516,11 +516,11 @@ impl NamedSyntaxNode for MemberAccessExpressionNode<'_> {
 
 impl<'script> MemberAccessExpressionNode<'script> {
     pub fn accessor(&self) -> ExpressionNode<'script> {
-        self.field_child("accessor").unwrap().into()
+        self.field_child("accessor").unwrap().unsafe_into()
     }
 
     pub fn member(&self) -> IdentifierNode<'script> {
-        self.field_child("member").unwrap().into()
+        self.field_child("member").unwrap().unsafe_into()
     }
 }
 
@@ -538,7 +538,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberAccessExpressionNode<'script> 
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -553,7 +553,7 @@ impl SyntaxNodeTraversal for MemberAccessExpressionNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((accessor, Some("accessor"))) if tp.traverse_accessor => {
-                        let accessor: ExpressionNode = accessor.into();
+                        let accessor: ExpressionNode = accessor.unsafe_into();
 
                         ctx.push(TraversalContext::MemberAccessExpressionAccessor);
                         accessor.accept(visitor, ctx);
@@ -582,11 +582,11 @@ impl NamedSyntaxNode for NewExpressionNode<'_> {
 
 impl<'script> NewExpressionNode<'script> {
     pub fn class(&self) -> IdentifierNode<'script> {
-        self.field_child("class").unwrap().into()
+        self.field_child("class").unwrap().unsafe_into()
     }
 
     pub fn lifetime_obj(&self) -> Option<ExpressionNode<'script>> {
-        self.field_child("lifetime_obj").map(|n| n.into())
+        self.field_child("lifetime_obj").map(|n| n.unsafe_into())
     }
 }
 
@@ -604,7 +604,7 @@ impl<'script> TryFrom<AnyNode<'script>> for NewExpressionNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -619,7 +619,7 @@ impl SyntaxNodeTraversal for NewExpressionNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((lifetime_obj, Some("lifetime_obj"))) if tp.traverse_lifetime_obj => {
-                        let lifetime_obj: ExpressionNode = lifetime_obj.into();
+                        let lifetime_obj: ExpressionNode = lifetime_obj.unsafe_into();
 
                         ctx.push(TraversalContext::NewExpressionLifetimeObj);
                         lifetime_obj.accept(visitor, ctx);
@@ -647,11 +647,11 @@ impl NamedSyntaxNode for TypeCastExpressionNode<'_> {
 
 impl<'script> TypeCastExpressionNode<'script> {
     pub fn target_type(&self) -> IdentifierNode<'script> {
-        self.field_child("type").unwrap().into()
+        self.field_child("type").unwrap().unsafe_into()
     }
 
     pub fn value(&self) -> ExpressionNode<'script> {
-        self.field_child("value").unwrap().into()
+        self.field_child("value").unwrap().unsafe_into()
     }
 }
 
@@ -669,7 +669,7 @@ impl<'script> TryFrom<AnyNode<'script>> for TypeCastExpressionNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -684,7 +684,7 @@ impl SyntaxNodeTraversal for TypeCastExpressionNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((value, Some("value"))) if tp.traverse_value => {
-                        let value: ExpressionNode = value.into();
+                        let value: ExpressionNode = value.unsafe_into();
 
                         ctx.push(TraversalContext::TypeCastExpressionValue);
                         value.accept(visitor, ctx);
@@ -712,11 +712,11 @@ impl NamedSyntaxNode for UnaryOperationExpressionNode<'_> {
 
 impl<'script> UnaryOperationExpressionNode<'script> {
     pub fn op(&self) -> UnaryOperatorNode<'script> {
-        self.field_child("op").unwrap().into()
+        self.field_child("op").unwrap().unsafe_into()
     }
 
     pub fn right(&self) -> ExpressionNode<'script> {
-        self.field_child("right").unwrap().into()
+        self.field_child("right").unwrap().unsafe_into()
     }
 }
 
@@ -734,7 +734,7 @@ impl<'script> TryFrom<AnyNode<'script>> for UnaryOperationExpressionNode<'script
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -749,7 +749,7 @@ impl SyntaxNodeTraversal for UnaryOperationExpressionNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((right, Some("right"))) if tp.traverse_right => {
-                        let right: ExpressionNode = right.into();
+                        let right: ExpressionNode = right.unsafe_into();
 
                         ctx.push(TraversalContext::UnaryOperationExpressionRight);
                         right.accept(visitor, ctx);
@@ -777,15 +777,15 @@ impl NamedSyntaxNode for BinaryOperationExpressionNode<'_> {
 
 impl<'script> BinaryOperationExpressionNode<'script> {
     pub fn op(&self) -> BinaryOperatorNode<'script> {
-        self.field_child("op").unwrap().into()
+        self.field_child("op").unwrap().unsafe_into()
     }
 
     pub fn left(&self) -> ExpressionNode<'script> {
-        self.field_child("left").unwrap().into()
+        self.field_child("left").unwrap().unsafe_into()
     }
 
     pub fn right(&self) -> ExpressionNode<'script> {
-        self.field_child("right").unwrap().into()
+        self.field_child("right").unwrap().unsafe_into()
     }
 }
 
@@ -804,7 +804,7 @@ impl<'script> TryFrom<AnyNode<'script>> for BinaryOperationExpressionNode<'scrip
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -819,14 +819,14 @@ impl SyntaxNodeTraversal for BinaryOperationExpressionNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((left, Some("left"))) if tp.traverse_left => {
-                        let left: ExpressionNode = left.into();
+                        let left: ExpressionNode = left.unsafe_into();
 
                         ctx.push(TraversalContext::BinaryOperationExpressionLeft);
                         left.accept(visitor, ctx);
                         ctx.pop();
                     },
                     Ok((right, Some("right"))) if tp.traverse_right => {
-                        let right: ExpressionNode = right.into();
+                        let right: ExpressionNode = right.unsafe_into();
 
                         ctx.push(TraversalContext::BinaryOperationExpressionRight);
                         right.accept(visitor, ctx);
@@ -854,15 +854,15 @@ impl NamedSyntaxNode for AssignmentOperationExpressionNode<'_> {
 
 impl<'script> AssignmentOperationExpressionNode<'script> {
     pub fn op(&self) -> AssignmentOperatorNode<'script> {
-        self.field_child("op").unwrap().into()
+        self.field_child("op").unwrap().unsafe_into()
     }
 
     pub fn left(&self) -> ExpressionNode<'script> {
-        self.field_child("left").unwrap().into()
+        self.field_child("left").unwrap().unsafe_into()
     }
 
     pub fn right(&self) -> ExpressionNode<'script> {
-        self.field_child("right").unwrap().into()
+        self.field_child("right").unwrap().unsafe_into()
     }
 }
 
@@ -881,7 +881,7 @@ impl<'script> TryFrom<AnyNode<'script>> for AssignmentOperationExpressionNode<'s
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -896,14 +896,14 @@ impl SyntaxNodeTraversal for AssignmentOperationExpressionNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((left, Some("left"))) if tp.traverse_left => {
-                        let left: ExpressionNode = left.into();
+                        let left: ExpressionNode = left.unsafe_into();
 
                         ctx.push(TraversalContext::AssignmentOperationExpressionLeft);
                         left.accept(visitor, ctx);
                         ctx.pop();
                     },
                     Ok((right, Some("right"))) if tp.traverse_right => {
-                        let right: ExpressionNode = right.into();
+                        let right: ExpressionNode = right.unsafe_into();
 
                         ctx.push(TraversalContext::AssignmentOperationExpressionRight);
                         right.accept(visitor, ctx);
@@ -931,15 +931,15 @@ impl NamedSyntaxNode for TernaryConditionalExpressionNode<'_> {
 
 impl<'script> TernaryConditionalExpressionNode<'script> {
     pub fn cond(&self) -> ExpressionNode<'script> {
-        self.field_child("cond").unwrap().into()
+        self.field_child("cond").unwrap().unsafe_into()
     }
 
     pub fn conseq(&self) -> ExpressionNode<'script> {
-        self.field_child("conseq").unwrap().into()
+        self.field_child("conseq").unwrap().unsafe_into()
     }
 
     pub fn alt(&self) -> ExpressionNode<'script> {
-        self.field_child("alt").unwrap().into()
+        self.field_child("alt").unwrap().unsafe_into()
     }
 }
 
@@ -958,7 +958,7 @@ impl<'script> TryFrom<AnyNode<'script>> for TernaryConditionalExpressionNode<'sc
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -973,21 +973,21 @@ impl SyntaxNodeTraversal for TernaryConditionalExpressionNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
-                        let cond: ExpressionNode = cond.into();
+                        let cond: ExpressionNode = cond.unsafe_into();
 
                         ctx.push(TraversalContext::TernaryConditionalExpressionCond);
                         cond.accept(visitor, ctx);
                         ctx.pop();
                     },
                     Ok((conseq, Some("conseq"))) if tp.traverse_conseq => {
-                        let conseq: ExpressionNode = conseq.into();
+                        let conseq: ExpressionNode = conseq.unsafe_into();
 
                         ctx.push(TraversalContext::TernaryConditionalExpressionConseq);
                         conseq.accept(visitor, ctx);
                         ctx.pop();
                     },
                     Ok((alt, Some("alt"))) if tp.traverse_alt => {
-                        let alt: ExpressionNode = alt.into();
+                        let alt: ExpressionNode = alt.unsafe_into();
 
                         ctx.push(TraversalContext::TernaryConditionalExpressionAlt);
                         alt.accept(visitor, ctx);
@@ -1056,28 +1056,28 @@ pub type ExpressionNode<'script> = SyntaxNode<'script, Expression<'script>>;
 impl<'script> ExpressionNode<'script> {
     pub fn value(self) -> Expression<'script> {
         match self.tree_node.kind() {
-            AssignmentOperationExpressionNode::NODE_KIND => Expression::AssignmentOperation(self.into()),
-            TernaryConditionalExpressionNode::NODE_KIND => Expression::TernaryConditional(self.into()),
-            BinaryOperationExpressionNode::NODE_KIND => Expression::BinaryOperation(self.into()),
-            NewExpressionNode::NODE_KIND => Expression::New(self.into()),
-            UnaryOperationExpressionNode::NODE_KIND => Expression::UnaryOperation(self.into()),
-            TypeCastExpressionNode::NODE_KIND => Expression::TypeCast(self.into()),
-            MemberAccessExpressionNode::NODE_KIND => Expression::MemberAccess(self.into()),
-            FunctionCallExpressionNode::NODE_KIND => Expression::FunctionCall(self.into()),
-            ArrayExpressionNode::NODE_KIND => Expression::Array(self.into()),
-            NestedExpressionNode::NODE_KIND => Expression::Nested(self.into()),
-            ThisExpressionNode::NODE_KIND => Expression::This(self.into()),
-            SuperExpressionNode::NODE_KIND => Expression::Super(self.into()),
-            ParentExpressionNode::NODE_KIND => Expression::Parent(self.into()),
-            VirtualParentExpressionNode::NODE_KIND => Expression::VirtualParent(self.into()),
-            IdentifierNode::NODE_KIND => Expression::Identifier(self.into()),
+            AssignmentOperationExpressionNode::NODE_KIND => Expression::AssignmentOperation(self.unsafe_into()),
+            TernaryConditionalExpressionNode::NODE_KIND => Expression::TernaryConditional(self.unsafe_into()),
+            BinaryOperationExpressionNode::NODE_KIND => Expression::BinaryOperation(self.unsafe_into()),
+            NewExpressionNode::NODE_KIND => Expression::New(self.unsafe_into()),
+            UnaryOperationExpressionNode::NODE_KIND => Expression::UnaryOperation(self.unsafe_into()),
+            TypeCastExpressionNode::NODE_KIND => Expression::TypeCast(self.unsafe_into()),
+            MemberAccessExpressionNode::NODE_KIND => Expression::MemberAccess(self.unsafe_into()),
+            FunctionCallExpressionNode::NODE_KIND => Expression::FunctionCall(self.unsafe_into()),
+            ArrayExpressionNode::NODE_KIND => Expression::Array(self.unsafe_into()),
+            NestedExpressionNode::NODE_KIND => Expression::Nested(self.unsafe_into()),
+            ThisExpressionNode::NODE_KIND => Expression::This(self.unsafe_into()),
+            SuperExpressionNode::NODE_KIND => Expression::Super(self.unsafe_into()),
+            ParentExpressionNode::NODE_KIND => Expression::Parent(self.unsafe_into()),
+            VirtualParentExpressionNode::NODE_KIND => Expression::VirtualParent(self.unsafe_into()),
+            IdentifierNode::NODE_KIND => Expression::Identifier(self.unsafe_into()),
             LiteralIntNode::NODE_KIND       |
             LiteralHexNode::NODE_KIND       |
             LiteralFloatNode::NODE_KIND     |
             LiteralBoolNode::NODE_KIND      |
             LiteralStringNode::NODE_KIND    |
             LiteralNameNode::NODE_KIND      |
-            LiteralNullNode::NODE_KIND      => Expression::Literal(self.into()),
+            LiteralNullNode::NODE_KIND      => Expression::Literal(self.unsafe_into()),
             _ => panic!("Unknown expression type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
@@ -1119,7 +1119,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
             LiteralBoolNode::NODE_KIND                      |
             LiteralStringNode::NODE_KIND                    |
             LiteralNameNode::NODE_KIND                      |
-            LiteralNullNode::NODE_KIND                       => Ok(value.into()),
+            LiteralNullNode::NODE_KIND                       => Ok(value.unsafe_into()),
             _ => Err(())
         }
     }
@@ -1127,97 +1127,97 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
 
 impl<'script> From<NestedExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: NestedExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<LiteralNode<'script>> for ExpressionNode<'script> {
     fn from(value: LiteralNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<ThisExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: ThisExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<SuperExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: SuperExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<ParentExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: ParentExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<VirtualParentExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: VirtualParentExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<IdentifierNode<'script>> for ExpressionNode<'script> {
     fn from(value: IdentifierNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<FunctionCallExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: FunctionCallExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<ArrayExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: ArrayExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<MemberAccessExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: MemberAccessExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<NewExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: NewExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<TypeCastExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: TypeCastExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<UnaryOperationExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: UnaryOperationExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<BinaryOperationExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: BinaryOperationExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<AssignmentOperationExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: AssignmentOperationExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
 impl<'script> From<TernaryConditionalExpressionNode<'script>> for ExpressionNode<'script> {
     fn from(value: TernaryConditionalExpressionNode<'script>) -> Self {
-        value.into()
+        value.unsafe_into()
     }
 }
 
@@ -1254,7 +1254,7 @@ impl NamedSyntaxNode for ExpressionStatementNode<'_> {
 
 impl<'script> ExpressionStatementNode<'script> {
     pub fn expr(&self) -> ExpressionNode<'script> {
-        self.first_child(true).unwrap().into()
+        self.first_child(true).unwrap().unsafe_into()
     }
 }
 
@@ -1271,7 +1271,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionStatementNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -1286,7 +1286,7 @@ impl SyntaxNodeTraversal for ExpressionStatementNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((expr, _)) if tp.traverse_expr => {
-                        let expr: ExpressionNode = expr.into();
+                        let expr: ExpressionNode = expr.unsafe_into();
 
                         ctx.push(TraversalContext::ExpressionStatement);
                         expr.accept(visitor, ctx);

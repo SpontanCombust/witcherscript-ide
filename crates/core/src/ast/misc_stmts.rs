@@ -30,7 +30,7 @@ impl<'script> TryFrom<AnyNode<'script>> for BreakStatementNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -77,7 +77,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ContinueStatementNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -113,7 +113,7 @@ impl NamedSyntaxNode for ReturnStatementNode<'_> {
 
 impl<'script> ReturnStatementNode<'script> {
     pub fn value(&self) -> Option<ExpressionNode<'script>> {
-        self.first_child(true).map(|n| n.into())
+        self.first_child(true).map(|n| n.unsafe_into())
     }
 }
 
@@ -130,7 +130,7 @@ impl<'script> TryFrom<AnyNode<'script>> for ReturnStatementNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -147,7 +147,7 @@ impl SyntaxNodeTraversal for ReturnStatementNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((value, _)) if tp.traverse_value => {
-                        let value: ExpressionNode = value.into();
+                        let value: ExpressionNode = value.unsafe_into();
 
                         value.accept(visitor, ctx);
                     },
@@ -175,7 +175,7 @@ impl NamedSyntaxNode for DeleteStatementNode<'_> {
 
 impl<'script> DeleteStatementNode<'script> {
     pub fn value(&self) -> ExpressionNode<'script> {
-        self.first_child(true).unwrap().into()
+        self.first_child(true).unwrap().unsafe_into()
     }
 }
 
@@ -192,7 +192,7 @@ impl<'script> TryFrom<AnyNode<'script>> for DeleteStatementNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -209,7 +209,7 @@ impl SyntaxNodeTraversal for DeleteStatementNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((value, _)) if tp.traverse_value => {
-                        let value: ExpressionNode = value.into();
+                        let value: ExpressionNode = value.unsafe_into();
 
                         value.accept(visitor, ctx);
                     },
@@ -237,7 +237,7 @@ impl NamedSyntaxNode for CompoundStatementNode<'_> {
 
 impl<'script> CompoundStatementNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = FunctionStatementNode<'script>> {
-        self.named_children().map(|n| n.into())
+        self.named_children().map(|n| n.unsafe_into())
     }
 }
 
@@ -255,7 +255,7 @@ impl<'script> TryFrom<AnyNode<'script>> for CompoundStatementNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -272,7 +272,7 @@ impl SyntaxNodeTraversal for CompoundStatementNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((stmt, _)) if tp.traverse_statements => {
-                        let stmt: FunctionStatementNode = stmt.into();
+                        let stmt: FunctionStatementNode = stmt.unsafe_into();
 
                         stmt.accept(visitor, ctx);
                     },

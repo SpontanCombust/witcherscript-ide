@@ -43,7 +43,7 @@ impl<'script> TryFrom<AnyNode<'script>> for UnaryOperatorNode<'script> {
             "unary_op_neg"      | 
             "unary_op_not"      |
             "unary_op_bitnot"   |
-            "unary_op_plus" =>  Ok(value.into()),
+            "unary_op_plus" =>  Ok(value.unsafe_into()),
             _ => Err(())
         }
     }
@@ -128,7 +128,7 @@ impl<'script> TryFrom<AnyNode<'script>> for BinaryOperatorNode<'script> {
             "binary_op_sum"     |
             "binary_op_mod"     |
             "binary_op_div"     |
-            "binary_op_mult" => Ok(value.into()),
+            "binary_op_mult" => Ok(value.unsafe_into()),
             _ => Err(())
         }
     }
@@ -186,7 +186,7 @@ impl<'script> TryFrom<AnyNode<'script>> for AssignmentOperatorNode<'script> {
             "assign_op_mult"    |
             "assign_op_div"     |
             "assign_op_bitand"  |
-            "assign_op_bitor" => Ok(value.into()),
+            "assign_op_bitor" => Ok(value.unsafe_into()),
             _ => Err(())
         }
     }

@@ -39,13 +39,13 @@ impl<'script> RootStatementNode<'script> {
     pub fn value(self) -> RootStatement<'script> {
         let s = self.tree_node.kind();
         match s {
-            FunctionDeclarationNode::NODE_KIND => RootStatement::Function(self.into()),
-            ClassDeclarationNode::NODE_KIND => RootStatement::Class(self.into()),
-            StateDeclarationNode::NODE_KIND => RootStatement::State(self.into()),
-            StructDeclarationNode::NODE_KIND => RootStatement::Struct(self.into()),
-            EnumDeclarationNode::NODE_KIND => RootStatement::Enum(self.into()),
-            MemberVarDeclarationNode::NODE_KIND => RootStatement::Var(self.into()),
-            NopNode::NODE_KIND => RootStatement::Nop(self.into()),
+            FunctionDeclarationNode::NODE_KIND => RootStatement::Function(self.unsafe_into()),
+            ClassDeclarationNode::NODE_KIND => RootStatement::Class(self.unsafe_into()),
+            StateDeclarationNode::NODE_KIND => RootStatement::State(self.unsafe_into()),
+            StructDeclarationNode::NODE_KIND => RootStatement::Struct(self.unsafe_into()),
+            EnumDeclarationNode::NODE_KIND => RootStatement::Enum(self.unsafe_into()),
+            MemberVarDeclarationNode::NODE_KIND => RootStatement::Var(self.unsafe_into()),
+            NopNode::NODE_KIND => RootStatement::Nop(self.unsafe_into()),
             _ => panic!("Unknown script statement: {} {}", s, self.range().debug())
         }
     }
@@ -72,7 +72,7 @@ impl<'script> TryFrom<AnyNode<'script>> for RootStatementNode<'script> {
             StructDeclarationNode::NODE_KIND            |
             EnumDeclarationNode::NODE_KIND              |
             MemberVarDeclarationNode::NODE_KIND         |
-            NopNode::NODE_KIND                          => Ok(value.into()),
+            NopNode::NODE_KIND                          => Ok(value.unsafe_into()),
             _ => Err(())
         }
     }
@@ -102,7 +102,7 @@ impl NamedSyntaxNode for RootNode<'_> {
 
 impl<'script> RootNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = RootStatementNode> {
-        self.named_children().map(|n| n.into())
+        self.named_children().map(|n| n.unsafe_into())
     }
 }
 
@@ -120,7 +120,7 @@ impl<'script> TryFrom<AnyNode<'script>> for RootNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -137,7 +137,7 @@ impl SyntaxNodeTraversal for RootNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((stmt, _)) if tp.traverse_statements => {
-                        let stmt: RootStatementNode = stmt.into();
+                        let stmt: RootStatementNode = stmt.unsafe_into();
                         
                         stmt.accept(visitor, ctx);
                     },

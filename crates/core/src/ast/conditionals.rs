@@ -20,15 +20,15 @@ impl NamedSyntaxNode for IfConditionalNode<'_> {
 
 impl<'script> IfConditionalNode<'script> {
     pub fn cond(&self) -> ExpressionNode<'script> {
-        self.field_child("cond").unwrap().into()
+        self.field_child("cond").unwrap().unsafe_into()
     }
 
     pub fn body(&self) -> FunctionStatementNode<'script> {
-        self.field_child("body").unwrap().into()
+        self.field_child("body").unwrap().unsafe_into()
     }
 
     pub fn else_body(&self) -> Option<FunctionStatementNode<'script>> {
-        self.field_child("else").map(|n| n.into())
+        self.field_child("else").map(|n| n.unsafe_into())
     }
 }
 
@@ -47,7 +47,7 @@ impl<'script> TryFrom<AnyNode<'script>> for IfConditionalNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -62,21 +62,21 @@ impl SyntaxNodeTraversal for IfConditionalNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
-                        let cond: ExpressionNode = cond.into();
+                        let cond: ExpressionNode = cond.unsafe_into();
                         
                         ctx.push(TraversalContext::IfConditionalCond);
                         cond.accept(visitor, ctx);
                         ctx.pop();
                     },
                     Ok((body, Some("body"))) if tp.traverse_body => {
-                        let body: FunctionStatementNode = body.into();
+                        let body: FunctionStatementNode = body.unsafe_into();
                         
                         ctx.push(TraversalContext::IfConditionalBody);
                         body.accept(visitor, ctx);
                         ctx.pop();
                     },
                     Ok((else_body, Some("else"))) if tp.traverse_else_body => {
-                        let else_body: FunctionStatementNode = else_body.into();
+                        let else_body: FunctionStatementNode = else_body.unsafe_into();
                         
                         ctx.push(TraversalContext::IfConditionalElseBody);
                         else_body.accept(visitor, ctx);
@@ -104,11 +104,11 @@ impl NamedSyntaxNode for SwitchConditionalNode<'_> {
 
 impl<'script> SwitchConditionalNode<'script> {
     pub fn cond(&self) -> ExpressionNode<'script> {
-        self.field_child("cond").unwrap().into()
+        self.field_child("cond").unwrap().unsafe_into()
     }
 
     pub fn body(&self) -> SwitchConditionalBlockNode<'script> {
-        self.field_child("body").unwrap().into()
+        self.field_child("body").unwrap().unsafe_into()
     }
 }
 
@@ -126,7 +126,7 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -141,14 +141,14 @@ impl SyntaxNodeTraversal for SwitchConditionalNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
-                        let cond: ExpressionNode = cond.into();
+                        let cond: ExpressionNode = cond.unsafe_into();
                         
                         ctx.push(TraversalContext::SwitchConditionalCond);
                         cond.accept(visitor, ctx);
                         ctx.pop();
                     },
                     Ok((body, Some("body"))) if tp.traverse_body => {
-                        let body: SwitchConditionalBlockNode = body.into();
+                        let body: SwitchConditionalBlockNode = body.unsafe_into();
                         
                         ctx.push(TraversalContext::SwitchConditionalBody);
                         body.accept_with_policy(visitor, ctx, tp.clone());
@@ -176,7 +176,7 @@ impl NamedSyntaxNode for SwitchConditionalBlockNode<'_> {
 
 impl<'script> SwitchConditionalBlockNode<'script> {
     pub fn sections(&self) -> impl Iterator<Item = SwitchConditionalSectionNode<'script>> {
-        self.named_children().map(|n| n.into())
+        self.named_children().map(|n| n.unsafe_into())
     }
 
 
@@ -184,7 +184,7 @@ impl<'script> SwitchConditionalBlockNode<'script> {
         for ch in self.children_detailed().must_be_named(true) {
             match ch {
                 Ok((section, _)) => {
-                    let section: SwitchConditionalSectionNode = section.into();
+                    let section: SwitchConditionalSectionNode = section.unsafe_into();
 
                     section.accept(visitor, ctx)
                 }
@@ -211,7 +211,7 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalBlockNode<'script> 
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -251,10 +251,10 @@ impl<'script> SwitchConditionalSectionNode<'script> {
         let k = self.tree_node.kind();
         // first try if self is a label
         if k == SwitchConditionalCaseLabelNode::NODE_KIND {
-            return SwitchConditionalSection::Case(self.into());
+            return SwitchConditionalSection::Case(self.unsafe_into());
         }
         if k == SwitchConditionalDefaultLabelNode::NODE_KIND {
-            return SwitchConditionalSection::Default(self.into());
+            return SwitchConditionalSection::Default(self.unsafe_into());
         }
 
         let range = self.range();
@@ -281,7 +281,7 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalSectionNode<'script
         if k == SwitchConditionalCaseLabelNode::NODE_KIND 
         || k == SwitchConditionalDefaultLabelNode::NODE_KIND 
         || FunctionStatementNode::try_from(value.clone()).is_ok() {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -308,7 +308,7 @@ impl NamedSyntaxNode for SwitchConditionalCaseLabelNode<'_> {
 
 impl<'script> SwitchConditionalCaseLabelNode<'script> {
     pub fn value(&self) -> ExpressionNode<'script> {
-        self.field_child("value").unwrap().into()
+        self.field_child("value").unwrap().unsafe_into()
     }
 }
 
@@ -325,7 +325,7 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalCaseLabelNode<'scri
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -340,7 +340,7 @@ impl SyntaxNodeTraversal for SwitchConditionalCaseLabelNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((value, Some("value"))) if tp.traverse_value => {
-                        let value: ExpressionNode = value.into();
+                        let value: ExpressionNode = value.unsafe_into();
                         
                         ctx.push(TraversalContext::SwitchConditionalCaseLabel);
                         value.accept(visitor, ctx);
@@ -377,7 +377,7 @@ impl<'script> TryFrom<AnyNode<'script>> for SwitchConditionalDefaultLabelNode<'s
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }

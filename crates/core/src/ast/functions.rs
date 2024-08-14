@@ -20,19 +20,19 @@ impl NamedSyntaxNode for EventDeclarationNode<'_> {
 
 impl<'script> EventDeclarationNode<'script> {
     pub fn name(&self) -> IdentifierNode<'script> {
-        self.field_child("name").unwrap().into()
+        self.field_child("name").unwrap().unsafe_into()
     }
 
     pub fn params(&self) -> FunctionParametersNode<'script> {
-        self.field_child("params").unwrap().into()
+        self.field_child("params").unwrap().unsafe_into()
     }
 
     pub fn return_type(&self) -> Option<TypeAnnotationNode<'script>> {
-        self.field_child("return_type").map(|n| n.into())
+        self.field_child("return_type").map(|n| n.unsafe_into())
     }
 
     pub fn definition(&self) -> FunctionDefinitionNode<'script> {
-        self.field_child("definition").unwrap().into()
+        self.field_child("definition").unwrap().unsafe_into()
     }
 }
 
@@ -52,7 +52,7 @@ impl<'script> TryFrom<AnyNode<'script>> for EventDeclarationNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -69,12 +69,12 @@ impl SyntaxNodeTraversal for EventDeclarationNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((params, Some("params"))) if tp.traverse_params => {
-                        let params: FunctionParametersNode = params.into();
+                        let params: FunctionParametersNode = params.unsafe_into();
 
                         params.accept_with_policy(visitor, ctx, tp.traverse_errors);
                     },
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
-                        let def: FunctionDefinitionNode = def.into();
+                        let def: FunctionDefinitionNode = def.unsafe_into();
 
                         def.accept_with_policy(visitor, ctx, tp.traverse_errors);
                     },
@@ -102,31 +102,31 @@ impl NamedSyntaxNode for FunctionDeclarationNode<'_> {
 
 impl<'script> FunctionDeclarationNode<'script> {
     pub fn annotation(&self) -> Option<AnnotationNode<'script>> {
-        self.field_child("annotation").map(|n| n.into())
+        self.field_child("annotation").map(|n| n.unsafe_into())
     }
 
     pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
-        self.field_children("specifiers").map(|n| n.into())
+        self.field_children("specifiers").map(|n| n.unsafe_into())
     }
 
     pub fn flavour(&self) -> Option<FunctionFlavourNode<'script>> {
-        self.field_child("flavour").map(|n| n.into())
+        self.field_child("flavour").map(|n| n.unsafe_into())
     }
 
     pub fn name(&self) -> IdentifierNode<'script> {
-        self.field_child("name").unwrap().into()
+        self.field_child("name").unwrap().unsafe_into()
     }
 
     pub fn params(&self) -> FunctionParametersNode<'script> {
-        self.field_child("params").unwrap().into()
+        self.field_child("params").unwrap().unsafe_into()
     }
 
     pub fn return_type(&self) -> Option<TypeAnnotationNode<'script>> {
-        self.field_child("return_type").map(|n| n.into())
+        self.field_child("return_type").map(|n| n.unsafe_into())
     }
 
     pub fn definition(&self) -> FunctionDefinitionNode<'script> {
-        self.field_child("definition").unwrap().into()
+        self.field_child("definition").unwrap().unsafe_into()
     }
 }
 
@@ -149,7 +149,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionDeclarationNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -163,12 +163,12 @@ impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
             for ch in self_.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((params, Some("params"))) if tp.traverse_params => {
-                        let params: FunctionParametersNode = params.into();
+                        let params: FunctionParametersNode = params.unsafe_into();
     
                         params.accept_with_policy(visitor, ctx, tp.traverse_errors);
                     },
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
-                        let def: FunctionDefinitionNode = def.into();
+                        let def: FunctionDefinitionNode = def.unsafe_into();
     
                         def.accept_with_policy(visitor, ctx, tp.traverse_errors);
                     },
@@ -231,8 +231,8 @@ pub type FunctionDefinitionNode<'script> = SyntaxNode<'script, FunctionDefinitio
 impl<'script> FunctionDefinitionNode<'script> {
     pub fn value(self) -> FunctionDefinition<'script> {
         match self.tree_node.kind() {
-            FunctionBlockNode::NODE_KIND => FunctionDefinition::Some(self.into()),
-            NopNode::NODE_KIND => FunctionDefinition::None(self.into()),
+            FunctionBlockNode::NODE_KIND => FunctionDefinition::Some(self.unsafe_into()),
+            NopNode::NODE_KIND => FunctionDefinition::None(self.unsafe_into()),
             _ => panic!("Unknown function definition node: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
@@ -261,7 +261,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionDefinitionNode<'script> {
 
         match value.tree_node.kind() {
             FunctionBlockNode::NODE_KIND    |
-            NopNode::NODE_KIND              => Ok(value.into()),
+            NopNode::NODE_KIND              => Ok(value.unsafe_into()),
             _ => Err(())
         }
     }
@@ -286,7 +286,7 @@ impl NamedSyntaxNode for FunctionBlockNode<'_> {
 
 impl<'script> FunctionBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = FunctionStatementNode<'script>> {
-        self.named_children().map(|n| n.into())
+        self.named_children().map(|n| n.unsafe_into())
     }
 
 
@@ -294,7 +294,7 @@ impl<'script> FunctionBlockNode<'script> {
         for ch in self.children_detailed().must_be_named(true) {
             match ch {
                 Ok((stmt, _)) => {
-                    let stmt: FunctionStatementNode = stmt.into();
+                    let stmt: FunctionStatementNode = stmt.unsafe_into();
 
                     stmt.accept(visitor, ctx);
                 },
@@ -321,7 +321,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionBlockNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -345,7 +345,7 @@ impl NamedSyntaxNode for FunctionParametersNode<'_> {
 
 impl<'script> FunctionParametersNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = FunctionParameterGroupNode<'script>> {
-        self.named_children().map(|n| n.into())
+        self.named_children().map(|n| n.unsafe_into())
     }
 
 
@@ -353,7 +353,7 @@ impl<'script> FunctionParametersNode<'script> {
         for ch in self.children_detailed().must_be_named(true) {
             match ch {
                 Ok((param_group, _)) => {
-                    let param_group: FunctionParameterGroupNode = param_group.into();
+                    let param_group: FunctionParameterGroupNode = param_group.unsafe_into();
 
                     param_group.accept(visitor, ctx);
                 },
@@ -380,7 +380,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionParametersNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -404,15 +404,15 @@ impl NamedSyntaxNode for FunctionParameterGroupNode<'_> {
 
 impl<'script> FunctionParameterGroupNode<'script> {
     pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
-        self.field_children("specifiers").map(|n| n.into())
+        self.field_children("specifiers").map(|n| n.unsafe_into())
     }
 
     pub fn names(&self) -> impl Iterator<Item = IdentifierNode<'script>> {
-        self.field_children("names").map(|n| n.into())
+        self.field_children("names").map(|n| n.unsafe_into())
     }
 
     pub fn param_type(&self) -> TypeAnnotationNode<'script> {
-        self.field_child("param_type").unwrap().into()
+        self.field_child("param_type").unwrap().unsafe_into()
     }
 }
 
@@ -431,7 +431,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionParameterGroupNode<'script> 
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -501,19 +501,19 @@ pub type FunctionStatementNode<'script> = SyntaxNode<'script, FunctionStatement<
 impl<'script> FunctionStatementNode<'script> {
     pub fn value(self) -> FunctionStatement<'script> {
         match self.tree_node.kind() {
-            LocalVarDeclarationNode::NODE_KIND => FunctionStatement::Var(self.into()),
-            ExpressionStatementNode::NODE_KIND => FunctionStatement::Expr(self.into()),
-            ForLoopNode::NODE_KIND => FunctionStatement::For(self.into()),
-            WhileLoopNode::NODE_KIND => FunctionStatement::While(self.into()),
-            DoWhileLoopNode::NODE_KIND => FunctionStatement::DoWhile(self.into()),
-            IfConditionalNode::NODE_KIND => FunctionStatement::If(self.into()),
-            SwitchConditionalNode::NODE_KIND => FunctionStatement::Switch(self.into()),
-            BreakStatementNode::NODE_KIND => FunctionStatement::Break(self.into()),
-            ContinueStatementNode::NODE_KIND => FunctionStatement::Continue(self.into()),
-            ReturnStatementNode::NODE_KIND => FunctionStatement::Return(self.into()),
-            DeleteStatementNode::NODE_KIND => FunctionStatement::Delete(self.into()),
-            CompoundStatementNode::NODE_KIND => FunctionStatement::Compound(self.into()),
-            NopNode::NODE_KIND => FunctionStatement::Nop(self.into()),
+            LocalVarDeclarationNode::NODE_KIND => FunctionStatement::Var(self.unsafe_into()),
+            ExpressionStatementNode::NODE_KIND => FunctionStatement::Expr(self.unsafe_into()),
+            ForLoopNode::NODE_KIND => FunctionStatement::For(self.unsafe_into()),
+            WhileLoopNode::NODE_KIND => FunctionStatement::While(self.unsafe_into()),
+            DoWhileLoopNode::NODE_KIND => FunctionStatement::DoWhile(self.unsafe_into()),
+            IfConditionalNode::NODE_KIND => FunctionStatement::If(self.unsafe_into()),
+            SwitchConditionalNode::NODE_KIND => FunctionStatement::Switch(self.unsafe_into()),
+            BreakStatementNode::NODE_KIND => FunctionStatement::Break(self.unsafe_into()),
+            ContinueStatementNode::NODE_KIND => FunctionStatement::Continue(self.unsafe_into()),
+            ReturnStatementNode::NODE_KIND => FunctionStatement::Return(self.unsafe_into()),
+            DeleteStatementNode::NODE_KIND => FunctionStatement::Delete(self.unsafe_into()),
+            CompoundStatementNode::NODE_KIND => FunctionStatement::Compound(self.unsafe_into()),
+            NopNode::NODE_KIND => FunctionStatement::Nop(self.unsafe_into()),
             _ => panic!("Unknown function statement type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
@@ -546,7 +546,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionStatementNode<'script> {
             ReturnStatementNode::NODE_KIND      |
             DeleteStatementNode::NODE_KIND      |
             CompoundStatementNode::NODE_KIND    |
-            NopNode::NODE_KIND                  => Ok(value.into()),
+            NopNode::NODE_KIND                  => Ok(value.unsafe_into()),
             _ => Err(())
         }
     }

@@ -50,11 +50,11 @@ impl NamedSyntaxNode for AnnotationNode<'_> {
 
 impl<'script> AnnotationNode<'script> {
     pub fn name(&self) -> AnnotationIdentifierNode<'script> {
-        self.field_child("name").unwrap().into()
+        self.field_child("name").unwrap().unsafe_into()
     }
 
     pub fn arg(&self) -> Option<IdentifierNode<'script>> {
-        self.field_child("arg").map(|n| n.into())
+        self.field_child("arg").map(|n| n.unsafe_into())
     }
 }
 
@@ -72,9 +72,11 @@ impl<'script> TryFrom<AnyNode<'script>> for AnnotationNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
     }
 }
+
+//TODO traversal to annotations

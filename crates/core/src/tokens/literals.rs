@@ -55,7 +55,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralIntNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -102,7 +102,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralFloatNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -142,7 +142,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralBoolNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -184,7 +184,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralStringNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -228,7 +228,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralNameNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -258,7 +258,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralNullNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -298,7 +298,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralHexNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.is_named() && value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -337,13 +337,13 @@ pub type LiteralNode<'script> = SyntaxNode<'script, Literal<'script>>;
 impl<'script> LiteralNode<'script> {
     pub fn value(self) -> Literal<'script> {
         match self.tree_node.kind() {
-            LiteralIntNode::NODE_KIND => Literal::Int(self.into()),
-            LiteralHexNode::NODE_KIND => Literal::Hex(self.into()),
-            LiteralFloatNode::NODE_KIND => Literal::Float(self.into()),
-            LiteralBoolNode::NODE_KIND => Literal::Bool(self.into()),
-            LiteralStringNode::NODE_KIND => Literal::String(self.into()),
-            LiteralNameNode::NODE_KIND => Literal::Name(self.into()),
-            LiteralNullNode::NODE_KIND => Literal::Null(self.into()),
+            LiteralIntNode::NODE_KIND => Literal::Int(self.unsafe_into()),
+            LiteralHexNode::NODE_KIND => Literal::Hex(self.unsafe_into()),
+            LiteralFloatNode::NODE_KIND => Literal::Float(self.unsafe_into()),
+            LiteralBoolNode::NODE_KIND => Literal::Bool(self.unsafe_into()),
+            LiteralStringNode::NODE_KIND => Literal::String(self.unsafe_into()),
+            LiteralNameNode::NODE_KIND => Literal::Name(self.unsafe_into()),
+            LiteralNullNode::NODE_KIND => Literal::Null(self.unsafe_into()),
             _ => panic!("Unknown literal type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
@@ -370,7 +370,7 @@ impl<'script> TryFrom<AnyNode<'script>> for LiteralNode<'script> {
             LiteralBoolNode::NODE_KIND      |
             LiteralStringNode::NODE_KIND    |
             LiteralNameNode::NODE_KIND      |
-            LiteralNullNode::NODE_KIND      => Ok(value.into()),
+            LiteralNullNode::NODE_KIND      => Ok(value.unsafe_into()),
             _ => Err(())
         }
     }

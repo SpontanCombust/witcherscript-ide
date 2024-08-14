@@ -18,7 +18,7 @@ impl NamedSyntaxNode for MemberDefaultsBlockNode<'_> {
 
 impl<'script> MemberDefaultsBlockNode<'script> {
     pub fn iter(&self) -> impl Iterator<Item = MemberDefaultsBlockAssignmentNode<'script>> {
-        self.named_children().map(|n| n.into())
+        self.named_children().map(|n| n.unsafe_into())
     }
 }
 
@@ -36,7 +36,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -51,7 +51,7 @@ impl SyntaxNodeTraversal for MemberDefaultsBlockNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((assign, _)) if tp.traverse_assignments => {
-                        let assign: MemberDefaultsBlockAssignmentNode = assign.into();
+                        let assign: MemberDefaultsBlockAssignmentNode = assign.unsafe_into();
 
                         assign.accept(visitor, ctx);
                     },
@@ -77,11 +77,11 @@ impl NamedSyntaxNode for MemberDefaultsBlockAssignmentNode<'_> {
 
 impl<'script> MemberDefaultsBlockAssignmentNode<'script> {
     pub fn member(&self) -> IdentifierNode<'script> {
-        self.field_child("member").unwrap().into()
+        self.field_child("member").unwrap().unsafe_into()
     }
 
     pub fn value(&self) -> ExpressionNode<'script> {
-        self.field_child("value").unwrap().into()
+        self.field_child("value").unwrap().unsafe_into()
     }
 }
 
@@ -99,7 +99,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultsBlockAssignmentNode<'s
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -116,7 +116,7 @@ impl SyntaxNodeTraversal for MemberDefaultsBlockAssignmentNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((value, Some("value"))) if tp.traverse_value => {
-                        let value: ExpressionNode = value.into();
+                        let value: ExpressionNode = value.unsafe_into();
 
                         value.accept(visitor, ctx);
                     },
@@ -144,11 +144,11 @@ impl NamedSyntaxNode for MemberDefaultValueNode<'_> {
 
 impl<'script> MemberDefaultValueNode<'script> {
     pub fn member(&self) -> IdentifierNode<'script> {
-        self.field_child("member").unwrap().into()
+        self.field_child("member").unwrap().unsafe_into()
     }
 
     pub fn value(&self) -> ExpressionNode<'script> {
-        self.field_child("value").unwrap().into()
+        self.field_child("value").unwrap().unsafe_into()
     }
 }
 
@@ -166,7 +166,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberDefaultValueNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
@@ -183,7 +183,7 @@ impl SyntaxNodeTraversal for MemberDefaultValueNode<'_> {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((value, Some("value"))) if tp.traverse_value => {
-                        let value: ExpressionNode = value.into();
+                        let value: ExpressionNode = value.unsafe_into();
 
                         value.accept(visitor, ctx);
                     },
@@ -211,11 +211,11 @@ impl NamedSyntaxNode for MemberHintNode<'_> {
 
 impl<'script> MemberHintNode<'script> {
     pub fn member(&self) -> IdentifierNode<'script> {
-        self.field_child("member").unwrap().into()
+        self.field_child("member").unwrap().unsafe_into()
     }
 
     pub fn value(&self) -> LiteralStringNode<'script> {
-        self.field_child("value").unwrap().into()
+        self.field_child("value").unwrap().unsafe_into()
     }
 }
 
@@ -233,7 +233,7 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberHintNode<'script> {
 
     fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
         if value.tree_node.kind() == Self::NODE_KIND {
-            Ok(value.into())
+            Ok(value.unsafe_into())
         } else {
             Err(())
         }
