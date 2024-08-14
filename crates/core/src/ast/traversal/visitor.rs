@@ -88,6 +88,16 @@ pub trait SyntaxNodeVisitor {
     /// Called after visiting a ternary conditional expression and possibly also children nodes specified in traversal policy.
     fn exit_ternary_cond_expr(&mut self, n: &TernaryConditionalExpressionNode, ctx: &TraversalContextStack) {}
 
+    /// Called when visiting an array initializer expression.
+    /// Array initializer can be used in the `default` statement context to initialize a member array.
+    /// The syntax for it is like in C++: 
+    /// ```js
+    /// default myArray: array<string> = {"item1", "item2", "item3"}; 
+    /// ```
+    fn visit_array_initializer_expr(&mut self, n: &ArrayInitializerExpressionNode, ctx: &TraversalContextStack) -> ArrayInitializerExpressionTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting an array initializer expression and possibly also children nodes specified in traversal policy.
+    fn exit_array_initializer_expr(&mut self, n: &ArrayInitializerExpressionNode, ctx: &TraversalContextStack) {}
+
 
 
 

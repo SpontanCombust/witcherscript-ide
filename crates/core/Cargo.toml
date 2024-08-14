@@ -13,9 +13,9 @@ thiserror.workspace = true
 shrinkwraprs.workspace = true
 ropey.workspace = true
 lsp-types.workspace = true
-tree-sitter = "0.20"
+tree-sitter = ">=0.22.6"
 encoding_rs_io = "0.1"
 
 [dependencies.tree-sitter-witcherscript]
 git = "https://github.com/SpontanCombust/tree-sitter-witcherscript.git"
-tag = "v0.11.0"
+tag = "v0.12.0"

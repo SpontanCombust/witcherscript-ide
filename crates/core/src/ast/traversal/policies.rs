@@ -401,6 +401,40 @@ impl BitAnd for TernaryConditionalExpressionTraversalPolicy {
 }
 
 
+#[derive(Debug, Clone)]
+pub struct ArrayInitializerExpressionTraversalPolicy {
+    pub traverse_items: bool,
+    pub traverse_errors: bool
+}
+
+impl TraversalPolicy for ArrayInitializerExpressionTraversalPolicy {
+    #[inline(always)]
+    fn default_to(value: bool) -> Self {
+        Self {
+            traverse_items: value,
+            traverse_errors: value
+        }
+    }
+
+    #[inline]
+    fn any(&self) -> bool {
+        self.traverse_items || 
+        self.traverse_errors
+    }
+}
+
+impl BitAnd for ArrayInitializerExpressionTraversalPolicy {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self {
+            traverse_items: self.traverse_items && rhs.traverse_items,
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
+        }
+    }
+}
+
+
 
 
 #[derive(Debug, Clone)]

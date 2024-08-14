@@ -59,7 +59,7 @@ impl Script {
         use ScriptError::*;
 
         let mut parser = Parser::new();
-        parser.set_language(tree_sitter_witcherscript::language()).map_err(ParserInitError)?;
+        parser.set_language(&tree_sitter_witcherscript::language()).map_err(ParserInitError)?;
 
         let parse_tree = parser.parse_with(&mut |byte, _| {
             if byte <= rope.len_bytes() {

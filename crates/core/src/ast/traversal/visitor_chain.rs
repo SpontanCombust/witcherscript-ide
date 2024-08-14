@@ -549,6 +549,16 @@ impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
         self.chain_visit(move |link| link.visit_virtual_parent_expr(n, ctx))
     }
 
+    #[inline]
+    fn visit_array_initializer_expr(&mut self, n: &ArrayInitializerExpressionNode, ctx: &TraversalContextStack) -> ArrayInitializerExpressionTraversalPolicy {
+        self.chain_visit_traversable(move |link| link.visit_array_initializer_expr(n, ctx))
+    }
+
+    #[inline]
+    fn exit_array_initializer_expr(&mut self, n: &ArrayInitializerExpressionNode, ctx: &TraversalContextStack) {
+        self.chain_exit(move |link| link.exit_array_initializer_expr(n, ctx))
+    }
+
 
     #[inline]
     fn visit_annotation(&mut self, n: &AnnotationNode, ctx: &TraversalContextStack) -> AnnotationTraversalPolicy {

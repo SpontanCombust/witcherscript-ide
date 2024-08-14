@@ -20,6 +20,7 @@ mod tags {
     pub struct BinaryOperationExpression;
     pub struct AssignmentOperationExpression;
     pub struct TernaryConditionalExpression;
+    pub struct ArrayInitializerExpression;
     pub struct ExpressionStatement;
 }
 
@@ -1007,6 +1008,69 @@ impl SyntaxNodeTraversal for TernaryConditionalExpressionNode<'_> {
 
 
 
+pub type ArrayInitializerExpressionNode<'script> = SyntaxNode<'script, tags::ArrayInitializerExpression>;
+
+impl NamedSyntaxNode for ArrayInitializerExpressionNode<'_> {
+    const NODE_KIND: &'static str = "array_init_expr";
+}
+
+impl<'script> ArrayInitializerExpressionNode<'script> {
+    pub fn iter(&self) -> impl Iterator<Item = ExpressionNode<'script>> {
+        self.named_children().map(|ch| ch.unsafe_into())
+    }
+}
+
+impl Debug for ArrayInitializerExpressionNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_maybe_alternate_named(
+            &format!("ArrayInitializerExpression {}", self.range().debug()), 
+            &self.iter().collect::<Vec<_>>()
+        )
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for ArrayInitializerExpressionNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.unsafe_into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl SyntaxNodeTraversal for ArrayInitializerExpressionNode<'_> {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        let tp = visitor.visit_array_initializer_expr(self, ctx);
+
+        if tp.any() {
+            ctx.push(TraversalContext::ArrayInitializerExpression);
+
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((item, _)) if tp.traverse_items => {
+                        let item: ExpressionNode = item.unsafe_into();
+
+                        item.accept(visitor, ctx);
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
+
+            ctx.pop();
+        }
+
+        visitor.exit_array_initializer_expr(self, ctx);
+    }
+}
+
+
+
 // Represents the unnamed $._expr node
 #[derive(Clone)]
 pub enum Expression<'script> {
@@ -1026,6 +1090,7 @@ pub enum Expression<'script> {
     BinaryOperation(BinaryOperationExpressionNode<'script>),
     AssignmentOperation(AssignmentOperationExpressionNode<'script>),
     TernaryConditional(TernaryConditionalExpressionNode<'script>),
+    ArrayInitializer(ArrayInitializerExpressionNode<'script>)
 }
 
 impl Debug for Expression<'_> {
@@ -1047,6 +1112,7 @@ impl Debug for Expression<'_> {
             Self::BinaryOperation(n) => f.debug_maybe_alternate(n),
             Self::AssignmentOperation(n) => f.debug_maybe_alternate(n),
             Self::TernaryConditional(n) => f.debug_maybe_alternate(n),
+            Self::ArrayInitializer(n) => f.debug_maybe_alternate(n),
         }
     }
 }
@@ -1078,6 +1144,7 @@ impl<'script> ExpressionNode<'script> {
             LiteralStringNode::NODE_KIND    |
             LiteralNameNode::NODE_KIND      |
             LiteralNullNode::NODE_KIND      => Expression::Literal(self.unsafe_into()),
+            ArrayInitializerExpressionNode::NODE_KIND => Expression::ArrayInitializer(self.unsafe_into()),
             _ => panic!("Unknown expression type: {} {}", self.tree_node.kind(), self.range().debug())
         }
     }
@@ -1119,7 +1186,8 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
             LiteralBoolNode::NODE_KIND                      |
             LiteralStringNode::NODE_KIND                    |
             LiteralNameNode::NODE_KIND                      |
-            LiteralNullNode::NODE_KIND                       => Ok(value.unsafe_into()),
+            LiteralNullNode::NODE_KIND                      |
+            ArrayInitializerExpressionNode::NODE_KIND       => Ok(value.unsafe_into()),
             _ => Err(())
         }
     }
@@ -1221,6 +1289,12 @@ impl<'script> From<TernaryConditionalExpressionNode<'script>> for ExpressionNode
     }
 }
 
+impl<'script> From<ArrayInitializerExpressionNode<'script>> for ExpressionNode<'script> {
+    fn from(value: ArrayInitializerExpressionNode<'script>) -> Self {
+        value.unsafe_into()
+    }
+}
+
 impl SyntaxNodeTraversal for ExpressionNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         match self.clone().value() {
@@ -1240,6 +1314,7 @@ impl SyntaxNodeTraversal for ExpressionNode<'_> {
             Expression::BinaryOperation(n) => n.accept(visitor, ctx),
             Expression::AssignmentOperation(n) => n.accept(visitor, ctx),
             Expression::TernaryConditional(n) => n.accept(visitor, ctx),
+            Expression::ArrayInitializer(n) => n.accept(visitor, ctx),
         }
     }
 }

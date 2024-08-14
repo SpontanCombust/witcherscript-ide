@@ -336,7 +336,7 @@ impl<'script> Iterator for SyntaxNodeChildren<'script> {
 pub struct SyntaxNodeFieldChildren<'script> {
     cursor: ts::TreeCursor<'script>,
     any_children_left: bool,
-    field_id: u16
+    field_id: std::num::NonZeroU16
 }
 
 impl<'script> SyntaxNodeFieldChildren<'script> {
@@ -344,7 +344,7 @@ impl<'script> SyntaxNodeFieldChildren<'script> {
         let mut cursor = cursor.unwrap_or(tree_node.walk());
         let any_children_left = cursor.goto_first_child();
 
-        let field_id = tree_sitter_witcherscript::language()
+        let field_id = tree_node.language()
             .field_id_for_name(field_name)
             .expect(&format!("Unknown field name {}", field_name));
     

@@ -46,6 +46,7 @@ impl<'script> SyntaxNodeTraversal for AnyNode<'script> {
                 BinaryOperationExpressionNode::NODE_KIND => { let n: BinaryOperationExpressionNode = n.unsafe_into(); n.accept(visitor, ctx); },
                 AssignmentOperationExpressionNode::NODE_KIND => { let n: AssignmentOperationExpressionNode = n.unsafe_into(); n.accept(visitor, ctx); },
                 TernaryConditionalExpressionNode::NODE_KIND => { let n: TernaryConditionalExpressionNode = n.unsafe_into(); n.accept(visitor, ctx); },
+                ArrayInitializerExpressionNode::NODE_KIND => { let n: ArrayInitializerExpressionNode = n.unsafe_into(); n.accept(visitor, ctx); },
                 
                 
                 RootNode::NODE_KIND => { let n: RootNode = n.unsafe_into(); n.accept(visitor, ctx); },
