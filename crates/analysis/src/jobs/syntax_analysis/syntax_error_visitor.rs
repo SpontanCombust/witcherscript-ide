@@ -137,7 +137,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         };
 
         RootTraversalPolicy { 
-            traverse,
+            traverse_statements: traverse,
             traverse_errors: false
         }
     }
@@ -442,7 +442,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         };
 
         MemberDefaultsBlockTraversalPolicy { 
-            traverse ,
+            traverse_assignments: traverse ,
             traverse_errors: false
         }
     }
@@ -474,7 +474,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         };
 
         CompoundStatementTraversalPolicy { 
-            traverse ,
+            traverse_statements: traverse ,
             traverse_errors: false
         }
     }

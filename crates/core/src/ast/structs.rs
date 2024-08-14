@@ -259,7 +259,7 @@ impl SyntaxNodeTraversal for MemberDefaultsBlockNode<'_> {
         if tp.any() {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
-                    Ok((assign, _)) if tp.traverse => {
+                    Ok((assign, _)) if tp.traverse_assignments => {
                         let assign: MemberDefaultsBlockAssignmentNode = assign.into();
 
                         assign.accept(visitor, ctx);

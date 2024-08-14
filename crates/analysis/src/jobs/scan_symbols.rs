@@ -234,7 +234,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
     fn visit_root(&mut self, _: &RootNode) -> RootTraversalPolicy {
         RootTraversalPolicy { 
-            traverse: true,
+            traverse_statements: true,
             traverse_errors: false
         }
     }
@@ -802,7 +802,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
     fn visit_compound_stmt(&mut self, _: &CompoundStatementNode, _: &TraversalContextStack) -> CompoundStatementTraversalPolicy {
         CompoundStatementTraversalPolicy { 
-            traverse: true,
+            traverse_statements: true,
             traverse_errors: false
         }
     }

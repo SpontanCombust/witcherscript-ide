@@ -535,7 +535,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         self.visited_non_var_stmt_before = true;
 
         CompoundStatementTraversalPolicy {
-            traverse: true,
+            traverse_statements: true,
             traverse_errors: false
         }
     }

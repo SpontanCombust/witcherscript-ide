@@ -839,7 +839,7 @@ impl SyntaxNodeTraversal for CompoundStatementNode<'_> {
 
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
-                    Ok((stmt, _)) if tp.traverse => {
+                    Ok((stmt, _)) if tp.traverse_statements => {
                         let stmt: FunctionStatementNode = stmt.into();
 
                         stmt.accept(visitor, ctx);

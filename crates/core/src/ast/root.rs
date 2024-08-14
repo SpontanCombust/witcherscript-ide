@@ -136,7 +136,7 @@ impl SyntaxNodeTraversal for RootNode<'_> {
             
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
-                    Ok((stmt, _)) if tp.traverse => {
+                    Ok((stmt, _)) if tp.traverse_statements => {
                         let stmt: RootStatementNode = stmt.into();
                         
                         stmt.accept(visitor, ctx);
