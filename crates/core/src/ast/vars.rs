@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{attribs::SpecifierNode, tokens::IdentifierNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{attribs::*, tokens::*, debug::*, AnyNode, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -7,6 +7,8 @@ mod tags {
     pub struct TypeAnnotation;
     pub struct LocalVarDeclaration;
     pub struct MemberVarDeclaration;
+    pub struct AutobindDeclaration;
+    pub struct AutobindValueSingle;
 }
 
 
@@ -192,6 +194,123 @@ impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
             accept_proper(self, visitor, ctx, tp);
 
             visitor.exit_member_var_decl(self, ctx);
+        }
+    }
+}
+
+
+
+pub type AutobindDeclarationNode<'script> = SyntaxNode<'script, tags::AutobindDeclaration>;
+
+impl NamedSyntaxNode for AutobindDeclarationNode<'_> {
+    const NODE_KIND: &'static str = "autobind_decl";
+}
+
+impl<'script> AutobindDeclarationNode<'script> {
+    pub fn specifiers(&self) -> impl Iterator<Item = SpecifierNode<'script>> {
+        self.field_children("specifiers").map(|n| n.into())
+    }
+
+    pub fn name(&self) -> IdentifierNode<'script> {
+        self.field_child("name").unwrap().into()
+    }
+
+    pub fn autobind_type(&self) -> TypeAnnotationNode<'script> {
+        self.field_child("autobind_type").unwrap().into()
+    }
+
+    pub fn value(&self) -> AutobindValue<'script> {
+        let n = self.field_child("value").unwrap();
+        let kind = n.tree_node.kind();
+        match kind {
+            AutobindValueSingleNode::NODE_KIND => AutobindValue::Single(n.into()),
+            LiteralStringNode::NODE_KIND => AutobindValue::Concrete(n.into()),
+            _ => panic!("Unknown autobind value kind: {} {}", kind, self.range().debug())
+        }
+    }
+}
+
+impl Debug for AutobindDeclarationNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct(&format!("AutobindDeclaration {}", self.range().debug()))
+            .field("specifiers", &self.specifiers().collect::<Vec<_>>())
+            .field("name", &self.name())
+            .field("autobind_type", &self.autobind_type())
+            .field("value", &self.value())
+            .finish()
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for AutobindDeclarationNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl SyntaxNodeTraversal for AutobindDeclarationNode<'_> {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        let tp = visitor.visit_autobind_decl(self, ctx);
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Err(e) => {
+                        e.accept(visitor, ctx)
+                    },
+                    _ => {}
+                }
+            }
+        }
+
+        visitor.exit_autobind_decl(self, ctx);
+    }
+}
+
+
+#[derive(Clone)]
+pub enum AutobindValue<'script> {
+    Single(AutobindValueSingleNode<'script>),
+    Concrete(LiteralStringNode<'script>)
+}
+
+impl Debug for AutobindValue<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Single(n) => f.debug_maybe_alternate(n),
+            Self::Concrete(n) => f.debug_maybe_alternate(n)
+        }
+    }
+}
+
+
+pub type AutobindValueSingleNode<'script> = SyntaxNode<'script, tags::AutobindValueSingle>;
+
+impl NamedSyntaxNode for AutobindValueSingleNode<'_> {
+    const NODE_KIND: &'static str = "autobind_single";
+}
+
+impl AutobindValueSingleNode<'_> {}
+
+impl Debug for AutobindValueSingleNode<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Single {}", self.range().debug())
+    }
+}
+
+impl<'script> TryFrom<AnyNode<'script>> for AutobindValueSingleNode<'script> {
+    type Error = ();
+
+    fn try_from(value: AnyNode<'script>) -> Result<Self, Self::Error> {
+        if value.tree_node.kind() == Self::NODE_KIND {
+            Ok(value.into())
+        } else {
+            Err(())
         }
     }
 }
