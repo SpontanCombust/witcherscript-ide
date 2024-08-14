@@ -605,6 +605,7 @@ impl BitAnd for EnumVariantDeclarationTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct MemberVarDeclarationTraversalPolicy {
+    pub traverse_annotation: bool,
     pub traverse_errors: bool
 }
 
@@ -612,12 +613,14 @@ impl TraversalPolicy for MemberVarDeclarationTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
+            traverse_annotation: value,
             traverse_errors: value
         }
     }
 
     #[inline]
     fn any(&self) -> bool {
+        self.traverse_annotation ||
         self.traverse_errors
     }
 }
@@ -627,6 +630,7 @@ impl BitAnd for MemberVarDeclarationTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
+            traverse_annotation: self.traverse_annotation && rhs.traverse_annotation,
             traverse_errors: self.traverse_errors && rhs.traverse_errors
         }
     }
@@ -793,6 +797,7 @@ impl BitAnd for FunctionParameterGroupTraversalPolicy {
 
 #[derive(Debug, Clone)]
 pub struct FunctionDeclarationTraversalPolicy {
+    pub traverse_annotation: bool,
     pub traverse_params: bool,
     pub traverse_definition: bool,
     pub traverse_errors: bool
@@ -802,6 +807,7 @@ impl TraversalPolicy for FunctionDeclarationTraversalPolicy {
     #[inline(always)]
     fn default_to(value: bool) -> Self {
         Self {
+            traverse_annotation: value,
             traverse_params: value,
             traverse_definition: value,
             traverse_errors: value
@@ -810,6 +816,7 @@ impl TraversalPolicy for FunctionDeclarationTraversalPolicy {
 
     #[inline]
     fn any(&self) -> bool {
+        self.traverse_annotation ||
         self.traverse_params || 
         self.traverse_definition || 
         self.traverse_errors
@@ -821,6 +828,7 @@ impl BitAnd for FunctionDeclarationTraversalPolicy {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self {
+            traverse_annotation: self.traverse_annotation && rhs.traverse_annotation,
             traverse_params: self.traverse_params && rhs.traverse_params,
             traverse_definition: self.traverse_definition && rhs.traverse_definition,
             traverse_errors: self.traverse_errors && rhs.traverse_errors
@@ -1364,6 +1372,36 @@ impl BitAnd for DeleteStatementTraversalPolicy {
     }
 }
 
+
+
+#[derive(Debug, Clone)]
+pub struct AnnotationTraversalPolicy {
+    pub traverse_errors: bool
+}
+
+impl TraversalPolicy for AnnotationTraversalPolicy {
+    #[inline(always)]
+    fn default_to(value: bool) -> Self {
+        Self {
+            traverse_errors: value,
+        }
+    }
+
+    #[inline]
+    fn any(&self) -> bool {
+        self.traverse_errors
+    }
+}
+
+impl BitAnd for AnnotationTraversalPolicy {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self {
+            traverse_errors: self.traverse_errors && rhs.traverse_errors
+        }
+    }
+}
 
 
 

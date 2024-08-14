@@ -85,7 +85,7 @@ impl<'a> SyntaxNodeVisitorChain<'a> {
         }
     }
 }
-
+//TODO add #[inline]s
 impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
     fn traversal_policy_default(&self) -> bool {
         true
@@ -458,6 +458,14 @@ impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
         self.chain_visit(move |link| link.visit_virtual_parent_expr(n, ctx))
     }
 
+
+    fn visit_annotation(&mut self, n: &AnnotationNode, ctx: &TraversalContextStack) -> AnnotationTraversalPolicy {
+        self.chain_visit_traversable(move |link| link.visit_annotation(n, ctx))
+    }
+
+    fn exit_annotation(&mut self, n: &AnnotationNode, ctx: &TraversalContextStack) {
+        self.chain_exit(move |link| link.exit_annotation(n, ctx))
+    }
 
 
     fn visit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) -> ErrorTraversalPolicy {

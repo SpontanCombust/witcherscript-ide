@@ -174,6 +174,11 @@ impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
         let accept_proper = |self_: &Self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: MemberVarDeclarationTraversalPolicy| {
             for ch in self_.children_detailed().must_be_named(true) {
                 match ch {
+                    Ok((annot, Some("annotation"))) if tp.traverse_annotation => {
+                        let annot: AnnotationNode = annot.unsafe_into();
+
+                        annot.accept(visitor, ctx);
+                    },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
                     },

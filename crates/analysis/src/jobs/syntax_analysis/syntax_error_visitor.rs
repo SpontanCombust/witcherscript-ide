@@ -4,7 +4,7 @@ use witcherscript::tokens::*;
 use witcherscript::ast::*;
 use witcherscript_diagnostics::*;
 
-
+//TODO rewrite for the new traversal methodology
 pub fn syntax_analysis(script: &Script, diagnostics: &mut Vec<Diagnostic>) {
     let mut visitor = SyntaxErrorVisitor {
         diagnostics
@@ -355,6 +355,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         FunctionDeclarationTraversalPolicy { 
+            traverse_annotation: false,
             traverse_params,
             traverse_definition,
             traverse_errors: false
@@ -392,7 +393,8 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
             }
         }
         
-        FunctionDeclarationTraversalPolicy { 
+        FunctionDeclarationTraversalPolicy {
+            traverse_annotation: false, 
             traverse_params,
             traverse_definition,
             traverse_errors: false

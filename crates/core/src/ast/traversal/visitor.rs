@@ -256,9 +256,14 @@ pub trait SyntaxNodeVisitor {
     fn visit_nop_stmt(&mut self, n: &NopNode, ctx: &TraversalContextStack) {}
 
 
+    /// Called when visiting an annotation node (e.g. @wrapMethod)
+    fn visit_annotation(&mut self, n: &AnnotationNode, ctx: &TraversalContextStack) -> AnnotationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting an annotation node and possibly also children nodes specified in traversal policy.
+    fn exit_annotation(&mut self, n: &AnnotationNode, ctx: &TraversalContextStack) {}
+
 
     /// Called when visiting a node representing a syntax error.
-    fn visit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) -> ErrorTraversalPolicy { ErrorTraversalPolicy::default_to(self.traversal_policy_default()) }
+    fn visit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) -> ErrorTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting a node representing a syntax error and possibly also children nodes specified in traversal policy.
     fn exit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) {}
 }

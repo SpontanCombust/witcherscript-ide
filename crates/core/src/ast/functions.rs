@@ -162,6 +162,11 @@ impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
         let accept_proper = |self_: &Self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: FunctionDeclarationTraversalPolicy| {
             for ch in self_.children_detailed().must_be_named(true) {
                 match ch {
+                    Ok((annot, Some("annotation"))) if tp.traverse_annotation => {
+                        let annot: AnnotationNode = annot.unsafe_into();
+
+                        annot.accept(visitor, ctx);
+                    },
                     Ok((params, Some("params"))) if tp.traverse_params => {
                         let params: FunctionParametersNode = params.unsafe_into();
     

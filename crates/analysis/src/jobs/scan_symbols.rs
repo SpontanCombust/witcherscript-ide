@@ -543,6 +543,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
 
         FunctionDeclarationTraversalPolicy { 
+            traverse_annotation: false,
             traverse_params: traverse,
             traverse_definition: traverse,
             traverse_errors: false
@@ -622,6 +623,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
 
         FunctionDeclarationTraversalPolicy {
+            traverse_annotation: false,
             traverse_params: traverse,
             traverse_definition: traverse,
             traverse_errors: false

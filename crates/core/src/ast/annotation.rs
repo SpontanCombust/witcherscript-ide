@@ -1,6 +1,6 @@
 use strum_macros::{EnumString, Display, AsRefStr};
-use crate::{AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
-use crate::tokens::{AnnotationIdentifierNode, IdentifierNode};
+use crate::{tokens::*, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
+use super::*;
 
 
 mod tags {
@@ -79,4 +79,21 @@ impl<'script> TryFrom<AnyNode<'script>> for AnnotationNode<'script> {
     }
 }
 
-//TODO traversal to annotations
+impl SyntaxNodeTraversal for AnnotationNode<'_> {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        let tp = visitor.visit_annotation(self, ctx);
+
+        if tp.any() {
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
+        }
+
+        visitor.exit_annotation(self, ctx);
+    }
+}
