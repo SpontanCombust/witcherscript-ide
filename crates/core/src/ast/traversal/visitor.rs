@@ -266,6 +266,11 @@ pub trait SyntaxNodeVisitor {
     fn visit_nop_stmt(&mut self, n: &NopNode, ctx: &TraversalContextStack) {}
 
 
+    /// Called when visiting a type annotation node
+    fn visit_type_annotation(&mut self, n: &TypeAnnotationNode, ctx: &TraversalContextStack) -> TypeAnnotationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
+    /// Called after visiting a type annotation node and possibly also children nodes specified in traversal policy.
+    fn exit_type_annotation(&mut self, n: &TypeAnnotationNode, ctx: &TraversalContextStack) {}
+
     /// Called when visiting an annotation node (e.g. @wrapMethod)
     fn visit_annotation(&mut self, n: &AnnotationNode, ctx: &TraversalContextStack) -> AnnotationTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting an annotation node and possibly also children nodes specified in traversal policy.

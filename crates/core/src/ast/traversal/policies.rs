@@ -146,6 +146,7 @@ traversal_policy!(EnumVariantDeclarationTraversalPolicy,
 
 traversal_policy!(MemberVarDeclarationTraversalPolicy,
     traverse_annotation,
+    traverse_type,
     traverse_errors
 );
 
@@ -164,22 +165,26 @@ traversal_policy!(MemberHintTraversalPolicy,
 );
 
 traversal_policy!(AutobindDeclarationTraversalPolicy,
+    traverse_type,
     traverse_errors
 );
 
 traversal_policy!(FunctionParameterGroupTraversalPolicy,
+    traverse_type,
     traverse_errors
 );
 
 traversal_policy!(FunctionDeclarationTraversalPolicy,
     traverse_annotation,
     traverse_params,
+    traverse_return_type,
     traverse_definition,
     traverse_errors
 );
 
 traversal_policy!(EventDeclarationTraversalPolicy,
     traverse_params,
+    traverse_return_type,
     traverse_definition,
     traverse_errors
 );
@@ -242,6 +247,7 @@ traversal_policy!(CompoundStatementTraversalPolicy,
 );
 
 traversal_policy!(VarDeclarationTraversalPolicy,
+    traverse_type,
     traverse_init_value,
     traverse_errors
 );
@@ -262,6 +268,11 @@ traversal_policy!(DeleteStatementTraversalPolicy,
 );
 
 
+
+traversal_policy!(TypeAnnotationTraversalPolicy,
+    traverse_type_arg,
+    traverse_errors
+);
 
 traversal_policy!(AnnotationTraversalPolicy,
     traverse_errors

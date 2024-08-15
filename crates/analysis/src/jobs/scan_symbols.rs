@@ -545,6 +545,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         FunctionDeclarationTraversalPolicy { 
             traverse_annotation: false,
             traverse_params: traverse,
+            traverse_return_type: false,
             traverse_definition: traverse,
             traverse_errors: false
         }
@@ -625,6 +626,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         FunctionDeclarationTraversalPolicy {
             traverse_annotation: false,
             traverse_params: traverse,
+            traverse_return_type: false,
             traverse_definition: traverse,
             traverse_errors: false
         }
@@ -660,6 +662,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
         EventDeclarationTraversalPolicy { 
             traverse_params: traverse,
+            traverse_return_type: false,
             traverse_definition: traverse,
             traverse_errors: false
         }
@@ -797,6 +800,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         }
 
         VarDeclarationTraversalPolicy {
+            traverse_type: false,
             traverse_init_value: false,
             traverse_errors: false
         }

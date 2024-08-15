@@ -49,6 +49,34 @@ impl<'script> TryFrom<AnyNode<'script>> for TypeAnnotationNode<'script> {
     }
 }
 
+impl SyntaxNodeTraversal for TypeAnnotationNode<'_> {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        let tp = visitor.visit_type_annotation(self, ctx);
+
+        if tp.any() {
+            ctx.push(TraversalContext::TypeAnnotation);
+
+            for ch in self.children_detailed().must_be_named(true) {
+                match ch {
+                    Ok((type_arg, Some("type_arg"))) if tp.traverse_type_arg => {
+                        let type_arg: TypeAnnotationNode = type_arg.unsafe_into();
+
+                        type_arg.accept(visitor, ctx);
+                    },
+                    Err(e) if tp.traverse_errors => {
+                        e.accept(visitor, ctx);
+                    },
+                    _ => {}
+                }
+            }
+
+            ctx.pop();
+        }
+
+        visitor.exit_type_annotation(self, ctx);
+    }
+}
+
 
 
 pub type LocalVarDeclarationNode<'script> = SyntaxNode<'script, tags::LocalVarDeclaration>;
@@ -100,6 +128,11 @@ impl SyntaxNodeTraversal for LocalVarDeclarationNode<'_> {
         if tp.any() {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
+                    Ok((typ, Some("var_type"))) if tp.traverse_type => {
+                        let typ: TypeAnnotationNode = typ.unsafe_into();
+
+                        typ.accept(visitor, ctx);
+                    },
                     Ok((init_value, Some("init_value"))) if tp.traverse_init_value => {
                         let init_value: ExpressionNode = init_value.unsafe_into();
 
@@ -178,6 +211,11 @@ impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
                         let annot: AnnotationNode = annot.unsafe_into();
 
                         annot.accept(visitor, ctx);
+                    },
+                    Ok((typ, Some("var_type"))) if tp.traverse_type => {
+                        let typ: TypeAnnotationNode = typ.unsafe_into();
+
+                        typ.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -265,6 +303,11 @@ impl SyntaxNodeTraversal for AutobindDeclarationNode<'_> {
         if tp.any() {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
+                    Ok((typ, Some("autobind_type"))) if tp.traverse_type => {
+                        let typ: TypeAnnotationNode = typ.unsafe_into();
+
+                        typ.accept(visitor, ctx);
+                    },
                     Err(e) => {
                         e.accept(visitor, ctx)
                     },

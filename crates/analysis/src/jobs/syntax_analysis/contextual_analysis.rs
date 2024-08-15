@@ -456,6 +456,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
 
         VarDeclarationTraversalPolicy {
             traverse_init_value: false,
+            traverse_type: false,
             traverse_errors: false
         }
     }

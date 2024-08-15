@@ -561,6 +561,16 @@ impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
 
 
     #[inline]
+    fn visit_type_annotation(&mut self, n: &TypeAnnotationNode, ctx: &TraversalContextStack) -> TypeAnnotationTraversalPolicy {
+        self.chain_visit_traversable(move |link| link.visit_type_annotation(n, ctx))
+    }
+
+    #[inline]
+    fn exit_type_annotation(&mut self, n: &TypeAnnotationNode, ctx: &TraversalContextStack) {
+        self.chain_exit(move |link| link.exit_type_annotation(n, ctx))
+    }
+
+    #[inline]
     fn visit_annotation(&mut self, n: &AnnotationNode, ctx: &TraversalContextStack) -> AnnotationTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_annotation(n, ctx))
     }

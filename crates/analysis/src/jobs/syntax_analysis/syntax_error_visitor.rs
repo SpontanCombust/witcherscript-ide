@@ -356,6 +356,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         FunctionDeclarationTraversalPolicy { 
             traverse_annotation: false,
+            traverse_return_type: false,
             traverse_params,
             traverse_definition,
             traverse_errors: false
@@ -395,6 +396,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         
         FunctionDeclarationTraversalPolicy {
             traverse_annotation: false, 
+            traverse_return_type: false,
             traverse_params,
             traverse_definition,
             traverse_errors: false
@@ -430,6 +432,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         
         EventDeclarationTraversalPolicy { 
             traverse_params,
+            traverse_return_type: false,
             traverse_definition,
             traverse_errors: false
         }
@@ -492,6 +495,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
         }
 
         VarDeclarationTraversalPolicy {
+            traverse_type: false,
             traverse_init_value,
             traverse_errors: false
         }

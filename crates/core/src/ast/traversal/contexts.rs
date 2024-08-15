@@ -61,6 +61,9 @@ pub enum TraversalContext {
     TernaryConditionalExpressionAlt,
     ArrayInitializerExpression,
 
+    TypeAnnotation,
+    Annotation,
+
     Error
 }
 

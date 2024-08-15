@@ -73,6 +73,11 @@ impl SyntaxNodeTraversal for EventDeclarationNode<'_> {
 
                         params.accept_with_policy(visitor, ctx, tp.traverse_errors);
                     },
+                    Ok((rt, Some("return_type"))) if tp.traverse_return_type => {
+                        let rt: TypeAnnotationNode = rt.unsafe_into();
+
+                        rt.accept(visitor, ctx);
+                    },
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
                         let def: FunctionDefinitionNode = def.unsafe_into();
 
@@ -171,6 +176,11 @@ impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
                         let params: FunctionParametersNode = params.unsafe_into();
     
                         params.accept_with_policy(visitor, ctx, tp.traverse_errors);
+                    },
+                    Ok((rt, Some("return_type"))) if tp.traverse_return_type => {
+                        let rt: TypeAnnotationNode = rt.unsafe_into();
+
+                        rt.accept(visitor, ctx);
                     },
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
                         let def: FunctionDefinitionNode = def.unsafe_into();
@@ -450,6 +460,11 @@ impl SyntaxNodeTraversal for FunctionParameterGroupNode<'_> {
         if tp.any() {
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
+                    Ok((typ, Some("param_type"))) if tp.traverse_type => {
+                        let typ: TypeAnnotationNode = typ.unsafe_into();
+
+                        typ.accept(visitor, ctx);
+                    },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
                     },

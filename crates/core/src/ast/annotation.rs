@@ -84,6 +84,8 @@ impl SyntaxNodeTraversal for AnnotationNode<'_> {
         let tp = visitor.visit_annotation(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::Annotation);
+
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Err(e) if tp.traverse_errors => {
@@ -92,6 +94,8 @@ impl SyntaxNodeTraversal for AnnotationNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_annotation(self, ctx);
