@@ -112,13 +112,7 @@ impl<'script, T> SyntaxNode<'script, T> {
 
     /// Whether any nodes descending from this node are errors
     pub fn has_errors(&self) -> bool {
-        self.use_cursor(|mut cursor| {
-            let any_errors = self.tree_node
-                .children(&mut cursor)
-                .any(|child| child.has_error());
-    
-            (cursor, any_errors)
-        })
+        self.tree_node.has_error()
     }
 
     /// Returns an iterator over ERROR or missing children nodes
@@ -161,8 +155,7 @@ impl<'script, T> SyntaxNode<'script, T> {
 
     #[inline]
     pub fn is_comment(&self) -> bool {
-        // comments are the only syntax that creates nodes but is also treated as whitespace
-        self.tree_node.is_extra()
+        self.tree_node.kind() == "comment"
     }
 
     #[inline]
@@ -417,7 +410,7 @@ impl<'script> Iterator for SyntaxNodeChildrenDetailed<'script> {
     fn next(&mut self) -> Option<Self::Item> {
         if self.any_children_left {
             let mut n = self.cursor.node();
-            while n.is_extra()
+            while (n.is_extra() && !n.is_error()) // all errors are extras, not all extras are errors
             || (self.must_be_named && !n.is_named()) {
                 if self.cursor.goto_next_sibling() {
                     n = self.cursor.node();
@@ -425,7 +418,6 @@ impl<'script> Iterator for SyntaxNodeChildrenDetailed<'script> {
                     return None;
                 }
             }
-
             
             let res = if n.is_error() {
                 Err(ErrorNode::new(n))
