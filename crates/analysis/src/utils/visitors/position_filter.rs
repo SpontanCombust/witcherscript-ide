@@ -155,12 +155,19 @@ impl SyntaxNodeVisitor for PositionFilter {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.currently_in_callable_range = true;
-            if n.params().spans_position(self.pos) {
+
+            if n.annotation().map(|annot| annot.spans_position(self.pos)).unwrap_or(false) {
+                tp.traverse_annotation = true;
+            }
+            else if n.params().spans_position(self.pos) {
                 tp.traverse_params = true;
             }
             else if n.definition().spans_position(self.pos) {
                 tp.traverse_definition = true;
-            } 
+            }
+            else if n.return_type().map(|rt| rt.spans_position(self.pos)).unwrap_or(false) {
+                tp.traverse_return_type = true;
+            }
             else {
                 self.payload.borrow_mut().done = true;
             }
@@ -174,12 +181,21 @@ impl SyntaxNodeVisitor for PositionFilter {
     }
 
     fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy {
+        let mut tp = MemberVarDeclarationTraversalPolicy::default_to(false);
+
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            if n.annotation().map(|annot| annot.spans_position(self.pos)).unwrap_or(false) {
+                tp.traverse_annotation = true;
+            }
+            if n.var_type().spans_position(self.pos) {
+                tp.traverse_type = true;
+            } else {
+                self.payload.borrow_mut().done = true;
+            }
         }
 
-        TraversalPolicy::default_to(false)
+        tp
     }
 
 
@@ -191,12 +207,19 @@ impl SyntaxNodeVisitor for PositionFilter {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             self.currently_in_callable_range = true;
-            if n.params().spans_position(self.pos) {
+
+            if n.annotation().map(|annot| annot.spans_position(self.pos)).unwrap_or(false) {
+                tp.traverse_annotation = true;
+            }
+            else if n.params().spans_position(self.pos) {
                 tp.traverse_params = true;
+            }
+            else if n.return_type().map(|rt| rt.spans_position(self.pos)).unwrap_or(false) {
+                tp.traverse_return_type = true;
             }
             else if n.definition().spans_position(self.pos) {
                 tp.traverse_definition = true;
-            } 
+            }
             else {
                 self.payload.borrow_mut().done = true;
             }
@@ -218,6 +241,9 @@ impl SyntaxNodeVisitor for PositionFilter {
             if n.params().spans_position(self.pos) {
                 tp.traverse_params = true;
             }
+            else if n.return_type().map(|rt| rt.spans_position(self.pos)).unwrap_or(false) {
+                tp.traverse_return_type = true;
+            }
             else if n.definition().spans_position(self.pos) {
                 tp.traverse_definition = true;
             } 
@@ -234,30 +260,50 @@ impl SyntaxNodeVisitor for PositionFilter {
     }
 
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy {
+        let mut tp = FunctionParameterGroupTraversalPolicy::default_to(false);
+
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            if n.param_type().spans_position(self.pos) {
+                tp.traverse_type = true;
+            } else {
+                self.payload.borrow_mut().done = true;
+            }
         }
 
-        TraversalPolicy::default_to(false)
+        tp
     }
 
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy {
+        let mut tp = MemberVarDeclarationTraversalPolicy::default_to(false);
+
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            // not checking annotation node as it's erroniuous in this context
+
+            if n.var_type().spans_position(self.pos) {
+                tp.traverse_type = true;
+            } else {
+                self.payload.borrow_mut().done = true;
+            }
         }
 
-        TraversalPolicy::default_to(false)
+        tp
     }
 
     fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) -> AutobindDeclarationTraversalPolicy {
+        let mut tp = AutobindDeclarationTraversalPolicy::default_to(false);
+
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            if n.autobind_type().spans_position(self.pos) {
+                tp.traverse_type = true;
+            } else {
+                self.payload.borrow_mut().done = true;
+            }
         }
 
-        TraversalPolicy::default_to(false)
+        tp
     }
 
     fn visit_member_hint(&mut self, n: &MemberHintNode, _: &TraversalContextStack) -> MemberHintTraversalPolicy {
@@ -322,7 +368,10 @@ impl SyntaxNodeVisitor for PositionFilter {
         if self.currently_in_range {
             if n.init_value().map(|init_value| init_value.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_init_value = true;
-            } 
+            }
+            else if n.var_type().spans_position(self.pos) {
+                tp.traverse_type = true;
+            }
             else { 
                 self.payload.borrow_mut().done = true;
             }
@@ -783,6 +832,43 @@ impl SyntaxNodeVisitor for PositionFilter {
         if self.currently_in_range {
             self.payload.borrow_mut().done = true;
         }
+    }
+
+    fn visit_array_initializer_expr(&mut self, n: &ArrayInitializerExpressionNode, _: &TraversalContextStack) -> ArrayInitializerExpressionTraversalPolicy {
+        let mut tp = ArrayInitializerExpressionTraversalPolicy::default_to(false);
+
+        self.currently_in_range = n.spans_position(self.pos);
+        if self.currently_in_range {
+            tp.traverse_items = true;
+        }
+      
+        tp
+    }
+
+
+    
+    fn visit_type_annotation(&mut self, n: &TypeAnnotationNode, _: &TraversalContextStack) -> TypeAnnotationTraversalPolicy {
+        let mut tp = TypeAnnotationTraversalPolicy::default_to(false);
+
+        self.currently_in_range = n.spans_position(self.pos);
+        if self.currently_in_range {
+            if n.type_arg().map(|type_arg| type_arg.spans_position(self.pos)).unwrap_or(false) {
+                tp.traverse_type_arg = true;
+            } else {
+                self.payload.borrow_mut().done = true;
+            }
+        }
+
+        tp
+    }
+
+    fn visit_annotation(&mut self, n: &AnnotationNode, _: &TraversalContextStack) -> AnnotationTraversalPolicy {
+        self.currently_in_range = n.spans_position(self.pos);
+        if self.currently_in_range {
+            self.payload.borrow_mut().done = true;
+        }
+
+        TraversalPolicy::default_to(false)
     }
 }
 

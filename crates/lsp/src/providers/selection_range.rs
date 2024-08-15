@@ -82,33 +82,6 @@ impl SelectionRangeResolver {
         self.pos = pos;
         self.range_stack.clear();
     }
-
-
-    fn visit_type_annotation(&mut self, n: &TypeAnnotationNode) {
-        self.range_stack.push(n.range());
-
-        if n.type_name().spans_position(self.pos) {
-            self.range_stack.push(n.type_name().range());
-        } 
-        else if let Some(type_arg) = n.type_arg() {
-            if type_arg.spans_position(self.pos) {
-                self.visit_type_annotation(&type_arg);
-            }
-        }
-    }
-
-    fn visit_annotation(&mut self, n: &AnnotationNode) {
-        self.range_stack.push(n.range());
-
-        if n.name().spans_position(self.pos) {
-            self.range_stack.push(n.name().range());
-        }
-        else if let Some(arg) = n.arg() {
-            if arg.spans_position(self.pos) {
-                self.range_stack.push(arg.range());
-            }
-        }
-    }
 }
 
 impl SyntaxNodeVisitor for SelectionRangeResolver {
@@ -229,14 +202,8 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
-            if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
-                self.visit_annotation(&annot);
-            }
-            else if n.name().spans_position(self.pos) {
+            if n.name().spans_position(self.pos) {
                 self.range_stack.push(n.name().range());
-            }
-            else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
-                self.visit_type_annotation(&rt);
             }
             else if let Some(flavour) = n.flavour().filter(|f| f.spans_position(self.pos)) {
                 self.range_stack.push(flavour.range());
@@ -258,13 +225,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
-            self.visit_annotation(&annot);
-        }
-        else if n.var_type().spans_position(self.pos) {
-            self.visit_type_annotation(&n.var_type());
-        }
-        else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
+        if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
             self.range_stack.push(name.range());
         }
         else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
@@ -281,14 +242,8 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
-            if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
-                self.visit_annotation(&annot);
-            }
-            else if n.name().spans_position(self.pos) {
+            if n.name().spans_position(self.pos) {
                 self.range_stack.push(n.name().range());
-            }
-            else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
-                self.visit_type_annotation(&rt);
             }
             else if let Some(flavour) = n.flavour().filter(|f| f.spans_position(self.pos)) {
                 self.range_stack.push(flavour.range());
@@ -314,9 +269,6 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
             if n.name().spans_position(self.pos) {
                 self.range_stack.push(n.name().range());
             }
-            else if let Some(rt) = n.return_type().filter(|rt| rt.spans_position(self.pos)) {
-                self.visit_type_annotation(&rt);
-            }
         }
         else if n.params().spans_position(self.pos) {
             self.range_stack.push(n.params().range());
@@ -331,10 +283,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if n.param_type().spans_position(self.pos) {
-            self.visit_type_annotation(&n.param_type());
-        } 
-        else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
+        if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
             self.range_stack.push(name.range());
         }
         else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
@@ -347,13 +296,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if let Some(annot) = n.annotation().filter(|annot| annot.spans_position(self.pos)) {
-            self.visit_annotation(&annot);
-        }
-        else if n.var_type().spans_position(self.pos) {
-            self.visit_type_annotation(&n.var_type());
-        }
-        else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
+        if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
             self.range_stack.push(name.range());
         }
         else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
@@ -368,9 +311,6 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
 
         if n.name().spans_position(self.pos) {
             self.range_stack.push(n.name().range());
-        }
-        else if n.autobind_type().spans_position(self.pos) {
-            self.visit_type_annotation(&n.autobind_type());
         }
         else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
             self.range_stack.push(spec.range());
@@ -443,10 +383,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         self.range_stack.push(n.range());
 
         if self.payload.borrow().done {
-            if n.var_type().spans_position(self.pos) {
-                self.visit_type_annotation(&n.var_type());
-            } 
-            else if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
+            if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
                 self.range_stack.push(name.range());
             }
         }
@@ -651,8 +588,44 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         self.range_stack.push(n.range());
     }
 
+    fn visit_array_initializer_expr(&mut self, n: &ArrayInitializerExpressionNode, _: &TraversalContextStack) -> ArrayInitializerExpressionTraversalPolicy {
+        self.range_stack.push(n.range());
 
-    fn visit_error(&mut self, _n: &ErrorNode, _ctx: &TraversalContextStack) -> ErrorTraversalPolicy {
+        TraversalPolicy::default_to(true)
+    }
+
+
+    fn visit_type_annotation(&mut self, n: &TypeAnnotationNode, _: &TraversalContextStack) -> TypeAnnotationTraversalPolicy {
+        self.range_stack.push(n.range());
+
+        if n.type_name().spans_position(self.pos) {
+            self.range_stack.push(n.type_name().range());
+        }
+
+        TraversalPolicy::default_to(true)
+    }
+
+    fn visit_annotation(&mut self, n: &AnnotationNode, _: &TraversalContextStack) -> AnnotationTraversalPolicy {
+        self.range_stack.push(n.range());
+
+        if n.name().spans_position(self.pos) {
+            self.range_stack.push(n.name().range());
+        }
+        else if let Some(arg) = n.arg() {
+            if arg.spans_position(self.pos) {
+                self.range_stack.push(arg.range());
+            }
+        }
+
+        AnnotationTraversalPolicy {
+            traverse_errors: false
+        }
+    }
+
+
+    fn visit_error(&mut self, n: &ErrorNode, _: &TraversalContextStack) -> ErrorTraversalPolicy {
+        self.range_stack.push(n.range());
+
         TraversalPolicy::default_to(false)
     }
 }

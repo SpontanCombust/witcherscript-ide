@@ -4,6 +4,11 @@ use crate::{ast::*, tokens::*, ErrorNode, NamedSyntaxNode, SyntaxNode};
 /// Default opaque node type not possessing any additional capabilities.
 pub type AnyNode<'script> = SyntaxNode<'script, ()>;
 
+impl<'script> AnyNode<'script> {
+    pub fn node_kind(&self) -> &'static str {
+        self.tree_node.kind()
+    }
+}
 
 impl std::fmt::Debug for AnyNode<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

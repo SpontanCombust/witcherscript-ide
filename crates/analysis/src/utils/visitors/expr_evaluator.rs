@@ -409,6 +409,10 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
         self.push(conseq_path, ctx.top());
     }
 
+    fn exit_array_initializer_expr(&mut self, _: &ArrayInitializerExpressionNode, ctx: &TraversalContextStack) {
+        self.push(SymbolPathBuf::unknown(SymbolCategory::Type), ctx.top());
+    }
+
 
     fn visit_error(&mut self, _n: &ErrorNode, _ctx: &TraversalContextStack) -> ErrorTraversalPolicy {
         TraversalPolicy::default_to(false)

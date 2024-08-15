@@ -41,6 +41,11 @@ impl<'script, T> SyntaxNode<'script, T> {
         AnyNode::new(self.tree_node)
     }
 
+    #[inline]
+    pub fn parent_node(&self) -> Option<AnyNode<'script>> {
+        self.tree_node.parent().map(|n| AnyNode::new(n))
+    }
+
     /// Returns an iterator over non-error children of this node as AnyNodes
     #[inline]
     pub fn children(&self) -> SyntaxNodeChildren<'script> {
