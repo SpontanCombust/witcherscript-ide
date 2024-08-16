@@ -12,5 +12,9 @@ impl Backend {
             
             self.reporter.commit_all_diagnostics().await;
         }
+
+        if diff.extended_search_for_workspace_symbols_changed {
+            self.cache.workspace_symbols.write().await.should_refresh = true;
+        }
     }
 }

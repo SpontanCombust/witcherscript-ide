@@ -52,12 +52,15 @@ impl Backend {
     }
 
     async fn refresh_workspace_symbols_cache(&self) {
+        let only_from_workspace = !self.config.read().await.extended_search_for_workspace_symbols;
+
         let content_names: HashMap<AbsPath, String> =
-                self.content_graph
-                .read().await
-                .nodes()
-                .map(|n| (n.content.path().to_owned(), n.content.content_name().to_string()))
-                .collect();
+            self.content_graph
+            .read().await
+            .nodes()
+            .filter(|n| if only_from_workspace { n.in_workspace } else { true })
+            .map(|n| (n.content.path().to_owned(), n.content.content_name().to_string()))
+            .collect();
         
         self.cache.workspace_symbols
             .write().await
@@ -67,10 +70,14 @@ impl Backend {
         let symtabs = self.symtabs.read().await;
         
         for (content_path, st) in symtabs.iter() {
-            let content_name = content_names
-                .get(content_path)
-                .map(|n| n.to_string())
-                .unwrap_or_default();
+            // if the name is not in the map this means that content was filtered out
+            // based on the extended_search_for_workspace_symbols setting
+            let content_name;
+            if let Some(name) = content_names.get(content_path) {
+                content_name = name.to_string();
+            } else {
+                continue;
+            }
 
             let content_symdata_iter = st.iter()
                 .par_bridge()
@@ -83,9 +90,9 @@ impl Backend {
         }
 
         self.cache.workspace_symbols
-                .write().await
-                .unqueried_data
-                .par_sort_unstable_by(|a, b| b.cmp(a));
+            .write().await
+            .unqueried_data
+            .par_sort_unstable_by(|a, b| b.cmp(a));
 
         self.cache.workspace_symbols
             .write().await
