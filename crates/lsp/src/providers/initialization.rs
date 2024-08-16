@@ -13,10 +13,7 @@ use crate::{notifications, Backend};
 #[serde(rename_all = "camelCase")]
 struct InitializationOptions {
     rayon_threads: i32,
-    native_content_path: PathBuf,
-    game_directory: PathBuf,
-    content_repositories: Vec<PathBuf>,
-    enable_syntax_analysis: bool
+    native_content_path: PathBuf
 }
 
 impl Backend {
@@ -55,11 +52,6 @@ impl Backend {
                             self.reporter.log_error("Invalid native_content_path").await;
                         }
                     }
-    
-                    let mut config = self.config.write().await;
-                    config.game_directory = val.game_directory;
-                    config.content_repositories = val.content_repositories;
-                    config.enable_syntax_analysis = val.enable_syntax_analysis;
                 },
                 Err(err) => {
                     self.reporter.log_error(format!("InitializationOptions deserialization fail: {}", err)).await;
@@ -162,6 +154,8 @@ impl Backend {
                 register_options: None 
             }
         ]).await.unwrap();
+
+        self.fetch_config().await;
     
         self.setup_workspace_content_scanners().await;
         self.setup_repository_content_scanners().await;
