@@ -190,6 +190,9 @@ Enable the language server. True by default.  You can disable this if you only w
 ### `witcherscript-ide.languageServer.syntaxAnalysis`
 Enable syntax analysis in the language server. True by default. This may require window reload if there are unresolved syntax analysis related diagnostics present.
 
+### `witcherscript-ide.languageServer.extendedSearchForWorkspaceSymbols`
+Search for code symbols in both workspace projects and their dependencies outside the workspace when using the "Go to Symbol in Workspace" feature.
+
 ### `witcherscript-ide.languageServer.rayonThreads`
 Number of threads allocated to parallel data computation. Leave at 0 for automatic configuration. Change requires extension reload.
 
