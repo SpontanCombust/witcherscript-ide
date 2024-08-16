@@ -9,6 +9,7 @@ pub mod selection_range;
 pub mod document_symbols;
 pub mod goto;
 pub mod hover;
+pub mod workspace_symbols;
 
 pub mod custom;
 

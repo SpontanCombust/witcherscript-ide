@@ -79,4 +79,9 @@ impl EnumVariantSymbol {
             value: 0
         }
     }
+
+    
+    pub fn parent_enum_name(&self) -> &str {
+        self.parent_enum_path.components().next().map(|c| c.name).unwrap_or_default()
+    }
 }

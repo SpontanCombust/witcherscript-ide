@@ -11,6 +11,7 @@ mod providers;
 mod config;
 mod reporting;
 mod tasks;
+mod cache;
 mod requests;
 mod notifications;
 mod model;
@@ -75,6 +76,10 @@ impl LanguageServer for Backend {
 
     async fn document_symbol(&self, params: lsp::DocumentSymbolParams) -> Result<Option<lsp::DocumentSymbolResponse>> {
         self.document_symbol_impl(params).await
+    }
+
+    async fn symbol(&self, params: lsp::WorkspaceSymbolParams) -> Result<Option<Vec<lsp::SymbolInformation>>> {
+        self.symbol_impl(params).await
     }
 
 

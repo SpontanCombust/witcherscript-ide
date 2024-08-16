@@ -153,7 +153,7 @@ impl SymbolTable {
     }
 
 
-    pub(crate) fn iter(&self) -> impl Iterator<Item = (&SymbolPath, &SymbolVariant)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&SymbolPath, &SymbolVariant)> {
         self.symbols.iter().map(|(p, v)| (p.as_sympath(), v))
     }
 

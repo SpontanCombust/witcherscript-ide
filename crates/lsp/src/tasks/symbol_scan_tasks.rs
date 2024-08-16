@@ -80,6 +80,7 @@ impl Backend {
         let duration = Instant::now() - start;
         self.reporter.log_info(format!("Updated symbol table for content {} in {:.3}s", content_path, duration.as_secs_f32())).await;
 
+        self.cache.workspace_symbols.write().await.should_refresh = true;
 
         for loc_diag in scanning_diagnostis {
             self.reporter.push_diagnostic(&loc_diag.path, loc_diag.diagnostic);
@@ -105,6 +106,8 @@ impl Backend {
             symtab.remove_symbols_for_source(p.local());
             self.reporter.clear_diagnostics(p.absolute(), DiagnosticDomain::SymbolAnalysis);
         }
+
+        self.cache.workspace_symbols.write().await.should_refresh = true;
     }
 }
 

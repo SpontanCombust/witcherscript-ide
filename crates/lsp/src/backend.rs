@@ -8,7 +8,7 @@ use abs_path::AbsPath;
 use witcherscript::{script_document::ScriptDocument, Script};
 use witcherscript_analysis::symbol_analysis::symbol_table::{marcher::SymbolTableMarcher, SymbolTable};
 use witcherscript_project::{ContentGraph, SourceTree, SourceTreePath};
-use crate::{config::Config, reporting::Reporter};
+use crate::{cache::Cache, config::Config, reporting::Reporter};
 
 
 
@@ -28,6 +28,8 @@ pub struct BackendInner {
     // key is path to the file
     pub scripts: Arc<ScriptStates>,
     pub symtabs: RwLock<SymbolTables>,
+
+    pub cache: Cache
 }
 
 #[derive(Debug, Shrinkwrap)]
@@ -104,7 +106,9 @@ impl Backend {
                 content_graph: RwLock::new(ContentGraph::new()),
                 source_trees: SourceTreeMap::new(),
                 scripts: Arc::new(ScriptStates::new()),
-                symtabs: RwLock::new(SymbolTables::new())
+                symtabs: RwLock::new(SymbolTables::new()),
+
+                cache: Cache::new()
             })
         }
     }
