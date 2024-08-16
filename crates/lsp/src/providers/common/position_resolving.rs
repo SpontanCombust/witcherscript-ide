@@ -11,14 +11,14 @@ use crate::ScriptState;
 
 
 #[derive(Debug, Clone)]
-pub(super) struct PositionTarget {
+pub struct PositionTarget {
     pub range: lsp::Range,
     pub kind: PositionTargetKind,
     pub sympath_ctx: SymbolPathBuf
 }
 
 #[derive(Debug, Clone)]
-pub(super) enum PositionTargetKind {
+pub enum PositionTargetKind {
     ArrayTypeIdentifier,
     TypeIdentifier(String),
     StateDeclarationNameIdentifier, // more info can be fetched using sympath_ctx 
@@ -100,7 +100,7 @@ impl PositionTarget {
 
 /// A node visitor that can resolve a code identifier/symbol if a specified position points to such.
 /// Expects to work after PositionSeeker in visitor chain.
-pub(super) struct TextDocumentPositionResolver<'a> {
+pub struct TextDocumentPositionResolver<'a> {
     pos: lsp::Position,
     doc: &'a ScriptDocument,
     pos_filter_payload: Rc<RefCell<PositionFilterPayload>>,
@@ -518,7 +518,7 @@ impl SyntaxNodeVisitorChainLink for TextDocumentPositionResolver<'_> {}
 
 
 
-pub(super) fn resolve_text_document_position<'a>(position: lsp::Position, script_state: &'a ScriptState, symtab_marcher: SymbolTableMarcher<'a>) -> Option<PositionTarget> {
+pub fn resolve_text_document_position<'a>(position: lsp::Position, script_state: &'a ScriptState, symtab_marcher: SymbolTableMarcher<'a>) -> Option<PositionTarget> {
     let (mut main_pos_filter, _) = PositionFilter::new(position);
     main_pos_filter.filter_statements = false;
 
