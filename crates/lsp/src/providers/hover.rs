@@ -737,13 +737,13 @@ impl RenderTooltip for MemberFunctionInjectorSymbol {
         buf.push(')');
         buf.push('\n');
 
-        for spec in self.specifiers.iter() {
+        for spec in self.backer.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
         }
 
-        if let Some(flavour) = self.flavour.clone() {
+        if let Some(flavour) = self.backer.flavour.clone() {
             let kw: Keyword = flavour.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
@@ -783,7 +783,7 @@ impl RenderTooltip for MemberFunctionInjectorSymbol {
         buf.push(' ');
         buf.push(':');
         buf.push(' ');
-        buf.push_str(self.return_type_name()); 
+        buf.push_str(self.backer.return_type_name()); 
     }
 }
 
@@ -795,13 +795,13 @@ impl RenderTooltip for MemberFunctionReplacerSymbol {
         buf.push(')');
         buf.push('\n');
 
-        for spec in self.specifiers.iter() {
+        for spec in self.backer.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
         }
 
-        if let Some(flavour) = self.flavour.clone() {
+        if let Some(flavour) = self.backer.flavour.clone() {
             let kw: Keyword = flavour.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
@@ -841,7 +841,7 @@ impl RenderTooltip for MemberFunctionReplacerSymbol {
         buf.push(' ');
         buf.push(':');
         buf.push(' ');
-        buf.push_str(self.return_type_name()); 
+        buf.push_str(self.backer.return_type_name()); 
     }
 }
 
@@ -850,13 +850,13 @@ impl RenderTooltip for GlobalFunctionReplacerSymbol {
         buf.push_str(AnnotationKind::ReplaceMethod.as_ref());
         buf.push('\n');
 
-        for spec in self.specifiers.iter() {
+        for spec in self.backer.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
         }
 
-        if let Some(flavour) = self.flavour.clone() {
+        if let Some(flavour) = self.backer.flavour.clone() {
             let kw: Keyword = flavour.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
@@ -890,13 +890,13 @@ impl RenderTooltip for GlobalFunctionReplacerSymbol {
             buf.push_str(", ");
             param.render_partial(buf);
         }
-        
+
         buf.push(')');
 
         buf.push(' ');
         buf.push(':');
         buf.push(' ');
-        buf.push_str(self.return_type_name()); 
+        buf.push_str(self.backer.return_type_name()); 
     }
 }
 
@@ -944,7 +944,7 @@ impl RenderTooltip for MemberFunctionWrapperSymbol {
         buf.push(' ');
         buf.push(':');
         buf.push(' ');
-        buf.push_str(self.return_type_name()); 
+        buf.push_str(self.backer.return_type_name()); 
     }
 }
 
@@ -956,7 +956,7 @@ impl RenderTooltip for MemberVarInjectorSymbol {
         buf.push(')');
         buf.push('\n');
 
-        for spec in self.specifiers.iter() {
+        for spec in self.backer.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
@@ -968,7 +968,7 @@ impl RenderTooltip for MemberVarInjectorSymbol {
         buf.push(' ');
         buf.push(':');
         buf.push(' ');
-        buf.push_str(self.type_name());
+        buf.push_str(self.backer.type_name());
     }
 }
 

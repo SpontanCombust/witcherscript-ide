@@ -411,35 +411,35 @@ impl ToDocumentSymbol for ConstructorSymbol {
 impl ToDocumentSymbol for MemberFunctionInjectorSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        self.inner.to_doc_sym()
+        self.backer.to_doc_sym()
     }
 }
 
 impl ToDocumentSymbol for MemberFunctionReplacerSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        self.inner.to_doc_sym()
+        self.backer.to_doc_sym()
     }
 }
 
 impl ToDocumentSymbol for GlobalFunctionReplacerSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        self.inner.to_doc_sym()
+        self.backer.to_doc_sym()
     }
 }
 
 impl ToDocumentSymbol for MemberFunctionWrapperSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        self.inner.to_doc_sym()
+        self.backer.to_doc_sym()
     }
 }
 
 impl ToDocumentSymbol for MemberVarInjectorSymbol {
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        self.inner.to_doc_sym()
+        self.backer.to_doc_sym()
     }
 }
 

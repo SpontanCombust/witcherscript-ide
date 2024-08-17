@@ -1,14 +1,12 @@
-use shrinkwraprs::Shrinkwrap;
 use witcherscript::ast::WRAPPED_METHOD_NAME;
 use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
 /// Corresponding to @addMethod(Class) functions
-#[derive(Debug, Clone, Shrinkwrap)]
-#[shrinkwrap(mutable)]
+#[derive(Debug, Clone)]
 pub struct MemberFunctionInjectorSymbol {
-    pub inner: MemberFunctionSymbol
+    pub backer: MemberFunctionSymbol
 }
 
 impl Symbol for MemberFunctionInjectorSymbol {
@@ -17,22 +15,22 @@ impl Symbol for MemberFunctionInjectorSymbol {
     }
 
     fn path(&self) -> &SymbolPath {
-        &self.inner.path()
+        &self.backer.path()
     }
 }
 
 impl LocatableSymbol for MemberFunctionInjectorSymbol {
     fn location(&self) -> &SymbolLocation {
-        &self.inner.location()
+        &self.backer.location()
     }
 }
 
 impl PrimarySymbol for MemberFunctionInjectorSymbol { }
 
 impl MemberFunctionInjectorSymbol {
-    pub fn new(inner: MemberFunctionSymbol) -> Self {
+    pub fn new(backer: MemberFunctionSymbol) -> Self {
         Self {
-            inner
+            backer
         }
     }
 }
@@ -40,10 +38,9 @@ impl MemberFunctionInjectorSymbol {
 
 
 /// Corresponding to @replaceMethod(Class) functions
-#[derive(Debug, Clone, Shrinkwrap)]
-#[shrinkwrap(mutable)]
+#[derive(Debug, Clone)]
 pub struct MemberFunctionReplacerSymbol {
-    pub inner: MemberFunctionSymbol
+    pub backer: MemberFunctionSymbol
 }
 
 impl Symbol for MemberFunctionReplacerSymbol {
@@ -52,22 +49,22 @@ impl Symbol for MemberFunctionReplacerSymbol {
     }
 
     fn path(&self) -> &SymbolPath {
-        &self.inner.path()
+        &self.backer.path()
     }
 }
 
 impl LocatableSymbol for MemberFunctionReplacerSymbol {
     fn location(&self) -> &SymbolLocation {
-        &self.inner.location()
+        &self.backer.location()
     }
 }
 
 impl PrimarySymbol for MemberFunctionReplacerSymbol { }
 
 impl MemberFunctionReplacerSymbol {
-    pub fn new(inner: MemberFunctionSymbol) -> Self {
+    pub fn new(backer: MemberFunctionSymbol) -> Self {
         Self {
-            inner
+            backer
         }
     }
 }
@@ -75,10 +72,9 @@ impl MemberFunctionReplacerSymbol {
 
 
 /// Corresponding to @replaceMethod functions
-#[derive(Debug, Clone, Shrinkwrap)]
-#[shrinkwrap(mutable)]
+#[derive(Debug, Clone)]
 pub struct GlobalFunctionReplacerSymbol {
-    pub inner: GlobalFunctionSymbol
+    pub backer: GlobalFunctionSymbol
 }
 
 impl Symbol for GlobalFunctionReplacerSymbol {
@@ -87,22 +83,22 @@ impl Symbol for GlobalFunctionReplacerSymbol {
     }
 
     fn path(&self) -> &SymbolPath {
-        &self.inner.path()
+        &self.backer.path()
     }
 }
 
 impl LocatableSymbol for GlobalFunctionReplacerSymbol {
     fn location(&self) -> &SymbolLocation {
-        &self.inner.location()
+        &self.backer.location()
     }
 }
 
 impl PrimarySymbol for GlobalFunctionReplacerSymbol { }
 
 impl GlobalFunctionReplacerSymbol {
-    pub fn new(inner: GlobalFunctionSymbol) -> Self {
+    pub fn new(backer: GlobalFunctionSymbol) -> Self {
         Self {
-            inner
+            backer
         }
     }
 }
@@ -110,10 +106,9 @@ impl GlobalFunctionReplacerSymbol {
 
 
 /// Corresponding to @wrapMethod(Class) functions
-#[derive(Debug, Clone, Shrinkwrap)]
-#[shrinkwrap(mutable)]
+#[derive(Debug, Clone)]
 pub struct MemberFunctionWrapperSymbol {
-    pub inner: MemberFunctionSymbol
+    pub backer: MemberFunctionSymbol
 }
 
 impl Symbol for MemberFunctionWrapperSymbol {
@@ -122,22 +117,22 @@ impl Symbol for MemberFunctionWrapperSymbol {
     }
 
     fn path(&self) -> &SymbolPath {
-        &self.inner.path()
+        &self.backer.path()
     }
 }
 
 impl LocatableSymbol for MemberFunctionWrapperSymbol {
     fn location(&self) -> &SymbolLocation {
-        &self.inner.location()
+        &self.backer.location()
     }
 }
 
 impl PrimarySymbol for MemberFunctionWrapperSymbol { }
 
 impl MemberFunctionWrapperSymbol {
-    pub fn new(inner: MemberFunctionSymbol) -> Self {
+    pub fn new(backer: MemberFunctionSymbol) -> Self {
         Self {
-            inner
+            backer
         }
     }
 }
@@ -176,10 +171,9 @@ impl WrappedMethodSymbol {
 
 
 /// Corresponding to @addField(Class) vars
-#[derive(Debug, Clone, Shrinkwrap)]
-#[shrinkwrap(mutable)]
+#[derive(Debug, Clone)]
 pub struct MemberVarInjectorSymbol {
-    pub inner: MemberVarSymbol
+    pub backer: MemberVarSymbol
 }
 
 impl Symbol for MemberVarInjectorSymbol {
@@ -188,22 +182,22 @@ impl Symbol for MemberVarInjectorSymbol {
     }
 
     fn path(&self) -> &SymbolPath {
-        &self.inner.path()
+        &self.backer.path()
     }
 }
 
 impl LocatableSymbol for MemberVarInjectorSymbol {
     fn location(&self) -> &SymbolLocation {
-        &self.inner.location()
+        &self.backer.location()
     }
 }
 
 impl PrimarySymbol for MemberVarInjectorSymbol { }
 
 impl MemberVarInjectorSymbol {
-    pub fn new(inner: MemberVarSymbol) -> Self {
+    pub fn new(backer: MemberVarSymbol) -> Self {
         Self {
-            inner
+            backer
         }
     }
 }
