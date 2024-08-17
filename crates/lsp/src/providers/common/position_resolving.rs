@@ -54,7 +54,7 @@ impl PositionTarget {
                     let mut base_state_path = None;
                     for state in symtab_marcher.state_hierarchy(target_state_sym.path()) {
                         if state.state_name() == base_state_name {
-                            base_state_path = Some(state.path().to_owned());
+                            base_state_path = Some(state.path_ref().to_owned());
                             break;
                         }
                     }

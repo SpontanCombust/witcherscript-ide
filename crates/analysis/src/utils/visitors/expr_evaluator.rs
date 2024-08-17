@@ -91,18 +91,18 @@ impl<'a> ExpressionEvaluator<'a> {
     fn produce_type(&self, path: &SymbolPath) -> SymbolPathBuf {
         if let Some(symvar) = self.symtab_marcher.get_symbol(path) {
             match symvar {
-                SymbolVariant::Class(s) => s.path().to_owned(),
-                SymbolVariant::State(s) => s.path().to_owned(),
-                SymbolVariant::Struct(s) => s.path().to_owned(),
-                SymbolVariant::Enum(s) => s.path().to_owned(),
-                SymbolVariant::Array(s) => s.path().to_owned(),
+                SymbolVariant::Class(s) => s.path_ref().to_owned(),
+                SymbolVariant::State(s) => s.path_ref().to_owned(),
+                SymbolVariant::Struct(s) => s.path_ref().to_owned(),
+                SymbolVariant::Enum(s) => s.path_ref().to_owned(),
+                SymbolVariant::Array(s) => s.path_ref().to_owned(),
                 SymbolVariant::ArrayFunc(s) => s.return_type_path.clone().into(),
                 SymbolVariant::ArrayFuncParam(s) => s.type_path.clone().into(),
                 SymbolVariant::GlobalFunc(s) => s.return_type_path.clone().into(),
                 SymbolVariant::MemberFunc(s) => s.return_type_path.clone().into(),
                 SymbolVariant::Event(_) => BasicTypeSymbolPath::new("void").into(), // I guess??
                 SymbolVariant::Constructor(s) => s.parent_type_path.clone().into(),
-                SymbolVariant::Primitive(s) => s.path().to_owned(),
+                SymbolVariant::Primitive(s) => s.path_ref().to_owned(),
                 SymbolVariant::EnumVariant(s) => s.parent_enum_path.clone().into(),
                 SymbolVariant::FuncParam(s) => s.type_path.clone().into(),
                 SymbolVariant::GlobalVar(s) => s.type_path().to_owned().into(),
@@ -117,7 +117,7 @@ impl<'a> ExpressionEvaluator<'a> {
                         self.symtab_marcher
                             .state_hierarchy(state_path)
                             .skip(1).next()
-                            .map(|sym| sym.path().to_owned())
+                            .map(|sym| sym.path_ref().to_owned())
                             .unwrap_or(SymbolPathBuf::unknown(SymbolCategory::Type))
                     } else {
                         BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME).into()

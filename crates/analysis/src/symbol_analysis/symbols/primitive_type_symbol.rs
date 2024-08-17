@@ -1,4 +1,4 @@
-use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
+use crate::symbol_analysis::symbol_path::SymbolPathBuf;
 use super::*;
 
 
@@ -12,11 +12,13 @@ pub struct PrimitiveTypeSymbol {
 }
 
 impl Symbol for PrimitiveTypeSymbol {
+    type PathType = SymbolPathBuf;
+
     fn typ(&self) -> SymbolType {
         SymbolType::Type
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }

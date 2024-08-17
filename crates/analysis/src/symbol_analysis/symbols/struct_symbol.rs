@@ -1,5 +1,4 @@
 use witcherscript::attribs::StructSpecifier;
-use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
@@ -11,11 +10,13 @@ pub struct StructSymbol {
 }
 
 impl Symbol for StructSymbol {
+    type PathType = BasicTypeSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::Struct
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -50,11 +51,13 @@ pub struct ConstructorSymbol {
 }
 
 impl Symbol for ConstructorSymbol {
+    type PathType = GlobalCallableSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::Constructor
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }

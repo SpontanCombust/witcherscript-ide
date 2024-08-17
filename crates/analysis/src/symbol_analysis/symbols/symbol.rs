@@ -1,15 +1,23 @@
-use crate::symbol_analysis::symbol_path::SymbolPath;
+use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::SymbolLocation;
 
 
 pub trait Symbol {
+    type PathType: AsRef<SymbolPathBuf>;
+
     fn typ(&self) -> SymbolType;
-    fn path(&self) -> &SymbolPath;
+    fn path(&self) -> &Self::PathType;
+
+    /// Shorthand of path().as_ref() for &SymbolPath reference
+    #[inline]
+    fn path_ref(&self) -> &SymbolPath {
+        self.path().as_ref()
+    }
 
     /// Returns name of the last path component.
     /// If path is empty returns empty string.
     fn name(&self) -> &str {
-        self.path().components().last().map(|c| c.name).unwrap_or("")
+        self.path().as_ref().components().last().map(|c| c.name).unwrap_or("")
     }
 }
 

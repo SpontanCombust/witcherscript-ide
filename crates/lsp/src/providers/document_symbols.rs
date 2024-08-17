@@ -57,13 +57,13 @@ impl Backend {
         for sym_variant in symtab_ref.get_symbols_for_source(content_info.source_tree_path.local()) {
             if let Some(doc_sym) = sym_variant.to_doc_sym() {    
                 if let Some(enum_sym) = sym_variant.try_as_enum_ref() {
-                    doc_enums.insert(enum_sym.path().to_owned(), doc_sym);
+                    doc_enums.insert(enum_sym.path_ref().to_owned(), doc_sym);
                 }
                 else if let Some(enum_variant_sym) = sym_variant.try_as_enum_variant_ref() {
                     doc_enum_variants.push((enum_variant_sym.parent_enum_path.clone().into(), doc_sym));
                 }
                 else {
-                    let sympath = sym_variant.path();
+                    let sympath = sym_variant.path_ref();
                     // if the symbol is not primary, then we need to reduce the stack to a form
                     // in which the top element if the parent symbol of the current
                     if let Some(parent_sympath) = sympath.parent() {

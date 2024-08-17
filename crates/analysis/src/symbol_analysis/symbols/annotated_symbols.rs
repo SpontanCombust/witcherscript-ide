@@ -1,5 +1,4 @@
 use witcherscript::ast::WRAPPED_METHOD_NAME;
-use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
@@ -10,11 +9,13 @@ pub struct MemberFunctionInjectorSymbol {
 }
 
 impl Symbol for MemberFunctionInjectorSymbol {
+    type PathType = MemberCallableSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::MemberFunctionInjector
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.backer.path()
     }
 }
@@ -44,11 +45,13 @@ pub struct MemberFunctionReplacerSymbol {
 }
 
 impl Symbol for MemberFunctionReplacerSymbol {
+    type PathType = MemberCallableSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::MemberFunctionReplacer
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.backer.path()
     }
 }
@@ -78,11 +81,13 @@ pub struct GlobalFunctionReplacerSymbol {
 }
 
 impl Symbol for GlobalFunctionReplacerSymbol {
+    type PathType = GlobalCallableSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::GlobalFunctionReplacer
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.backer.path()
     }
 }
@@ -112,11 +117,13 @@ pub struct MemberFunctionWrapperSymbol {
 }
 
 impl Symbol for MemberFunctionWrapperSymbol {
+    type PathType = MemberCallableSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::MemberFunctionWrapper
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.backer.path()
     }
 }
@@ -146,11 +153,13 @@ pub struct WrappedMethodSymbol {
 }
 
 impl Symbol for WrappedMethodSymbol {
+    type PathType = MemberCallableSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::WrappedMethod
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -177,11 +186,13 @@ pub struct MemberVarInjectorSymbol {
 }
 
 impl Symbol for MemberVarInjectorSymbol {
+    type PathType = MemberDataSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::MemberVarInjector
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.backer.path()
     }
 }

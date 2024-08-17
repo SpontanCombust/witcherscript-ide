@@ -80,7 +80,7 @@ impl<'a> SymbolTableMarcher<'a> {
     #[inline]
     pub fn find_table_with_symbol(&self, symvar: &SymbolVariant) -> Option<&'a SymbolTable> {
         self.march(|masked| {
-            if masked.get_symbol(symvar.path()).filter(|v| v.location() == symvar.location()).is_some() { 
+            if masked.get_symbol(symvar.path_ref()).filter(|v| v.location() == symvar.location()).is_some() { 
                 Some(masked.symtab) 
             } else { 
                 None 
@@ -173,7 +173,7 @@ impl<'a> MaskedSymbolTable<'a> {
     fn test_contains_symbol(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         if let Some(occupying) = self.get_symbol(path) {
             Err(PathOccupiedError {
-                occupied_path: occupying.path().to_sympath_buf(),
+                occupied_path: occupying.path_ref().to_sympath_buf(),
                 occupied_location: occupying.location().cloned(),
                 occupied_typ: occupying.typ()
             })
@@ -288,7 +288,7 @@ impl<'a> Iterator for StateHierarchy<'a> {
                 'classes: for class in self.marcher.class_hierarchy(current_state_sym.parent_class_path()) {
                     for state in self.marcher.class_states(class.path()) {
                         if state.state_name() == base_state_name {
-                            state.path().clone_into(&mut self.current_state_path);
+                            state.path_ref().clone_into(&mut self.current_state_path);
                             break 'classes;
                         }
                     }

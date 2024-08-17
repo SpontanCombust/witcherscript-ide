@@ -115,7 +115,7 @@ impl SymbolVariant {
         }
     }
 
-    pub fn path(&self) -> &SymbolPath {
+    pub fn path_ref(&self) -> &SymbolPath {
         match self {
             Self::Class(s) => s.path(),
             Self::State(s) => s.path(),

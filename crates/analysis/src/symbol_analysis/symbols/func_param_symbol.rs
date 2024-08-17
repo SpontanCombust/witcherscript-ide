@@ -1,5 +1,4 @@
 use witcherscript::attribs::FunctionParameterSpecifier;
-use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
@@ -13,11 +12,13 @@ pub struct FunctionParameterSymbol {
 }
 
 impl Symbol for FunctionParameterSymbol {
+    type PathType = MemberDataSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::Parameter
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }

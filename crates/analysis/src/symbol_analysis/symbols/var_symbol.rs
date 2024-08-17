@@ -13,11 +13,13 @@ pub struct MemberVarSymbol {
 }
 
 impl Symbol for MemberVarSymbol {
+    type PathType = MemberDataSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::MemberVar
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -54,11 +56,13 @@ pub struct LocalVarSymbol {
 }
 
 impl Symbol for LocalVarSymbol {
+    type PathType = MemberDataSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::LocalVar
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -92,11 +96,13 @@ pub struct GlobalVarSymbol {
 }
 
 impl Symbol for GlobalVarSymbol {
+    type PathType = SymbolPathBuf;
+
     fn typ(&self) -> SymbolType {
         SymbolType::GlobalVar
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -128,11 +134,13 @@ pub struct ThisVarSymbol {
 }
 
 impl Symbol for ThisVarSymbol {
+    type PathType = ThisVarSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::ThisVar
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -162,11 +170,13 @@ pub struct SuperVarSymbol {
 }
 
 impl Symbol for SuperVarSymbol {
+    type PathType = SuperVarSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::SuperVar
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -206,11 +216,13 @@ pub struct StateSuperVarSymbol {
 }
 
 impl Symbol for StateSuperVarSymbol {
+    type PathType = SuperVarSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::SuperVar
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -236,11 +248,13 @@ pub struct ParentVarSymbol {
 }
 
 impl Symbol for ParentVarSymbol {
+    type PathType = ParentVarSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::ParentVar
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -270,11 +284,13 @@ pub struct VirtualParentVarSymbol {
 }
 
 impl Symbol for VirtualParentVarSymbol {
+    type PathType = VirtualParentVarSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::VirtualParentVar
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }

@@ -1,4 +1,3 @@
-use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
@@ -8,11 +7,13 @@ pub struct ArrayTypeSymbol {
 }
 
 impl Symbol for ArrayTypeSymbol {
+    type PathType = ArrayTypeSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::Array
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -257,11 +258,13 @@ pub struct ArrayTypeFunctionSymbol {
 }
 
 impl Symbol for ArrayTypeFunctionSymbol {
+    type PathType = MemberCallableSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::MemberFunction
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -282,11 +285,13 @@ pub struct ArrayTypeFunctionParameterSymbol {
 }
 
 impl Symbol for ArrayTypeFunctionParameterSymbol {
+    type PathType = MemberDataSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::Parameter
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }

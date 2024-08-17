@@ -1,4 +1,3 @@
-use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
@@ -9,11 +8,13 @@ pub struct EnumSymbol {
 }
 
 impl Symbol for EnumSymbol {
+    type PathType = BasicTypeSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::Enum
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -51,11 +52,13 @@ pub struct EnumVariantSymbol {
 }
 
 impl Symbol for EnumVariantSymbol {
+    type PathType = GlobalDataSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::EnumVariant
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }

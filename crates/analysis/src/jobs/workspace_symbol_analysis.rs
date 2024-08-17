@@ -15,7 +15,7 @@ pub fn workspace_symbol_analysis(target_symtab: &SymbolTable, marcher: SymbolTab
         .filter(|p| !matches!(p.typ(), SymbolType::MemberFunctionWrapper | SymbolType::MemberFunctionReplacer | SymbolType::GlobalFunctionReplacer))
         .filter_map(|primary| {
             let primary_loc = primary.location().unwrap(); // primary symbols always have location
-            if let Err(err) = marcher.test_contains_symbol(primary.path()) {
+            if let Err(err) = marcher.test_contains_symbol(primary.path_ref()) {
                 Some(LocatedDiagnostic {
                     path: primary_loc.abs_source_path(),
                     diagnostic: Diagnostic {

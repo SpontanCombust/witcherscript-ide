@@ -65,25 +65,25 @@ impl SymbolTable {
 
     pub(crate) fn insert_symbol<S>(&mut self, sym: S)
     where S: Symbol + Into<SymbolVariant> {
-        self.symbols.insert(sym.path().to_owned(), sym.into());
+        self.symbols.insert(sym.path_ref().to_owned(), sym.into());
     }
 
     pub(crate) fn insert_primary_symbol<S>(&mut self, sym: S)
     where S: PrimarySymbol + LocatableSymbol + Into<SymbolVariant> {
         self.source_path_assocs.entry(sym.location().local_source_path.clone())
             .or_default()
-            .push(sym.path().to_owned());
+            .push(sym.path_ref().to_owned());
 
-        self.symbols.insert(sym.path().to_owned(), sym.into());
+        self.symbols.insert(sym.path_ref().to_owned(), sym.into());
     }
 
     pub(crate) fn insert_array_type_symbol(&mut self, sym: ArrayTypeSymbol, ref_local_source_path: &Path) {
         self.array_type_refs
-            .entry(sym.path().to_owned())
+            .entry(sym.path_ref().to_owned())
             .or_default()
             .insert(ref_local_source_path.to_owned());
 
-        self.symbols.insert(sym.path().to_owned(), sym.into());
+        self.symbols.insert(sym.path_ref().to_owned(), sym.into());
     }
 
 
@@ -97,7 +97,7 @@ impl SymbolTable {
     pub fn test_contains_symbol(&self, path: &SymbolPath) -> Result<(), PathOccupiedError> {
         if let Some(occupying) = self.symbols.get(path) {
             Err(PathOccupiedError {
-                occupied_path: occupying.path().to_sympath_buf(),
+                occupied_path: occupying.path_ref().to_sympath_buf(),
                 occupied_location: occupying.location().cloned(),
                 occupied_typ: occupying.typ()
             })
@@ -121,7 +121,7 @@ impl SymbolTable {
     pub fn remove_symbols_for_source(&mut self, local_source_path: &Path) {
         let for_removal: Vec<_> = 
             self.get_symbols_for_source(local_source_path)
-            .map(|sym| sym.path().to_owned())
+            .map(|sym| sym.path_ref().to_owned())
             .collect();
 
         for sympath in for_removal {
@@ -143,7 +143,7 @@ impl SymbolTable {
         for (array_sympath, refs) in self.array_type_refs.iter() {
             if refs.is_empty() {
                 for_removal.push(array_sympath.to_owned());
-                for_removal.extend(self.get_symbol_descendants(&array_sympath).map(|v| v.path().to_owned()));
+                for_removal.extend(self.get_symbol_descendants(&array_sympath).map(|v| v.path_ref().to_owned()));
             }
         }
 
@@ -212,13 +212,13 @@ impl SymbolTable {
             if let Some(occupying_variant) = self.symbols.get(&incoming_sympath) {
                 incoming_sympath.clone_into(&mut sympath_to_skip);
 
-                if occupying_variant.is_array() || occupying_variant.path().has_missing() {
+                if occupying_variant.is_array() || occupying_variant.path_ref().has_missing() {
                     continue;
                 }
 
                 if let Some(incoming_location) = incoming_variant.location().cloned() {
                     errors.push(MergeConflictError {
-                        occupied_path: occupying_variant.path().to_owned(),
+                        occupied_path: occupying_variant.path_ref().to_owned(),
                         occupied_typ: occupying_variant.typ(),
                         occupied_location: occupying_variant.location().cloned(),
                         incoming_typ: incoming_variant.typ(),

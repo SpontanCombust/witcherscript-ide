@@ -95,7 +95,7 @@ impl Backend {
                 // attempt to find the very first declaration of the callable
                 // because normally you get the location of the last override of the function
                 if symvar.is_member_func() || symvar.is_event() {
-                    let func_path = symvar.path().to_owned();
+                    let func_path = symvar.path_ref().to_owned();
                     let mut parent_path = func_path.clone();
                     parent_path.pop();
     
@@ -132,7 +132,7 @@ impl Backend {
                     }
                 }
                 else if symvar.is_global_func_replacer() || symvar.is_member_func_replacer() || symvar.is_member_func_wrapper() {
-                    let sympath = symvar.path();
+                    let sympath = symvar.path_ref();
     
                     let symtabs = self.symtabs.read().await;
                     let symtabs_marcher = self.march_symbol_tables(&symtabs, &content_path).await;
@@ -258,7 +258,7 @@ impl Backend {
                             symtabs_marcher
                                 .state_hierarchy(state_path)
                                 .skip(1).next()
-                                .map(|sym| sym.path())
+                                .map(|sym| sym.path_ref())
                         } else {
                             Some(default_state_base_path.as_sympath())
                         }

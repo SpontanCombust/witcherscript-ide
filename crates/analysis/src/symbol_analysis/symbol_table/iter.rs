@@ -43,7 +43,7 @@ impl<'st, F> FilteredSymbolChildren<'st, F>
 where F: ChildrenSymbolsFilter<'st> {
     pub(super) fn new(symtab: &'st SymbolTable, symbol: &F) -> Self {
         Self {
-            iter: SymbolChildren::new(symtab, symbol.path()),
+            iter: SymbolChildren::new(symtab, symbol.path_ref()),
             filter_phantom: PhantomData
         }
     }
@@ -312,8 +312,8 @@ impl<'st> Iterator for FileSymbols<'st> {
             // Their symbol paths can reference symbols from other source paths.
             // We have to skip over them and all of their children.
             if item.location().map(|loc| loc.local_source_path.as_ref() != self.local_source_path).unwrap_or(false) {
-                let injector_path = item.path().to_owned();
-                self.iter.find(|v| !v.path().starts_with(&injector_path))
+                let injector_path = item.path_ref().to_owned();
+                self.iter.find(|v| !v.path_ref().starts_with(&injector_path))
             } else {
                 Some(item)
             }

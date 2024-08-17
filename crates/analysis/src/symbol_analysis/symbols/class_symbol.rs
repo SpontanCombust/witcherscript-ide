@@ -1,5 +1,4 @@
 use witcherscript::attribs::{ClassSpecifier, AutobindSpecifier};
-use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
@@ -12,11 +11,13 @@ pub struct ClassSymbol {
 }
 
 impl Symbol for ClassSymbol {
+    type PathType = BasicTypeSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::Class
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -57,11 +58,13 @@ pub struct AutobindSymbol {
 }
 
 impl Symbol for AutobindSymbol {
+    type PathType = MemberDataSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::Autobind
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }

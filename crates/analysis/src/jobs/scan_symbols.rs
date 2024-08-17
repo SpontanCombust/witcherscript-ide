@@ -371,7 +371,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 .filter_map(|s| StructSpecifier::try_from(s).ok())
                 .collect();
 
-            sym.path().clone_into(&mut self.current_path);
+            sym.path_ref().clone_into(&mut self.current_path);
             self.symtab.insert_primary_symbol(sym);
 
             let constr_path = GlobalCallableSymbolPath::new(&struct_name);
@@ -383,7 +383,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             });
             constr_sym.parent_type_path = path;
 
-            self.current_constr_path = Some(constr_sym.path().to_owned());
+            self.current_constr_path = Some(constr_sym.path_ref().to_owned());
             self.symtab.insert_primary_symbol(constr_sym);
 
             traverse_definition = true;
@@ -418,7 +418,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 label_range: name_node.range()
             });
 
-            sym.path().clone_into(&mut self.current_path);
+            sym.path_ref().clone_into(&mut self.current_path);
             self.symtab.insert_primary_symbol(sym);
 
             traverse_definition = true;
@@ -488,7 +488,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                     if self.check_contains(&path, name_node.range(), SymbolType::MemberFunctionInjector) {
                         let sym = MemberFunctionInjectorSymbol::new(self.parse_member_function(n, path));
 
-                        sym.path().clone_into(&mut self.current_path);
+                        sym.path_ref().clone_into(&mut self.current_path);
                         self.symtab.insert_primary_symbol(sym);
             
                         traverse = true;
@@ -500,7 +500,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                         if self.check_contains(&path, name_node.range(), SymbolType::MemberFunctionReplacer) {
                             let sym = MemberFunctionReplacerSymbol::new(self.parse_member_function(n, path));
 
-                            sym.path().clone_into(&mut self.current_path);
+                            sym.path_ref().clone_into(&mut self.current_path);
                             self.symtab.insert_primary_symbol(sym);
                 
                             traverse = true;
@@ -510,7 +510,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                         if self.check_contains(&path, name_node.range(), SymbolType::GlobalFunctionReplacer) {
                             let sym = GlobalFunctionReplacerSymbol::new(self.parse_global_function(n, path));
 
-                            sym.path().clone_into(&mut self.current_path);
+                            sym.path_ref().clone_into(&mut self.current_path);
                             self.symtab.insert_primary_symbol(sym);
                 
                             traverse = true;
@@ -524,7 +524,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                         let wrapped_sym = WrappedMethodSymbol::new(&path);
                         let sym = MemberFunctionWrapperSymbol::new(self.parse_member_function(n, path));
 
-                        sym.path().clone_into(&mut self.current_path);
+                        sym.path_ref().clone_into(&mut self.current_path);
                         self.symtab.insert_primary_symbol(sym);
                         self.symtab.insert_symbol(wrapped_sym);
             
@@ -538,7 +538,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             if self.check_contains(&path, name_node.range(), SymbolType::GlobalFunction) {
                 let sym = self.parse_global_function(n, path);
     
-                sym.path().clone_into(&mut self.current_path);
+                sym.path_ref().clone_into(&mut self.current_path);
                 self.symtab.insert_primary_symbol(sym);
     
                 traverse = true;
@@ -622,7 +622,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         if self.check_contains(&path, name_node.range(), SymbolType::MemberFunction) {
             let sym = self.parse_member_function(n, path);
 
-            sym.path().clone_into(&mut self.current_path);
+            sym.path_ref().clone_into(&mut self.current_path);
             self.symtab.insert_symbol(sym);
 
             traverse = true;
@@ -660,7 +660,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 label_range: name_node.range()
             });
 
-            sym.path().clone_into(&mut self.current_path);
+            sym.path_ref().clone_into(&mut self.current_path);
             self.symtab.insert_symbol(sym);
 
             traverse = true;

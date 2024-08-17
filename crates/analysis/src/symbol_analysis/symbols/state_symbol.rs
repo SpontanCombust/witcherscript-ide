@@ -12,11 +12,13 @@ pub struct StateSymbol {
 }
 
 impl Symbol for StateSymbol {
+    type PathType = StateSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::State
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }

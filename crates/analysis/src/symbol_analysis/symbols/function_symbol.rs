@@ -1,5 +1,4 @@
 use witcherscript::attribs::*;
-use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 
 
@@ -16,11 +15,13 @@ pub struct GlobalFunctionSymbol {
 }
 
 impl Symbol for GlobalFunctionSymbol {
+    type PathType = GlobalCallableSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::GlobalFunction
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -63,11 +64,13 @@ pub struct MemberFunctionSymbol {
 }
 
 impl Symbol for MemberFunctionSymbol {
+    type PathType = MemberCallableSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::MemberFunction
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
@@ -103,11 +106,13 @@ pub struct EventSymbol {
 }
 
 impl Symbol for EventSymbol {
+    type PathType = MemberCallableSymbolPath;
+
     fn typ(&self) -> SymbolType {
         SymbolType::Event
     }
 
-    fn path(&self) -> &SymbolPath {
+    fn path(&self) -> &Self::PathType {
         &self.path
     }
 }
