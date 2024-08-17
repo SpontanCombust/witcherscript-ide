@@ -86,8 +86,12 @@ impl SyntaxNodeTraversal for AnnotationNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::Annotation);
 
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
+                    },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
                     },

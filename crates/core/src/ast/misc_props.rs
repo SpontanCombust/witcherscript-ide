@@ -48,12 +48,15 @@ impl SyntaxNodeTraversal for MemberDefaultsBlockNode<'_> {
         let tp = visitor.visit_member_defaults_block(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
-                    Ok((assign, _)) if tp.traverse_assignments => {
+                    Ok((assign, _)) if assign.is_named() && tp.traverse_assignments => {
                         let assign: MemberDefaultsBlockAssignmentNode = assign.unsafe_into();
-
                         assign.accept(visitor, ctx);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -113,12 +116,15 @@ impl SyntaxNodeTraversal for MemberDefaultsBlockAssignmentNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::MemberDefaultValue);
 
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((value, Some("value"))) if tp.traverse_value => {
                         let value: ExpressionNode = value.unsafe_into();
-
                         value.accept(visitor, ctx);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -180,12 +186,15 @@ impl SyntaxNodeTraversal for MemberDefaultValueNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::MemberDefaultValue);
 
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((value, Some("value"))) if tp.traverse_value => {
                         let value: ExpressionNode = value.unsafe_into();
-
                         value.accept(visitor, ctx);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -245,8 +254,12 @@ impl SyntaxNodeTraversal for MemberHintNode<'_> {
         let tp = visitor.visit_member_hint(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
+                    },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
                     },

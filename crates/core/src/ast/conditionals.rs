@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{tokens::UnnamedNode, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -59,7 +59,7 @@ impl SyntaxNodeTraversal for IfConditionalNode<'_> {
         let tp = visitor.visit_if_stmt(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
                         let cond: ExpressionNode = cond.unsafe_into();
@@ -81,7 +81,11 @@ impl SyntaxNodeTraversal for IfConditionalNode<'_> {
                         ctx.push(TraversalContext::IfConditionalElseBody);
                         else_body.accept(visitor, ctx);
                         ctx.pop();
-                    }
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
+                    },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx)
                     },
@@ -138,21 +142,27 @@ impl SyntaxNodeTraversal for SwitchConditionalNode<'_> {
         let tp = visitor.visit_switch_stmt(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
-                        let cond: ExpressionNode = cond.unsafe_into();
-                        
                         ctx.push(TraversalContext::SwitchConditionalCond);
+                        
+                        let cond: ExpressionNode = cond.unsafe_into();
                         cond.accept(visitor, ctx);
+
                         ctx.pop();
                     },
                     Ok((body, Some("body"))) if tp.traverse_body => {
-                        let body: SwitchConditionalBlockNode = body.unsafe_into();
-                        
                         ctx.push(TraversalContext::SwitchConditionalBody);
+                        
+                        let body: SwitchConditionalBlockNode = body.unsafe_into();
                         body.accept_with_policy(visitor, ctx, tp.clone());
+
                         ctx.pop();
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -181,13 +191,16 @@ impl<'script> SwitchConditionalBlockNode<'script> {
 
 
     fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: SwitchConditionalTraversalPolicy) {
-        for ch in self.children_detailed().must_be_named(true) {
+        for ch in self.children_detailed() {
             match ch {
-                Ok((section, _)) => {
+                Ok((section, _)) if section.is_named() => {
                     let section: SwitchConditionalSectionNode = section.unsafe_into();
-
                     section.accept(visitor, ctx)
-                }
+                },
+                Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                    let unnamed: UnnamedNode = unnamed.unsafe_into();
+                    unnamed.accept(visitor, ctx);
+                },
                 Err(e) if tp.traverse_errors => {
                     e.accept(visitor, ctx)
                 },
@@ -337,14 +350,19 @@ impl SyntaxNodeTraversal for SwitchConditionalCaseLabelNode<'_> {
         let tp = visitor.visit_switch_stmt_case(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((value, Some("value"))) if tp.traverse_value => {
-                        let value: ExpressionNode = value.unsafe_into();
-                        
                         ctx.push(TraversalContext::SwitchConditionalCaseLabel);
+                        
+                        let value: ExpressionNode = value.unsafe_into();
                         value.accept(visitor, ctx);
+
                         ctx.pop();
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -389,8 +407,12 @@ impl SyntaxNodeTraversal for SwitchConditionalDefaultLabelNode<'_> {
         let tp = visitor.visit_switch_stmt_default(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
+                    },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
                     }

@@ -63,13 +63,16 @@ impl SyntaxNodeTraversal for ClassDeclarationNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::Class);
     
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((definition, Some("definition"))) if tp.traverse_definition => {
                         let definition: ClassBlockNode = definition.unsafe_into();
-
                         definition.accept_with_policy(visitor, ctx, tp.clone());
-                    }
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
+                    },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx)
                     },
@@ -99,12 +102,15 @@ impl<'script> ClassBlockNode<'script> {
 
 
     fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: ClassDeclarationTraversalPolicy) {
-        for ch in self.children_detailed().must_be_named(true) {
+        for ch in self.children_detailed() {
             match ch {
-                Ok((prop, _)) => {
+                Ok((prop, _)) if prop.is_named() => {
                     let prop: ClassPropertyNode = prop.unsafe_into();
-
                     prop.accept(visitor, ctx);
+                },
+                Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                    let unnamed: UnnamedNode = unnamed.unsafe_into();
+                    unnamed.accept(visitor, ctx);
                 },
                 Err(e) if tp.traverse_errors => {
                     e.accept(visitor, ctx);

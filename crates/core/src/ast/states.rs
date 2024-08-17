@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{attribs::SpecifierNode, tokens::IdentifierNode, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{attribs::SpecifierNode, tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -68,12 +68,15 @@ impl SyntaxNodeTraversal for StateDeclarationNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::State);
 
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
                         let def: StateBlockNode = def.unsafe_into();
-
-                        def.accept_with_policy(visitor, ctx, tp.traverse_errors);
+                        def.accept_with_policy(visitor, ctx, tp.clone());
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -102,15 +105,18 @@ impl<'script> StateBlockNode<'script> {
     }
 
 
-    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, traverse_errors: bool) {
-        for ch in self.children_detailed().must_be_named(true) {
+    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: StateDeclarationTraversalPolicy) {
+        for ch in self.children_detailed() {
             match ch {
-                Ok((prop, _)) => {
+                Ok((prop, _)) if prop.is_named() => {
                     let prop: ClassPropertyNode = prop.unsafe_into();
-
                     prop.accept(visitor, ctx);
                 },
-                Err(e) if traverse_errors => {
+                Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                    let unnamed: UnnamedNode = unnamed.unsafe_into();
+                    unnamed.accept(visitor, ctx);
+                },
+                Err(e) if tp.traverse_errors => {
                     e.accept(visitor, ctx);
                 },
                 _ => {}

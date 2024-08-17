@@ -1,4 +1,4 @@
-use crate::{debug::*, AnyNode, NamedSyntaxNode, SyntaxNode};
+use crate::{debug::*, tokens::UnnamedNode, AnyNode, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -44,6 +44,10 @@ impl SyntaxNodeTraversal for BreakStatementNode<'_> {
         if tp.any() {
             for ch in self.children_detailed() {
                 match ch {
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
+                    },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
                     },
@@ -91,6 +95,10 @@ impl SyntaxNodeTraversal for ContinueStatementNode<'_> {
         if tp.any() {
             for ch in self.children_detailed() {
                 match ch {
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
+                    },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
                     },
@@ -144,12 +152,15 @@ impl SyntaxNodeTraversal for ReturnStatementNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::ReturnStatement);
 
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((value, _)) if tp.traverse_value => {
                         let value: ExpressionNode = value.unsafe_into();
-
                         value.accept(visitor, ctx);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -206,12 +217,15 @@ impl SyntaxNodeTraversal for DeleteStatementNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::DeleteStatement);
 
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
-                    Ok((value, _)) if tp.traverse_value => {
+                    Ok((value, _)) if value.is_named() && tp.traverse_value => {
                         let value: ExpressionNode = value.unsafe_into();
-
                         value.accept(visitor, ctx);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);

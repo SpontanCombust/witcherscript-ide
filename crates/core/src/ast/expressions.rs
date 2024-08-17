@@ -62,15 +62,19 @@ impl SyntaxNodeTraversal for NestedExpressionNode<'_> {
         let tp = visitor.visit_nested_expr(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
-                    Ok((inner, _)) if tp.traverse_inner => {
+                    Ok((inner, _)) if inner.is_named() && tp.traverse_inner => {
                         ctx.push(TraversalContext::NestedExpressionInner);
 
                         let inner: ExpressionNode = inner.unsafe_into();
                         inner.accept(visitor, ctx);
 
                         ctx.pop();
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx)
@@ -264,7 +268,7 @@ impl SyntaxNodeTraversal for FunctionCallExpressionNode<'_> {
         let tp = visitor.visit_func_call_expr(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((func, Some("func"))) if tp.traverse_func => {
                         ctx.push(TraversalContext::FunctionCallExpressionFunc);
@@ -278,6 +282,10 @@ impl SyntaxNodeTraversal for FunctionCallExpressionNode<'_> {
                         let args: FunctionCallArgumentsNode = args.unsafe_into();
 
                         args.accept_with_policy(visitor, ctx, tp.clone());
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -479,7 +487,7 @@ impl SyntaxNodeTraversal for ArrayExpressionNode<'_> {
         let tp = visitor.visit_array_expr(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((accessor, Some("accessor"))) if tp.traverse_accessor => {
                         let accessor: ExpressionNode = accessor.unsafe_into();
@@ -494,6 +502,10 @@ impl SyntaxNodeTraversal for ArrayExpressionNode<'_> {
                         ctx.push(TraversalContext::ArrayExpressionIndex);
                         index.accept(visitor, ctx);
                         ctx.pop();
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -971,7 +983,7 @@ impl SyntaxNodeTraversal for TernaryConditionalExpressionNode<'_> {
         let tp = visitor.visit_ternary_cond_expr(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
                         let cond: ExpressionNode = cond.unsafe_into();
@@ -993,6 +1005,10 @@ impl SyntaxNodeTraversal for TernaryConditionalExpressionNode<'_> {
                         ctx.push(TraversalContext::TernaryConditionalExpressionAlt);
                         alt.accept(visitor, ctx);
                         ctx.pop();
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -1048,12 +1064,15 @@ impl SyntaxNodeTraversal for ArrayInitializerExpressionNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::ArrayInitializerExpression);
 
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
-                    Ok((item, _)) if tp.traverse_items => {
+                    Ok((item, _)) if item.is_named() && tp.traverse_items => {
                         let item: ExpressionNode = item.unsafe_into();
-
                         item.accept(visitor, ctx);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -1358,14 +1377,19 @@ impl SyntaxNodeTraversal for ExpressionStatementNode<'_> {
         let tp = visitor.visit_expr_stmt(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
-                    Ok((expr, _)) if tp.traverse_expr => {
-                        let expr: ExpressionNode = expr.unsafe_into();
-
+                    Ok((expr, _)) if expr.is_named() && tp.traverse_expr => {
                         ctx.push(TraversalContext::ExpressionStatement);
+                        
+                        let expr: ExpressionNode = expr.unsafe_into();
                         expr.accept(visitor, ctx);
+
                         ctx.pop();
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);

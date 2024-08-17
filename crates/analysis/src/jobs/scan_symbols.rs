@@ -280,6 +280,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
         ClassDeclarationTraversalPolicy { 
             traverse_definition,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -339,6 +340,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
         StateDeclarationTraversalPolicy { 
             traverse_definition,
+            traverse_unnamed: false,
             traverse_errors: false
         }       
     }
@@ -389,6 +391,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
         StructDeclarationTraversalPolicy { 
             traverse_definition,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -423,6 +426,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
 
         EnumDeclarationTraversalPolicy { 
             traverse_definition,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -547,6 +551,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             traverse_params: traverse,
             traverse_return_type: false,
             traverse_definition: traverse,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -628,6 +633,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             traverse_params: traverse,
             traverse_return_type: false,
             traverse_definition: traverse,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -664,6 +670,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             traverse_params: traverse,
             traverse_return_type: false,
             traverse_definition: traverse,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -802,6 +809,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         VarDeclarationTraversalPolicy {
             traverse_type: false,
             traverse_init_value: false,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -817,6 +825,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         WhileLoopTraversalPolicy { 
             traverse_cond: false, 
             traverse_body: true,
+            traverse_unnamed: false,
             traverse_errors: false 
         }
     }
@@ -825,6 +834,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         DoWhileLoopTraversalPolicy { 
             traverse_cond: false, 
             traverse_body: true,
+            traverse_unnamed: false,
             traverse_errors: false 
         }
     }
@@ -835,6 +845,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             traverse_cond: false, 
             traverse_iter: false, 
             traverse_body: true,
+            traverse_unnamed: false,
             traverse_errors: false 
         }
     }
@@ -844,6 +855,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
             traverse_cond: false, 
             traverse_body: true, 
             traverse_else_body: true,
+            traverse_unnamed: false,
             traverse_errors: false 
         }
     }
@@ -852,6 +864,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         SwitchConditionalTraversalPolicy { 
             traverse_cond: false, 
             traverse_body: true,
+            traverse_unnamed: false,
             traverse_errors: false 
         }
     }

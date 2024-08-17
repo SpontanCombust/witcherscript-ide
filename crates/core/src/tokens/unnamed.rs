@@ -1,6 +1,6 @@
 use std::str::FromStr;
 use std::fmt::Debug;
-use crate::{tokens::Keyword, AnyNode, DebugMaybeAlternate, DebugRange, SyntaxNode};
+use crate::{ast::{SyntaxNodeTraversal, SyntaxNodeVisitor, TraversalContextStack}, tokens::Keyword, AnyNode, DebugMaybeAlternate, DebugRange, SyntaxNode};
 
 
 #[derive(Debug, Clone)]
@@ -40,5 +40,11 @@ impl<'script> TryFrom<AnyNode<'script>> for UnnamedNode<'script> {
         } else {
             Err(())
         }
+    }
+}
+
+impl SyntaxNodeTraversal for UnnamedNode<'_> {
+    fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        visitor.visit_unnamed(self, ctx);
     }
 }

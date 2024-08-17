@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{tokens::UnnamedNode, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -62,35 +62,43 @@ impl SyntaxNodeTraversal for ForLoopNode<'_> {
         let tp = visitor.visit_for_stmt(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((init, Some("init"))) if tp.traverse_init => {
-                        let init: ExpressionNode = init.unsafe_into();
-
                         ctx.push(TraversalContext::ForLoopInit);
+                        
+                        let init: ExpressionNode = init.unsafe_into();
                         init.accept(visitor, ctx);
+
                         ctx.pop();
                     },
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
-                        let cond: ExpressionNode = cond.unsafe_into();
-
                         ctx.push(TraversalContext::ForLoopCond);
+                        
+                        let cond: ExpressionNode = cond.unsafe_into();
                         cond.accept(visitor, ctx);
+
                         ctx.pop();
                     },
                     Ok((iter, Some("iter"))) if tp.traverse_iter => {
-                        let iter: ExpressionNode = iter.unsafe_into();
-
                         ctx.push(TraversalContext::ForLoopIter);
+                        
+                        let iter: ExpressionNode = iter.unsafe_into();
                         iter.accept(visitor, ctx);
+
                         ctx.pop();
                     },
                     Ok((body, Some("body"))) if tp.traverse_body => {
-                        let body: FunctionStatementNode = body.unsafe_into();
-
                         ctx.push(TraversalContext::ForLoopBody);
+                        
+                        let body: FunctionStatementNode = body.unsafe_into();
                         body.accept(visitor, ctx);
+
                         ctx.pop();
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -148,21 +156,27 @@ impl SyntaxNodeTraversal for WhileLoopNode<'_> {
         let tp = visitor.visit_while_stmt(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
-                        let cond: ExpressionNode = cond.unsafe_into();
-
                         ctx.push(TraversalContext::WhileLoopCond);
+                        
+                        let cond: ExpressionNode = cond.unsafe_into();
                         cond.accept(visitor, ctx);
+
                         ctx.pop();
                     },
                     Ok((body, Some("body"))) if tp.traverse_body => {
-                        let body: FunctionStatementNode = body.unsafe_into();
-
                         ctx.push(TraversalContext::WhileLoopBody);
+                        
+                        let body: FunctionStatementNode = body.unsafe_into();
                         body.accept(visitor, ctx);
+
                         ctx.pop();
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -220,7 +234,7 @@ impl SyntaxNodeTraversal for DoWhileLoopNode<'_> {
         let tp = visitor.visit_do_while_stmt(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
                         let cond: ExpressionNode = cond.unsafe_into();
@@ -235,6 +249,10 @@ impl SyntaxNodeTraversal for DoWhileLoopNode<'_> {
                         ctx.push(TraversalContext::DoWhileLoopBody);
                         body.accept(visitor, ctx);
                         ctx.pop();
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);

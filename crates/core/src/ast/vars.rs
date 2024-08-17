@@ -56,12 +56,15 @@ impl SyntaxNodeTraversal for TypeAnnotationNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::TypeAnnotation);
 
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((type_arg, Some("type_arg"))) if tp.traverse_type_arg => {
                         let type_arg: TypeAnnotationNode = type_arg.unsafe_into();
-
                         type_arg.accept(visitor, ctx);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -126,19 +129,23 @@ impl SyntaxNodeTraversal for LocalVarDeclarationNode<'_> {
         let tp = visitor.visit_local_var_decl_stmt(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((typ, Some("var_type"))) if tp.traverse_type => {
                         let typ: TypeAnnotationNode = typ.unsafe_into();
-
                         typ.accept(visitor, ctx);
                     },
                     Ok((init_value, Some("init_value"))) if tp.traverse_init_value => {
-                        let init_value: ExpressionNode = init_value.unsafe_into();
-
                         ctx.push(TraversalContext::LocalVarDeclarationInitValue);
+                        
+                        let init_value: ExpressionNode = init_value.unsafe_into();
                         init_value.accept(visitor, ctx);
+
                         ctx.pop();
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -205,17 +212,19 @@ impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         // closure to avoid code repetition below
         let accept_proper = |self_: &Self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: MemberVarDeclarationTraversalPolicy| {
-            for ch in self_.children_detailed().must_be_named(true) {
+            for ch in self_.children_detailed() {
                 match ch {
                     Ok((annot, Some("annotation"))) if tp.traverse_annotation => {
                         let annot: AnnotationNode = annot.unsafe_into();
-
                         annot.accept(visitor, ctx);
                     },
                     Ok((typ, Some("var_type"))) if tp.traverse_type => {
                         let typ: TypeAnnotationNode = typ.unsafe_into();
-
                         typ.accept(visitor, ctx);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -301,12 +310,15 @@ impl SyntaxNodeTraversal for AutobindDeclarationNode<'_> {
         let tp = visitor.visit_autobind_decl(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((typ, Some("autobind_type"))) if tp.traverse_type => {
                         let typ: TypeAnnotationNode = typ.unsafe_into();
-
                         typ.accept(visitor, ctx);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) => {
                         e.accept(visitor, ctx)

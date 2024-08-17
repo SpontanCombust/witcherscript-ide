@@ -618,6 +618,7 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
         }
 
         AnnotationTraversalPolicy {
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }

@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{tokens::{IdentifierNode, LiteralHexNode, LiteralIntNode}, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
+use crate::{tokens::*, AnyNode, DebugMaybeAlternate, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -52,14 +52,19 @@ impl SyntaxNodeTraversal for EnumDeclarationNode<'_> {
         let tp = visitor.visit_enum_decl(self);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
-                        let def: EnumBlockNode = def.unsafe_into();
-
                         ctx.push(TraversalContext::Enum);
+                        
+                        let def: EnumBlockNode = def.unsafe_into();
                         def.accept_with_policy(visitor, ctx, tp.clone());
+
                         ctx.pop();
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -88,12 +93,15 @@ impl<'script> EnumBlockNode<'script> {
 
 
     fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: EnumDeclarationTraversalPolicy) {
-        for ch in self.children_detailed().must_be_named(true) {
+        for ch in self.children_detailed() {
             match ch {
-                Ok((variant, _)) => {
+                Ok((variant, _)) if variant.is_named() => {
                     let variant: EnumVariantDeclarationNode = variant.unsafe_into();
-                    
                     variant.accept(visitor, ctx);
+                },
+                Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                    let unnamed: UnnamedNode = unnamed.unsafe_into();
+                    unnamed.accept(visitor, ctx);
                 },
                 Err(e) if tp.traverse_errors => {
                     e.accept(visitor, ctx);
@@ -182,8 +190,12 @@ impl SyntaxNodeTraversal for EnumVariantDeclarationNode<'_> {
         let tp = visitor.visit_enum_variant_decl(self);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
+                    },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
                     },

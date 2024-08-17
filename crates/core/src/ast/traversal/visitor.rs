@@ -277,6 +277,9 @@ pub trait SyntaxNodeVisitor {
     fn exit_annotation(&mut self, n: &AnnotationNode, ctx: &TraversalContextStack) {}
 
 
+    /// Called when visiting an unnamed node (i.e. keyword or punctuation).
+    fn visit_unnamed(&mut self, n: &UnnamedNode, ctx: &TraversalContextStack) {}
+
     /// Called when visiting a node representing a syntax error.
     fn visit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) -> ErrorTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting a node representing a syntax error and possibly also children nodes specified in traversal policy.

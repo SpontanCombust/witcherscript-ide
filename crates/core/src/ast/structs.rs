@@ -58,12 +58,15 @@ impl SyntaxNodeTraversal for StructDeclarationNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::Struct);
 
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
                         let def: StructBlockNode = def.unsafe_into();
-
-                        def.accept_with_policy(visitor, ctx, tp.traverse_errors);
+                        def.accept_with_policy(visitor, ctx, tp.clone());
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -93,15 +96,19 @@ impl<'script> StructBlockNode<'script> {
     }
 
 
-    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, traverse_errors: bool) {
-        for ch in self.children_detailed().must_be_named(true) {
+    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: StructDeclarationTraversalPolicy) {
+        for ch in self.children_detailed() {
             match ch {
-                Ok((prop, _)) => {
+                Ok((prop, _)) if prop.is_named() => {
                     let prop: StructPropertyNode = prop.unsafe_into();
 
                     prop.accept(visitor, ctx);
                 },
-                Err(e) if traverse_errors => {
+                Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                    let unnamed: UnnamedNode = unnamed.unsafe_into();
+                    unnamed.accept(visitor, ctx);
+                },
+                Err(e) if tp.traverse_errors => {
                     e.accept(visitor, ctx);
                 },
                 _ => {}

@@ -457,6 +457,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         VarDeclarationTraversalPolicy {
             traverse_init_value: false,
             traverse_type: false,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -466,6 +467,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
 
         ExpressionStatementTraversalPolicy {
             traverse_expr: false,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -477,6 +479,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
             traverse_cond: false,
             traverse_body: true,
             traverse_else_body: true,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -487,6 +490,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         SwitchConditionalTraversalPolicy {
             traverse_cond: false,
             traverse_body: true,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -499,6 +503,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
             traverse_cond: false,
             traverse_iter: false,
             traverse_body: true,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -509,6 +514,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         WhileLoopTraversalPolicy {
             traverse_cond: false,
             traverse_body: true,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -519,6 +525,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
         DoWhileLoopTraversalPolicy {
             traverse_cond: false,
             traverse_body: true,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -528,6 +535,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
 
         DeleteStatementTraversalPolicy {
             traverse_value: false,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
@@ -546,6 +554,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
 
         ReturnStatementTraversalPolicy {
             traverse_value: false,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }

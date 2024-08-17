@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use crate::{attribs::*, tokens::IdentifierNode, debug::*, AnyNode, NamedSyntaxNode, SyntaxNode};
+use crate::{attribs::*, tokens::*, debug::*, AnyNode, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
 
@@ -66,7 +66,7 @@ impl SyntaxNodeTraversal for EventDeclarationNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::Event);
 
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((params, Some("params"))) if tp.traverse_params => {
                         let params: FunctionParametersNode = params.unsafe_into();
@@ -81,7 +81,11 @@ impl SyntaxNodeTraversal for EventDeclarationNode<'_> {
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
                         let def: FunctionDefinitionNode = def.unsafe_into();
 
-                        def.accept_with_policy(visitor, ctx, tp.traverse_errors);
+                        def.accept_with_policy(visitor, ctx, tp.traverse_unnamed, tp.traverse_errors);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -165,7 +169,7 @@ impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         // closure to not repeat code below
         let accept_proper = |self_: &Self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: FunctionDeclarationTraversalPolicy| {
-            for ch in self_.children_detailed().must_be_named(true) {
+            for ch in self_.children_detailed() {
                 match ch {
                     Ok((annot, Some("annotation"))) if tp.traverse_annotation => {
                         let annot: AnnotationNode = annot.unsafe_into();
@@ -185,7 +189,11 @@ impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
                     Ok((def, Some("definition"))) if tp.traverse_definition => {
                         let def: FunctionDefinitionNode = def.unsafe_into();
     
-                        def.accept_with_policy(visitor, ctx, tp.traverse_errors);
+                        def.accept_with_policy(visitor, ctx, tp.traverse_unnamed, tp.traverse_errors);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
@@ -253,9 +261,9 @@ impl<'script> FunctionDefinitionNode<'script> {
     }
 
 
-    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, traverse_errors: bool) {
+    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, traverse_unnamed: bool, traverse_errors: bool) {
         if let FunctionDefinition::Some(block) = self.clone().value() {
-            block.accept_with_policy(visitor, ctx, traverse_errors);
+            block.accept_with_policy(visitor, ctx, traverse_unnamed, traverse_errors);
         }
     }
 }
@@ -305,13 +313,16 @@ impl<'script> FunctionBlockNode<'script> {
     }
 
 
-    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, traverse_errors: bool) {
-        for ch in self.children_detailed().must_be_named(true) {
+    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, traverse_unnamed: bool, traverse_errors: bool) {
+        for ch in self.children_detailed() {
             match ch {
-                Ok((stmt, _)) => {
+                Ok((stmt, _)) if stmt.is_named() => {
                     let stmt: FunctionStatementNode = stmt.unsafe_into();
-
                     stmt.accept(visitor, ctx);
+                },
+                Ok((unnamed, _)) if !unnamed.is_named() && traverse_unnamed => {
+                    let unnamed: UnnamedNode = unnamed.unsafe_into();
+                    unnamed.accept(visitor, ctx);
                 },
                 Err(e) if traverse_errors => {
                     e.accept(visitor, ctx);
@@ -458,12 +469,15 @@ impl SyntaxNodeTraversal for FunctionParameterGroupNode<'_> {
         let tp = visitor.visit_func_param_group(self, ctx);
 
         if tp.any() {
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((typ, Some("param_type"))) if tp.traverse_type => {
                         let typ: TypeAnnotationNode = typ.unsafe_into();
-
                         typ.accept(visitor, ctx);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);

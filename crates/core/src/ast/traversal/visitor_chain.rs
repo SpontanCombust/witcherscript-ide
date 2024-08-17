@@ -582,6 +582,11 @@ impl<'a> SyntaxNodeVisitor for SyntaxNodeVisitorChain<'a> {
 
 
     #[inline]
+    fn visit_unnamed(&mut self, n: &UnnamedNode, ctx: &TraversalContextStack) {
+        self.chain_visit(move |link| link.visit_unnamed(n, ctx))
+    }
+
+    #[inline]
     fn visit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) -> ErrorTraversalPolicy {
         self.chain_visit_traversable(move |link| link.visit_error(n, ctx))
     }
