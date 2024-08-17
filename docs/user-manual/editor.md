@@ -63,6 +63,8 @@ Status bar displays context information about the last worked on project and any
 
 ### Go to definition/declaration
 
+Use either the context menu (right click) or left click while holding `LCtrl` to go to the definition of a given code symbol.
+
 <video controls muted>
   <source src="../../assets/user-manual/editor/goto-definition.mp4" type="video/mp4">
 </video>
@@ -72,6 +74,12 @@ Status bar displays context information about the last worked on project and any
 <video controls muted>
   <source src="../../assets/user-manual/editor/recompiling-scripts.mp4" type="video/mp4">
 </video>
+
+### Go to Symbol in Editor/Workspace
+
+Use the `LCtrl + P` shortcut to bring up the "Quick Open" text input. Then type in `@` or `#` proceeeded by the searched for name to look for symbols in the actively opened file or the entire workspace respectively (depending on the configuration). You can also use `LCtrl + LShift + O` and `LCtrl + T` shortcuts.
+
+<!--TODO add video here -->
 
 **More coming soon!**
 
