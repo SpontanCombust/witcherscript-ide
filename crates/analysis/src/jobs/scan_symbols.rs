@@ -51,7 +51,7 @@ struct SymbolScannerVisitor<'a> {
 
 impl SymbolScannerVisitor<'_> {
     // Returns whether the symbol is not a duplicate
-    fn check_contains(&mut self, path: &SymbolPath, label_range: Range, typ: SymbolType) -> bool {
+    fn check_contains(&mut self, path: &SymbolPath, label_range: Range, _typ: SymbolType) -> bool {
         if let Err(err) = self.symtab.test_contains_symbol(path) {
             // missing nodes don't get an error, as it's the job of syntax analysis to detect them and inform the user about them
             // these situations are very rare anyways, so doing anything aside from showing a diagnostic is an overkill
@@ -60,49 +60,17 @@ impl SymbolScannerVisitor<'_> {
                     .map(|loc| (Some(loc.abs_source_path()), Some(loc.label_range)))
                     .unwrap_or((None, None));
     
-                match (err.occupied_typ, typ) {
-                    (SymbolType::MemberFunction, SymbolType::MemberFunctionReplacer) |
-                    (SymbolType::MemberFunction, SymbolType::MemberFunctionWrapper)  |
-                    (SymbolType::GlobalFunction, SymbolType::GlobalFunctionReplacer) => {
-                        self.diagnostics.push(LocatedDiagnostic { 
-                            path: self.symtab.script_root().join(&self.local_source_path).unwrap(), 
-                            diagnostic: Diagnostic { 
-                                range: label_range, 
-                                kind: DiagnosticKind::SameContentAnnotation { 
-                                    original_file_path: precursor_file_path, 
-                                    original_range: precursor_range, 
-                                }
-                            }
-                        });
-                    },
-                    (SymbolType::MemberFunctionReplacer, SymbolType::MemberFunction) |
-                    (SymbolType::MemberFunctionWrapper, SymbolType::MemberFunction)  |
-                    (SymbolType::GlobalFunctionReplacer, SymbolType::GlobalFunction) => {
-                        self.diagnostics.push(LocatedDiagnostic { 
-                            path: precursor_file_path.expect("Annotation symbol without location"), 
-                            diagnostic: Diagnostic { 
-                                range: label_range, 
-                                kind: DiagnosticKind::SameContentAnnotation { 
-                                    original_file_path: Some(self.symtab.script_root().join(&self.local_source_path).unwrap()), 
-                                    original_range: Some(label_range) 
-                                }
-                            }
-                        });
-                    },
-                    _ => {
-                        self.diagnostics.push(LocatedDiagnostic { 
-                            path: self.symtab.script_root().join(&self.local_source_path).unwrap(), 
-                            diagnostic: Diagnostic { 
-                                range: label_range, 
-                                kind: DiagnosticKind::SymbolNameTaken { 
-                                    name: err.occupied_path.components().last().unwrap().name.to_string(),
-                                    precursor_file_path,
-                                    precursor_range
-                                }
-                            }
-                        });
+                self.diagnostics.push(LocatedDiagnostic { 
+                    path: self.symtab.script_root().join(&self.local_source_path).unwrap(), 
+                    diagnostic: Diagnostic { 
+                        range: label_range, 
+                        kind: DiagnosticKind::SymbolNameTaken { 
+                            name: err.occupied_path.components().last().unwrap().name.to_string(),
+                            precursor_file_path,
+                            precursor_range
+                        }
                     }
-                }
+                });
             }
             
             false
@@ -171,56 +139,58 @@ impl SymbolScannerVisitor<'_> {
     }
 
 
-    fn parse_global_function(&mut self, n: &FunctionDeclarationNode, path: GlobalCallableSymbolPath) -> GlobalFunctionSymbol {
-        let mut sym = GlobalFunctionSymbol::new(path, SymbolLocation { 
+    fn parse_global_function(&mut self, n: &FunctionDeclarationNode) 
+    -> (SymbolLocation, SymbolSpecifiers<GlobalFunctionSpecifier>, Option<GlobalFunctionFlavour>, TypeSymbolPath) {
+        let loc = SymbolLocation { 
             scripts_root: self.symtab.script_root_arc(), 
             local_source_path: self.local_source_path.clone(), 
             range: n.range(), 
             label_range: n.name().range()
-        });
+        };
 
-        sym.specifiers = n.specifiers()
+        let specifiers = n.specifiers()
             .map(|sn| sn.value())
             .filter_map(|s| GlobalFunctionSpecifier::try_from(s).ok())
             .collect();
 
-        sym.flavour = n.flavour()
+        let flavour = n.flavour()
             .map(|flavn| flavn.value())
             .and_then(|f| GlobalFunctionFlavour::try_from(f).ok());
 
-        sym.return_type_path = if let Some(ret_typn) = n.return_type() {
+        let return_type_path = if let Some(ret_typn) = n.return_type() {
             self.check_type_from_type_annot(ret_typn)
         } else {
             TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new(DEFAULT_FUNCTION_RETURN_TYPE_NAME))
         };
 
-        sym
+        (loc, specifiers, flavour, return_type_path)
     }
 
-    fn parse_member_function(&mut self, n: &FunctionDeclarationNode, path: MemberCallableSymbolPath) -> MemberFunctionSymbol {
-        let mut sym = MemberFunctionSymbol::new(path, SymbolLocation { 
+    fn parse_member_function(&mut self, n: &FunctionDeclarationNode) 
+    -> (SymbolLocation, SymbolSpecifiers<MemberFunctionSpecifier>, Option<MemberFunctionFlavour>, TypeSymbolPath) {
+        let loc = SymbolLocation { 
             scripts_root: self.symtab.script_root_arc(), 
             local_source_path: self.local_source_path.clone(), 
             range: n.range(), 
             label_range: n.name().range()
-        });
+        };
 
-        sym.specifiers = n.specifiers()
+        let specifiers = n.specifiers()
             .map(|sn| sn.value())
             .filter_map(|s| MemberFunctionSpecifier::try_from(s).ok())
             .collect();
 
-        sym.flavour = n.flavour()
+        let flavour = n.flavour()
             .map(|flavn| flavn.value())
             .and_then(|f| MemberFunctionFlavour::try_from(f).ok());
 
-        sym.return_type_path = if let Some(ret_typn) = n.return_type() {
+        let return_type_path = if let Some(ret_typn) = n.return_type() {
             self.check_type_from_type_annot(ret_typn)
         } else {
             TypeSymbolPath::BasicOrState(BasicTypeSymbolPath::new(DEFAULT_FUNCTION_RETURN_TYPE_NAME))
         };
 
-        sym
+        (loc, specifiers, flavour, return_type_path)
     }
 }
 
@@ -478,15 +448,18 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let func_name = name_node.value(&self.doc);
 
         if let Some(annotation) = n.annotation() {
-            let class_path = annotation.arg()
-                .map(|arg| BasicTypeSymbolPath::new(&arg.value(self.doc)));
+            let class_name = annotation.arg()
+                .map(|arg| arg.value(self.doc));
 
-            match AnnotationKind::from_str(&annotation.name().value(self.doc)) {
-                Ok(AnnotationKind::AddMethod) if class_path.is_some() => {
-                    let class_path = class_path.unwrap();
-                    let path = MemberCallableSymbolPath::new(&class_path, &func_name);
+            match (AnnotationKind::from_str(&annotation.name().value(self.doc)), class_name) {
+                (Ok(AnnotationKind::AddMethod), Some(class_name)) => {
+                    let path = MemberCallableSymbolPath::new(&BasicTypeSymbolPath::new(&class_name), &func_name);
                     if self.check_contains(&path, name_node.range(), SymbolType::MemberFunctionInjector) {
-                        let sym = MemberFunctionInjectorSymbol::new(self.parse_member_function(n, path));
+                        let (loc, specs, flav, rt) = self.parse_member_function(n);
+                        let mut sym = MemberFunctionInjectorSymbol::new(path, loc);
+                        sym.specifiers = specs;
+                        sym.flavour = flav;
+                        sym.return_type_path = rt;
 
                         sym.path_ref().clone_into(&mut self.current_path);
                         self.symtab.insert_primary_symbol(sym);
@@ -494,35 +467,44 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                         traverse = true;
                     }
                 },
-                Ok(AnnotationKind::ReplaceMethod) => {
-                    if let Some(class_path) = class_path {
-                        let path = MemberCallableSymbolPath::new(&class_path, &func_name);
-                        if self.check_contains(&path, name_node.range(), SymbolType::MemberFunctionReplacer) {
-                            let sym = MemberFunctionReplacerSymbol::new(self.parse_member_function(n, path));
+                (Ok(AnnotationKind::ReplaceMethod), Some(class_name)) => {
+                    let path = MemberCallableWrapperSymbolPath::new(&class_name, &func_name);
+                    if self.check_contains(&path, name_node.range(), SymbolType::MemberFunctionReplacer) {
+                        let (loc, specs, flav, rt) = self.parse_member_function(n);
+                        let mut sym = MemberFunctionReplacerSymbol::new(path, loc);
+                        sym.specifiers = specs;
+                        sym.flavour = flav;
+                        sym.return_type_path = rt;
 
-                            sym.path_ref().clone_into(&mut self.current_path);
-                            self.symtab.insert_primary_symbol(sym);
-                
-                            traverse = true;
-                        }
-                    } else {
-                        let path = GlobalCallableSymbolPath::new(&func_name);
-                        if self.check_contains(&path, name_node.range(), SymbolType::GlobalFunctionReplacer) {
-                            let sym = GlobalFunctionReplacerSymbol::new(self.parse_global_function(n, path));
-
-                            sym.path_ref().clone_into(&mut self.current_path);
-                            self.symtab.insert_primary_symbol(sym);
-                
-                            traverse = true;
-                        }
+                        sym.path_ref().clone_into(&mut self.current_path);
+                        self.symtab.insert_primary_symbol(sym);
+            
+                        traverse = true;
                     }
                 },
-                Ok(AnnotationKind::WrapMethod) if class_path.is_some() => {
-                    let class_path = class_path.unwrap();
-                    let path = MemberCallableSymbolPath::new(&class_path, &func_name);
+                (Ok(AnnotationKind::ReplaceMethod), None) => {
+                    let path = GlobalCallableReplacerSymbolPath::new(&func_name);
+                    if self.check_contains(&path, name_node.range(), SymbolType::GlobalFunctionReplacer) {
+                        let (loc, specs, flav, rt) = self.parse_global_function(n);
+                        let mut sym = GlobalFunctionReplacerSymbol::new(path, loc);
+                        sym.specifiers = specs;
+                        sym.flavour = flav;
+                        sym.return_type_path = rt;
+
+                        sym.path_ref().clone_into(&mut self.current_path);
+                        self.symtab.insert_primary_symbol(sym);
+            
+                        traverse = true;
+                    }
+                },
+                (Ok(AnnotationKind::WrapMethod), Some(class_name)) => {
+                    let path = MemberCallableWrapperSymbolPath::new(&class_name, &func_name);
                     if self.check_contains(&path, name_node.range(), SymbolType::MemberFunctionWrapper) {
-                        let wrapped_sym = WrappedMethodSymbol::new(&path);
-                        let sym = MemberFunctionWrapperSymbol::new(self.parse_member_function(n, path));
+                        let (loc, _specs, _flav, rt) = self.parse_member_function(n);
+                        let mut sym = MemberFunctionWrapperSymbol::new(path, loc);
+                        sym.return_type_path = rt;
+
+                        let wrapped_sym = WrappedMethodSymbol::new(sym.path());
 
                         sym.path_ref().clone_into(&mut self.current_path);
                         self.symtab.insert_primary_symbol(sym);
@@ -536,8 +518,12 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         } else {
             let path = GlobalCallableSymbolPath::new(&func_name);
             if self.check_contains(&path, name_node.range(), SymbolType::GlobalFunction) {
-                let sym = self.parse_global_function(n, path);
-    
+                let (loc, specs, flav, rt) = self.parse_global_function(n);
+                let mut sym = GlobalFunctionSymbol::new(path, loc);
+                sym.specifiers = specs;
+                sym.flavour = flav;
+                sym.return_type_path = rt;
+
                 sym.path_ref().clone_into(&mut self.current_path);
                 self.symtab.insert_primary_symbol(sym);
     
@@ -593,7 +579,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                 let var_name = name_node.value(&self.doc);
                 let path = MemberDataSymbolPath::new(&class_path, &var_name);
                 if self.check_contains(&path, name_node.range(), SymbolType::MemberVarInjector) {
-                    let mut sym = MemberVarSymbol::new(path, SymbolLocation { 
+                    let mut sym = MemberVarInjectorSymbol::new(path, SymbolLocation { 
                         scripts_root: self.symtab.script_root_arc(), 
                         local_source_path: self.local_source_path.clone(), 
                         range: n.range(), 
@@ -601,9 +587,6 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                     });
                     sym.specifiers = specifiers.clone();
                     sym.type_path = type_path.clone();
-                    sym.ordinal = 0; // no way to know the real order, it's not needed for classes anyways
-
-                    let sym = MemberVarInjectorSymbol::new(sym);
 
                     self.symtab.insert_primary_symbol(sym);
                 }
@@ -620,7 +603,11 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
         let func_name = name_node.value(&self.doc);
         let path = MemberCallableSymbolPath::new(&self.current_path, &func_name);
         if self.check_contains(&path, name_node.range(), SymbolType::MemberFunction) {
-            let sym = self.parse_member_function(n, path);
+            let (loc, specs, flav, rt) = self.parse_member_function(n);
+            let mut sym = MemberFunctionSymbol::new(path, loc);
+            sym.specifiers = specs;
+            sym.flavour = flav;
+            sym.return_type_path = rt;
 
             sym.path_ref().clone_into(&mut self.current_path);
             self.symtab.insert_symbol(sym);

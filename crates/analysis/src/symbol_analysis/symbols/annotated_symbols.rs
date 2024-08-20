@@ -1,11 +1,15 @@
-use witcherscript::ast::WRAPPED_METHOD_NAME;
+use witcherscript::{ast::WRAPPED_METHOD_NAME, attribs::*};
 use super::*;
 
 
 /// Corresponding to @addMethod(Class) functions
 #[derive(Debug, Clone)]
 pub struct MemberFunctionInjectorSymbol {
-    pub backer: MemberFunctionSymbol
+    path: MemberCallableSymbolPath,
+    location: SymbolLocation,
+    pub specifiers: SymbolSpecifiers<MemberFunctionSpecifier>,
+    pub flavour: Option<MemberFunctionFlavour>,
+    pub return_type_path: TypeSymbolPath
 }
 
 impl Symbol for MemberFunctionInjectorSymbol {
@@ -16,23 +20,31 @@ impl Symbol for MemberFunctionInjectorSymbol {
     }
 
     fn path(&self) -> &Self::PathType {
-        &self.backer.path()
+        &self.path
     }
 }
 
 impl LocatableSymbol for MemberFunctionInjectorSymbol {
     fn location(&self) -> &SymbolLocation {
-        &self.backer.location()
+        &self.location
     }
 }
 
 impl PrimarySymbol for MemberFunctionInjectorSymbol { }
 
 impl MemberFunctionInjectorSymbol {
-    pub fn new(backer: MemberFunctionSymbol) -> Self {
+    pub fn new(path: MemberCallableSymbolPath, location: SymbolLocation) -> Self {
         Self {
-            backer
+            path,
+            location,
+            specifiers: SymbolSpecifiers::new(),
+            flavour: None,
+            return_type_path: TypeSymbolPath::unknown()
         }
+    }
+
+    pub fn return_type_name(&self) -> &str {
+        self.return_type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
 }
 
@@ -41,34 +53,46 @@ impl MemberFunctionInjectorSymbol {
 /// Corresponding to @replaceMethod(Class) functions
 #[derive(Debug, Clone)]
 pub struct MemberFunctionReplacerSymbol {
-    pub backer: MemberFunctionSymbol
+    path: MemberCallableWrapperSymbolPath,
+    location: SymbolLocation,
+    pub specifiers: SymbolSpecifiers<MemberFunctionSpecifier>,
+    pub flavour: Option<MemberFunctionFlavour>,
+    pub return_type_path: TypeSymbolPath
 }
 
 impl Symbol for MemberFunctionReplacerSymbol {
-    type PathType = MemberCallableSymbolPath;
+    type PathType = MemberCallableWrapperSymbolPath;
 
     fn typ(&self) -> SymbolType {
         SymbolType::MemberFunctionReplacer
     }
 
     fn path(&self) -> &Self::PathType {
-        &self.backer.path()
+        &self.path
     }
 }
 
 impl LocatableSymbol for MemberFunctionReplacerSymbol {
     fn location(&self) -> &SymbolLocation {
-        &self.backer.location()
+        &self.location
     }
 }
 
 impl PrimarySymbol for MemberFunctionReplacerSymbol { }
 
 impl MemberFunctionReplacerSymbol {
-    pub fn new(backer: MemberFunctionSymbol) -> Self {
+    pub fn new(path: MemberCallableWrapperSymbolPath, location: SymbolLocation) -> Self {
         Self {
-            backer
+            path,
+            location,
+            specifiers: SymbolSpecifiers::new(),
+            flavour: None,
+            return_type_path: TypeSymbolPath::unknown()
         }
+    }
+
+    pub fn return_type_name(&self) -> &str {
+        self.return_type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
 }
 
@@ -77,34 +101,46 @@ impl MemberFunctionReplacerSymbol {
 /// Corresponding to @replaceMethod functions
 #[derive(Debug, Clone)]
 pub struct GlobalFunctionReplacerSymbol {
-    pub backer: GlobalFunctionSymbol
+    path: GlobalCallableReplacerSymbolPath,
+    location: SymbolLocation,
+    pub specifiers: SymbolSpecifiers<GlobalFunctionSpecifier>,
+    pub flavour: Option<GlobalFunctionFlavour>,
+    pub return_type_path: TypeSymbolPath
 }
 
 impl Symbol for GlobalFunctionReplacerSymbol {
-    type PathType = GlobalCallableSymbolPath;
+    type PathType = GlobalCallableReplacerSymbolPath;
 
     fn typ(&self) -> SymbolType {
         SymbolType::GlobalFunctionReplacer
     }
 
     fn path(&self) -> &Self::PathType {
-        &self.backer.path()
+        &self.path
     }
 }
 
 impl LocatableSymbol for GlobalFunctionReplacerSymbol {
     fn location(&self) -> &SymbolLocation {
-        &self.backer.location()
+        &self.location
     }
 }
 
 impl PrimarySymbol for GlobalFunctionReplacerSymbol { }
 
 impl GlobalFunctionReplacerSymbol {
-    pub fn new(backer: GlobalFunctionSymbol) -> Self {
+    pub fn new(path: GlobalCallableReplacerSymbolPath, location: SymbolLocation) -> Self {
         Self {
-            backer
+            path,
+            location,
+            specifiers: SymbolSpecifiers::new(),
+            flavour: None,
+            return_type_path: TypeSymbolPath::unknown()
         }
+    }
+
+    pub fn return_type_name(&self) -> &str {
+        self.return_type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
 }
 
@@ -113,34 +149,43 @@ impl GlobalFunctionReplacerSymbol {
 /// Corresponding to @wrapMethod(Class) functions
 #[derive(Debug, Clone)]
 pub struct MemberFunctionWrapperSymbol {
-    pub backer: MemberFunctionSymbol
+    path: MemberCallableWrapperSymbolPath,
+    location: SymbolLocation,
+    // you don't put specifiers in the declaration of a wrapped method
+    pub return_type_path: TypeSymbolPath
 }
 
 impl Symbol for MemberFunctionWrapperSymbol {
-    type PathType = MemberCallableSymbolPath;
+    type PathType = MemberCallableWrapperSymbolPath;
 
     fn typ(&self) -> SymbolType {
         SymbolType::MemberFunctionWrapper
     }
 
     fn path(&self) -> &Self::PathType {
-        &self.backer.path()
+        &self.path
     }
 }
 
 impl LocatableSymbol for MemberFunctionWrapperSymbol {
     fn location(&self) -> &SymbolLocation {
-        &self.backer.location()
+        &self.location
     }
 }
 
 impl PrimarySymbol for MemberFunctionWrapperSymbol { }
 
 impl MemberFunctionWrapperSymbol {
-    pub fn new(backer: MemberFunctionSymbol) -> Self {
+    pub fn new(path: MemberCallableWrapperSymbolPath, location: SymbolLocation) -> Self {
         Self {
-            backer
+            path,
+            location,
+            return_type_path: TypeSymbolPath::unknown()
         }
+    }
+
+    pub fn return_type_name(&self) -> &str {
+        self.return_type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
 }
 
@@ -165,10 +210,11 @@ impl Symbol for WrappedMethodSymbol {
 }
 
 impl WrappedMethodSymbol {
-    pub fn new(wrapper_path: &MemberCallableSymbolPath) -> Self {
+    pub fn new(wrapper_path: &MemberCallableWrapperSymbolPath) -> Self {
         Self {
             path: MemberCallableSymbolPath::new(&wrapper_path, WRAPPED_METHOD_NAME),
-            wrapped_path: wrapper_path.to_owned(), // wrapped and wrapper paths are the same
+            //FIXME remove this
+            wrapped_path: wrapper_path.to_owned().into(), // wrapped and wrapper paths are the same
         }
     }
 
@@ -182,7 +228,10 @@ impl WrappedMethodSymbol {
 /// Corresponding to @addField(Class) vars
 #[derive(Debug, Clone)]
 pub struct MemberVarInjectorSymbol {
-    pub backer: MemberVarSymbol
+    path: MemberDataSymbolPath,
+    location: SymbolLocation,
+    pub specifiers: SymbolSpecifiers<MemberVarSpecifier>,
+    pub type_path: TypeSymbolPath
 }
 
 impl Symbol for MemberVarInjectorSymbol {
@@ -193,22 +242,29 @@ impl Symbol for MemberVarInjectorSymbol {
     }
 
     fn path(&self) -> &Self::PathType {
-        &self.backer.path()
+        &self.path
     }
 }
 
 impl LocatableSymbol for MemberVarInjectorSymbol {
     fn location(&self) -> &SymbolLocation {
-        &self.backer.location()
+        &self.location
     }
 }
 
 impl PrimarySymbol for MemberVarInjectorSymbol { }
 
 impl MemberVarInjectorSymbol {
-    pub fn new(backer: MemberVarSymbol) -> Self {
+    pub fn new(path: MemberDataSymbolPath, location: SymbolLocation) -> Self {
         Self {
-            backer
+            path,
+            location,
+            specifiers: SymbolSpecifiers::new(),
+            type_path: TypeSymbolPath::unknown()
         }
+    }
+
+    pub fn type_name(&self) -> &str {
+        self.type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
 }

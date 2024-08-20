@@ -328,3 +328,81 @@ impl From<VirtualParentVarSymbolPath> for SymbolPathBuf {
         value.path
     }
 }
+
+
+
+// Path suffixes that disambiguate annotated functions from each other and the un-annotated counterpart
+pub const CALLABLE_WRAPPER_PATH_SUFFIX: &'static str = "@wrapped"; 
+pub const CALLABLE_REPLACER_PATH_SUFFIX: &'static str = "@replaced"; 
+
+
+#[derive(Debug, Clone, Shrinkwrap)]
+pub struct GlobalCallableReplacerSymbolPath(SymbolPathBuf);
+
+impl GlobalCallableReplacerSymbolPath {
+    pub fn new(name: &str) -> Self {
+        let path = SymbolPathBuf::new(&format!("{}{}", name, CALLABLE_REPLACER_PATH_SUFFIX), SymbolCategory::Callable);
+
+        Self(path)
+    }
+}
+
+impl From<GlobalCallableReplacerSymbolPath> for SymbolPathBuf {
+    fn from(value: GlobalCallableReplacerSymbolPath) -> Self {
+        value.0
+    }
+}
+
+
+#[derive(Debug, Clone, Shrinkwrap)]
+pub struct MemberCallableReplacerSymbolPath(SymbolPathBuf);
+
+impl MemberCallableReplacerSymbolPath {
+    pub fn new(class_name: &str, name: &str) -> Self {
+        let mut path = SymbolPathBuf::new(class_name, SymbolCategory::Type);
+        path.push(&format!("{}{}", name, CALLABLE_REPLACER_PATH_SUFFIX), SymbolCategory::Callable);
+
+        Self(path)
+    }
+}
+
+impl From<MemberCallableReplacerSymbolPath> for SymbolPathBuf {
+    fn from(value: MemberCallableReplacerSymbolPath) -> Self {
+        value.0
+    }
+}
+
+
+#[derive(Debug, Clone, Shrinkwrap)]
+pub struct MemberCallableWrapperSymbolPath(SymbolPathBuf);
+
+impl MemberCallableWrapperSymbolPath {
+    pub fn new(class_name: &str, name: &str) -> Self {
+        let mut path = SymbolPathBuf::new(class_name, SymbolCategory::Type);
+        path.push(&format!("{}{}", name, CALLABLE_WRAPPER_PATH_SUFFIX), SymbolCategory::Callable);
+
+        Self(path)
+    }
+}
+
+impl From<MemberCallableWrapperSymbolPath> for SymbolPathBuf {
+    fn from(value: MemberCallableWrapperSymbolPath) -> Self {
+        value.0
+    }
+}
+
+impl From<MemberCallableWrapperSymbolPath> for MemberCallableSymbolPath {
+    fn from(value: MemberCallableWrapperSymbolPath) -> Self {
+        let name = value.components()
+            .last().unwrap()
+            .name
+            .strip_suffix(CALLABLE_WRAPPER_PATH_SUFFIX).unwrap()
+            .to_string();
+        
+        let mut path = value.0.clone();
+        path.pop();
+        path.push(&name, SymbolCategory::Callable);
+
+        MemberCallableSymbolPath(path)
+    }
+}

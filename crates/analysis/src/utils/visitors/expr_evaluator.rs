@@ -125,16 +125,16 @@ impl<'a> ExpressionEvaluator<'a> {
                 },
                 SymbolVariant::ParentVar(s) => s.type_path().to_owned(),
                 SymbolVariant::VirtualParentVar(s) => s.type_path().to_owned(),
-                SymbolVariant::MemberFuncInjector(s) => s.backer.return_type_path.clone().into(),
-                SymbolVariant::MemberFuncReplacer(s) => s.backer.return_type_path.clone().into(),
-                SymbolVariant::GlobalFuncReplacer(s) => s.backer.return_type_path.clone().into(),
-                SymbolVariant::MemberFuncWrapper(s) => s.backer.return_type_path.clone().into(),
-                SymbolVariant::MemberVarInjector(s) => s.backer.type_path.clone().into(),
+                SymbolVariant::MemberFuncInjector(s) => s.return_type_path.clone().into(),
+                SymbolVariant::MemberFuncReplacer(s) => s.return_type_path.clone().into(),
+                SymbolVariant::GlobalFuncReplacer(s) => s.return_type_path.clone().into(),
+                SymbolVariant::MemberFuncWrapper(s) => s.return_type_path.clone().into(),
+                SymbolVariant::MemberVarInjector(s) => s.type_path.clone().into(),
                 SymbolVariant::WrappedMethod(s) => {
                     self.symtab_marcher
-                        .get_symbol(s.wrapped_path())
+                        .get_symbol(s.path().parent().unwrap_or_default())
                         .and_then(|v| v.try_as_member_func_wrapper_ref())
-                        .map(|wrapper| wrapper.backer.return_type_path.clone().into())
+                        .map(|wrapper| wrapper.return_type_path.clone().into())
                         .unwrap_or(SymbolPathBuf::unknown(SymbolCategory::Type))
                 }
             }

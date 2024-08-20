@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, str::FromStr};
 use witcherscript::{ast::*, script_document::ScriptDocument, ErrorNode};
 use crate::symbol_analysis::{symbol_path::SymbolPathBuf, symbols::*};
 
@@ -97,20 +97,43 @@ impl SyntaxNodeVisitor for SymbolPathBuilder<'_> {
 
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
         let mut payload = self.payload.borrow_mut();
-        payload.current_sympath.clear();
 
-        if let Some(class_name) = n.annotation().and_then(|annot| annot.arg()) {
-            payload.current_sympath.push(&class_name.value(self.doc), SymbolCategory::Type);
-        }
-            
         let name = n.name().value(self.doc);
-        payload.current_sympath.push(&name, SymbolCategory::Callable);
+
+        if let Some(annot_node) = n.annotation() {
+            if let Some(class_name) = annot_node.arg().map(|arg| arg.value(self.doc)) {
+                payload.current_sympath.push(&class_name, SymbolCategory::Type);
+            }
+
+            let annot_kind = AnnotationKind::from_str(&annot_node.name().value(self.doc));
+            let annot_arg = annot_node.arg().map(|arg| arg.value(self.doc));
+
+            match (annot_kind, annot_arg) {
+                (Ok(AnnotationKind::AddMethod), Some(class_name)) => {
+                    payload.current_sympath = MemberCallableSymbolPath::new(&BasicTypeSymbolPath::new(&class_name), &name).into();
+                },
+                (Ok(AnnotationKind::ReplaceMethod), Some(class_name)) => {
+                    payload.current_sympath = MemberCallableReplacerSymbolPath::new(&class_name, &name).into();
+                },
+                (Ok(AnnotationKind::ReplaceMethod), None) => {
+                    payload.current_sympath = GlobalCallableReplacerSymbolPath::new(&name).into();
+                },
+                (Ok(AnnotationKind::WrapMethod), Some(class_name)) => {
+                    payload.current_sympath = MemberCallableWrapperSymbolPath::new(&class_name, &name).into();
+                },
+                _ => {
+                    payload.current_sympath = GlobalCallableSymbolPath::new(&name).into();
+                }
+            }
+        } else {
+            payload.current_sympath = GlobalCallableSymbolPath::new(&name).into();
+        }
 
         TraversalPolicy::default_to(true)
     }
 
     fn exit_global_func_decl(&mut self, _: &FunctionDeclarationNode) {
-        self.payload.borrow_mut().current_sympath.pop();
+        self.payload.borrow_mut().current_sympath.clear();
     }
 
     fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {

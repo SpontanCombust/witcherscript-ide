@@ -409,37 +409,91 @@ impl ToDocumentSymbol for ConstructorSymbol {
 }
 
 impl ToDocumentSymbol for MemberFunctionInjectorSymbol {
+    #[allow(deprecated)]
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        self.backer.to_doc_sym()
+        Some(lsp::DocumentSymbol {
+            name: self.name().to_owned(),
+            kind: lsp::SymbolKind::METHOD,
+            range: self.location().range,
+            selection_range: self.location().label_range,
+            detail: None,
+            tags: None,
+            children: Some(Vec::new()),
+            deprecated: None
+        })
     }
 }
 
 impl ToDocumentSymbol for MemberFunctionReplacerSymbol {
+    #[allow(deprecated)]
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        self.backer.to_doc_sym()
+        Some(lsp::DocumentSymbol {
+            name: self.name().to_owned(),
+            kind: lsp::SymbolKind::METHOD,
+            range: self.location().range,
+            selection_range: self.location().label_range,
+            detail: None,
+            tags: None,
+            children: Some(Vec::new()),
+            deprecated: None
+        })
     }
 }
 
 impl ToDocumentSymbol for GlobalFunctionReplacerSymbol {
+    #[allow(deprecated)]
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        self.backer.to_doc_sym()
+        Some(lsp::DocumentSymbol {
+            name: self.name().to_owned(),
+            kind: lsp::SymbolKind::FUNCTION,
+            range: self.location().range,
+            selection_range: self.location().label_range,
+            detail: None,
+            tags: None,
+            children: Some(Vec::new()),
+            deprecated: None
+        })
     }
 }
 
 impl ToDocumentSymbol for MemberFunctionWrapperSymbol {
+    #[allow(deprecated)]
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        self.backer.to_doc_sym()
+        Some(lsp::DocumentSymbol {
+            name: self.name().to_owned(),
+            kind: lsp::SymbolKind::METHOD,
+            range: self.location().range,
+            selection_range: self.location().label_range,
+            detail: None,
+            tags: None,
+            children: Some(Vec::new()),
+            deprecated: None
+        })
     }
 }
 
 impl ToDocumentSymbol for MemberVarInjectorSymbol {
+    #[allow(deprecated)]
     #[inline]
     fn to_doc_sym(&self) -> Option<lsp::DocumentSymbol> {
-        self.backer.to_doc_sym()
+        Some(lsp::DocumentSymbol {
+            name: self.name().to_owned(),
+            kind: if self.specifiers.contains(MemberVarSpecifier::Const) { 
+                lsp::SymbolKind::CONSTANT 
+            } else {
+                lsp::SymbolKind::FIELD
+            },
+            range: self.location().range,
+            selection_range: self.location().label_range,
+            detail: None,
+            tags: None,
+            children: None,
+            deprecated: None
+        })
     }
 }
 

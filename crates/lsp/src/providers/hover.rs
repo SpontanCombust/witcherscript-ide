@@ -737,13 +737,13 @@ impl RenderTooltip for MemberFunctionInjectorSymbol {
         buf.push(')');
         buf.push('\n');
 
-        for spec in self.backer.specifiers.iter() {
+        for spec in self.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
         }
 
-        if let Some(flavour) = self.backer.flavour.clone() {
+        if let Some(flavour) = self.flavour.clone() {
             let kw: Keyword = flavour.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
@@ -783,7 +783,7 @@ impl RenderTooltip for MemberFunctionInjectorSymbol {
         buf.push(' ');
         buf.push(':');
         buf.push(' ');
-        buf.push_str(self.backer.return_type_name()); 
+        buf.push_str(self.return_type_name()); 
     }
 }
 
@@ -795,13 +795,13 @@ impl RenderTooltip for MemberFunctionReplacerSymbol {
         buf.push(')');
         buf.push('\n');
 
-        for spec in self.backer.specifiers.iter() {
+        for spec in self.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
         }
 
-        if let Some(flavour) = self.backer.flavour.clone() {
+        if let Some(flavour) = self.flavour.clone() {
             let kw: Keyword = flavour.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
@@ -841,7 +841,7 @@ impl RenderTooltip for MemberFunctionReplacerSymbol {
         buf.push(' ');
         buf.push(':');
         buf.push(' ');
-        buf.push_str(self.backer.return_type_name()); 
+        buf.push_str(self.return_type_name()); 
     }
 }
 
@@ -850,13 +850,13 @@ impl RenderTooltip for GlobalFunctionReplacerSymbol {
         buf.push_str(AnnotationKind::ReplaceMethod.as_ref());
         buf.push('\n');
 
-        for spec in self.backer.specifiers.iter() {
+        for spec in self.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
         }
 
-        if let Some(flavour) = self.backer.flavour.clone() {
+        if let Some(flavour) = self.flavour.clone() {
             let kw: Keyword = flavour.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
@@ -896,7 +896,7 @@ impl RenderTooltip for GlobalFunctionReplacerSymbol {
         buf.push(' ');
         buf.push(':');
         buf.push(' ');
-        buf.push_str(self.backer.return_type_name()); 
+        buf.push_str(self.return_type_name()); 
     }
 }
 
@@ -944,7 +944,7 @@ impl RenderTooltip for MemberFunctionWrapperSymbol {
         buf.push(' ');
         buf.push(':');
         buf.push(' ');
-        buf.push_str(self.backer.return_type_name()); 
+        buf.push_str(self.return_type_name()); 
     }
 }
 
@@ -956,7 +956,7 @@ impl RenderTooltip for MemberVarInjectorSymbol {
         buf.push(')');
         buf.push('\n');
 
-        for spec in self.backer.specifiers.iter() {
+        for spec in self.specifiers.iter() {
             let kw: Keyword = spec.into();
             buf.push_str(kw.as_ref());
             buf.push(' ');
@@ -968,7 +968,7 @@ impl RenderTooltip for MemberVarInjectorSymbol {
         buf.push(' ');
         buf.push(':');
         buf.push(' ');
-        buf.push_str(self.backer.type_name());
+        buf.push_str(self.type_name());
     }
 }
 
@@ -976,13 +976,10 @@ impl RenderTooltip for WrappedMethodSymbol {
     fn render(&self, buf: &mut String, _: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
         let mut rendered = false;
 
-        // skip the wrapper function to get to either another wrapper or the original function
-        if let Some(wrapped) = marcher.redefinition_chain(&self.wrapped_path()).skip(1).next() {
-            // wrapped symbol should be in other content, so we need to fetch the correct one for it
-            if let Some(symtab) = marcher.find_table_with_symbol(wrapped) {
-                wrapped.render(buf, symtab, marcher);
-                rendered = true;
-            }
+        // go to the original declaration pointed to by the wrapped path
+        if let Some((symtab, wrapped)) = marcher.get_symbol_with_table(self.wrapped_path()) {
+            wrapped.render(buf, symtab, marcher);
+            rendered = true;
         }
 
         if !rendered {
