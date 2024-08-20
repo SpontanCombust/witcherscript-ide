@@ -433,31 +433,6 @@ var player: CR4Player<Ciri>; // (1)
 
 ---
 
-### `same-content-annotation`
-
-Annotations are meant to extend types already existing in the Witcher 3 script code base or types defined in other mods. Even if it may be possible to `@wrapMethod` that is defined in the same mod WIDE discourages this behaviour in favour of simply editing those types instead of using annotations. 
-
-```ts linenums="1" title="modSkillFramework/content/scripts/skill_framework.ws"
-class SkillFramework {
-    public function DefineSkill(skillName: name) {
-        // ...
-    }
-}
-```
-
-```ts linenums="1" hl_lines="2"
-@wrapMethod(SkillFramework)
-function DefineSkill(skillName: name) { // (1)
-    LogChannel('SF', "Skill defined: " + skillName);
-    wrappedMethod(skillName);
-}
-```
-
-1. Putting this in the same mod will work for the script compiler, but will yield undefined behaviour for WIDE.
-
-
----
-
 
 
 </br>
