@@ -345,11 +345,41 @@ impl GlobalCallableReplacerSymbolPath {
 
         Self(path)
     }
+
+    pub fn function_name(&self) -> &str {
+        self.0.components().last().and_then(|c| c.name.strip_suffix(CALLABLE_REPLACER_PATH_SUFFIX)).unwrap_or_default()
+    }
 }
 
 impl From<GlobalCallableReplacerSymbolPath> for SymbolPathBuf {
     fn from(value: GlobalCallableReplacerSymbolPath) -> Self {
         value.0
+    }
+}
+
+impl From<GlobalCallableSymbolPath> for GlobalCallableReplacerSymbolPath {
+    fn from(value: GlobalCallableSymbolPath) -> Self {
+        let name = value.components()
+            .last().unwrap()
+            .name.to_string();
+
+        Self::new(&name)
+    }
+}
+
+impl From<GlobalCallableReplacerSymbolPath> for GlobalCallableSymbolPath {
+    fn from(value: GlobalCallableReplacerSymbolPath) -> Self {
+        let name = value.components()
+            .next().unwrap()
+            .name
+            .strip_suffix(CALLABLE_REPLACER_PATH_SUFFIX).unwrap()
+            .to_string();
+        
+        let mut path = value.0.clone();
+        path.pop();
+        path.push(&name, SymbolCategory::Callable);
+
+        GlobalCallableSymbolPath(path)
     }
 }
 
@@ -364,11 +394,45 @@ impl MemberCallableReplacerSymbolPath {
 
         Self(path)
     }
+
+    pub fn function_name(&self) -> &str {
+        self.0.components().last().and_then(|c| c.name.strip_suffix(CALLABLE_REPLACER_PATH_SUFFIX)).unwrap_or_default()
+    }
 }
 
 impl From<MemberCallableReplacerSymbolPath> for SymbolPathBuf {
     fn from(value: MemberCallableReplacerSymbolPath) -> Self {
         value.0
+    }
+}
+
+impl From<MemberCallableSymbolPath> for MemberCallableReplacerSymbolPath {
+    fn from(value: MemberCallableSymbolPath) -> Self {
+        let name = value.components()
+            .last().unwrap()
+            .name.to_string();
+
+        let mut path = value.0;
+        path.pop();
+        path.push(&format!("{}{}", name, CALLABLE_REPLACER_PATH_SUFFIX), SymbolCategory::Callable);
+
+        MemberCallableReplacerSymbolPath(path)
+    }
+}
+
+impl From<MemberCallableReplacerSymbolPath> for MemberCallableSymbolPath {
+    fn from(value: MemberCallableReplacerSymbolPath) -> Self {
+        let name = value.components()
+            .last().unwrap()
+            .name
+            .strip_suffix(CALLABLE_REPLACER_PATH_SUFFIX).unwrap()
+            .to_string();
+        
+        let mut path = value.0.clone();
+        path.pop();
+        path.push(&name, SymbolCategory::Callable);
+
+        MemberCallableSymbolPath(path)
     }
 }
 
@@ -382,6 +446,10 @@ impl MemberCallableWrapperSymbolPath {
         path.push(&format!("{}{}", name, CALLABLE_WRAPPER_PATH_SUFFIX), SymbolCategory::Callable);
 
         Self(path)
+    }
+
+    pub fn function_name(&self) -> &str {
+        self.0.components().last().and_then(|c| c.name.strip_suffix(CALLABLE_WRAPPER_PATH_SUFFIX)).unwrap_or_default()
     }
 }
 
@@ -404,5 +472,19 @@ impl From<MemberCallableWrapperSymbolPath> for MemberCallableSymbolPath {
         path.push(&name, SymbolCategory::Callable);
 
         MemberCallableSymbolPath(path)
+    }
+}
+
+impl From<MemberCallableSymbolPath> for MemberCallableWrapperSymbolPath  {
+    fn from(value: MemberCallableSymbolPath) -> Self {
+        let name = value.components()
+            .last().unwrap()
+            .name.to_string();
+
+        let mut path = value.0;
+        path.pop();
+        path.push(&format!("{}{}", name, CALLABLE_WRAPPER_PATH_SUFFIX), SymbolCategory::Callable);
+
+        MemberCallableWrapperSymbolPath(path)
     }
 }

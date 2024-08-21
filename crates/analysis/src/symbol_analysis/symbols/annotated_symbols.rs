@@ -53,7 +53,7 @@ impl MemberFunctionInjectorSymbol {
 /// Corresponding to @replaceMethod(Class) functions
 #[derive(Debug, Clone)]
 pub struct MemberFunctionReplacerSymbol {
-    path: MemberCallableWrapperSymbolPath,
+    path: MemberCallableReplacerSymbolPath,
     location: SymbolLocation,
     pub specifiers: SymbolSpecifiers<MemberFunctionSpecifier>,
     pub flavour: Option<MemberFunctionFlavour>,
@@ -61,7 +61,7 @@ pub struct MemberFunctionReplacerSymbol {
 }
 
 impl Symbol for MemberFunctionReplacerSymbol {
-    type PathType = MemberCallableWrapperSymbolPath;
+    type PathType = MemberCallableReplacerSymbolPath;
 
     fn typ(&self) -> SymbolType {
         SymbolType::MemberFunctionReplacer
@@ -81,7 +81,7 @@ impl LocatableSymbol for MemberFunctionReplacerSymbol {
 impl PrimarySymbol for MemberFunctionReplacerSymbol { }
 
 impl MemberFunctionReplacerSymbol {
-    pub fn new(path: MemberCallableWrapperSymbolPath, location: SymbolLocation) -> Self {
+    pub fn new(path: MemberCallableReplacerSymbolPath, location: SymbolLocation) -> Self {
         Self {
             path,
             location,
@@ -93,6 +93,11 @@ impl MemberFunctionReplacerSymbol {
 
     pub fn return_type_name(&self) -> &str {
         self.return_type_path.components().next().map(|c| c.name).unwrap_or_default()
+    }
+
+    #[inline]
+    pub fn function_name(&self) -> &str {
+        self.path.function_name()
     }
 }
 
@@ -142,6 +147,11 @@ impl GlobalFunctionReplacerSymbol {
     pub fn return_type_name(&self) -> &str {
         self.return_type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
+
+    #[inline]
+    pub fn function_name(&self) -> &str {
+        self.path.function_name()
+    }
 }
 
 
@@ -187,6 +197,11 @@ impl MemberFunctionWrapperSymbol {
     pub fn return_type_name(&self) -> &str {
         self.return_type_path.components().next().map(|c| c.name).unwrap_or_default()
     }
+
+    #[inline]
+    pub fn function_name(&self) -> &str {
+        self.path.function_name()
+    }
 }
 
 
@@ -213,18 +228,18 @@ impl WrappedMethodSymbol {
     pub fn new(wrapper_path: &MemberCallableWrapperSymbolPath) -> Self {
         Self {
             path: MemberCallableSymbolPath::new(&wrapper_path, WRAPPED_METHOD_NAME),
-            //FIXME remove this
             wrapped_path: wrapper_path.to_owned().into(), // wrapped and wrapper paths are the same
         }
     }
 
+    /// Path to the original method
     pub fn wrapped_path(&self) -> &MemberCallableSymbolPath {
         &self.wrapped_path
     }
 }
 
 
-
+//FIXME appears twice in document outline
 /// Corresponding to @addField(Class) vars
 #[derive(Debug, Clone)]
 pub struct MemberVarInjectorSymbol {

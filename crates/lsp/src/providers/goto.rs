@@ -31,12 +31,11 @@ impl Backend {
                 if let Some(wrapped_method_sym) = symvar.try_as_wrapped_method_ref() {
                     let symtabs = self.symtabs.read().await;
                     let symtabs_marcher = self
-                        .march_symbol_tables(&symtabs, &content_path).await
-                        .skip_first_step(true);
+                        .march_symbol_tables(&symtabs, &content_path).await;
     
                     let wrapped_loc = symtabs_marcher
-                        .redefinition_chain(&wrapped_method_sym.wrapped_path())
-                        .skip(1).next()
+                        .annotation_chain_for_member_callable(&wrapped_method_sym.wrapped_path())
+                        .skip(1).next() // skip the actual wrapped method declaration
                         .and_then(|v| v.location());
     
                     if let Some(wrapped_loc) = wrapped_loc {
@@ -90,71 +89,90 @@ impl Backend {
             let origin_selection_range = Some(inspected.origin_selection_range);
     
             let mut loc = inspected.loc;
-            if let Some(symvar) = inspected.symvar {
-                // if the inspected symbol is a method or an event
-                // attempt to find the very first declaration of the callable
-                // because normally you get the location of the last override of the function
-                if symvar.is_member_func() || symvar.is_event() {
-                    let func_path = symvar.path_ref().to_owned();
-                    let mut parent_path = func_path.clone();
-                    parent_path.pop();
-    
-                    let func_name = symvar.name();
-    
-                    let symtabs = self.symtabs.read().await;
-                    let symtabs_marcher = self.march_symbol_tables(&symtabs, &content_path).await;
-    
-                    let parent_sym_typ = symtabs_marcher
-                        .get_symbol(&parent_path)
-                        .map(|v| v.typ())
-                        .unwrap_or(SymbolType::Type);
-    
-                    if parent_sym_typ == SymbolType::Class {
-                        for class in symtabs_marcher.class_hierarchy(&parent_path).skip(1) {
-                            let base_func_path = class.path().join_component(func_name, SymbolCategory::Callable);
+            if let Some(ref symvar) = inspected.symvar {
+                match symvar {
+                    // if the inspected symbol is a method or an event
+                    // attempt to find the very first declaration of the callable
+                    // because normally you get the location of the last override of the function
+                    SymbolVariant::MemberFunc(_) | SymbolVariant::Event(_) => {
+                        let func_path = symvar.path_ref().to_owned();
+                        let mut parent_path = func_path.clone();
+                        parent_path.pop();
+        
+                        let func_name = symvar.name();
+        
+                        let symtabs = self.symtabs.read().await;
+                        let symtabs_marcher = self.march_symbol_tables(&symtabs, &content_path).await;
+        
+                        let parent_sym_typ = symtabs_marcher
+                            .get_symbol(&parent_path)
+                            .map(|v| v.typ())
+                            .unwrap_or(SymbolType::Type);
+        
+                        if parent_sym_typ == SymbolType::Class {
+                            for class in symtabs_marcher.class_hierarchy(&parent_path).skip(1) {
+                                let base_func_path = class.path().join_component(func_name, SymbolCategory::Callable);
+                                if let Some(base_func_loc) = symtabs_marcher.get_symbol(&base_func_path).and_then(|v| v.location()) {
+                                    loc = Some(base_func_loc.to_owned());
+                                }
+                            }
+                        } 
+                        else if parent_sym_typ == SymbolType::State {
+                            for state in symtabs_marcher.state_hierarchy(&parent_path).skip(1) {
+                                let base_func_path = state.path().join_component(func_name, SymbolCategory::Callable);
+                                if let Some(base_func_loc) = symtabs_marcher.get_symbol(&base_func_path).and_then(|v| v.location()) {
+                                    loc = Some(base_func_loc.to_owned());
+                                }
+                            }
+        
+                            let base_func_path = BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME).join_component(func_name, SymbolCategory::Callable);
                             if let Some(base_func_loc) = symtabs_marcher.get_symbol(&base_func_path).and_then(|v| v.location()) {
                                 loc = Some(base_func_loc.to_owned());
                             }
                         }
-                    } 
-                    else if parent_sym_typ == SymbolType::State {
-                        for state in symtabs_marcher.state_hierarchy(&parent_path).skip(1) {
-                            let base_func_path = state.path().join_component(func_name, SymbolCategory::Callable);
-                            if let Some(base_func_loc) = symtabs_marcher.get_symbol(&base_func_path).and_then(|v| v.location()) {
-                                loc = Some(base_func_loc.to_owned());
-                            }
-                        }
-    
-                        let base_func_path = BasicTypeSymbolPath::new(StateSymbol::DEFAULT_STATE_BASE_NAME).join_component(func_name, SymbolCategory::Callable);
-                        if let Some(base_func_loc) = symtabs_marcher.get_symbol(&base_func_path).and_then(|v| v.location()) {
-                            loc = Some(base_func_loc.to_owned());
+                    },
+                    SymbolVariant::GlobalFuncReplacer(global_func_replacer_sym) => {
+                        let symtabs = self.symtabs.read().await;
+                        let symtabs_marcher = self.march_symbol_tables(&symtabs, &content_path).await;
+        
+                        let path: GlobalCallableSymbolPath = global_func_replacer_sym.path().clone().into();
+                        if let Some(first_loc) = symtabs_marcher.annotation_chain_for_global_callable(&path).last().and_then(|v| v.location()) {
+                            loc = Some(first_loc.to_owned());
                         }
                     }
-                }
-                else if symvar.is_global_func_replacer() || symvar.is_member_func_replacer() || symvar.is_member_func_wrapper() {
-                    let sympath = symvar.path_ref();
-    
-                    let symtabs = self.symtabs.read().await;
-                    let symtabs_marcher = self.march_symbol_tables(&symtabs, &content_path).await;
-    
-                    if let Some(first_loc) = symtabs_marcher.redefinition_chain(&sympath).last().and_then(|v| v.location()) {
-                        loc = Some(first_loc.to_owned());
+                    SymbolVariant::MemberFuncReplacer(member_func_replacer_sym) => {
+                        let symtabs = self.symtabs.read().await;
+                        let symtabs_marcher = self.march_symbol_tables(&symtabs, &content_path).await;
+        
+                        let path: MemberCallableSymbolPath = member_func_replacer_sym.path().clone().into();
+                        if let Some(first_loc) = symtabs_marcher.annotation_chain_for_member_callable(&path).last().and_then(|v| v.location()) {
+                            loc = Some(first_loc.to_owned());
+                        }
                     }
-                }
-                else if let Some(wrapped_method_sym) = symvar.try_as_wrapped_method_ref() {
-                    let symtabs = self.symtabs.read().await;
-                    let symtabs_marcher = self
-                        .march_symbol_tables(&symtabs, &content_path).await
-                        .skip_first_step(true);
-    
-                    let wrapped_loc = symtabs_marcher
-                        .redefinition_chain(&wrapped_method_sym.wrapped_path())
-                        .skip(1).next()
-                        .and_then(|v| v.location());
-    
-                    if let Some(wrapped_loc) = wrapped_loc {
-                        loc = Some(wrapped_loc.to_owned());
+                    SymbolVariant::MemberFuncWrapper(member_func_wrapper_sym) => {
+                        let symtabs = self.symtabs.read().await;
+                        let symtabs_marcher = self.march_symbol_tables(&symtabs, &content_path).await;
+        
+                        let path: MemberCallableSymbolPath = member_func_wrapper_sym.path().clone().into();
+                        if let Some(first_loc) = symtabs_marcher.annotation_chain_for_member_callable(&path).last().and_then(|v| v.location()) {
+                            loc = Some(first_loc.to_owned());
+                        }
                     }
+                    SymbolVariant::WrappedMethod(wrapped_method_sym) => {
+                        let symtabs = self.symtabs.read().await;
+                        let symtabs_marcher = self
+                            .march_symbol_tables(&symtabs, &content_path).await;
+        
+                        let wrapped_loc = symtabs_marcher
+                            .annotation_chain_for_member_callable(&wrapped_method_sym.wrapped_path())
+                            .skip(1).next() // skip the actual wrapped method declaration
+                            .and_then(|v| v.location());
+        
+                        if let Some(wrapped_loc) = wrapped_loc {
+                            loc = Some(wrapped_loc.to_owned());
+                        }
+                    },
+                    _ => {}
                 }
             }
     

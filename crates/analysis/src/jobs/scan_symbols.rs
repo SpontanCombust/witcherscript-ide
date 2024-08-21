@@ -468,7 +468,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
                     }
                 },
                 (Ok(AnnotationKind::ReplaceMethod), Some(class_name)) => {
-                    let path = MemberCallableWrapperSymbolPath::new(&class_name, &func_name);
+                    let path = MemberCallableReplacerSymbolPath::new(&class_name, &func_name);
                     if self.check_contains(&path, name_node.range(), SymbolType::MemberFunctionReplacer) {
                         let (loc, specs, flav, rt) = self.parse_member_function(n);
                         let mut sym = MemberFunctionReplacerSymbol::new(path, loc);

@@ -810,7 +810,7 @@ impl RenderTooltip for MemberFunctionReplacerSymbol {
         buf.push_str(Keyword::Function.as_ref());
         buf.push(' ');
 
-        buf.push_str(self.name());
+        buf.push_str(self.function_name());
 
         buf.push('(');
 
@@ -865,7 +865,7 @@ impl RenderTooltip for GlobalFunctionReplacerSymbol {
         buf.push_str(Keyword::Function.as_ref());
         buf.push(' ');
 
-        buf.push_str(self.name());
+        buf.push_str(self.function_name());
 
         buf.push('(');
 
@@ -913,7 +913,7 @@ impl RenderTooltip for MemberFunctionWrapperSymbol {
         buf.push_str(Keyword::Function.as_ref());
         buf.push(' ');
 
-        buf.push_str(self.name());
+        buf.push_str(self.function_name());
 
         buf.push('(');
 
@@ -976,10 +976,13 @@ impl RenderTooltip for WrappedMethodSymbol {
     fn render(&self, buf: &mut String, _: &SymbolTable, marcher: &SymbolTableMarcher<'_>) {
         let mut rendered = false;
 
-        // go to the original declaration pointed to by the wrapped path
-        if let Some((symtab, wrapped)) = marcher.get_symbol_with_table(self.wrapped_path()) {
-            wrapped.render(buf, symtab, marcher);
-            rendered = true;
+        // skip the wrapper function to get to either another wrapper or the original function
+        if let Some(wrapped) = marcher.annotation_chain_for_member_callable(&self.wrapped_path()).skip(1).next() {
+            // wrapped symbol should be in other content, so we need to fetch the correct one for it
+            if let Some(symtab) = marcher.find_table_with_symbol(wrapped) {
+                wrapped.render(buf, symtab, marcher);
+                rendered = true;
+            }
         }
 
         if !rendered {

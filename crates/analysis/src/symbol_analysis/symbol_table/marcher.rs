@@ -1,6 +1,6 @@
 use witcherscript_project::SourceMask;
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
-use super::{ClassSymbol, PathOccupiedError, StateSymbol, Symbol, SymbolTable, SymbolVariant};
+use super::*;
 
 
 /// A type that can perform data fetching operations on many symbol tables
@@ -121,13 +121,16 @@ impl<'a> SymbolTableMarcher<'a> {
         StateHierarchy::new(self.clone(), state_path)
     }
 
-    /// Iterate over symbols with the same symbol path accross the marcher.
-    /// Normally a path conflict (i.e. redefinition) in the dependency tree means an error.
-    /// It is not the case with @wrapMethod/@replaceMethod symbols however.
-    /// This way you can check for example the location of the wrapped method.
+    /// Iterate over callable symbols in the annotation chain accross the marcher.
     #[inline]
-    pub fn redefinition_chain(&self, annotated_sympath: &SymbolPath) -> RedefinitionChain<'a> {
-        RedefinitionChain::new(self.clone(), annotated_sympath)
+    pub fn annotation_chain_for_member_callable(&self, member_callable_sympath: &MemberCallableSymbolPath) -> AnnotationChain<'a> {
+        AnnotationChain::for_member_callable(self.clone(), member_callable_sympath)
+    }
+
+    /// Iterate over callable symbols in the annotation chain accross the marcher.
+    #[inline]
+    pub fn annotation_chain_for_global_callable(&self, global_callable_sympath: &GlobalCallableSymbolPath) -> AnnotationChain<'a> {
+        AnnotationChain::for_global_callable(self.clone(), global_callable_sympath)
     }
 
 
@@ -304,35 +307,90 @@ impl<'a> Iterator for StateHierarchy<'a> {
 
 
 
-pub struct RedefinitionChain<'a> {
-    sympath: SymbolPathBuf,
+pub struct AnnotationChain<'a> {
     symtabs: Vec<MaskedSymbolTable<'a>>,
-    idx: usize,
+    symtab_idx: usize,
+
+    regular_sympath: SymbolPathBuf,
+    replaced_sympath: SymbolPathBuf,
+    wrapped_sympath: Option<SymbolPathBuf>,
+
+    regular_visited: bool,
+    replaced_visited: bool,
+    wrapped_visited: bool
 }
 
-impl<'a> RedefinitionChain<'a> {
-    fn new(marcher: SymbolTableMarcher<'a>, path: &SymbolPath) -> Self {
+impl<'a> AnnotationChain<'a> {
+    fn for_member_callable(marcher: SymbolTableMarcher<'a>, path: &MemberCallableSymbolPath) -> Self {
         Self {
-            sympath: path.to_owned(),
             symtabs: marcher.inner,
-            idx: 0
+            symtab_idx: 0,
+
+            regular_sympath: path.to_owned().into(),
+            replaced_sympath: MemberCallableReplacerSymbolPath::from(path.to_owned()).into(),
+            wrapped_sympath: Some(MemberCallableWrapperSymbolPath::from(path.to_owned()).into()),
+
+            regular_visited: false,
+            replaced_visited: false,
+            wrapped_visited: false
+        }
+    }
+
+    fn for_global_callable(marcher: SymbolTableMarcher<'a>, path: &GlobalCallableSymbolPath) -> Self {
+        Self {
+            symtabs: marcher.inner,
+            symtab_idx: 0,
+
+            regular_sympath: path.to_owned().into(),
+            replaced_sympath: GlobalCallableReplacerSymbolPath::from(path.to_owned()).into(),
+            wrapped_sympath: None,
+
+            regular_visited: false,
+            replaced_visited: false,
+            wrapped_visited: false
         }
     }
 }
 
-impl<'a> Iterator for RedefinitionChain<'a> {
+impl<'a> Iterator for AnnotationChain<'a> {
     type Item = &'a SymbolVariant;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.idx < self.symtabs.len() {
-            let symvar = self.symtabs[self.idx]
-                .get_symbol(&self.sympath);
-
-            self.idx += 1;
-
-            if symvar.is_some() {
-                return symvar;
+        while self.symtab_idx < self.symtabs.len() {
+            if !self.wrapped_visited {
+                self.wrapped_visited = true;
+                if let Some(wrapped_sympath) = &self.wrapped_sympath {
+                    let symvar = self.symtabs[self.symtab_idx].get_symbol(wrapped_sympath);
+        
+                    if symvar.is_some() {
+                        return symvar;
+                    }
+                }
             }
+
+            if !self.replaced_visited {
+                self.replaced_visited = true;
+                let symvar = self.symtabs[self.symtab_idx].get_symbol(&self.replaced_sympath);
+
+                if symvar.is_some() {
+                    return symvar;
+                }
+            }
+
+            if !self.regular_visited {
+                self.regular_visited = true;
+                let symvar = self.symtabs[self.symtab_idx].get_symbol(&self.regular_sympath);
+
+                if symvar.is_some() {
+                    return symvar;
+                }
+            }
+
+            self.wrapped_visited = false;
+            self.replaced_visited = false;
+            self.regular_visited = false;
+
+            self.symtab_idx += 1;
         }
 
         None
