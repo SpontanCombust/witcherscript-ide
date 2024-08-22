@@ -545,6 +545,7 @@ impl SyntaxNodeVisitor for ContextualSyntaxAnalysis<'_> {
 
         CompoundStatementTraversalPolicy {
             traverse_statements: true,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }

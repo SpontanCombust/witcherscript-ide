@@ -270,6 +270,7 @@ traversal_policy!(ContinueStatementTraversalPolicy,
 
 traversal_policy!(CompoundStatementTraversalPolicy,
     traverse_statements,
+    traverse_unnamed,
     traverse_errors
 );
 

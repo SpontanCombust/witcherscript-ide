@@ -154,7 +154,7 @@ impl SyntaxNodeTraversal for ReturnStatementNode<'_> {
 
             for ch in self.children_detailed() {
                 match ch {
-                    Ok((value, _)) if tp.traverse_value => {
+                    Ok((value, _)) if value.is_named() && tp.traverse_value => {
                         let value: ExpressionNode = value.unsafe_into();
                         value.accept(visitor, ctx);
                     },
@@ -283,12 +283,15 @@ impl SyntaxNodeTraversal for CompoundStatementNode<'_> {
         if tp.any() {
             ctx.push(TraversalContext::CompoundStatement);
 
-            for ch in self.children_detailed().must_be_named(true) {
+            for ch in self.children_detailed() {
                 match ch {
-                    Ok((stmt, _)) if tp.traverse_statements => {
+                    Ok((stmt, _)) if stmt.is_named() && tp.traverse_statements => {
                         let stmt: FunctionStatementNode = stmt.unsafe_into();
-
                         stmt.accept(visitor, ctx);
+                    },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
                     },
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);

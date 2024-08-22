@@ -433,6 +433,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         CompoundStatementTraversalPolicy { 
             traverse_statements: any_error,
+            traverse_unnamed: any_error,
             traverse_errors: any_error
         }
     }

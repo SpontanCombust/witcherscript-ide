@@ -804,6 +804,7 @@ impl SyntaxNodeVisitor for SymbolScannerVisitor<'_> {
     fn visit_compound_stmt(&mut self, _: &CompoundStatementNode, _: &TraversalContextStack) -> CompoundStatementTraversalPolicy {
         CompoundStatementTraversalPolicy { 
             traverse_statements: true,
+            traverse_unnamed: false,
             traverse_errors: false
         }
     }
