@@ -239,7 +239,6 @@ impl WrappedMethodSymbol {
 }
 
 
-//FIXME appears twice in document outline
 /// Corresponding to @addField(Class) vars
 #[derive(Debug, Clone)]
 pub struct MemberVarInjectorSymbol {

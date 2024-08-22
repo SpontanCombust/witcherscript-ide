@@ -143,7 +143,7 @@ impl SymbolTable {
         for (array_sympath, refs) in self.array_type_refs.iter() {
             if refs.is_empty() {
                 for_removal.push(array_sympath.to_owned());
-                for_removal.extend(self.get_symbol_descendants(&array_sympath).map(|v| v.path_ref().to_owned()));
+                for_removal.extend(self.get_symbol_descendants(&array_sympath, false).map(|v| v.path_ref().to_owned()));
             }
         }
 
@@ -175,9 +175,12 @@ impl SymbolTable {
 
     /// Iterate over all descendants of a symbol in a symbol hierarchy.
     /// Symbols are returned ordered by their symbol path.
+    /// 
+    /// - skip_primary_children - if children symbols that do not attach themselves naturally to the symbol hierarchy should be skipped. 
+    /// Refers to annotated symbols that exist outside of classes' bodies, but their paths still have the class as a parent.
     #[inline]
-    pub fn get_symbol_descendants<'a>(&'a self, path: &SymbolPath) -> SymbolDescendants<'a> {
-        SymbolDescendants::new(self, path)
+    pub fn get_symbol_descendants<'a>(&'a self, path: &SymbolPath, skip_primary_children: bool) -> SymbolDescendants<'a> {
+        SymbolDescendants::new(self, path, skip_primary_children)
     }
 
 

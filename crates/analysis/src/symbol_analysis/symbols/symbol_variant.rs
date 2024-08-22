@@ -219,6 +219,24 @@ impl SymbolVariant {
             Self::WrappedMethod(_) => None,
         }
     }
+
+    pub fn is_primary(&self) -> bool {
+        match self {
+            SymbolVariant::Class(_)
+            | SymbolVariant::State(_)
+            | SymbolVariant::Struct(_)
+            | SymbolVariant::Enum(_)
+            | SymbolVariant::EnumVariant(_)
+            | SymbolVariant::GlobalFunc(_)
+            | SymbolVariant::Constructor(_)
+            | SymbolVariant::MemberFuncInjector(_)
+            | SymbolVariant::MemberFuncReplacer(_)
+            | SymbolVariant::GlobalFuncReplacer(_)
+            | SymbolVariant::MemberFuncWrapper(_)
+            | SymbolVariant::MemberVarInjector(_) => true,
+            _ => false
+        }
+    }
 }
 
 
@@ -317,6 +335,15 @@ impl From<MemberVarSymbol> for SymbolVariant {
         Self::MemberVar(value)
     }
 }
+
+impl<'a> TryFrom<&'a SymbolVariant> for &'a MemberVarSymbol {
+    type Error = ();
+
+    fn try_from(value: &'a SymbolVariant) -> Result<Self, Self::Error> {
+        value.try_as_member_var_ref().ok_or(())
+    }
+}
+
 
 impl From<AutobindSymbol> for SymbolVariant {
     fn from(value: AutobindSymbol) -> Self {

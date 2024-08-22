@@ -209,6 +209,11 @@ impl<'a> UnqualifiedNameLookupBuilder<'a> {
                                 unl.insert(s.path_ref().to_owned());
                             }
                         },
+                        ClassSymbolChild::VarInjector(s) => {
+                            if class.path_ref() == class_path || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path_ref().to_owned());
+                            }
+                        },
                         ClassSymbolChild::Method(s) => {
                             if class.path_ref() == class_path || !s.specifiers.contains(AccessModifier::Private.into()) {
                                 unl.insert(s.path_ref().to_owned());
@@ -216,6 +221,11 @@ impl<'a> UnqualifiedNameLookupBuilder<'a> {
                         },
                         ClassSymbolChild::Event(s) => {
                             unl.insert(s.path_ref().to_owned());
+                        },
+                        ClassSymbolChild::MethodInjector(s) => {
+                            if class.path_ref() == class_path || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path_ref().to_owned());
+                            }
                         },
                         // these are special reserved names, they cannot be overshadowed
                         ClassSymbolChild::ThisVar(_)
@@ -269,7 +279,17 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
                                 unl.insert(s.path_ref().to_owned());
                             }
                         },
+                        ClassSymbolChild::VarInjector(s) => {
+                            if !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path_ref().to_owned());
+                            }
+                        },
                         ClassSymbolChild::Method(s) => {
+                            if !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path_ref().to_owned());
+                            }
+                        },
+                        ClassSymbolChild::MethodInjector(s) => {
                             if !s.specifiers.contains(AccessModifier::Private.into()) {
                                 unl.insert(s.path_ref().to_owned());
                             }
@@ -305,6 +325,11 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
                                 unl.insert(s.path_ref().to_owned());
                             }
                         },
+                        StateSymbolChild::VarInjector(s) => {
+                            if state.path_ref() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path_ref().to_owned());
+                            }
+                        },
                         StateSymbolChild::Method(s) => {
                             if state.path_ref() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
                                 unl.insert(s.path_ref().to_owned());
@@ -312,6 +337,11 @@ impl SyntaxNodeVisitor for UnqualifiedNameLookupBuilder<'_> {
                         },
                         StateSymbolChild::Event(s) => {
                             unl.insert(s.path_ref().to_owned());
+                        },
+                        StateSymbolChild::MethodInjector(s) => {
+                            if state.path_ref() == &sympath_ctx.current_sympath || !s.specifiers.contains(AccessModifier::Private.into()) {
+                                unl.insert(s.path_ref().to_owned());
+                            }
                         },
                         // these are special reserved names, they cannot be overshadowed
                         StateSymbolChild::ThisVar(_)
