@@ -131,6 +131,10 @@ impl<'a> ExpressionEvaluator<'a> {
                 SymbolVariant::MemberFuncWrapper(s) => s.return_type_path.clone().into(),
                 SymbolVariant::MemberVarInjector(s) => s.type_path.clone().into(),
                 SymbolVariant::WrappedMethod(s) => {
+                    // we don't have to look at the annotation chain
+                    // as the function annotated with `@wrapMethod` in which wrappedMethod() is used 
+                    // should have the same return type as the original or replaced function
+
                     self.symtab_marcher
                         .get_symbol(s.path().parent().unwrap_or_default())
                         .and_then(|v| v.try_as_member_func_wrapper_ref())
@@ -210,10 +214,36 @@ impl SyntaxNodeVisitor for ExpressionEvaluator<'_> {
             SymbolCategory::Data
         };
 
-        let ident_path = self.unl_payload.borrow()
+        let mut ident_path = self.unl_payload.borrow()
             .get(&name, ident_category)
             .map(|p| p.to_owned())
             .unwrap_or(SymbolPathBuf::new(&name, ident_category));
+
+        // resolve function calls to annotated symbols if they exist
+        match self.symtab_marcher.get_symbol(&ident_path) {
+            Some(SymbolVariant::GlobalFunc(s)) => {
+                ident_path = self.symtab_marcher
+                    .annotation_chain_for_global_callable(s.path())
+                    .next()
+                    .map(|v| v.path_ref().to_owned())
+                    .unwrap_or(ident_path);
+            },
+            Some(SymbolVariant::MemberFunc(s)) => {
+                ident_path = self.symtab_marcher
+                    .annotation_chain_for_member_callable(s.path())
+                    .next()
+                    .map(|v| v.path_ref().to_owned())
+                    .unwrap_or(ident_path);
+            },
+            Some(SymbolVariant::Event(s)) => {
+                ident_path = self.symtab_marcher
+                    .annotation_chain_for_member_callable(s.path())
+                    .next()
+                    .map(|v| v.path_ref().to_owned())
+                    .unwrap_or(ident_path);
+            }
+            _ => {}
+        }
 
         self.push(ident_path, ctx.top());
     }

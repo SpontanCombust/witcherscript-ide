@@ -85,6 +85,8 @@ type Scope = HashMap<Key, SymbolPathBuf>;
 /// e.g. a member var can be used without `this` keyword and thus becomes ambiguous
 /// without the context of inherited properties, local vars and global constants (enum variants).  
 /// Names on each deeper scope layer can overshadow the same name from higher layers.
+/// 
+/// Methods that have been `@wrap`ed or `@replace`d still produce path to the original symbol.
 #[derive(Debug, Clone)]
 pub struct UnqualifiedNameLookup {
     stack: Vec<Scope>
