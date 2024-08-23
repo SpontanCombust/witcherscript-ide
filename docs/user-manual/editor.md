@@ -77,9 +77,12 @@ Use either the context menu (right click) or left click while holding `LCtrl` to
 
 ### Go to Symbol in Editor/Workspace
 
-Use the `LCtrl + P` shortcut to bring up the "Quick Open" text input. Then type in `@` or `#` proceeeded by the searched for name to look for symbols in the actively opened file or the entire workspace respectively (depending on the configuration). You can also use `LCtrl + LShift + O` and `LCtrl + T` shortcuts.
+Use the `LCtrl + P` shortcut to bring up the "Quick Open" text input. Then type in `@` or `#` proceeeded by the searched for name to look for symbols in the actively opened file or the entire workspace respectively (depending on the configuration).  
+You can also use `LCtrl + LShift + O` and `LCtrl + T` shortcuts for immediate access to these search methods.
 
-<!--TODO add video here -->
+<video controls muted>
+  <source src="../../assets/user-manual/editor/finding-symbols.mp4" type="video/mp4">
+</video>
 
 **More coming soon!**
 
