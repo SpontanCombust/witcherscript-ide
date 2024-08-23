@@ -2,6 +2,27 @@
 
 # Changelog
 
+# v0.5.0-dev.1
+
+### Features
+- Added the workspace-wide symbol search feature. The default shortcut for that in VS Code is <nobr>`LCtrl + T`</nobr> [#53](https://github.com/SpontanCombust/witcherscript-ide/issues/53)
+- Added an ability to perform a symbol search in dependencies (including content0). This uses the workspace symbols feature described in the previous point and is enabled by default (<nobr>`languageServer.extendedSearchForWorkspaceSymbols`</nobr> setting) [#54](https://github.com/SpontanCombust/witcherscript-ide/issues/54)
+- Added support for the array initializer syntax. Array type fields in WitcherScript can be default-initialized with the following syntax: <nobr>`default myArray = {value1, value2, value3};`</nobr>
+
+### Fixes
+- Fixed missing lookup for methods and fields added through annotations
+
+### Configuration
+- Added a setting to extend the workspace symbol search feature beyond the workspace and into dependencies [#54](https://github.com/SpontanCombust/witcherscript-ide/issues/54)
+
+### Other changes
+- Redesigned the implementation of annotated symbols, which now should allow for using annotations with symbols declared inside the same package. It should also allow for the simultaneous use of `@replaceMethod` and `@wrapMethod` if that's useful. As a consequence, the <nobr>`same-content-annotation`</nobr> error code has been removed [#49](https://github.com/SpontanCombust/witcherscript-ide/issues/49)
+- Rewrote syntax node traversal to prepare it for the implementation of autocompletion. Watch out for possible bugs in previously existing features and please report them!
+
+### Documentation
+- Added information about script recompilation in editor features section
+- Added information about symbol search in editor and workspace
+
 # v0.4.0
 **UI/UX Improvements and more**
 
