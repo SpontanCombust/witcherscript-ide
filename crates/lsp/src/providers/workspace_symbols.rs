@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::HashSet;
 use fuzzy_matcher::{FuzzyMatcher, skim::SkimMatcherV2};
 use rayon::prelude::*;
 use tower_lsp::lsp_types as lsp;
@@ -54,40 +54,35 @@ impl Backend {
     async fn refresh_workspace_symbols_cache(&self) {
         let only_from_workspace = !self.config.read().await.extended_search_for_workspace_symbols;
 
-        let content_names: HashMap<AbsPath, String> =
+        let allowed_contents: HashSet<AbsPath> =
             self.content_graph
             .read().await
             .nodes()
             .filter(|n| if only_from_workspace { n.in_workspace } else { true })
-            .map(|n| (n.content.path().to_owned(), n.content.content_name().to_string()))
+            .map(|n| n.content.path().to_owned())
             .collect();
-        
+  
         self.cache.workspace_symbols
             .write().await
             .unqueried_data
             .clear();
 
-        let symtabs = self.symtabs.read().await;
-        
-        for (content_path, st) in symtabs.iter() {
-            // if the name is not in the map this means that content was filtered out
-            // based on the extended_search_for_workspace_symbols setting
-            let content_name;
-            if let Some(name) = content_names.get(content_path) {
-                content_name = name.to_string();
-            } else {
-                continue;
-            }
 
+        let symtabs = self.symtabs.read().await;
+
+        for (_, st) in symtabs.iter().filter(|(path, _)| allowed_contents.contains(*path)) {
             let content_symdata_iter = st.iter()
                 .par_bridge()
-                .filter_map(|(_, symvar)| symvar.to_symbol_data(&content_name));
+                .filter_map(|(_, symvar)| symvar.to_symbol_data());
 
             self.cache.workspace_symbols
                 .write().await
                 .unqueried_data
                 .par_extend(content_symdata_iter);
         }
+
+        drop(symtabs);
+
 
         self.cache.workspace_symbols
             .write().await
@@ -153,42 +148,42 @@ impl Ord for WorkspaceSymbolData {
 
 trait ToWorkspaceSymbolData {
     /// None should be returned if a given symbol should not or cannot appear in the symbol list
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData>;
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData>;
 }
 
 
 impl ToWorkspaceSymbolData for SymbolVariant {
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         match self {
-            SymbolVariant::Class(s) => s.to_symbol_data(content_name),
-            SymbolVariant::State(s) => s.to_symbol_data(content_name),
-            SymbolVariant::Struct(s) => s.to_symbol_data(content_name),
-            SymbolVariant::Enum(s) => s.to_symbol_data(content_name),
-            SymbolVariant::Array(s) => s.to_symbol_data(content_name),
-            SymbolVariant::ArrayFunc(s) => s.to_symbol_data(content_name),
-            SymbolVariant::ArrayFuncParam(s) => s.to_symbol_data(content_name),
-            SymbolVariant::GlobalFunc(s) => s.to_symbol_data(content_name),
-            SymbolVariant::MemberFunc(s) => s.to_symbol_data(content_name),
-            SymbolVariant::Event(s) => s.to_symbol_data(content_name),
-            SymbolVariant::Constructor(s) => s.to_symbol_data(content_name),
-            SymbolVariant::MemberFuncInjector(s) => s.to_symbol_data(content_name),
-            SymbolVariant::MemberFuncReplacer(s) => s.to_symbol_data(content_name),
-            SymbolVariant::GlobalFuncReplacer(s) => s.to_symbol_data(content_name),
-            SymbolVariant::MemberFuncWrapper(s) => s.to_symbol_data(content_name),
-            SymbolVariant::WrappedMethod(s) => s.to_symbol_data(content_name),
-            SymbolVariant::Primitive(s) => s.to_symbol_data(content_name),
-            SymbolVariant::EnumVariant(s) => s.to_symbol_data(content_name),
-            SymbolVariant::FuncParam(s) => s.to_symbol_data(content_name),
-            SymbolVariant::GlobalVar(s) => s.to_symbol_data(content_name),
-            SymbolVariant::MemberVar(s) => s.to_symbol_data(content_name),
-            SymbolVariant::Autobind(s) => s.to_symbol_data(content_name),
-            SymbolVariant::LocalVar(s) => s.to_symbol_data(content_name),
-            SymbolVariant::ThisVar(s) => s.to_symbol_data(content_name),
-            SymbolVariant::SuperVar(s) => s.to_symbol_data(content_name),
-            SymbolVariant::StateSuperVar(s) => s.to_symbol_data(content_name),
-            SymbolVariant::ParentVar(s) => s.to_symbol_data(content_name),
-            SymbolVariant::VirtualParentVar(s) => s.to_symbol_data(content_name),
-            SymbolVariant::MemberVarInjector(s) => s.to_symbol_data(content_name),
+            SymbolVariant::Class(s) => s.to_symbol_data(),
+            SymbolVariant::State(s) => s.to_symbol_data(),
+            SymbolVariant::Struct(s) => s.to_symbol_data(),
+            SymbolVariant::Enum(s) => s.to_symbol_data(),
+            SymbolVariant::Array(s) => s.to_symbol_data(),
+            SymbolVariant::ArrayFunc(s) => s.to_symbol_data(),
+            SymbolVariant::ArrayFuncParam(s) => s.to_symbol_data(),
+            SymbolVariant::GlobalFunc(s) => s.to_symbol_data(),
+            SymbolVariant::MemberFunc(s) => s.to_symbol_data(),
+            SymbolVariant::Event(s) => s.to_symbol_data(),
+            SymbolVariant::Constructor(s) => s.to_symbol_data(),
+            SymbolVariant::MemberFuncInjector(s) => s.to_symbol_data(),
+            SymbolVariant::MemberFuncReplacer(s) => s.to_symbol_data(),
+            SymbolVariant::GlobalFuncReplacer(s) => s.to_symbol_data(),
+            SymbolVariant::MemberFuncWrapper(s) => s.to_symbol_data(),
+            SymbolVariant::WrappedMethod(s) => s.to_symbol_data(),
+            SymbolVariant::Primitive(s) => s.to_symbol_data(),
+            SymbolVariant::EnumVariant(s) => s.to_symbol_data(),
+            SymbolVariant::FuncParam(s) => s.to_symbol_data(),
+            SymbolVariant::GlobalVar(s) => s.to_symbol_data(),
+            SymbolVariant::MemberVar(s) => s.to_symbol_data(),
+            SymbolVariant::Autobind(s) => s.to_symbol_data(),
+            SymbolVariant::LocalVar(s) => s.to_symbol_data(),
+            SymbolVariant::ThisVar(s) => s.to_symbol_data(),
+            SymbolVariant::SuperVar(s) => s.to_symbol_data(),
+            SymbolVariant::StateSuperVar(s) => s.to_symbol_data(),
+            SymbolVariant::ParentVar(s) => s.to_symbol_data(),
+            SymbolVariant::VirtualParentVar(s) => s.to_symbol_data(),
+            SymbolVariant::MemberVarInjector(s) => s.to_symbol_data(),
         }
     }
 }
@@ -196,7 +191,7 @@ impl ToWorkspaceSymbolData for SymbolVariant {
 
 impl ToWorkspaceSymbolData for ClassSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         Some(WorkspaceSymbolData {
             id_string: self.name().to_string(),
             sym_info: lsp::SymbolInformation {
@@ -206,7 +201,7 @@ impl ToWorkspaceSymbolData for ClassSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: None,
                 tags: None,
                 deprecated: None
             },
@@ -217,17 +212,17 @@ impl ToWorkspaceSymbolData for ClassSymbol {
 
 impl ToWorkspaceSymbolData for StateSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         Some(WorkspaceSymbolData {
             id_string: self.name().to_string(),
             sym_info: lsp::SymbolInformation {
-                name: self.state_name().to_string(),
+                name: self.name().to_string(),
                 kind: lsp::SymbolKind::CLASS,
                 location: lsp::Location { 
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: None,
                 tags: None,
                 deprecated: None
             },
@@ -238,7 +233,7 @@ impl ToWorkspaceSymbolData for StateSymbol {
 
 impl ToWorkspaceSymbolData for StructSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         Some(WorkspaceSymbolData {
             id_string: self.name().to_string(),
             sym_info: lsp::SymbolInformation {
@@ -248,7 +243,7 @@ impl ToWorkspaceSymbolData for StructSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: None,
                 tags: None,
                 deprecated: None
             },
@@ -259,7 +254,7 @@ impl ToWorkspaceSymbolData for StructSymbol {
 
 impl ToWorkspaceSymbolData for EnumSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         Some(WorkspaceSymbolData {
             id_string: self.name().to_string(),
             sym_info: lsp::SymbolInformation {
@@ -269,7 +264,7 @@ impl ToWorkspaceSymbolData for EnumSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: None,
                 tags: None,
                 deprecated: None
             },
@@ -280,28 +275,28 @@ impl ToWorkspaceSymbolData for EnumSymbol {
 
 impl ToWorkspaceSymbolData for ArrayTypeSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for ArrayTypeFunctionSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for ArrayTypeFunctionParameterSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for GlobalFunctionSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         Some(WorkspaceSymbolData {
             id_string: self.name().to_string(),
             sym_info: lsp::SymbolInformation {
@@ -311,7 +306,7 @@ impl ToWorkspaceSymbolData for GlobalFunctionSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: None,
                 tags: None,
                 deprecated: None
             },
@@ -322,7 +317,13 @@ impl ToWorkspaceSymbolData for GlobalFunctionSymbol {
 
 impl ToWorkspaceSymbolData for MemberFunctionSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
+        let class_name = self.path()
+            .parent()
+            .and_then(|p| p.components().next())
+            .map(|c| c.name.to_string())
+            .unwrap_or_default();
+
         Some(WorkspaceSymbolData {
             id_string: self.path().components().map(|c| c.name).fold(String::new(), |n1, n2| format!("{} {}", n1, n2)),
             sym_info: lsp::SymbolInformation {
@@ -332,7 +333,7 @@ impl ToWorkspaceSymbolData for MemberFunctionSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: Some(class_name),
                 tags: None,
                 deprecated: None
             },
@@ -343,7 +344,13 @@ impl ToWorkspaceSymbolData for MemberFunctionSymbol {
 
 impl ToWorkspaceSymbolData for EventSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
+        let class_name = self.path()
+            .parent()
+            .and_then(|p| p.components().next())
+            .map(|c| c.name.to_string())
+            .unwrap_or_default();
+        
         Some(WorkspaceSymbolData {
             id_string: self.path().components().map(|c| c.name).fold(String::new(), |n1, n2| format!("{} {}", n1, n2)),
             sym_info: lsp::SymbolInformation {
@@ -353,7 +360,7 @@ impl ToWorkspaceSymbolData for EventSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: Some(class_name),
                 tags: None,
                 deprecated: None
             },
@@ -364,14 +371,20 @@ impl ToWorkspaceSymbolData for EventSymbol {
 
 impl ToWorkspaceSymbolData for ConstructorSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for MemberFunctionInjectorSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
+        let class_name = self.path()
+            .parent()
+            .and_then(|p| p.components().next())
+            .map(|c| c.name.to_string())
+            .unwrap_or_default();
+
         Some(WorkspaceSymbolData {
             id_string: self.path().components().map(|c| c.name).fold(String::new(), |n1, n2| format!("{} {}", n1, n2)),
             sym_info: lsp::SymbolInformation {
@@ -381,7 +394,7 @@ impl ToWorkspaceSymbolData for MemberFunctionInjectorSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: Some(class_name),
                 tags: None,
                 deprecated: None
             },
@@ -392,7 +405,13 @@ impl ToWorkspaceSymbolData for MemberFunctionInjectorSymbol {
 
 impl ToWorkspaceSymbolData for MemberFunctionReplacerSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
+        let class_name = self.path()
+            .parent()
+            .and_then(|p| p.components().next())
+            .map(|c| c.name.to_string())
+            .unwrap_or_default();
+
         Some(WorkspaceSymbolData {
             id_string: self.path().components().map(|c| c.name).fold(String::new(), |n1, n2| format!("{} {}", n1, n2)),
             sym_info: lsp::SymbolInformation {
@@ -402,7 +421,7 @@ impl ToWorkspaceSymbolData for MemberFunctionReplacerSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: Some(class_name),
                 tags: None,
                 deprecated: None
             },
@@ -413,7 +432,7 @@ impl ToWorkspaceSymbolData for MemberFunctionReplacerSymbol {
 
 impl ToWorkspaceSymbolData for GlobalFunctionReplacerSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         Some(WorkspaceSymbolData {
             id_string: self.name().to_string(),
             sym_info: lsp::SymbolInformation {
@@ -423,7 +442,7 @@ impl ToWorkspaceSymbolData for GlobalFunctionReplacerSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: None,
                 tags: None,
                 deprecated: None
             },
@@ -434,7 +453,13 @@ impl ToWorkspaceSymbolData for GlobalFunctionReplacerSymbol {
 
 impl ToWorkspaceSymbolData for MemberFunctionWrapperSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
+        let class_name = self.path()
+            .parent()
+            .and_then(|p| p.components().next())
+            .map(|c| c.name.to_string())
+            .unwrap_or_default();
+
         Some(WorkspaceSymbolData {
             id_string: self.path().components().map(|c| c.name).fold(String::new(), |n1, n2| format!("{} {}", n1, n2)),
             sym_info: lsp::SymbolInformation {
@@ -444,7 +469,7 @@ impl ToWorkspaceSymbolData for MemberFunctionWrapperSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: Some(class_name),
                 tags: None,
                 deprecated: None
             },
@@ -455,21 +480,23 @@ impl ToWorkspaceSymbolData for MemberFunctionWrapperSymbol {
 
 impl ToWorkspaceSymbolData for WrappedMethodSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for PrimitiveTypeSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for EnumVariantSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
+        let enum_name = self.parent_enum_name().to_string();
+
         Some(WorkspaceSymbolData {
             id_string: format!("{} {}", self.parent_enum_name(), self.name()),
             sym_info: lsp::SymbolInformation {
@@ -479,7 +506,7 @@ impl ToWorkspaceSymbolData for EnumVariantSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: Some(enum_name),
                 tags: None,
                 deprecated: None
             },
@@ -490,21 +517,27 @@ impl ToWorkspaceSymbolData for EnumVariantSymbol {
 
 impl ToWorkspaceSymbolData for FunctionParameterSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for GlobalVarSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for MemberVarSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
+        let class_name = self.path()
+            .parent()
+            .and_then(|p| p.components().next())
+            .map(|c| c.name.to_string())
+            .unwrap_or_default();
+
         Some(WorkspaceSymbolData {
             id_string: self.path().components().map(|c| c.name).fold(String::new(), |n1, n2| format!("{} {}", n1, n2)),
             sym_info: lsp::SymbolInformation {
@@ -514,7 +547,7 @@ impl ToWorkspaceSymbolData for MemberVarSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: Some(class_name),
                 tags: None,
                 deprecated: None
             },
@@ -525,7 +558,13 @@ impl ToWorkspaceSymbolData for MemberVarSymbol {
 
 impl ToWorkspaceSymbolData for AutobindSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
+        let class_name = self.path()
+            .parent()
+            .and_then(|p| p.components().next())
+            .map(|c| c.name.to_string())
+            .unwrap_or_default();
+
         Some(WorkspaceSymbolData {
             id_string: self.path().components().map(|c| c.name).fold(String::new(), |n1, n2| format!("{} {}", n1, n2)),
             sym_info: lsp::SymbolInformation {
@@ -535,7 +574,7 @@ impl ToWorkspaceSymbolData for AutobindSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: Some(class_name),
                 tags: None,
                 deprecated: None
             },
@@ -546,49 +585,55 @@ impl ToWorkspaceSymbolData for AutobindSymbol {
 
 impl ToWorkspaceSymbolData for LocalVarSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for ThisVarSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for SuperVarSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for StateSuperVarSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for ParentVarSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for VirtualParentVarSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, _content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
         None
     }
 }
 
 impl ToWorkspaceSymbolData for MemberVarInjectorSymbol {
     #[allow(deprecated)]
-    fn to_symbol_data(&self, content_name: &str) -> Option<WorkspaceSymbolData> {
+    fn to_symbol_data(&self) -> Option<WorkspaceSymbolData> {
+        let class_name = self.path()
+            .parent()
+            .and_then(|p| p.components().next())
+            .map(|c| c.name.to_string())
+            .unwrap_or_default();
+        
         Some(WorkspaceSymbolData {
             id_string: self.path().components().map(|c| c.name).fold(String::new(), |n1, n2| format!("{} {}", n1, n2)),
             sym_info: lsp::SymbolInformation {
@@ -598,7 +643,7 @@ impl ToWorkspaceSymbolData for MemberVarInjectorSymbol {
                     uri: self.location().abs_source_path().to_uri(), 
                     range: self.location().range
                 },
-                container_name: Some(content_name.to_string()),
+                container_name: Some(class_name),
                 tags: None,
                 deprecated: None
             },
