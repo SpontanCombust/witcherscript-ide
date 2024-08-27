@@ -1,8 +1,11 @@
 use std::str::FromStr;
+
+use strum_macros::EnumIter;
+
 use crate::{tokens::Keyword, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter)]
 pub enum Specifier {
     Abstract,
     Const,

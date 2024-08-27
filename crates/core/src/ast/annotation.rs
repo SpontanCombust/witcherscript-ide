@@ -1,4 +1,4 @@
-use strum_macros::{EnumString, Display, AsRefStr};
+use strum_macros::{AsRefStr, Display, EnumIter, EnumString};
 use crate::{tokens::*, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::*;
 
@@ -7,7 +7,7 @@ mod tags {
     pub struct Annotation;
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, Display, AsRefStr)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, Display, AsRefStr, EnumIter)]
 pub enum AnnotationKind {
     #[strum(serialize="@addMethod")]
     AddMethod,

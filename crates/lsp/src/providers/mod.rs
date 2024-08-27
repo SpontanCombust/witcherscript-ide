@@ -10,6 +10,7 @@ pub mod document_symbols;
 pub mod goto;
 pub mod hover;
 pub mod workspace_symbols;
+pub mod completion;
 
 pub mod custom;
 

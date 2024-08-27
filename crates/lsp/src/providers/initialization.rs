@@ -139,6 +139,14 @@ impl Backend {
                 type_definition_provider: Some(lsp::TypeDefinitionProviderCapability::Simple(true)),
                 implementation_provider: None,
                 hover_provider: Some(lsp::HoverProviderCapability::Simple(true)),
+                completion_provider: Some(lsp::CompletionOptions {
+                    trigger_characters: Some(vec![".".to_string()]),
+                    resolve_provider: Some(true),
+                    completion_item: Some(lsp::CompletionOptionsCompletionItem {
+                        label_details_support: Some(true)
+                    }),
+                    ..Default::default()
+                }),
                 ..lsp::ServerCapabilities::default()
             }
         })

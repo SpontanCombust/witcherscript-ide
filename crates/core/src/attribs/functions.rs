@@ -1,10 +1,12 @@
 use std::fmt::Debug;
 use std::str::FromStr;
+use strum_macros::EnumIter;
+
 use crate::{tokens::Keyword, AnyNode, DebugRange, NamedSyntaxNode, SyntaxNode};
 use super::{AccessModifier, Specifier};
 
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter)]
 pub enum FunctionFlavour {
     Cleanup,
     Entry,

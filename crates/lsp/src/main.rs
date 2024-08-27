@@ -99,6 +99,15 @@ impl LanguageServer for Backend {
     async fn hover(&self, params: lsp::HoverParams) -> Result<Option<lsp::Hover>> {
         self.hover_impl(params).await
     }
+
+
+    async fn completion(&self, params: lsp::CompletionParams) -> Result<Option<lsp::CompletionResponse>> {
+        self.completion_impl(params).await
+    }
+
+    async fn completion_resolve(&self, params: lsp::CompletionItem) -> Result<lsp::CompletionItem> {
+        self.completion_resolve_impl(params).await
+    }
 }
 
 
