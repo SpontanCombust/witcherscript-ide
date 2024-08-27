@@ -284,7 +284,8 @@ pub struct SyntaxNodeChildren<'script> {
     cursor: ts::TreeCursor<'script>,
     any_children_left: bool,
     
-    must_be_named: bool
+    must_be_named: bool,
+    can_be_error: bool
 }
 
 impl<'script> SyntaxNodeChildren<'script> {
@@ -296,12 +297,18 @@ impl<'script> SyntaxNodeChildren<'script> {
             cursor,
             any_children_left,
 
-            must_be_named: false
+            must_be_named: false,
+            can_be_error: false
         }
     }
 
     pub fn must_be_named(mut self, b: bool) -> Self {
         self.must_be_named = b;
+        self
+    }
+
+    pub fn can_be_error(mut self, b: bool) -> Self {
+        self.can_be_error = b;
         self
     }
 }
@@ -313,7 +320,7 @@ impl<'script> Iterator for SyntaxNodeChildren<'script> {
         if self.any_children_left {
             let mut n = self.cursor.node();
             while n.is_extra()
-            || n.is_error()
+            || (!self.can_be_error && n.is_error())
             || (self.must_be_named && !n.is_named()) {
                 if self.cursor.goto_next_sibling() {
                     n = self.cursor.node();

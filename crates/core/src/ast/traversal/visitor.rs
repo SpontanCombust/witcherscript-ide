@@ -1,5 +1,6 @@
 use crate::tokens::*;
 use crate::ast::*;
+use crate::AnyNode;
 use crate::ErrorNode;
 use super::policies::*;
 use super::contexts::*;
@@ -280,8 +281,12 @@ pub trait SyntaxNodeVisitor {
     /// Called when visiting an unnamed node (i.e. keyword or punctuation).
     fn visit_unnamed(&mut self, n: &UnnamedNode, ctx: &TraversalContextStack) {}
 
+
     /// Called when visiting a node representing a syntax error.
     fn visit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) -> ErrorTraversalPolicy { TraversalPolicy::default_to(self.traversal_policy_default()) }
     /// Called after visiting a node representing a syntax error and possibly also children nodes specified in traversal policy.
     fn exit_error(&mut self, n: &ErrorNode, ctx: &TraversalContextStack) {}
+
+    /// Called when visiting a child node of an error node. The actual kind of node is not resolved automatically and thus not traversed into.
+    fn visit_error_child(&mut self, n: &AnyNode, ctx: &TraversalContextStack) {}
 }

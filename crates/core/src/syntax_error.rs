@@ -29,16 +29,15 @@ impl std::fmt::Debug for ErrorNode<'_> {
 impl<'script> SyntaxNodeTraversal for ErrorNode<'script> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         let tp = visitor.visit_error(self, ctx);
-        ctx.push(TraversalContext::Error);
         if tp.traverse {
-            for res in self.children_detailed() {
-                match res {
-                    Ok((n, _)) => n.accept(visitor, ctx),
-                    Err(e) => e.accept(visitor, ctx)
-                }
+            ctx.push(TraversalContext::Error);
+            
+            for n in self.children().can_be_error(true) {
+                visitor.visit_error_child(&n, ctx);
             }
+
+            ctx.pop();
         }
-        ctx.pop();
         visitor.exit_error(self, ctx);
     }
 }
