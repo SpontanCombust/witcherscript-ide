@@ -356,14 +356,34 @@ impl<'script> FunctionCallArgumentsNode<'script> {
     }
 
     fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: FunctionCallExpressionTraversalPolicy) {
-        //FIXME missing unnamed traversal
-        for res in self.iter_result() {
-            match res {
-                Ok(arg) => {
-                    arg.accept(visitor, ctx)
-                }
+        let mut previous_was_comma = true;
+
+        for ch in self.children_detailed().must_be_named(false) {
+            match ch {
+                Ok((arg, _)) if arg.is_named() => {
+                    let arg = FunctionCallArgument::Some(arg.unsafe_into());
+                    arg.accept(visitor, ctx);
+
+                    previous_was_comma = false;
+                },
+                // comma is the only valid unnamed token in thi s context
+                Ok((comma, _)) if !comma.is_named() => {
+                    if previous_was_comma {
+                        let arg = FunctionCallArgument::Omitted(comma.range());
+                        arg.accept(visitor, ctx);
+                    }
+
+                    previous_was_comma = true;
+
+                    if tp.traverse_unnamed {
+                        let unnamed: UnnamedNode = comma.unsafe_into();
+                        unnamed.accept(visitor, ctx);
+                    }
+                },
                 Err(e) if tp.traverse_errors => {
-                    e.accept(visitor, ctx)
+                    e.accept(visitor, ctx);
+
+                    previous_was_comma = false;
                 },
                 _ => {}
             }
@@ -394,6 +414,7 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionCallArgumentsNode<'script> {
 
 impl SyntaxNodeTraversal for FunctionCallArgumentsNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
+        // UNUSED
         self.iter().for_each(|n| n.accept(visitor, ctx))
     }
 }
@@ -657,6 +678,10 @@ impl SyntaxNodeTraversal for NewExpressionNode<'_> {
                         lifetime_obj.accept(visitor, ctx);
                         ctx.pop();
                     },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
+                    }
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
                     },
@@ -726,6 +751,10 @@ impl SyntaxNodeTraversal for TypeCastExpressionNode<'_> {
                         value.accept(visitor, ctx);
                         ctx.pop();
                     },
+                    Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
+                        let unnamed: UnnamedNode = unnamed.unsafe_into();
+                        unnamed.accept(visitor, ctx);
+                    }
                     Err(e) if tp.traverse_errors => {
                         e.accept(visitor, ctx);
                     },

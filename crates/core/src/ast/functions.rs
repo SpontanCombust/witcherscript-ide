@@ -71,7 +71,7 @@ impl SyntaxNodeTraversal for EventDeclarationNode<'_> {
                     Ok((params, Some("params"))) if tp.traverse_params => {
                         let params: FunctionParametersNode = params.unsafe_into();
 
-                        params.accept_with_policy(visitor, ctx, tp.traverse_errors);
+                        params.accept_with_policy(visitor, ctx, tp.traverse_unnamed, tp.traverse_errors);
                     },
                     Ok((rt, Some("return_type"))) if tp.traverse_return_type => {
                         let rt: TypeAnnotationNode = rt.unsafe_into();
@@ -179,7 +179,7 @@ impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
                     Ok((params, Some("params"))) if tp.traverse_params => {
                         let params: FunctionParametersNode = params.unsafe_into();
     
-                        params.accept_with_policy(visitor, ctx, tp.traverse_errors);
+                        params.accept_with_policy(visitor, ctx, tp.traverse_unnamed, tp.traverse_errors);
                     },
                     Ok((rt, Some("return_type"))) if tp.traverse_return_type => {
                         let rt: TypeAnnotationNode = rt.unsafe_into();
@@ -375,14 +375,16 @@ impl<'script> FunctionParametersNode<'script> {
     }
 
 
-    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, traverse_errors: bool) {
-        //FIXME missing unnamed traversal
+    fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, traverse_unnamed: bool, traverse_errors: bool) {
         for ch in self.children_detailed().must_be_named(true) {
             match ch {
-                Ok((param_group, _)) => {
+                Ok((param_group, _)) if param_group.is_named() => {
                     let param_group: FunctionParameterGroupNode = param_group.unsafe_into();
-
                     param_group.accept(visitor, ctx);
+                },
+                Ok((unnamed, _)) if !unnamed.is_named() && traverse_unnamed => {
+                    let unnamed: UnnamedNode = unnamed.unsafe_into();
+                    unnamed.accept(visitor, ctx);
                 },
                 Err(e) if traverse_errors => {
                     e.accept(visitor, ctx);

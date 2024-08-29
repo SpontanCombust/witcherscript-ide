@@ -761,6 +761,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         NewExpressionTraversalPolicy { 
             traverse_lifetime_obj,
+            traverse_unnamed: any_error,
             traverse_errors: any_error
         }
     }
@@ -833,6 +834,7 @@ impl SyntaxNodeVisitor for SyntaxErrorVisitor<'_> {
 
         TypeCastExpressionTraversalPolicy { 
             traverse_value,
+            traverse_unnamed: any_error,
             traverse_errors: any_error
         }
     }

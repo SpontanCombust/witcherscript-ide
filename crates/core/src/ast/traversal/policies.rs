@@ -77,11 +77,13 @@ traversal_policy!(MemberFieldExpressionTraversalPolicy,
 
 traversal_policy!(NewExpressionTraversalPolicy,
     traverse_lifetime_obj,
+    traverse_unnamed,
     traverse_errors
 );
 
 traversal_policy!(TypeCastExpressionTraversalPolicy,
     traverse_value,
+    traverse_unnamed,
     traverse_errors
 );
 
