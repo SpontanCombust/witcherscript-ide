@@ -48,6 +48,8 @@ impl SyntaxNodeTraversal for MemberDefaultsBlockNode<'_> {
         let tp = visitor.visit_member_defaults_block(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::MemberDefaultsBlock);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((assign, _)) if assign.is_named() && tp.traverse_assignments => {
@@ -64,6 +66,8 @@ impl SyntaxNodeTraversal for MemberDefaultsBlockNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_member_defaults_block(self, ctx);
@@ -254,6 +258,8 @@ impl SyntaxNodeTraversal for MemberHintNode<'_> {
         let tp = visitor.visit_member_hint(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::MemberHint);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
@@ -266,6 +272,8 @@ impl SyntaxNodeTraversal for MemberHintNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_member_hint(self, ctx);

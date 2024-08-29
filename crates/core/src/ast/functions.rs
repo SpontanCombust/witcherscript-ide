@@ -168,8 +168,8 @@ impl<'script> TryFrom<AnyNode<'script>> for FunctionDeclarationNode<'script> {
 impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         // closure to not repeat code below
-        let accept_proper = |self_: &Self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: FunctionDeclarationTraversalPolicy| {
-            for ch in self_.children_detailed() {
+        let accept_proper = |visitor: &mut V, ctx: &mut TraversalContextStack, tp: FunctionDeclarationTraversalPolicy| {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((annot, Some("annotation"))) if tp.traverse_annotation => {
                         let annot: AnnotationNode = annot.unsafe_into();
@@ -210,7 +210,7 @@ impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
             if tp.any() {
                 ctx.push(TraversalContext::GlobalFunction);
 
-                accept_proper(self, visitor, ctx, tp);
+                accept_proper(visitor, ctx, tp);
 
                 ctx.pop();
             }
@@ -222,7 +222,7 @@ impl SyntaxNodeTraversal for FunctionDeclarationNode<'_> {
             if tp.any() {
                 ctx.push(TraversalContext::MemberFunction);
 
-                accept_proper(self, visitor, ctx, tp);
+                accept_proper(visitor, ctx, tp);
 
                 ctx.pop();
             }
@@ -376,6 +376,7 @@ impl<'script> FunctionParametersNode<'script> {
 
 
     fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, traverse_errors: bool) {
+        //FIXME missing unnamed traversal
         for ch in self.children_detailed().must_be_named(true) {
             match ch {
                 Ok((param_group, _)) => {

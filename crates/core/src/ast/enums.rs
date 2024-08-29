@@ -52,15 +52,13 @@ impl SyntaxNodeTraversal for EnumDeclarationNode<'_> {
         let tp = visitor.visit_enum_decl(self);
 
         if tp.any() {
+            ctx.push(TraversalContext::Enum);
+            
             for ch in self.children_detailed() {
                 match ch {
-                    Ok((def, Some("definition"))) if tp.traverse_definition => {
-                        ctx.push(TraversalContext::Enum);
-                        
+                    Ok((def, Some("definition"))) if tp.traverse_definition => {  
                         let def: EnumBlockNode = def.unsafe_into();
                         def.accept_with_policy(visitor, ctx, tp.clone());
-
-                        ctx.pop();
                     },
                     Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
                         let unnamed: UnnamedNode = unnamed.unsafe_into();
@@ -72,6 +70,8 @@ impl SyntaxNodeTraversal for EnumDeclarationNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_enum_decl(self);
@@ -190,6 +190,8 @@ impl SyntaxNodeTraversal for EnumVariantDeclarationNode<'_> {
         let tp = visitor.visit_enum_variant_decl(self);
 
         if tp.any() {
+            ctx.push(TraversalContext::EnumVariant);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
@@ -202,6 +204,8 @@ impl SyntaxNodeTraversal for EnumVariantDeclarationNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_enum_variant_decl(self);

@@ -11,58 +11,99 @@ pub enum TraversalContext {
     State,
     Struct,
     Enum,
-    GlobalFunction,
+    EnumVariant,
 
+    GlobalFunction,
     MemberFunction,
     Event,
-    MemberDefaultValue,
 
-    LocalVarDeclarationInitValue,
+    MemberDefaultsBlock,
+    MemberDefaultValue,
+    MemberHint,
+
+    GlobalVar,
+    MemberVar,
+    Autobind,
+    LocalVar,
+    LocalVarInitValue,
+
 
     ExpressionStatement,
     CompoundStatement,
     ReturnStatement,
     DeleteStatement,
+    BreakStatement,
+    ContinueStatement,
 
+    IfConditional,
     IfConditionalCond,
     IfConditionalBody,
     IfConditionalElseBody,
 
+    SwitchConditional,
     SwitchConditionalCond,
-    SwitchConditionalBody,
     SwitchConditionalCaseLabel,
+    SwitchConditionalDefaultLabel,
 
+    ForLoop,
     ForLoopInit,
     ForLoopCond,
     ForLoopIter,
     ForLoopBody,
 
+    WhileLoop,
     WhileLoopCond,
     WhileLoopBody,
 
+    DoWhileLoop,
     DoWhileLoopCond,
     DoWhileLoopBody, 
 
+
+    NestedExpression,
     NestedExpressionInner,
+
+    FunctionCall,
     FunctionCallExpressionFunc,
     FunctionCallArg,
+
+    ArrayExpression,
     ArrayExpressionAccessor,
     ArrayExpressionIndex,
+
+    MemberAccessExpression,
     MemberAccessExpressionAccessor,
+
+    NewExpression,
     NewExpressionLifetimeObj,
+
+    TypeCastExpression,
     TypeCastExpressionValue,
+
+    UnaryOperationExpression,
     UnaryOperationExpressionRight,
+    
+    BinaryOperationExpression,
     BinaryOperationExpressionLeft,
     BinaryOperationExpressionRight,
+
+    AssignmentOperationExpression,
     AssignmentOperationExpressionLeft,
     AssignmentOperationExpressionRight,
+
+    TernaryConditionalExpression,
     TernaryConditionalExpressionCond,
     TernaryConditionalExpressionConseq,
     TernaryConditionalExpressionAlt,
+
     ArrayInitializerExpression,
 
+
     TypeAnnotation,
+
+
     Annotation,
+
 
     Error
 }

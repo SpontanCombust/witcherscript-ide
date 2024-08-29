@@ -42,6 +42,8 @@ impl SyntaxNodeTraversal for BreakStatementNode<'_> {
         let tp = visitor.visit_break_stmt(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::BreakStatement);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
@@ -54,6 +56,8 @@ impl SyntaxNodeTraversal for BreakStatementNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_break_stmt(self, ctx);
@@ -93,6 +97,8 @@ impl SyntaxNodeTraversal for ContinueStatementNode<'_> {
         let tp = visitor.visit_continue_stmt(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::ContinueStatement);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
@@ -105,6 +111,8 @@ impl SyntaxNodeTraversal for ContinueStatementNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_continue_stmt(self, ctx);

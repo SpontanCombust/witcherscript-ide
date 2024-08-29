@@ -62,6 +62,8 @@ impl SyntaxNodeTraversal for ForLoopNode<'_> {
         let tp = visitor.visit_for_stmt(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::ForLoop);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((init, Some("init"))) if tp.traverse_init => {
@@ -106,6 +108,8 @@ impl SyntaxNodeTraversal for ForLoopNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_for_stmt(self, ctx);
@@ -156,6 +160,8 @@ impl SyntaxNodeTraversal for WhileLoopNode<'_> {
         let tp = visitor.visit_while_stmt(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::WhileLoop);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
@@ -184,6 +190,8 @@ impl SyntaxNodeTraversal for WhileLoopNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_while_stmt(self, ctx);
@@ -234,6 +242,8 @@ impl SyntaxNodeTraversal for DoWhileLoopNode<'_> {
         let tp = visitor.visit_do_while_stmt(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::DoWhileLoop);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
@@ -260,6 +270,8 @@ impl SyntaxNodeTraversal for DoWhileLoopNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_do_while_stmt(self, ctx);

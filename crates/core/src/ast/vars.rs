@@ -129,6 +129,8 @@ impl SyntaxNodeTraversal for LocalVarDeclarationNode<'_> {
         let tp = visitor.visit_local_var_decl_stmt(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::LocalVar);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((typ, Some("var_type"))) if tp.traverse_type => {
@@ -136,7 +138,7 @@ impl SyntaxNodeTraversal for LocalVarDeclarationNode<'_> {
                         typ.accept(visitor, ctx);
                     },
                     Ok((init_value, Some("init_value"))) if tp.traverse_init_value => {
-                        ctx.push(TraversalContext::LocalVarDeclarationInitValue);
+                        ctx.push(TraversalContext::LocalVarInitValue);
                         
                         let init_value: ExpressionNode = init_value.unsafe_into();
                         init_value.accept(visitor, ctx);
@@ -153,6 +155,8 @@ impl SyntaxNodeTraversal for LocalVarDeclarationNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_local_var_decl_stmt(self, ctx);
@@ -211,8 +215,8 @@ impl<'script> TryFrom<AnyNode<'script>> for MemberVarDeclarationNode<'script> {
 impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
     fn accept<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack) {
         // closure to avoid code repetition below
-        let accept_proper = |self_: &Self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: MemberVarDeclarationTraversalPolicy| {
-            for ch in self_.children_detailed() {
+        let accept_proper = |visitor: &mut V, ctx: &mut TraversalContextStack, tp: MemberVarDeclarationTraversalPolicy| {
+            for ch in self.children_detailed() {
                 match ch {
                     Ok((annot, Some("annotation"))) if tp.traverse_annotation => {
                         let annot: AnnotationNode = annot.unsafe_into();
@@ -237,13 +241,25 @@ impl SyntaxNodeTraversal for MemberVarDeclarationNode<'_> {
         if ctx.top() == TraversalContext::Global {
             let tp = visitor.visit_global_var_decl(self);
 
-            accept_proper(self, visitor, ctx, tp);
+            if tp.any() {
+                ctx.push(TraversalContext::GlobalVar);
+
+                accept_proper(visitor, ctx, tp);
+
+                ctx.pop();
+            }
 
             visitor.exit_global_var_decl(self);
         } else {
             let tp = visitor.visit_member_var_decl(self, ctx);
 
-            accept_proper(self, visitor, ctx, tp);
+            if tp.any() {
+                ctx.push(TraversalContext::MemberVar);
+
+                accept_proper(visitor, ctx, tp);
+
+                ctx.pop();
+            }
 
             visitor.exit_member_var_decl(self, ctx);
         }
@@ -310,6 +326,8 @@ impl SyntaxNodeTraversal for AutobindDeclarationNode<'_> {
         let tp = visitor.visit_autobind_decl(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::Autobind);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((typ, Some("autobind_type"))) if tp.traverse_type => {
@@ -326,6 +344,8 @@ impl SyntaxNodeTraversal for AutobindDeclarationNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_autobind_decl(self, ctx);

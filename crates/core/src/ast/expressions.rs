@@ -62,6 +62,8 @@ impl SyntaxNodeTraversal for NestedExpressionNode<'_> {
         let tp = visitor.visit_nested_expr(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::NestedExpression);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((inner, _)) if inner.is_named() && tp.traverse_inner => {
@@ -81,7 +83,9 @@ impl SyntaxNodeTraversal for NestedExpressionNode<'_> {
                     },
                     _ => {}
                 }
-            }            
+            }
+
+            ctx.pop();         
         }
 
         visitor.exit_nested_expr(self, ctx);
@@ -268,6 +272,8 @@ impl SyntaxNodeTraversal for FunctionCallExpressionNode<'_> {
         let tp = visitor.visit_func_call_expr(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::FunctionCall);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((func, Some("func"))) if tp.traverse_func => {
@@ -293,6 +299,8 @@ impl SyntaxNodeTraversal for FunctionCallExpressionNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_func_call_expr(self, ctx);
@@ -348,6 +356,7 @@ impl<'script> FunctionCallArgumentsNode<'script> {
     }
 
     fn accept_with_policy<V: SyntaxNodeVisitor>(&self, visitor: &mut V, ctx: &mut TraversalContextStack, tp: FunctionCallExpressionTraversalPolicy) {
+        //FIXME missing unnamed traversal
         for res in self.iter_result() {
             match res {
                 Ok(arg) => {
@@ -487,6 +496,8 @@ impl SyntaxNodeTraversal for ArrayExpressionNode<'_> {
         let tp = visitor.visit_array_expr(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::ArrayExpression);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((accessor, Some("accessor"))) if tp.traverse_accessor => {
@@ -513,6 +524,8 @@ impl SyntaxNodeTraversal for ArrayExpressionNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_array_expr(self, ctx);
@@ -563,6 +576,8 @@ impl SyntaxNodeTraversal for MemberAccessExpressionNode<'_> {
         let tp = visitor.visit_member_access_expr(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::MemberAccessExpression);
+
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((accessor, Some("accessor"))) if tp.traverse_accessor => {
@@ -579,6 +594,8 @@ impl SyntaxNodeTraversal for MemberAccessExpressionNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_member_access_expr(self, ctx);
@@ -629,6 +646,8 @@ impl SyntaxNodeTraversal for NewExpressionNode<'_> {
         let tp = visitor.visit_new_expr(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::NewExpression);
+
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((lifetime_obj, Some("lifetime_obj"))) if tp.traverse_lifetime_obj => {
@@ -644,6 +663,8 @@ impl SyntaxNodeTraversal for NewExpressionNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_new_expr(self, ctx);
@@ -694,6 +715,8 @@ impl SyntaxNodeTraversal for TypeCastExpressionNode<'_> {
         let tp = visitor.visit_type_cast_expr(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::TypeCastExpression);
+
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((value, Some("value"))) if tp.traverse_value => {
@@ -709,6 +732,8 @@ impl SyntaxNodeTraversal for TypeCastExpressionNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_type_cast_expr(self, ctx);
@@ -759,6 +784,8 @@ impl SyntaxNodeTraversal for UnaryOperationExpressionNode<'_> {
         let tp = visitor.visit_unary_op_expr(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::UnaryOperationExpression);
+
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((right, Some("right"))) if tp.traverse_right => {
@@ -774,6 +801,8 @@ impl SyntaxNodeTraversal for UnaryOperationExpressionNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_unary_op_expr(self, ctx);
@@ -829,6 +858,8 @@ impl SyntaxNodeTraversal for BinaryOperationExpressionNode<'_> {
         let tp = visitor.visit_binary_op_expr(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::BinaryOperationExpression);
+
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((left, Some("left"))) if tp.traverse_left => {
@@ -851,6 +882,8 @@ impl SyntaxNodeTraversal for BinaryOperationExpressionNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_binary_op_expr(self, ctx);
@@ -906,6 +939,8 @@ impl SyntaxNodeTraversal for AssignmentOperationExpressionNode<'_> {
         let tp = visitor.visit_assign_op_expr(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::AssignmentOperationExpression);
+
             for ch in self.children_detailed().must_be_named(true) {
                 match ch {
                     Ok((left, Some("left"))) if tp.traverse_left => {
@@ -928,6 +963,8 @@ impl SyntaxNodeTraversal for AssignmentOperationExpressionNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_assign_op_expr(self, ctx);
@@ -983,6 +1020,8 @@ impl SyntaxNodeTraversal for TernaryConditionalExpressionNode<'_> {
         let tp = visitor.visit_ternary_cond_expr(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::TernaryConditionalExpression);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((cond, Some("cond"))) if tp.traverse_cond => {
@@ -1016,6 +1055,8 @@ impl SyntaxNodeTraversal for TernaryConditionalExpressionNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_ternary_cond_expr(self, ctx);
@@ -1187,10 +1228,10 @@ impl<'script> TryFrom<AnyNode<'script>> for ExpressionNode<'script> {
             AssignmentOperationExpressionNode::NODE_KIND    |
             TernaryConditionalExpressionNode::NODE_KIND     |
             BinaryOperationExpressionNode::NODE_KIND        |
-            NewExpressionNode::NODE_KIND          |
+            NewExpressionNode::NODE_KIND                    |
             UnaryOperationExpressionNode::NODE_KIND         |
             TypeCastExpressionNode::NODE_KIND               |
-            MemberAccessExpressionNode::NODE_KIND            |
+            MemberAccessExpressionNode::NODE_KIND           |
             FunctionCallExpressionNode::NODE_KIND           |
             ArrayExpressionNode::NODE_KIND                  |
             NestedExpressionNode::NODE_KIND                 |
@@ -1377,15 +1418,13 @@ impl SyntaxNodeTraversal for ExpressionStatementNode<'_> {
         let tp = visitor.visit_expr_stmt(self, ctx);
 
         if tp.any() {
+            ctx.push(TraversalContext::ExpressionStatement);
+
             for ch in self.children_detailed() {
                 match ch {
                     Ok((expr, _)) if expr.is_named() && tp.traverse_expr => {
-                        ctx.push(TraversalContext::ExpressionStatement);
-                        
                         let expr: ExpressionNode = expr.unsafe_into();
-                        expr.accept(visitor, ctx);
-
-                        ctx.pop();
+                        expr.accept(visitor, ctx);                        
                     },
                     Ok((unnamed, _)) if !unnamed.is_named() && tp.traverse_unnamed => {
                         let unnamed: UnnamedNode = unnamed.unsafe_into();
@@ -1397,6 +1436,8 @@ impl SyntaxNodeTraversal for ExpressionStatementNode<'_> {
                     _ => {}
                 }
             }
+
+            ctx.pop();
         }
 
         visitor.exit_expr_stmt(self, ctx);
