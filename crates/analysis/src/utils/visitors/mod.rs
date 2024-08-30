@@ -1,5 +1,5 @@
 mod position_filter;
-pub use position_filter::{PositionFilter, PositionFilterPayload};
+pub use position_filter::{PositionFilter, PositionFilterPayload, PositionFilterEndpoint};
 
 mod sympath_builder;
 pub use sympath_builder::{SymbolPathBuilder, SymbolPathBuilderPayload};
