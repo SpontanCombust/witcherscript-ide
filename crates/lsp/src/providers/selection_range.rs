@@ -3,7 +3,7 @@ use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
 use witcherscript::{ast::*, tokens::*, ErrorNode};
-use witcherscript_analysis::utils::{PositionFilter, PositionFilterPayload};
+use witcherscript_analysis::utils::{PositionFilter, PositionFilterEndpoint, PositionFilterPayload};
 use crate::Backend;
 
 
@@ -99,15 +99,18 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.name().spans_position(self.pos) {
-                self.range_stack.push(n.name().range());
-            }
-            else if let Some(base) = n.base().filter(|base| base.spans_position(self.pos)) {
-                self.range_stack.push(base.range());
-            }
-            else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
-                self.range_stack.push(spec.range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::ClassName => {
+                    self.range_stack.push(n.name().range());
+                },
+                PositionFilterEndpoint::ClassBase => {
+                    self.range_stack.push(n.base().map(|b| b.range()).unwrap_or_default());
+                },
+                PositionFilterEndpoint::ClassSpecifier { nth } => {
+                    self.range_stack.push(n.specifiers().nth(nth).map(|s| s.range()).unwrap_or_default());
+                },
+                _ => {}
             }
         }
         else if n.definition().spans_position(self.pos) {
@@ -120,18 +123,21 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> StateDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.name().spans_position(self.pos) {
-                self.range_stack.push(n.name().range());
-            }
-            else if n.parent().spans_position(self.pos) {
-                self.range_stack.push(n.parent().range());
-            }
-            else if let Some(base) = n.base().filter(|base| base.spans_position(self.pos)) {
-                self.range_stack.push(base.range());
-            }
-            else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
-                self.range_stack.push(spec.range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::StateName => {
+                    self.range_stack.push(n.name().range());   
+                },
+                PositionFilterEndpoint::StateParent => {
+                    self.range_stack.push(n.parent().range());
+                },
+                PositionFilterEndpoint::StateBase => {
+                    self.range_stack.push(n.base().map(|b| b.range()).unwrap_or_default());
+                },
+                PositionFilterEndpoint::StateSpecifier { nth } => {
+                    self.range_stack.push(n.specifiers().nth(nth).map(|s| s.range()).unwrap_or_default());
+                },
+                _ => {}
             }
         }
         else if n.definition().spans_position(self.pos) {
@@ -144,12 +150,15 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> StructDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.name().spans_position(self.pos) {
-                self.range_stack.push(n.name().range());
-            }
-            else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
-                self.range_stack.push(spec.range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::StructName => {
+                    self.range_stack.push(n.name().range());
+                },
+                PositionFilterEndpoint::StructSpecifier { nth } => {
+                    self.range_stack.push(n.specifiers().nth(nth).map(|s| s.range()).unwrap_or_default());
+                },
+                _ => {}
             }
         }
         else if n.definition().spans_position(self.pos) {
@@ -162,9 +171,12 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> EnumDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.name().spans_position(self.pos) {
-                self.range_stack.push(n.name().range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::EnumName => {
+                    self.range_stack.push(n.name().range());
+                },
+                _ => {}
             }
         }
         else if n.definition().spans_position(self.pos) {
@@ -177,21 +189,23 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) -> EnumVariantDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if n.name().spans_position(self.pos) {
-            self.range_stack.push(n.name().range());
-        }
-        if let Some(value) = n.value() {
-            match value {
-                EnumVariantValue::Int(int) => {
-                    if int.spans_position(self.pos) {
-                        self.range_stack.push(int.range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::EnumVariantName => {
+                    self.range_stack.push(n.name().range());
+                },
+                PositionFilterEndpoint::EnumVariantValue => {
+                    match n.value() {
+                        Some(EnumVariantValue::Int(int)) => {
+                            self.range_stack.push(int.range());
+                        },
+                        Some(EnumVariantValue::Hex(hex)) => {
+                            self.range_stack.push(hex.range());
+                        },
+                        _ => {}
                     }
                 },
-                EnumVariantValue::Hex(hex) => {
-                    if hex.spans_position(self.pos) {
-                        self.range_stack.push(hex.range());
-                    }
-                }
+                _ => {}
             }
         }
 
@@ -201,15 +215,18 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.name().spans_position(self.pos) {
-                self.range_stack.push(n.name().range());
-            }
-            else if let Some(flavour) = n.flavour().filter(|f| f.spans_position(self.pos)) {
-                self.range_stack.push(flavour.range());
-            }
-            else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
-                self.range_stack.push(spec.range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::FunctionSpecifier { nth } => {
+                    self.range_stack.push(n.specifiers().nth(nth).map(|s| s.range()).unwrap_or_default());
+                },
+                PositionFilterEndpoint::FunctionFlavour => {
+                    self.range_stack.push(n.flavour().map(|f| f.range()).unwrap_or_default());
+                },
+                PositionFilterEndpoint::FunctionName => {
+                    self.range_stack.push(n.name().range());                    
+                },
+                _ => {}
             }
         }
         else if n.params().spans_position(self.pos) {
@@ -225,11 +242,16 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-            self.range_stack.push(name.range());
-        }
-        else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
-            self.range_stack.push(spec.range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::VarSpecifier { nth } => {
+                    self.range_stack.push(n.specifiers().nth(nth).map(|s| s.range()).unwrap_or_default());
+                },
+                PositionFilterEndpoint::VarName { nth } => {
+                    self.range_stack.push(n.names().nth(nth).map(|n| n.range()).unwrap_or_default());
+                },
+                _ => {}
+            }
         }
 
         TraversalPolicy::default_to(false)
@@ -241,15 +263,18 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.name().spans_position(self.pos) {
-                self.range_stack.push(n.name().range());
-            }
-            else if let Some(flavour) = n.flavour().filter(|f| f.spans_position(self.pos)) {
-                self.range_stack.push(flavour.range());
-            }
-            else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
-                self.range_stack.push(spec.range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::FunctionSpecifier { nth } => {
+                    self.range_stack.push(n.specifiers().nth(nth).map(|s| s.range()).unwrap_or_default());
+                },
+                PositionFilterEndpoint::FunctionFlavour => {
+                    self.range_stack.push(n.flavour().map(|f| f.range()).unwrap_or_default());
+                },
+                PositionFilterEndpoint::FunctionName => {
+                    self.range_stack.push(n.name().range());                    
+                },
+                _ => {}
             }
         }
         else if n.params().spans_position(self.pos) {
@@ -265,9 +290,12 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: &TraversalContextStack) -> EventDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.name().spans_position(self.pos) {
-                self.range_stack.push(n.name().range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::EventName => {
+                    self.range_stack.push(n.name().range());
+                },
+                _ => {}
             }
         }
         else if n.params().spans_position(self.pos) {
@@ -283,11 +311,16 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-            self.range_stack.push(name.range());
-        }
-        else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
-            self.range_stack.push(spec.range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::FunctionParameterName { nth } => {
+                    self.range_stack.push(n.names().nth(nth).map(|n| n.range()).unwrap_or_default());
+                },
+                PositionFilterEndpoint::FunctionParameterSpecifier { nth } => {
+                    self.range_stack.push(n.specifiers().nth(nth).map(|s| s.range()).unwrap_or_default());
+                },
+                _ => {}
+            }
         }
 
         TraversalPolicy::default_to(false)
@@ -296,11 +329,16 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-            self.range_stack.push(name.range());
-        }
-        else if let Some(spec) = n.specifiers().find(|spec| spec.spans_position(self.pos)) {
-            self.range_stack.push(spec.range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::VarSpecifier { nth } => {
+                    self.range_stack.push(n.specifiers().nth(nth).map(|s| s.range()).unwrap_or_default());
+                },
+                PositionFilterEndpoint::VarName { nth } => {
+                    self.range_stack.push(n.names().nth(nth).map(|n| n.range()).unwrap_or_default());
+                },
+                _ => {}
+            }
         }
 
         TraversalPolicy::default_to(false)
@@ -336,9 +374,12 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.member().spans_position(self.pos) {
-                self.range_stack.push(n.member().range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::MemberDefaultValueMember => {
+                    self.range_stack.push(n.member().range());
+                },
+                _ => {}
             }
         }
 
@@ -354,9 +395,12 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode, _: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.member().spans_position(self.pos) {
-                self.range_stack.push(n.member().range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::MemberDefaultValueMember => {
+                    self.range_stack.push(n.member().range());
+                },
+                _ => {}
             }
         }
 
@@ -366,11 +410,16 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_member_hint(&mut self, n: &MemberHintNode, _: &TraversalContextStack) -> MemberHintTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if n.member().spans_position(self.pos) {
-            self.range_stack.push(n.member().range());
-        }
-        else if n.value().spans_position(self.pos) {
-            self.range_stack.push(n.value().range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::MemberHintMember => {
+                    self.range_stack.push(n.member().range());
+                },
+                PositionFilterEndpoint::MemberHintValue => {
+                    self.range_stack.push(n.value().range());
+                }
+                _ => {}
+            }
         }
 
         TraversalPolicy::default_to(false)
@@ -382,9 +431,12 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: &TraversalContextStack) -> VarDeclarationTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-                self.range_stack.push(name.range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::VarName { nth } => {
+                    self.range_stack.push(n.names().nth(nth).map(|n| n.range()).unwrap_or_default());
+                },
+                _ => {}
             }
         }
 
@@ -513,9 +565,12 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, _: &TraversalContextStack) -> MemberFieldExpressionTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.member().spans_position(self.pos) {
-                self.range_stack.push(n.member().range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::MemberAccessExpressionMember => {
+                    self.range_stack.push(n.member().range());
+                },
+                _ => {}
             }
         }
 
@@ -525,9 +580,12 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_new_expr(&mut self, n: &NewExpressionNode, _: &TraversalContextStack) -> NewExpressionTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.class().spans_position(self.pos) {
-                self.range_stack.push(n.class().range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::NewExpressionClass => {
+                    self.range_stack.push(n.class().range());
+                },
+                _ => {}
             }
         }
 
@@ -537,9 +595,12 @@ impl SyntaxNodeVisitor for SelectionRangeResolver {
     fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, _: &TraversalContextStack) -> TypeCastExpressionTraversalPolicy {
         self.range_stack.push(n.range());
 
-        if self.payload.borrow().done {
-            if n.target_type().spans_position(self.pos) {
-                self.range_stack.push(n.target_type().range());
+        if let Some(endpoint) = self.payload.borrow().leaf_endpoint {
+            match endpoint {
+                PositionFilterEndpoint::TypeCastExpressionTargetType => {
+                    self.range_stack.push(n.target_type().range());
+                },
+                _ => {}
             }
         }
 

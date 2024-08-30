@@ -101,7 +101,6 @@ impl PositionTarget {
 /// A node visitor that can resolve a code identifier/symbol if a specified position points to such.
 /// Expects to work after PositionSeeker in visitor chain.
 pub struct TextDocumentPositionResolver<'a> {
-    pos: lsp::Position,
     doc: &'a ScriptDocument,
     pos_filter_payload: Rc<RefCell<PositionFilterPayload>>,
     symtab_marcher: SymbolTableMarcher<'a>,
@@ -112,7 +111,6 @@ pub struct TextDocumentPositionResolver<'a> {
 
 impl<'a> TextDocumentPositionResolver<'a> {
     pub fn new_rc(
-        pos: lsp::Position, 
         doc: &'a ScriptDocument, 
         pos_filter_payload: Rc<RefCell<PositionFilterPayload>>,
         symtab_marcher: SymbolTableMarcher<'a>,
@@ -120,7 +118,6 @@ impl<'a> TextDocumentPositionResolver<'a> {
         unl_builder_payload: Rc<RefCell<UnqualifiedNameLookup>>
     ) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self {
-            pos,
             doc,
             pos_filter_payload,
             symtab_marcher,
@@ -235,14 +232,16 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
 
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let name = n.name();
-
-            if name.spans_position(self.pos) {
-                self.found_type_ident(&name);
-            }
-            else if let Some(base) = n.base().filter(|base| base.spans_position(self.pos)) {
-                self.found_type_ident(&base);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::ClassName => {
+                    self.found_type_ident(&n.name());
+                },
+                PositionFilterEndpoint::ClassBase => {
+                    self.found_type_ident(&n.base().unwrap());
+                },
+                _ => {}
             }
         }
 
@@ -250,18 +249,19 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_state_decl(&mut self, n: &StateDeclarationNode) -> StateDeclarationTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let name = n.name();
-            let parent = n.parent();
-
-            if name.spans_position(self.pos) {
-                self.found_state_ident(&name);
-            }
-            else if parent.spans_position(self.pos) {
-                self.found_type_ident(&parent);
-            }
-            else if let Some(base) = n.base().filter(|base| base.spans_position(self.pos)) {
-                self.found_state_base_ident(&base);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::StateName => {
+                    self.found_state_ident(&n.name());
+                },
+                PositionFilterEndpoint::StateParent => {
+                    self.found_type_ident(&n.parent());
+                },
+                PositionFilterEndpoint::StateBase => {
+                    self.found_state_base_ident(&n.base().unwrap());
+                },
+                _ => {}
             }
         }
 
@@ -269,11 +269,13 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_struct_decl(&mut self, n: &StructDeclarationNode) -> StructDeclarationTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let name = n.name();
-
-            if name.spans_position(self.pos) {
-                self.found_type_ident(&name);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::StructName => {
+                    self.found_type_ident(&n.name());
+                },
+                _ => {}
             }
         }
 
@@ -281,11 +283,13 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_enum_decl(&mut self, n: &EnumDeclarationNode) -> EnumDeclarationTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let name = n.name();
-
-            if name.spans_position(self.pos) {
-                self.found_type_ident(&name);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::EnumName => {
+                    self.found_type_ident(&n.name());
+                },
+                _ => {}
             }
         }
 
@@ -294,11 +298,13 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
     
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) -> EnumVariantDeclarationTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let name = n.name();
-
-            if name.spans_position(self.pos) {
-                self.found_data_decl_ident(&name);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::EnumVariantName => {
+                    self.found_data_decl_ident(&n.name());
+                },
+                _ => {}
             }
         }
 
@@ -306,18 +312,26 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_global_var_decl(&mut self, n: &MemberVarDeclarationNode) -> MemberVarDeclarationTraversalPolicy {
-        if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-            let class_path = n.annotation()
-                .and_then(|annot| annot.arg())
-                .map(|arg| arg.value(self.doc))
-                .map(|class_name| SymbolPathBuf::new(&class_name, SymbolCategory::Type))
-                .unwrap_or_default();
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::VarName { nth } => {
+                    let name = n.names().nth(nth).map(|n| n.value(self.doc).to_string()).unwrap_or_default();
 
-            self.found_target = Some(PositionTarget { 
-                range: n.range(),
-                kind: PositionTargetKind::DataDeclarationNameIdentifier(name.value(self.doc).to_string()),
-                sympath_ctx: class_path,
-            });
+                    let class_path = n.annotation()
+                        .and_then(|annot| annot.arg())
+                        .map(|arg| arg.value(self.doc))
+                        .map(|class_name| SymbolPathBuf::new(&class_name, SymbolCategory::Type))
+                        .unwrap_or_default();
+
+                    self.found_target = Some(PositionTarget { 
+                        range: n.range(),
+                        kind: PositionTargetKind::DataDeclarationNameIdentifier(name),
+                        sympath_ctx: class_path,
+                    });
+                },
+                _ => {}
+            }
         }
 
         TraversalPolicy::default_to(true)
@@ -325,29 +339,42 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
     fn visit_member_var_decl(&mut self, n: &MemberVarDeclarationNode, _: &TraversalContextStack) -> MemberVarDeclarationTraversalPolicy {
         // not checking the annotation, because it'll be erroneous anyways
-        if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-            self.found_data_decl_ident(&name);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::VarName { nth } => {
+                    self.found_data_decl_ident(&n.names().nth(nth).unwrap());
+                },
+                _ => {}
+            }
         }
 
         TraversalPolicy::default_to(true)
     }
 
     fn visit_autobind_decl(&mut self, n: &AutobindDeclarationNode, _: &TraversalContextStack) -> AutobindDeclarationTraversalPolicy {
-        let name = n.name();
-
-        if name.spans_position(self.pos) {
-            self.found_data_decl_ident(&name);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::AutobindName => {
+                    self.found_data_decl_ident(&n.name());
+                },
+                _ => {}
+            }
         }
 
         TraversalPolicy::default_to(true)
     }
 
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, ctx: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let member = n.member();
-
-            if member.spans_position(self.pos) {
-                self.found_expression_ident(&member, member.clone().into(), ctx.top());
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::MemberDefaultValueMember => {
+                    let member = n.member();
+                    self.found_expression_ident(&member, member.clone().into(), ctx.top());
+                },
+                _ => {}
             }
         }
 
@@ -355,11 +382,14 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_defaults_block_assignment(&mut self, n: &MemberDefaultsBlockAssignmentNode, ctx: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let member = n.member();
-
-            if member.spans_position(self.pos) {
-                self.found_expression_ident(&member, member.clone().into(), ctx.top());
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::MemberDefaultValueMember => {
+                    let member = n.member();
+                    self.found_expression_ident(&member, member.clone().into(), ctx.top());
+                },
+                _ => {}
             }
         }
 
@@ -367,10 +397,15 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_hint(&mut self, n: &MemberHintNode, ctx: &TraversalContextStack) -> MemberHintTraversalPolicy {
-        let member = n.member();
-
-        if member.spans_position(self.pos) {
-            self.found_expression_ident(&member, member.clone().into(), ctx.top());
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::MemberHintMember => {
+                    let member = n.member();
+                    self.found_expression_ident(&member, member.clone().into(), ctx.top());
+                },
+                _ => {}
+            }
         }
 
         TraversalPolicy::default_to(true)
@@ -378,11 +413,13 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
 
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let name = n.name();
-
-            if name.spans_position(self.pos) {
-                self.found_callable_decl_ident(&name);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::FunctionName => {
+                    self.found_callable_decl_ident(&n.name());
+                },
+                _ => {}
             }
         }
 
@@ -390,12 +427,14 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_func_decl(&mut self, n: &FunctionDeclarationNode, _: &TraversalContextStack) -> FunctionDeclarationTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let name = n.name();
-
-            // not checking the annotation, because it'll be erroneous anyways
-            if name.spans_position(self.pos) {
-                self.found_callable_decl_ident(&name);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::FunctionName => {
+                    // not checking the annotation, because it'll be erroneous anyways
+                    self.found_callable_decl_ident(&n.name());
+                },
+                _ => {}
             }
         }
 
@@ -403,11 +442,13 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_event_decl(&mut self, n: &EventDeclarationNode, _: &TraversalContextStack) -> EventDeclarationTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let name = n.name();
-
-            if name.spans_position(self.pos) {
-                self.found_callable_decl_ident(&name);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::EventName => {
+                    self.found_callable_decl_ident(&n.name());
+                },
+                _ => {}
             }
         }
 
@@ -415,8 +456,14 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_func_param_group(&mut self, n: &FunctionParameterGroupNode, _: &TraversalContextStack) -> FunctionParameterGroupTraversalPolicy {
-        if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-            self.found_data_decl_ident(&name);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::FunctionParameterName { nth } => {
+                    self.found_data_decl_ident(&n.names().nth(nth).unwrap());
+                },
+                _ => {}
+            }
         }
 
         TraversalPolicy::default_to(true)
@@ -424,9 +471,13 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
 
     fn visit_local_var_decl_stmt(&mut self, n: &LocalVarDeclarationNode, _: &TraversalContextStack) -> VarDeclarationTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            if let Some(name) = n.names().find(|name| name.spans_position(self.pos)) {
-                self.found_data_decl_ident(&name);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::VarName { nth } => {
+                    self.found_data_decl_ident(&n.names().nth(nth).unwrap());
+                },
+                _ => {}
             }
         }
 
@@ -455,11 +506,13 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_member_access_expr(&mut self, n: &MemberAccessExpressionNode, ctx: &TraversalContextStack) -> MemberFieldExpressionTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let member = n.member();
-
-            if member.spans_position(self.pos) {
-                self.found_expression_ident(&member, n.clone().into(), ctx.top());
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::MemberAccessExpressionMember => {
+                    self.found_expression_ident(&n.member(), n.clone().into(), ctx.top());
+                },
+                _ => {}
             }
         }
 
@@ -467,11 +520,13 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_new_expr(&mut self, n: &NewExpressionNode, _: &TraversalContextStack) -> NewExpressionTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let class = n.class();
-
-            if class.spans_position(self.pos) {
-                self.found_type_ident(&class);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::NewExpressionClass => {
+                    self.found_type_ident(&n.class());
+                },
+                _ => {}
             }
         }
 
@@ -479,11 +534,13 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
     }
 
     fn visit_type_cast_expr(&mut self, n: &TypeCastExpressionNode, _: &TraversalContextStack) -> TypeCastExpressionTraversalPolicy {
-        if self.pos_filter_payload.borrow().done {
-            let target_type = n.target_type();
-
-            if n.target_type().spans_position(self.pos) {
-                self.found_type_ident(&target_type);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::TypeCastExpressionTargetType => {
+                    self.found_type_ident(&n.target_type());
+                },
+                _ => {}
             }
         }
 
@@ -492,17 +549,28 @@ impl SyntaxNodeVisitor for TextDocumentPositionResolver<'_> {
 
 
     fn visit_type_annotation(&mut self, n: &TypeAnnotationNode, _: &TraversalContextStack) -> TypeAnnotationTraversalPolicy {
-        let type_name = n.type_name();
-        if type_name.spans_position(self.pos) {
-            self.found_type_ident(&type_name);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::TypeAnnotationTypeName => {
+                    self.found_type_ident(&n.type_name());
+                },
+                _ => {}
+            }
         }
 
         TraversalPolicy::default_to(true)
     }
 
     fn visit_annotation(&mut self, n: &AnnotationNode, _: &TraversalContextStack) -> AnnotationTraversalPolicy {
-        if let Some(arg) = n.arg().filter(|arg| arg.spans_position(self.pos)) {
-            self.found_type_ident(&arg);
+        let endpoint = self.pos_filter_payload.borrow().leaf_endpoint;
+        if let Some(endpoint) = endpoint {
+            match endpoint {
+                PositionFilterEndpoint::AnnotationArg => {
+                    self.found_type_ident(&n.arg().unwrap());
+                },
+                _ => {}
+            }
         }
 
         TraversalPolicy::default_to(true)
@@ -528,7 +596,6 @@ pub fn resolve_text_document_position<'a>(position: lsp::Position, script_state:
     let (sympath_builder, sympath_builder_payload) = SymbolPathBuilder::new(&script_state.buffer);
     let (unl_builder, unl_payload) = UnqualifiedNameLookupBuilder::new(&script_state.buffer, sympath_builder_payload.clone(), symtab_marcher.clone());
     let resolver = TextDocumentPositionResolver::new_rc(
-        position, 
         &script_state.buffer, 
         detail_pos_filter_payload.clone(),
         symtab_marcher,

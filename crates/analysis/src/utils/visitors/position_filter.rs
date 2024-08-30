@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 use lsp_types as lsp;
-use witcherscript::{ast::*, tokens::*};
+use witcherscript::{ast::*, tokens::*, AnyNode};
 
 
 /// Utility node visitor travels only through nodes that span a specified position
@@ -26,15 +26,73 @@ pub struct PositionFilter {
 
 #[derive(Debug, Clone, Default)]
 pub struct PositionFilterPayload {
-    /// Signals that the given node likely directly contains a node, 
-    /// which spans the specified position 
-    pub done: bool
+    /// Signals that the given node directly contains a child leaf node, 
+    /// which spans the specified position.
+    pub leaf_endpoint: Option<PositionFilterEndpoint>
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PositionFilterEndpoint {
+    Current,
+
+
+    ClassSpecifier { nth: usize },
+    ClassName,
+    ClassBase,
+
+    StateSpecifier { nth: usize },
+    StateName,
+    StateParent,
+    StateBase,
+
+    StructSpecifier { nth: usize },
+    StructName,
+
+    EnumName,
+    EnumVariantName,
+    EnumVariantValue,
+
+
+    FunctionSpecifier { nth: usize },
+    FunctionFlavour,
+    FunctionName,
+    EventName,
+
+    FunctionParameterSpecifier { nth: usize },
+    FunctionParameterName { nth: usize },
+
+    MemberDefaultValueMember,
+    MemberHintMember,
+    MemberHintValue,
+
+    VarSpecifier { nth: usize },
+    VarName { nth: usize },
+
+    AutobindSpecifier { nth: usize },
+    AutobindName,
+    AutobindValue,
+
+
+    MemberAccessExpressionMember,
+    NewExpressionClass,
+    TypeCastExpressionTargetType,
+    UnaryOperationExpressionOp,
+    BinaryOperationExpressionOp,
+    AssignmentOperationExpressionOp,
+
+
+    TypeAnnotationTypeName,
+
+
+    AnnotationName,
+    AnnotationArg
+}
+
 
 impl PositionFilter {
     pub fn new(position: lsp::Position) -> (Self, Rc<RefCell<PositionFilterPayload>>) {
         let payload = Rc::new(RefCell::new(PositionFilterPayload {
-            done: false
+            leaf_endpoint: None
         }));
 
         let self_ = Self {
@@ -57,7 +115,7 @@ impl PositionFilter {
     pub fn reset(&mut self, position: lsp::Position) {
         self.pos = position;
         self.currently_in_range = false;
-        self.payload.borrow_mut().done = false;
+        self.payload.borrow_mut().leaf_endpoint.take();
     }
 }
 
@@ -70,10 +128,7 @@ impl SyntaxNodeVisitor for PositionFilter {
     fn visit_root(&mut self, n: &RootNode) -> RootTraversalPolicy {
         self.currently_in_range = n.spans_position(self.pos);
 
-        RootTraversalPolicy { 
-            traverse_statements: self.currently_in_range,
-            traverse_errors: false
-        }
+        RootTraversalPolicy::default_to(self.currently_in_range)
     }
 
     fn visit_class_decl(&mut self, n: &ClassDeclarationNode) -> ClassDeclarationTraversalPolicy {
@@ -83,9 +138,21 @@ impl SyntaxNodeVisitor for PositionFilter {
         if self.currently_in_range {
             if n.definition().spans_position(self.pos) {
                 tp.traverse_definition = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
+            }
+            else if let Some(speci) = n.specifiers().enumerate().find(|(_, s)| s.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::ClassSpecifier { nth: speci });
+            }
+            else if n.name().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::ClassName);
+            }
+            else if n.base().map(|b| b.spans_position(self.pos)).unwrap_or(false) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::ClassBase);
             } 
-            else { 
-                self.payload.borrow_mut().done = true;
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -99,9 +166,24 @@ impl SyntaxNodeVisitor for PositionFilter {
         if self.currently_in_range {
             if n.definition().spans_position(self.pos) {
                 tp.traverse_definition = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             } 
-            else { 
-                self.payload.borrow_mut().done = true;
+            else if let Some(speci) = n.specifiers().enumerate().find(|(_, s)| s.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::StateSpecifier { nth: speci });
+            }
+            else if n.name().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::StateName);
+            }
+            else if n.parent().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::StateParent);
+            }
+            else if n.base().map(|b| b.spans_position(self.pos)).unwrap_or(false) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::StateBase);
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -115,9 +197,18 @@ impl SyntaxNodeVisitor for PositionFilter {
         if self.currently_in_range {
             if n.definition().spans_position(self.pos) {
                 tp.traverse_definition = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             } 
-            else { 
-                self.payload.borrow_mut().done = true;
+            else if let Some(speci) = n.specifiers().enumerate().find(|(_, s)| s.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::StructSpecifier { nth: speci });
+            }
+            else if n.name().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::StructName);
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -131,9 +222,15 @@ impl SyntaxNodeVisitor for PositionFilter {
         if self.currently_in_range {
             if n.definition().spans_position(self.pos) {
                 tp.traverse_definition = true;
-            } 
-            else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
+            }
+            else if n.name().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::EnumName);
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -141,12 +238,26 @@ impl SyntaxNodeVisitor for PositionFilter {
     }
 
     fn visit_enum_variant_decl(&mut self, n: &EnumVariantDeclarationNode) -> EnumVariantDeclarationTraversalPolicy {
+        let mut tp = EnumVariantDeclarationTraversalPolicy::default_to(false);
+
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            if n.name().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::EnumVariantName);
+            }
+            else if n.value().map(|v| match v {
+                EnumVariantValue::Int(n) => n.spans_position(self.pos),
+                EnumVariantValue::Hex(n) => n.spans_position(self.pos),
+            }).unwrap_or(false) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::EnumVariantValue);
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
+            }
         }
 
-        TraversalPolicy::default_to(false)
+        tp
     }
 
     fn visit_global_func_decl(&mut self, n: &FunctionDeclarationNode) -> FunctionDeclarationTraversalPolicy {
@@ -161,15 +272,29 @@ impl SyntaxNodeVisitor for PositionFilter {
             }
             else if n.params().spans_position(self.pos) {
                 tp.traverse_params = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
             else if n.definition().spans_position(self.pos) {
                 tp.traverse_definition = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
             else if n.return_type().map(|rt| rt.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_return_type = true;
             }
+            else if let Some(speci) = n.specifiers().enumerate().find(|(_, s)| s.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::FunctionSpecifier { nth: speci });
+            }
+            else if n.flavour().map(|f| f.spans_position(self.pos)).unwrap_or(false) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::FunctionFlavour);
+            }
+            else if n.name().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::FunctionName);
+            }
             else {
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
 
@@ -188,10 +313,18 @@ impl SyntaxNodeVisitor for PositionFilter {
             if n.annotation().map(|annot| annot.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_annotation = true;
             }
-            if n.var_type().spans_position(self.pos) {
+            else if n.var_type().spans_position(self.pos) {
                 tp.traverse_type = true;
-            } else {
-                self.payload.borrow_mut().done = true;
+            } 
+            else if let Some(speci) = n.specifiers().enumerate().find(|(_, s)| s.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::VarSpecifier { nth: speci });
+            }
+            else if let Some(namei) = n.names().enumerate().find(|(_, n)| n.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::VarName { nth: namei });
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
 
@@ -213,15 +346,29 @@ impl SyntaxNodeVisitor for PositionFilter {
             }
             else if n.params().spans_position(self.pos) {
                 tp.traverse_params = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
             else if n.return_type().map(|rt| rt.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_return_type = true;
             }
             else if n.definition().spans_position(self.pos) {
                 tp.traverse_definition = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
+            }
+            else if let Some(speci) = n.specifiers().enumerate().find(|(_, s)| s.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::FunctionSpecifier { nth: speci });
+            }
+            else if n.flavour().map(|f| f.spans_position(self.pos)).unwrap_or(false) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::FunctionFlavour);
+            }
+            else if n.name().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::FunctionName);
             }
             else {
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
 
@@ -240,15 +387,23 @@ impl SyntaxNodeVisitor for PositionFilter {
             self.currently_in_callable_range = true;
             if n.params().spans_position(self.pos) {
                 tp.traverse_params = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
             else if n.return_type().map(|rt| rt.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_return_type = true;
             }
             else if n.definition().spans_position(self.pos) {
                 tp.traverse_definition = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             } 
+            else if n.name().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::EventName);
+            }
             else {
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
 
@@ -266,8 +421,16 @@ impl SyntaxNodeVisitor for PositionFilter {
         if self.currently_in_range {
             if n.param_type().spans_position(self.pos) {
                 tp.traverse_type = true;
-            } else {
-                self.payload.borrow_mut().done = true;
+            } 
+            else if let Some(speci) = n.specifiers().enumerate().find(|(_, s)| s.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::FunctionParameterSpecifier { nth: speci });
+            }
+            else if let Some(namei) = n.names().enumerate().find(|(_, n)| n.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::FunctionParameterName { nth: namei });
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
 
@@ -283,8 +446,16 @@ impl SyntaxNodeVisitor for PositionFilter {
 
             if n.var_type().spans_position(self.pos) {
                 tp.traverse_type = true;
-            } else {
-                self.payload.borrow_mut().done = true;
+            }
+            else if let Some(speci) = n.specifiers().enumerate().find(|(_, s)| s.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::VarSpecifier { nth: speci });
+            }
+            else if let Some(namei) = n.names().enumerate().find(|(_, n)| n.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::VarName { nth: namei });
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
 
@@ -296,10 +467,24 @@ impl SyntaxNodeVisitor for PositionFilter {
 
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            if n.autobind_type().spans_position(self.pos) {
+            if let Some(speci) = n.specifiers().enumerate().find(|(_, s)| s.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::AutobindSpecifier { nth: speci });
+            }
+            else if n.name().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::AutobindName);
+            }
+            else if n.autobind_type().spans_position(self.pos) {
                 tp.traverse_type = true;
-            } else {
-                self.payload.borrow_mut().done = true;
+            }
+            else if match n.value() {
+                AutobindValue::Single(n) => n.spans_position(self.pos),
+                AutobindValue::Concrete(n) => n.spans_position(self.pos),
+            } {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::AutobindValue);
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
 
@@ -307,12 +492,23 @@ impl SyntaxNodeVisitor for PositionFilter {
     }
 
     fn visit_member_hint(&mut self, n: &MemberHintNode, _: &TraversalContextStack) -> MemberHintTraversalPolicy {
+        let mut tp = MemberHintTraversalPolicy::default_to(false);
+
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            if n.member().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::MemberHintMember);
+            }
+            else if n.value().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::MemberHintValue);
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
+            }
         }
 
-        TraversalPolicy::default_to(false)
+        tp
     }
 
     fn visit_member_default_val(&mut self, n: &MemberDefaultValueNode, _: &TraversalContextStack) -> MemberDefaultValueTraversalPolicy {
@@ -323,8 +519,12 @@ impl SyntaxNodeVisitor for PositionFilter {
             if n.value().spans_position(self.pos) {
                 tp.traverse_value = true;
             }
+            else if n.member().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::MemberDefaultValueMember);
+            }
             else {
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
 
@@ -337,6 +537,8 @@ impl SyntaxNodeVisitor for PositionFilter {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             tp.traverse_assignments = true;
+            tp.traverse_unnamed = true;
+            tp.traverse_errors = true;
         }
 
         tp
@@ -350,8 +552,12 @@ impl SyntaxNodeVisitor for PositionFilter {
             if n.value().spans_position(self.pos) {
                 tp.traverse_value = true;
             }
+            else if n.member().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::MemberDefaultValueMember);
+            }
             else {
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
 
@@ -372,8 +578,12 @@ impl SyntaxNodeVisitor for PositionFilter {
             else if n.var_type().spans_position(self.pos) {
                 tp.traverse_type = true;
             }
-            else { 
-                self.payload.borrow_mut().done = true;
+            else if let Some(namei) = n.names().enumerate().find(|(_, n)| n.spans_position(self.pos)).map(|(i, _)| i) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::VarName { nth: namei });
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -386,6 +596,8 @@ impl SyntaxNodeVisitor for PositionFilter {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             tp.traverse_statements = true;
+            tp.traverse_unnamed = true;
+            tp.traverse_errors = true;
         }
       
         tp
@@ -408,8 +620,9 @@ impl SyntaxNodeVisitor for PositionFilter {
             else if n.body().spans_position(self.pos) {
                 tp.traverse_body = true;
             }
-            else { 
-                self.payload.borrow_mut().done = true;
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -427,8 +640,9 @@ impl SyntaxNodeVisitor for PositionFilter {
             else if n.body().spans_position(self.pos) {
                 tp.traverse_body = true;
             }
-            else { 
-                self.payload.borrow_mut().done = true;
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -446,8 +660,9 @@ impl SyntaxNodeVisitor for PositionFilter {
             else if n.body().spans_position(self.pos) {
                 tp.traverse_body = true;
             }
-            else { 
-                self.payload.borrow_mut().done = true;
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -468,8 +683,9 @@ impl SyntaxNodeVisitor for PositionFilter {
             else if n.else_body().map(|else_body| else_body.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_else_body = true;
             }
-            else { 
-                self.payload.borrow_mut().done = true;
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -486,9 +702,12 @@ impl SyntaxNodeVisitor for PositionFilter {
             }
             else if n.body().spans_position(self.pos) {
                 tp.traverse_body = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
-            else { 
-                self.payload.borrow_mut().done = true;
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -503,8 +722,9 @@ impl SyntaxNodeVisitor for PositionFilter {
             if n.value().spans_position(self.pos) {
                 tp.traverse_value = true;
             }
-            else { 
-                self.payload.borrow_mut().done = true;
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -512,30 +732,39 @@ impl SyntaxNodeVisitor for PositionFilter {
     }
 
     fn visit_switch_stmt_default(&mut self, n: &SwitchConditionalDefaultLabelNode, _: &TraversalContextStack) -> SwitchConditionalDefaultLabelTraversalPolicy {
+        let mut tp = SwitchConditionalDefaultLabelTraversalPolicy::default_to(false);
+
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            tp.traverse_unnamed = true;
+            tp.traverse_errors = true;
         }
 
-        TraversalPolicy::default_to(false)
+        tp
     }
 
     fn visit_break_stmt(&mut self, n: &BreakStatementNode, _: &TraversalContextStack) -> BreakStatementTraversalPolicy {
+        let mut tp = BreakStatementTraversalPolicy::default_to(false);
+
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            tp.traverse_unnamed = true;
+            tp.traverse_errors = true;
         }
 
-        TraversalPolicy::default_to(false)
+        tp
     }
 
     fn visit_continue_stmt(&mut self, n: &ContinueStatementNode, _: &TraversalContextStack) -> ContinueStatementTraversalPolicy {
+        let mut tp = ContinueStatementTraversalPolicy::default_to(false);
+
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            tp.traverse_unnamed = true;
+            tp.traverse_errors = true;
         }
 
-        TraversalPolicy::default_to(false)
+        tp
     }
 
     fn visit_delete_stmt(&mut self, n: &DeleteStatementNode, _: &TraversalContextStack) -> DeleteStatementTraversalPolicy {
@@ -547,7 +776,8 @@ impl SyntaxNodeVisitor for PositionFilter {
                 tp.traverse_value = true;
             }
             else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -563,7 +793,8 @@ impl SyntaxNodeVisitor for PositionFilter {
                 tp.traverse_value = true;
             }
             else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -579,7 +810,8 @@ impl SyntaxNodeVisitor for PositionFilter {
                 tp.traverse_expr = true;
             }
             else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -589,7 +821,7 @@ impl SyntaxNodeVisitor for PositionFilter {
     fn visit_nop_stmt(&mut self, n: &NopNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::Current);
         }
     }
 
@@ -605,7 +837,8 @@ impl SyntaxNodeVisitor for PositionFilter {
                 tp.traverse_inner = true;
             }
             else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -623,8 +856,11 @@ impl SyntaxNodeVisitor for PositionFilter {
             else if n.right().spans_position(self.pos) {
                 tp.traverse_right = true;
             }
+            else if n.op().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::AssignmentOperationExpressionOp);
+            }
             else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -642,8 +878,11 @@ impl SyntaxNodeVisitor for PositionFilter {
             else if n.right().spans_position(self.pos) {
                 tp.traverse_right = true;
             }
+            else if n.op().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::BinaryOperationExpressionOp);
+            }
             else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -658,8 +897,11 @@ impl SyntaxNodeVisitor for PositionFilter {
             if n.right().spans_position(self.pos) {
                 tp.traverse_right = true;
             }
+            else if n.op().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::UnaryOperationExpressionOp);
+            }
             else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -674,8 +916,12 @@ impl SyntaxNodeVisitor for PositionFilter {
             if n.lifetime_obj().map(|lifetime_obj| lifetime_obj.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_lifetime_obj = true;
             }
-            else { 
-                self.payload.borrow_mut().done = true;
+            else if n.class().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::NewExpressionClass);
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -690,8 +936,12 @@ impl SyntaxNodeVisitor for PositionFilter {
             if n.value().spans_position(self.pos) {
                 tp.traverse_value = true;
             }
+            else if n.target_type().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::TypeCastExpressionTargetType);
+            }
             else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -713,7 +963,8 @@ impl SyntaxNodeVisitor for PositionFilter {
                 tp.traverse_alt = true;
             }
             else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -728,8 +979,11 @@ impl SyntaxNodeVisitor for PositionFilter {
             if n.accessor().spans_position(self.pos) {
                 tp.traverse_accessor = true;
             }
-            else { 
-                self.payload.borrow_mut().done = true;
+            else if n.member().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::MemberAccessExpressionMember);
+            }
+            else {
+                tp.traverse_errors = true;
             }
         }
       
@@ -748,7 +1002,8 @@ impl SyntaxNodeVisitor for PositionFilter {
                 tp.traverse_index = true;
             }
             else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -767,7 +1022,8 @@ impl SyntaxNodeVisitor for PositionFilter {
                 tp.traverse_args = true;
             }
             else { 
-                self.payload.borrow_mut().done = true;
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
       
@@ -784,7 +1040,7 @@ impl SyntaxNodeVisitor for PositionFilter {
                     tp.traverse_expr = true;
                 }
                 FunctionCallArgument::Omitted(_) => {
-                    self.payload.borrow_mut().done = true;
+                    self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::Current);
                 }
             }
         }
@@ -795,42 +1051,42 @@ impl SyntaxNodeVisitor for PositionFilter {
     fn visit_identifier_expr(&mut self, n: &IdentifierNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::MemberAccessExpressionMember);
         }
     }
 
     fn visit_literal_expr(&mut self, n: &LiteralNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::MemberAccessExpressionMember);
         }
     }
 
     fn visit_this_expr(&mut self, n: &ThisExpressionNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::MemberAccessExpressionMember);
         }
     }
 
     fn visit_super_expr(&mut self, n: &SuperExpressionNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::MemberAccessExpressionMember);
         }
     }
 
     fn visit_parent_expr(&mut self, n: &ParentExpressionNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::MemberAccessExpressionMember);
         }
     }
 
     fn visit_virtual_parent_expr(&mut self, n: &VirtualParentExpressionNode, _: &TraversalContextStack) {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::MemberAccessExpressionMember);
         }
     }
 
@@ -840,6 +1096,8 @@ impl SyntaxNodeVisitor for PositionFilter {
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
             tp.traverse_items = true;
+            tp.traverse_unnamed = true;
+            tp.traverse_errors = true;
         }
       
         tp
@@ -852,10 +1110,15 @@ impl SyntaxNodeVisitor for PositionFilter {
 
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            if n.type_arg().map(|type_arg| type_arg.spans_position(self.pos)).unwrap_or(false) {
+            if n.type_name().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::TypeAnnotationTypeName);
+            }
+            else if n.type_arg().map(|type_arg| type_arg.spans_position(self.pos)).unwrap_or(false) {
                 tp.traverse_type_arg = true;
-            } else {
-                self.payload.borrow_mut().done = true;
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
             }
         }
 
@@ -863,12 +1126,47 @@ impl SyntaxNodeVisitor for PositionFilter {
     }
 
     fn visit_annotation(&mut self, n: &AnnotationNode, _: &TraversalContextStack) -> AnnotationTraversalPolicy {
+        let mut tp = AnnotationTraversalPolicy::default_to(false);
+
         self.currently_in_range = n.spans_position(self.pos);
         if self.currently_in_range {
-            self.payload.borrow_mut().done = true;
+            if n.name().spans_position(self.pos) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::AnnotationName);
+            }
+            else if n.arg().map(|arg| arg.spans_position(self.pos)).unwrap_or(false) {
+                self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::AnnotationArg);
+            }
+            else {
+                tp.traverse_unnamed = true;
+                tp.traverse_errors = true;
+            }
         }
 
-        TraversalPolicy::default_to(false)
+        tp
+    }
+
+
+    fn visit_unnamed(&mut self, n: &UnnamedNode, _: &TraversalContextStack) {
+        self.currently_in_range = n.spans_position(self.pos);
+        if self.currently_in_range {
+            self.payload.borrow_mut().leaf_endpoint = Some(PositionFilterEndpoint::Current);
+        }
+    }
+
+
+    fn visit_error(&mut self, n: &witcherscript::ErrorNode, _: &TraversalContextStack) -> ErrorTraversalPolicy {
+        let mut tp = ErrorTraversalPolicy::default_to(false);
+
+        self.currently_in_range = n.spans_position(self.pos);
+        if self.currently_in_range {
+            tp.traverse = true;
+        }
+
+        tp
+    }
+
+    fn visit_error_child(&mut self, n: &AnyNode, _: &TraversalContextStack) {
+        self.currently_in_range = n.spans_position(self.pos);
     }
 }
 
