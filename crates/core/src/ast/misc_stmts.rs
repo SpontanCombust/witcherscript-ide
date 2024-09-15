@@ -254,7 +254,7 @@ impl SyntaxNodeTraversal for DeleteStatementNode<'_> {
 pub type CompoundStatementNode<'script> = SyntaxNode<'script, tags::CompoundStatement>;
 
 impl NamedSyntaxNode for CompoundStatementNode<'_> {
-    const NODE_KIND: &'static str = "compound_stmt";
+    const NODE_KIND: &'static str = "func_block";
 }
 
 impl<'script> CompoundStatementNode<'script> {

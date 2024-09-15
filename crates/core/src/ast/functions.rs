@@ -304,7 +304,7 @@ impl SyntaxNodeTraversal for FunctionDefinitionNode<'_> {
 pub type FunctionBlockNode<'script> = SyntaxNode<'script, tags::FunctionBlock>;
 
 impl NamedSyntaxNode for FunctionBlockNode<'_> {
-    const NODE_KIND: &'static str = "func_def";
+    const NODE_KIND: &'static str = "func_block";
 }
 
 impl<'script> FunctionBlockNode<'script> {

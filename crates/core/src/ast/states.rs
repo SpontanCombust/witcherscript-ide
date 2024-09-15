@@ -96,7 +96,7 @@ impl SyntaxNodeTraversal for StateDeclarationNode<'_> {
 pub type StateBlockNode<'script> = SyntaxNode<'script, tags::StateBlock>;
 
 impl NamedSyntaxNode for StateBlockNode<'_> {
-    const NODE_KIND: &'static str = "state_def";
+    const NODE_KIND: &'static str = "class_def";
 }
 
 impl<'script> StateBlockNode<'script> {
