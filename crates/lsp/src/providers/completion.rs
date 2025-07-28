@@ -3,9 +3,9 @@ use strum::IntoEnumIterator;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 
-use witcherscript::ast::AnnotationKind;
-use witcherscript::attribs::{FunctionFlavour, Specifier};
-use witcherscript::tokens::Keyword;
+use witcherscript_lang::ast::AnnotationKind;
+use witcherscript_lang::attribs::{FunctionFlavour, Specifier};
+use witcherscript_lang::tokens::Keyword;
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 
 use crate::Backend;

@@ -1,7 +1,7 @@
 use tokio::{sync::oneshot, time::Instant};
 use rayon::prelude::*;
 use abs_path::AbsPath;
-use witcherscript::{script_document::ScriptDocument, Script};
+use witcherscript_lang::{script_document::ScriptDocument, Script};
 use witcherscript_project::source_tree::{SourceTreeDifference, SourceTreeFile};
 use crate::{Backend, ScriptState, ScriptStateContentInfo, notifications};
 

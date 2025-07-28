@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 use lsp_types as lsp;
-use witcherscript::{ast::*, tokens::*, AnyNode};
+use witcherscript_lang::{ast::*, tokens::*, AnyNode};
 
 
 /// Utility node visitor travels only through nodes that span a specified position
@@ -1154,7 +1154,7 @@ impl SyntaxNodeVisitor for PositionFilter {
     }
 
 
-    fn visit_error(&mut self, n: &witcherscript::ErrorNode, _: &TraversalContextStack) -> ErrorTraversalPolicy {
+    fn visit_error(&mut self, n: &witcherscript_lang::ErrorNode, _: &TraversalContextStack) -> ErrorTraversalPolicy {
         let mut tp = ErrorTraversalPolicy::default_to(false);
 
         self.currently_in_range = n.spans_position(self.pos);

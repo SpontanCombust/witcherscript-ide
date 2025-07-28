@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
-use witcherscript::ErrorNode;
-use witcherscript::{ast::*, attribs::*, script_document::ScriptDocument};
+use witcherscript_lang::ErrorNode;
+use witcherscript_lang::{ast::*, attribs::*, script_document::ScriptDocument};
 use crate::utils::SymbolPathBuilderPayload;
 use super::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::symbols::{BasicTypeSymbolPath, MemberDataSymbolPath, StateSymbol, Symbol, SymbolCategory};

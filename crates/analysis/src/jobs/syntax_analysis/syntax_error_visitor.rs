@@ -1,7 +1,7 @@
 use lsp_types::Range;
-use witcherscript::{ErrorNode, Script, SyntaxNode};
-use witcherscript::tokens::*;
-use witcherscript::ast::*;
+use witcherscript_lang::{ErrorNode, Script, SyntaxNode};
+use witcherscript_lang::tokens::*;
+use witcherscript_lang::ast::*;
 use witcherscript_diagnostics::*;
 
 

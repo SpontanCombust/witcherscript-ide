@@ -1,4 +1,4 @@
-use witcherscript::attribs::StateSpecifier;
+use witcherscript_lang::attribs::StateSpecifier;
 use crate::symbol_analysis::symbol_path::SymbolPath;
 use super::*;
 

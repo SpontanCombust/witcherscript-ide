@@ -7,7 +7,7 @@ authors.workspace = true
 
 [dependencies]
 abs-path = { path = "../abs-path" }
-witcherscript = { path = "../core" }
+witcherscript-lang = { path = "../lang" }
 witcherscript-project = { path = "../project" }
 witcherscript-diagnostics = { path = "../diagnostics" }
 thiserror.workspace = true

@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 use tower_lsp::lsp_types as lsp;
-use witcherscript::ErrorNode;
-use witcherscript::{ast::*, script_document::ScriptDocument, tokens::*};
+use witcherscript_lang::ErrorNode;
+use witcherscript_lang::{ast::*, script_document::ScriptDocument, tokens::*};
 use witcherscript_analysis::symbol_analysis::symbol_table::marcher::SymbolTableMarcher;
 use witcherscript_analysis::symbol_analysis::symbols::*;
 use witcherscript_analysis::symbol_analysis::unqualified_name_lookup::*;

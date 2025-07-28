@@ -5,7 +5,7 @@ use shrinkwraprs::Shrinkwrap;
 use tokio::sync::RwLock;
 use tower_lsp::Client;
 use abs_path::AbsPath;
-use witcherscript::{script_document::ScriptDocument, Script};
+use witcherscript_lang::{script_document::ScriptDocument, Script};
 use witcherscript_analysis::symbol_analysis::symbol_table::{marcher::SymbolTableMarcher, SymbolTable};
 use witcherscript_project::{ContentGraph, SourceTree, SourceTreePath};
 use crate::{cache::Cache, config::Config, reporting::Reporter};

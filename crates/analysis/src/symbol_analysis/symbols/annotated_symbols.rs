@@ -1,4 +1,4 @@
-use witcherscript::{ast::WRAPPED_METHOD_NAME, attribs::*};
+use witcherscript_lang::{ast::WRAPPED_METHOD_NAME, attribs::*};
 use super::*;
 
 

@@ -1,4 +1,4 @@
-use witcherscript::attribs::*;
+use witcherscript_lang::attribs::*;
 use super::*;
 
 

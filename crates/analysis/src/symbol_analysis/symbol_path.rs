@@ -1,4 +1,4 @@
-use witcherscript::MISSING_TEXT;
+use witcherscript_lang::MISSING_TEXT;
 use super::symbols::SymbolCategory;
 
 
@@ -158,7 +158,7 @@ impl SymbolPath {
         self.inner.is_empty()
     }
 
-    /// Returns if any of path's components is [`witcherscript::MISSING_TEXT`] indicating that its name node was missing in AST
+    /// Returns if any of path's components is [`witcherscript_lang::MISSING_TEXT`] indicating that its name node was missing in AST
     pub fn has_missing(&self) -> bool {
         self.components().any(|c| c.name == MISSING_TEXT)
     }

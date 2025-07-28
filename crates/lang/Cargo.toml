@@ -1,6 +1,6 @@
 [package]
-name = "witcherscript"
-description = "Core library with grammar parsing utilities"
+name = "witcherscript-lang"
+description = "Core library with language parsing utilities"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

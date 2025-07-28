@@ -1,5 +1,5 @@
 use std::{cell::RefCell, rc::Rc};
-use witcherscript::{ast::*, script_document::ScriptDocument, tokens::*, ErrorNode};
+use witcherscript_lang::{ast::*, script_document::ScriptDocument, tokens::*, ErrorNode};
 use crate::symbol_analysis::{symbol_path::{SymbolPath, SymbolPathBuf}, symbol_table::marcher::SymbolTableMarcher, symbols::*, unqualified_name_lookup::UnqualifiedNameLookup};
 use super::SymbolPathBuilderPayload;
 

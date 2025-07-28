@@ -6,7 +6,7 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
-witcherscript = { path = "../core" }
+witcherscript-lang = { path = "../lang" }
 witcherscript-analysis = { path = "../analysis" }
 witcherscript-project = { path = "../project" }
 witcherscript-diagnostics = { path = "../diagnostics" }

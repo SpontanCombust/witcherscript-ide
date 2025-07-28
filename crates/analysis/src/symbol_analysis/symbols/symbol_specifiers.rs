@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 use smallvec::SmallVec;
-use witcherscript::attribs::*;
+use witcherscript_lang::attribs::*;
 
 
 /// Cheap to store and clone type that can contain symbol specifier information

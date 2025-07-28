@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use lsp_types as lsp;
 use smallvec::SmallVec;
-use witcherscript::{ast::*, attribs::*, script_document::ScriptDocument, tokens::*, NamedSyntaxNode, Script};
+use witcherscript_lang::{ast::*, attribs::*, script_document::ScriptDocument, tokens::*, NamedSyntaxNode, Script};
 use witcherscript_diagnostics::{Diagnostic, DiagnosticKind};
 
 

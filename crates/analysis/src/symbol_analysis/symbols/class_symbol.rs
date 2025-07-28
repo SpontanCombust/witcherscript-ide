@@ -1,4 +1,4 @@
-use witcherscript::attribs::{ClassSpecifier, AutobindSpecifier};
+use witcherscript_lang::attribs::{ClassSpecifier, AutobindSpecifier};
 use super::*;
 
 

@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use filetime::FileTime;
 use tower_lsp::lsp_types as lsp;
 use abs_path::AbsPath;
-use witcherscript::{script_document::ScriptDocument, Script};
+use witcherscript_lang::{script_document::ScriptDocument, Script};
 use witcherscript_project::{redkit::RedkitManifest, Manifest};
 use crate::{Backend, ScriptState};
 

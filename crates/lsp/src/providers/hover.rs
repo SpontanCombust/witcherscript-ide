@@ -1,7 +1,7 @@
 use abs_path::AbsPath;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
-use witcherscript::{ast::AnnotationKind, tokens::Keyword};
+use witcherscript_lang::{ast::AnnotationKind, tokens::Keyword};
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbol_table::iter::*;
 use witcherscript_analysis::symbol_analysis::symbol_table::marcher::SymbolTableMarcher;

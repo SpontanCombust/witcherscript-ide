@@ -1,4 +1,4 @@
-use witcherscript::attribs::MemberVarSpecifier;
+use witcherscript_lang::attribs::MemberVarSpecifier;
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::*;
 

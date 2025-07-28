@@ -1,4 +1,4 @@
-use witcherscript::attribs::FunctionParameterSpecifier;
+use witcherscript_lang::attribs::FunctionParameterSpecifier;
 use super::*;
 
 

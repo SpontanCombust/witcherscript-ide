@@ -90,6 +90,30 @@ impl<'script, T> SyntaxNode<'script, T> {
         SyntaxNodeChildrenDetailed::new(&self.tree_node, None).must_be_named(false)
     }
 
+    #[inline]
+    pub fn prev_sibling(&self) -> Option<AnyNode<'script>> {
+        self.use_cursor(|mut cursor| {
+            let mut sibling = None; 
+            if cursor.goto_previous_sibling() {
+                sibling = Some(AnyNode::new(cursor.node()));
+            }
+
+            (cursor, sibling)
+        })
+    }
+
+    #[inline]
+    pub fn next_sibling(&self) -> Option<AnyNode<'script>> {
+        self.use_cursor(|mut cursor| {
+            let mut sibling = None; 
+            if cursor.goto_next_sibling() {
+                sibling = Some(AnyNode::new(cursor.node()));
+            }
+
+            (cursor, sibling)
+        })
+    }
+
     /// Invoke a function using cursor stored in self. The invoked function should return back the cursor it got in the parameter.
     /// Cursor is created only for the first and only time on the first call of [`Self::use_cursor`] on self.
     /// Thanks to this method a new cursor doesn't need to be unnecesaily allocated 

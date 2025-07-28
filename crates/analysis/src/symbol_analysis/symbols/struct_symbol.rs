@@ -1,4 +1,4 @@
-use witcherscript::attribs::StructSpecifier;
+use witcherscript_lang::attribs::StructSpecifier;
 use super::*;
 
 

@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
-use witcherscript::{ast::*, tokens::*, ErrorNode};
+use witcherscript_lang::{ast::*, tokens::*, ErrorNode};
 use witcherscript_analysis::utils::{PositionFilter, PositionFilterEndpoint, PositionFilterPayload};
 use crate::Backend;
 

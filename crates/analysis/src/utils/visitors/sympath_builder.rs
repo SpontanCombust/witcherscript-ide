@@ -1,5 +1,5 @@
 use std::{cell::RefCell, rc::Rc, str::FromStr};
-use witcherscript::{ast::*, script_document::ScriptDocument, ErrorNode};
+use witcherscript_lang::{ast::*, script_document::ScriptDocument, ErrorNode};
 use crate::symbol_analysis::{symbol_path::SymbolPathBuf, symbols::*};
 
 

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use tower_lsp::lsp_types as lsp;
 use tower_lsp::jsonrpc::Result;
 use abs_path::AbsPath;
-use witcherscript::attribs::MemberVarSpecifier;
+use witcherscript_lang::attribs::MemberVarSpecifier;
 use witcherscript_analysis::symbol_analysis::symbol_path::SymbolPathBuf;
 use witcherscript_analysis::symbol_analysis::symbols::*;
 use crate::Backend;

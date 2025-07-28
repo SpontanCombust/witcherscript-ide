@@ -13,7 +13,7 @@
 
 use std::{ops::Deref, borrow::Borrow};
 use shrinkwraprs::Shrinkwrap;
-use witcherscript::tokens::Keyword;
+use witcherscript_lang::tokens::Keyword;
 use crate::symbol_analysis::symbol_path::{SymbolPath, SymbolPathBuf};
 use super::SymbolCategory;
 
